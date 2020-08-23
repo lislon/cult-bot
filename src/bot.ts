@@ -5,8 +5,11 @@ import { getMainKeyboard } from './util/keyboards';
 import TelegrafI18n, { match } from 'telegraf-i18n';
 import path from 'path'
 import theaters from './controllers/theaters'
+import { config } from 'dotenv'
 
-const bot = new Telegraf('1294938975:AAF3Hwba7WjpqGDy8OUUnECHvVYT_nVnKPw')
+config();
+
+const bot = new Telegraf(process.env.TELEGRAM_TOKEN)
 
 const i18n = new TelegrafI18n({
     defaultLanguage: 'ru',
@@ -24,7 +27,6 @@ const stage = new Stage([
 
 bot.use(i18n.middleware());
 bot.use(stage.middleware());
-
 
 bot.start(asyncWrapper(async (ctx: ContextMessageUpdate) => ctx.scene.enter('start')));
 

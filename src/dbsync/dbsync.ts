@@ -14,7 +14,7 @@ const categoryToSheetName = {
     }
 
 // Load client secrets from a local file.
-;(async function run() {
+; (async function run() {
     try {
 
         const excel = await loadExcel()
@@ -78,7 +78,7 @@ const categoryToSheetName = {
 
             await db.tx(async t => {
                 await t.none('DELETE FROM cb_events')
-                let s = pgp.helpers.insert(rows, cachedColumnsSet)
+                const s = pgp.helpers.insert(rows, cachedColumnsSet)
                 console.log(s)
                 await t.none(s)
             })
