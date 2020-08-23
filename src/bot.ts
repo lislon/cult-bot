@@ -9,6 +9,7 @@ import { config } from 'dotenv'
 
 config();
 
+console.log(`starting bot... ${process.env.TELEGRAM_TOKEN}`);
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN)
 
 const i18n = new TelegrafI18n({
