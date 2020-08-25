@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "cross-env NODE_ENV=production node dist/bot.js",
+    "prod": "cross-env NODE_ENV=production node dist/bot.js",
     "dev": "cross-env NODE_ENV=development node dist/bot.js",
     "build-dev": "npm run build-ts && npm run tslint && node dist/bot.js",
     "watch-node": "nodemon dist/bot.js",

@@ -1,2 +1,2 @@
-worker: npm run serve
+web: npm run prod
 
