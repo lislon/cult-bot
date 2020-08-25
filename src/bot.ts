@@ -104,13 +104,13 @@ async function startProdMode(bot: Telegraf<ContextMessageUpdate>) {
         console.log('process.env.WEBHOOK_PORT must be defined to run in PROD')
         process.exit(1)
     }
-    console.log('Set hook:' + `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:${process.env.WEBHOOK_PORT}/${process.env.TELEGRAM_TOKEN}`)
-
     await bot.telegram.setWebhook(
         `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:${process.env.WEBHOOK_PORT}/${process.env.TELEGRAM_TOKEN}`
     );
 
-    await bot.startWebhook(`/${process.env.TELEGRAM_TOKEN}`, undefined, +process.env.WEBHOOK_PORT);
+    console.log(`hook is set. To delete: https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook`)
+
+    await bot.startWebhook(`/${process.env.TELEGRAM_TOKEN}`, undefined, +process.env.PORT);
 
     const webhookStatus = await bot.telegram.getWebhookInfo();
     console.log('Webhook status', webhookStatus);
