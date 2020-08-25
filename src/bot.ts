@@ -2,6 +2,7 @@ import Telegraf, { ContextMessageUpdate, Stage, Telegram } from 'telegraf'
 import session from 'telegraf/session';
 import logger from './util/logger';
 import asyncWrapper from './util/error-handler'
+
 const rateLimit = require('telegraf-ratelimit')
 import { getMainKeyboard } from './util/keyboards';
 import TelegrafI18n, { match } from 'telegraf-i18n';
@@ -41,15 +42,17 @@ bot.use(session());
 bot.use(i18n.middleware());
 bot.use(stage.middleware());
 bot.use(rateLimit(limitConfig))
-bot.use(updateLogger({ colors: true }))
+bot.use(updateLogger({colors: true}))
 
-bot.start(asyncWrapper(async (ctx: ContextMessageUpdate) => ctx.scene.enter('start')));
-
+bot.start(asyncWrapper(async (ctx: ContextMessageUpdate) => {
+    const {mainKeyboard} = getMainKeyboard(ctx);
+    await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard)
+}));
 
 bot.command('/saveme', async (ctx: ContextMessageUpdate) => {
     logger.debug(ctx, 'User uses /saveme command');
 
-    const { mainKeyboard } = getMainKeyboard(ctx);
+    const {mainKeyboard} = getMainKeyboard(ctx);
     await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
 });
 
@@ -69,7 +72,7 @@ bot.help((ctx) => ctx.reply('Send me a sticker'))
 bot.on('sticker', (ctx) => ctx.reply('👍'))
 bot.hears('hi', (ctx) => ctx.reply('Hey there'))
 bot.hears(match('keyboards.back_keyboard.back'), async (ctx) => {
-    const { mainKeyboard } = getMainKeyboard(ctx);
+    const {mainKeyboard} = getMainKeyboard(ctx);
     await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
 });
 
