@@ -96,21 +96,25 @@ async function startProdMode(bot: Telegraf<ContextMessageUpdate>) {
     //     cert: fs.readFileSync(process.env.PATH_TO_CERT)
     // };
 
-    if (process.env.HEROKU_APP_NAME) {
-        console.log('Set hook:' + `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:${process.env.PORT}/${process.env.TELEGRAM_TOKEN}`)
-
-
-        await bot.telegram.setWebhook(
-            `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:${process.env.PORT}/${process.env.TELEGRAM_TOKEN}`
-        );
-
-        await bot.startWebhook(`/${process.env.TELEGRAM_TOKEN}`, undefined, +process.env.PORT);
-
-        const webhookStatus = await bot.telegram.getWebhookInfo();
-        console.log('Webhook status', webhookStatus);
-    } else {
+    if (!process.env.HEROKU_APP_NAME) {
         console.log('process.env.HEROKU_APP_NAME must be defined to run in PROD')
+        process.exit(1)
     }
+    if (!process.env.WEBHOOK_PORT) {
+        console.log('process.env.WEBHOOK_PORT must be defined to run in PROD')
+        process.exit(1)
+    }
+    console.log('Set hook:' + `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:${process.env.WEBHOOK_PORT}/${process.env.TELEGRAM_TOKEN}`)
+
+    await bot.telegram.setWebhook(
+        `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:${process.env.WEBHOOK_PORT}/${process.env.TELEGRAM_TOKEN}`
+    );
+
+    await bot.startWebhook(`/${process.env.TELEGRAM_TOKEN}`, undefined, +process.env.WEBHOOK_PORT);
+
+    const webhookStatus = await bot.telegram.getWebhookInfo();
+    console.log('Webhook status', webhookStatus);
+
 
     // checkUnreleasedMovies();
 }
