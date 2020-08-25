@@ -12,11 +12,8 @@ import { config } from 'dotenv'
 import { RateLimitConfig } from 'telegraf-ratelimit';
 import updateLogger from 'telegraf-update-logger'
 
-const {leave} = Stage;
-
-// console.log(`Loading config...`);
+console.log(process.env);
 config();
-match('keyboards.main_keyboard.theaters')
 
 // console.log(`starting bot... ${process.env.TELEGRAM_TOKEN}`);
 const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
