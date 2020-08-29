@@ -1,74 +1,53 @@
-import { loadExcel } from './googlesheets'
+import { colorCell, loadExcel } from './googlesheets'
 import { EventCategory } from '../interfaces/app-interfaces'
 import { db, pgp } from '../db'
+import { categoryToSheetName, mapSheetRow } from './parseSheetRow'
+import { sheets_v4 } from 'googleapis'
+import Schema$Request = sheets_v4.Schema$Request
 
 // our set of columns, to be created only once (statically), and then reused,
 // to let it cache up its formatting templates for high performance:
+const spreadsheetId = process.env.GOOGLE_DOCS_ID;
 
-const categoryToSheetName: { [key in EventCategory]?: string } = {
-        'theaters': 'Театр',
-        'exhibitions': 'Выставки',
-        'concerts': 'Концерты',
-        'events': 'Мероприятия',
-        'movies': 'Кино',
-        'walks': 'Прогулки'
-    }
 
-// Load client secrets from a local file.
-; (async function run() {
+(async function run() {
     try {
-
         console.log('Connection from excel...')
         const excel = await loadExcel()
 
         const ranges = Object.values(categoryToSheetName).map(name => `${name}!A2:Q`);
 
         console.log(`Loading from excel [${ranges}]...`)
-        const res = await excel.spreadsheets.values.batchGet({
-            spreadsheetId: process.env.GOOGLE_DOCS_ID,
-            ranges,
-        })
-        console.log('Saving to db...')
+        const [sheetsMetaData, sheetsData] = await Promise.all([
+            excel.spreadsheets.get({ spreadsheetId, ranges }),
+            excel.spreadsheets.values.batchGet({ spreadsheetId, ranges })
+        ]);
+        // const sheetsMetaData  = await excel.spreadsheets.get({ spreadsheetId, ranges })
+        // const sheetsData = await excel.spreadsheets.values.batchGet({ spreadsheetId, ranges })
 
+        console.log('Saving to db...')
         const rows: object[] = []
-        res.data.valueRanges.map((sheet, sheetNo) => {
+
+        const updateRequests: Schema$Request[] = []
+        sheetsData.data.valueRanges.map(async (sheet, sheetNo: number) => {
+
+            const sheetId = sheetsMetaData.data.sheets[sheetNo].properties.sheetId;
 
             // Print columns A and E, which correspond to indices 0 and 4.
-            sheet.values.map((row: any) => {
-                const notNull = (s: string) => s === undefined ? '' : s;
-                const forceDigit = (n: string) => n === undefined ? 0 : +n;
-                let c = 1;
-                const data = {
-                    'category': Object.keys(categoryToSheetName)[sheetNo] as string,
-                    'publish': row[c++],
-                    'subcategory': row[c++],
-                    'title': row[c++],
-                    'place': notNull(row[c++]),
-                    'address': notNull(row[c++]),
-                    'timetable': notNull(row[c++]),
-                    'duration': notNull(row[c++]),
-                    'price': notNull(row[c++]),
-                    'notes': notNull(row[c++]),
-                    'description': row[c++],
-                    'url': notNull(row[c++]),
-                    'tag_level_1': notNull(row[c++]),
-                    'tag_level_2': notNull(row[c++]),
-                    'tag_level_3': notNull(row[c++]),
-                    'rating': forceDigit(row[c++]),
-                    'reviewer': notNull(row[c]),
-                }
-                if (data.publish && data.publish.toLocaleLowerCase() === 'публиковать') {
-                    delete data.publish
-                    rows.push(data);
+
+            sheet.values.forEach((row, id) => {
+                const cat = Object.keys(categoryToSheetName)[sheetNo] as EventCategory;
+                const mapped = mapSheetRow(row, cat)
+                if (mapped !== undefined) {
+                    rows.push(mapped);
+                    updateRequests.push(colorCell(sheetId, 'green', 2, 2 + id))
                 }
             })
         });
 
         if (rows.length > 0) {
 
-            const cachedColumnsSet = new pgp.helpers.ColumnSet(
-                Object.keys(rows[0]), {table: 'cb_events'});
-
+            const cachedColumnsSet = new pgp.helpers.ColumnSet(Object.keys(rows[0]), {table: 'cb_events'});
 
             await db.tx(async t => {
                 await t.none('DELETE FROM cb_events')
@@ -80,6 +59,12 @@ const categoryToSheetName: { [key in EventCategory]?: string } = {
         }
 
         console.log(`Insertion done. Rows inserted: ${rows.length}`);
+
+        const result = await excel.spreadsheets.batchUpdate({
+                spreadsheetId,
+                requestBody: { requests: updateRequests }
+            });
+        console.log(`Excel updated`);
 
     } catch (e) {
         return console.log(e);
