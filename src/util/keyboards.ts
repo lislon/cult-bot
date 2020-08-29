@@ -28,10 +28,12 @@ export const getMainKeyboard = (ctx: ContextMessageUpdate) => {
   const events = ctx.i18n.t('keyboards.main_keyboard.events');
   const walks = ctx.i18n.t('keyboards.main_keyboard.walks');
   const concerts = ctx.i18n.t('keyboards.main_keyboard.concerts');
+  const customized = ctx.i18n.t('keyboards.main_keyboard.customize');
   let mainKeyboard: any = Markup.keyboard([
     [theaters, exhibitions] as any,
     [movies, events],
-    [walks, concerts]
+    [walks, concerts],
+    [customized]
   ]);
   mainKeyboard = mainKeyboard.resize().extra();
 
@@ -42,6 +44,7 @@ export const getMainKeyboard = (ctx: ContextMessageUpdate) => {
     movies,
     events,
     walks,
-    concerts
+    concerts,
+    customized
   };
 };
