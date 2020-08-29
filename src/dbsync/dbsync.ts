@@ -1,10 +1,6 @@
 import { loadExcel } from './googlesheets'
-import { config } from 'dotenv'
-import pg_promise from 'pg-promise'
 import { EventCategory } from '../interfaces/app-interfaces'
-
-config();
-
+import { db, pgp } from '../db'
 
 // our set of columns, to be created only once (statically), and then reused,
 // to let it cache up its formatting templates for high performance:
@@ -68,19 +64,8 @@ const categoryToSheetName: { [key in EventCategory]?: string } = {
             })
         });
 
-        const pgp = pg_promise({
-            capSQL: true,
-        });
-
         if (rows.length > 0) {
-            const db = pgp({
-                host: process.env.PGHOST,
-                port: +process.env.PGPORT,
-                database: process.env.PGDATABASE,
-                user: process.env.PGUSER,
-                password: process.env.PGPASSWORD,
-                max: +process.env.PGMAXCONNECTIONS
-            })
+
             const cachedColumnsSet = new pgp.helpers.ColumnSet(
                 Object.keys(rows[0]), {table: 'cb_events'});
 

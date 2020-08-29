@@ -3,19 +3,14 @@ import { config } from 'dotenv'
 
 config();
 
-const pgp = pg_promise({
-    capSQL: true,
-})
+const pgp = pg_promise({})
 
 const cfg = {
-    host: process.env.PGHOST,
-    port: +process.env.PGPORT,
-    database: process.env.PGDATABASE,
-    user: process.env.PGUSER,
-    password: process.env.PGPASSWORD,
-    max: +process.env.PGMAXCONNECTIONS
+    connectionString: process.env.DATABASE_URL,
+    max: +20,
+    ssl: process.env.HEROKU_APP_ID === undefined ? undefined : { rejectUnauthorized: false }
 }
 
-const db = pgp(cfg); // database instance;
 
-export { db }
+const db = pgp(cfg); // database instance;
+export { db, pgp }

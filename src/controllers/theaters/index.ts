@@ -34,7 +34,7 @@ theaters.enter(async (ctx: ContextMessageUpdate) => {
     logger.debug(ctx, 'Enter theaters scene');
     const {backKeyboard} = getBackKeyboard(ctx);
 
-    const theathers = await loadTop5Events('theatre');
+    const theathers = await loadTop5Events('theaters');
 
     for (let i = 0; i < theathers.length; i++) {
         await ctx.reply(formatEvent(theathers[i]));
