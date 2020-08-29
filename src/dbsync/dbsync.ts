@@ -54,7 +54,6 @@ export default async function run(): Promise<number> {
                 // console.log(s)
                 await t.none(s)
             })
-            pgp.end();
         }
 
         console.log(`Insertion done. Rows inserted: ${rows.length}`);
