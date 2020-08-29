@@ -9,8 +9,7 @@ import Schema$Request = sheets_v4.Schema$Request
 // to let it cache up its formatting templates for high performance:
 const spreadsheetId = process.env.GOOGLE_DOCS_ID;
 
-
-(async function run() {
+export default async function run(): Promise<number> {
     try {
         console.log('Connection from excel...')
         const excel = await loadExcel()
@@ -60,16 +59,18 @@ const spreadsheetId = process.env.GOOGLE_DOCS_ID;
 
         console.log(`Insertion done. Rows inserted: ${rows.length}`);
 
-        const result = await excel.spreadsheets.batchUpdate({
+        await excel.spreadsheets.batchUpdate({
                 spreadsheetId,
                 requestBody: { requests: updateRequests }
             });
         console.log(`Excel updated`);
+        return rows.length;
 
     } catch (e) {
-        return console.log(e);
+        console.log(e);
+        throw e;
     }
-})()
+}
 
 
 

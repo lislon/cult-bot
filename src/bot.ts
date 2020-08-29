@@ -11,6 +11,7 @@ import { RateLimitConfig } from 'telegraf-ratelimit';
 import updateLogger from 'telegraf-update-logger'
 import { allCategories, ContextMessageUpdate } from './interfaces/app-interfaces'
 import rateLimit from 'telegraf-ratelimit'
+import dbsync from './dbsync/dbsync'
 
 console.log(`starting bot...`);
 const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
@@ -65,6 +66,15 @@ bot.hears(match('keyboards.back_keyboard.back'), async (ctx) => {
     const {mainKeyboard} = getMainKeyboard(ctx);
     await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
 });
+bot.command('sync', async (ctx) => {
+    await ctx.reply('Начали синхронизацию...')
+    try {
+        const count = await dbsync()
+        await ctx.reply(`✅ Успех! Синхронизировали ${count} событий...`)
+    } catch (e) {
+        await ctx.reply(`❌ Эх, что-то не удалось :(...` + e.toString().substr(0, 100))
+    }
+})
 
 bot.hears(/.+/, (ctx, next) => {
     // console.debug(ctx)
