@@ -12,8 +12,13 @@ import updateLogger from 'telegraf-update-logger'
 import { allCategories, ContextMessageUpdate } from './interfaces/app-interfaces'
 import rateLimit from 'telegraf-ratelimit'
 import dbsync from './dbsync/dbsync'
+import { Markup, Extra } from 'telegraf';
+import { db } from './db';
+
 
 console.log(`starting bot...`);
+db.any('select 1 + 1')
+
 const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
 
 const i18n = new TelegrafI18n({
@@ -48,14 +53,12 @@ bot.command('/saveme', async (ctx: ContextMessageUpdate) => {
     logger.debug(ctx, 'User uses /saveme command');
 
     const {mainKeyboard} = getMainKeyboard(ctx);
+
     await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
 });
 
 for (const cat of allCategories) {
-    bot.hears(
-        match(`keyboards.main_keyboard.${cat}`),
-        asyncWrapper(async (ctx: ContextMessageUpdate) => await ctx.scene.enter(cat))
-    );
+    bot.action( cat, asyncWrapper(async (ctx: ContextMessageUpdate) => await ctx.scene.enter(cat)));
 }
 
 bot.start((ctx) => ctx.reply('Welcome!'))
@@ -67,10 +70,10 @@ bot.hears(match('keyboards.back_keyboard.back'), async (ctx) => {
     await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
 });
 bot.command('sync', async (ctx) => {
-    await ctx.reply('Начали синхронизацию...')
+    await ctx.reply('Пошла скачивать эксельчик...')
     try {
         const count = await dbsync()
-        await ctx.reply(`✅ Успех! Синхронизировали ${count} событий...`)
+        await ctx.reply(`✅ База обновлена. Всего у нас ${count} событий...`)
     } catch (e) {
         await ctx.reply(`❌ Эх, что-то не удалось :(...` + e.toString().substr(0, 100))
     }

@@ -1,5 +1,5 @@
-import { Markup } from 'telegraf';
-import { ContextMessageUpdate } from '../interfaces/app-interfaces'
+import { Markup, Extra } from 'telegraf';
+import { ContextMessageUpdate, EventCategory } from '../interfaces/app-interfaces'
 
 /**
  * Returns back keyboard and its buttons according to the language
@@ -22,29 +22,17 @@ export const getBackKeyboard = (ctx: ContextMessageUpdate) => {
  * @param ctx - telegram context
  */
 export const getMainKeyboard = (ctx: ContextMessageUpdate) => {
-  const theaters = ctx.i18n.t('keyboards.main_keyboard.theaters');
-  const exhibitions = ctx.i18n.t('keyboards.main_keyboard.exhibitions');
-  const movies = ctx.i18n.t('keyboards.main_keyboard.movies');
-  const events = ctx.i18n.t('keyboards.main_keyboard.events');
-  const walks = ctx.i18n.t('keyboards.main_keyboard.walks');
-  const concerts = ctx.i18n.t('keyboards.main_keyboard.concerts');
-  const customized = ctx.i18n.t('keyboards.main_keyboard.customize');
-  let mainKeyboard: any = Markup.keyboard([
-    [theaters, exhibitions] as any,
-    [movies, events],
-    [walks, concerts],
-    [customized]
-  ]);
-  mainKeyboard = mainKeyboard.resize().extra();
-
-  return {
-    mainKeyboard,
-    theaters,
-    exhibitions,
-    movies,
-    events,
-    walks,
-    concerts,
-    customized
-  };
+  const menu = [
+    [ 'theaters', 'exhibitions' ],
+    [ 'movies', 'events' ],
+    [ 'walks', 'concerts' ],
+    [ 'customize' ]
+  ]
+  const mainKeyboard = menu.map(row =>
+    row.map(slug => {
+      const title = ctx.i18n.t(`keyboards.main_keyboard.${slug}`);
+      return Markup.callbackButton(title, slug);
+    })
+  );
+  return { mainKeyboard: Extra.markup(Markup.inlineKeyboard(mainKeyboard)) }
 };
