@@ -15,7 +15,10 @@
     "debug": "npm run build && npm run watch-debug",
     "dbsync": "npx ts-node src/dbsync/dbsync.ts",
     "serve-debug": "nodemon --inspect dist/bot.js",
-    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run serve-debug\""
+    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run serve-debug\"",
+    "db:sync": "node dist/dbsync/dbsync.js",
+    "db:up": "db-migrate up",
+    "db:down": "db-migrate down"
   },
   "dependencies": {
     "anymatch": "^3.1.1",

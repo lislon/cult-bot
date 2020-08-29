@@ -4,10 +4,11 @@ import fs from 'fs'
 import readline from 'readline'
 import { OAuth2Client } from 'google-auth-library'
 import Sheets = sheets_v4.Sheets
+import { config } from 'dotenv'
 
+config();
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
-const TOKEN_PATH = path.resolve(__dirname + '/token.json');
 const CRED_PATH = path.resolve(__dirname + '/credentials.json')
 
 export async function loadExcel(): Promise<Sheets> {
@@ -34,11 +35,13 @@ async function authorize(credentials: any): Promise<OAuth2Client> {
 
     // Check if we have previously stored a token.
     try {
-        const token = await fs.promises.readFile(TOKEN_PATH);
-        oAuth2Client.setCredentials(JSON.parse(token.toString()));
+        if (!process.env.GOOGLE_DOCS_TOKEN) {
+            throw new Error('missing GOOGLE_DOCS_TOKEN env variable!');
+        }
+        oAuth2Client.setCredentials(JSON.parse(process.env.GOOGLE_DOCS_TOKEN));
     } catch (e) {
-        console.log('ova', e)
-        // return getNewToken(oAuth2Client);
+        console.log(`can't authorize to get google docs`, e)
+        throw e
     }
     return oAuth2Client;
 }
@@ -72,12 +75,7 @@ async function getNewToken(oAuth2Client: OAuth2Client) {
 
         oAuth2Client.setCredentials(token.tokens);
         // Store the token to disk for later program executions
-        try {
-            await fs.promises.writeFile(TOKEN_PATH, JSON.stringify(token))
-            console.log('Token stored to', TOKEN_PATH);
-        } catch (e) {
-            return console.error(e);
-        }
+        console.log('Here is your token. Store it in GOOGLE_DOCS_TOKEN: ', JSON.stringify(token));
     } catch (e) {
         return console.error('Error while trying to retrieve access token', e);
     }
