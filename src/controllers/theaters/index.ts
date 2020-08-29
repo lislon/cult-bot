@@ -10,23 +10,34 @@ import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interf
 const {leave} = Stage;
 const theaters = new Scene('theaters');
 
+const escapeHTML = (string: string) => {
+    return string
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+}
+
 function formatEvent(row: Event) {
+
+
     let text = ``;
-    text += `**${row.title}**\n`
+    text += `<b>${escapeHTML(row.title)}</b>\n`
     text += '\n'
     text += `${row.description} \n`
     text += '\n'
-    text += `Где: ${row.address}\n`
-    text += `Время: ${row.timetable}\n`
-    text += `Длительность прогулки: ${row.duration}\n`
-    text += `Стоимость: ${row.price}\n`
-    text += `Особенности:  ${row.notes}\n`
+    text += `<b>Где:</b> ${row.address}\n`
+    text += `<b>Время:</b> ${row.timetable}\n`
+    text += `<b>Длительность:</b> ${row.duration}\n`
+    text += `<b>Стоимость:</b> ${row.price}\n`
+    text += `<b>Особенности:</b>  ${row.notes}\n`
     text += '\n'
-    text += `${row.url}\n`
+    text += `<a href="${row.url}">${row.url}</a>\n`
     text += '\n'
-    text += `${row.tag_level_1}\n`
-    text += `${row.tag_level_2}\n`
-    text += `${row.tag_level_3}\n`
+    text += `${escapeHTML(row.tag_level_1)}\n`
+    text += `${escapeHTML(row.tag_level_2)}\n`
+    text += `${escapeHTML(row.tag_level_3)}\n`
+    console.log(text)
     return text;
 }
 
@@ -37,7 +48,7 @@ theaters.enter(async (ctx: ContextMessageUpdate) => {
     const theathers = await loadTop5Events('theaters');
 
     for (let i = 0; i < theathers.length; i++) {
-        await ctx.reply(formatEvent(theathers[i]));
+        await ctx.replyWithHTML(formatEvent(theathers[i]));
     }
     if (theathers.length == 0) {
         await ctx.reply(ctx.i18n.t('scenes.theaters.no_movies_found'));

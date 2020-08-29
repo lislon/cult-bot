@@ -7,9 +7,7 @@ export async function loadTop5Events(cat: EventCategory): Promise<Event[]> {
         'from cb_events ce ' +
         'where category = $1 ' +
         'order by rating  desc ' +
-        'limit 5 ', [cat.toString()]);
-
-    console.log('DATA:', data); // print data;
+        'limit 5', [cat.toString()]);
     return data;
 }
 //
