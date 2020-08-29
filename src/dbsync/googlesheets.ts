@@ -8,13 +8,24 @@ import { config } from 'dotenv'
 
 config();
 
+if (!process.env.GOOGLE_DOCS_TOKEN) {
+    console.log('Required GOOGLE_DOCS_TOKEN env variable');
+    process.exit(1)
+}
+
+if (!process.env.GOOGLE_DOCS_CREDENTIALS) {
+    console.log('Required GOOGLE_DOCS_CREDENTIALS env variable');
+    process.exit(1)
+}
+
+const TOKEN = process.env.GOOGLE_DOCS_TOKEN
+const CREDENTIALS = process.env.GOOGLE_DOCS_CREDENTIALS
+
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
-const CRED_PATH = path.resolve(__dirname + '/credentials.json')
 
 export async function loadExcel(): Promise<Sheets> {
     try {
-        const content = await fs.promises.readFile(CRED_PATH);
-        const auth = await authorize(JSON.parse(content.toString()));
+        const auth = await authorize(JSON.parse(CREDENTIALS));
         return google.sheets({version: 'v4', auth})
     } catch (e) {
         console.log('Error loading client secret file:', e);
@@ -35,10 +46,7 @@ async function authorize(credentials: any): Promise<OAuth2Client> {
 
     // Check if we have previously stored a token.
     try {
-        if (!process.env.GOOGLE_DOCS_TOKEN) {
-            throw new Error('missing GOOGLE_DOCS_TOKEN env variable!');
-        }
-        oAuth2Client.setCredentials(JSON.parse(process.env.GOOGLE_DOCS_TOKEN));
+        oAuth2Client.setCredentials(JSON.parse(TOKEN));
     } catch (e) {
         console.log(`can't authorize to get google docs`, e)
         throw e
