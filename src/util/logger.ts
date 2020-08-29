@@ -1,6 +1,6 @@
-import { ContextMessageUpdate } from 'telegraf';
 import util from 'util';
 import winston, { format } from 'winston';
+import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 
 /**
  * Adds user id and nickname if found. Also formats message to display complex objects

@@ -1,22 +1,18 @@
-import Telegraf, { ContextMessageUpdate, Stage, Telegram } from 'telegraf'
+import Telegraf, { Stage } from 'telegraf'
 import session from 'telegraf/session';
 import logger from './util/logger';
 import asyncWrapper from './util/error-handler'
-
-const rateLimit = require('telegraf-ratelimit')
 import { getMainKeyboard } from './util/keyboards';
 import TelegrafI18n, { match } from 'telegraf-i18n';
 import rp from 'request-promise';
 import path from 'path'
 import theaters from './controllers/theaters'
-import { config } from 'dotenv'
 import { RateLimitConfig } from 'telegraf-ratelimit';
 import updateLogger from 'telegraf-update-logger'
+import { ContextMessageUpdate } from './interfaces/app-interfaces'
+import rateLimit from 'telegraf-ratelimit'
 
-console.log(process.env);
-config();
-
-// console.log(`starting bot... ${process.env.TELEGRAM_TOKEN}`);
+console.log(`starting bot...`);
 const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
 
 const i18n = new TelegrafI18n({

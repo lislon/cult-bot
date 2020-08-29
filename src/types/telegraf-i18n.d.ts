@@ -9,5 +9,7 @@ declare module 'telegraf-i18n' {
   // I18n.match = function (resourceKey, templateData) {
   //   return (text, ctx) => (text && ctx && ctx.i18n && text === ctx.i18n.t(resourceKey, templateData)) ? [text] : null
   // }
-  function match(resourceKey: string, templateData?: any): string;
+  export function match(resourceKey: string, templateData?: any): string;
+  // export function qq(resourceKey: string, templateData?: any): string;
+
 }

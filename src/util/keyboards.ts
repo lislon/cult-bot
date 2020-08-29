@@ -1,4 +1,5 @@
-import { Markup, ContextMessageUpdate } from 'telegraf';
+import { Markup } from 'telegraf';
+import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 
 /**
  * Returns back keyboard and its buttons according to the language

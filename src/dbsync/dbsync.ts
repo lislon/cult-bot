@@ -1,6 +1,7 @@
 import { loadExcel } from './googlesheets'
 import { config } from 'dotenv'
 import pg_promise from 'pg-promise'
+import { EventCategory } from '../interfaces/app-interfaces'
 
 config();
 
@@ -8,23 +9,30 @@ config();
 // our set of columns, to be created only once (statically), and then reused,
 // to let it cache up its formatting templates for high performance:
 
-const categoryToSheetName = {
-        Theatre: 'Театр',
-        Exhibition: 'Выставки'
+const categoryToSheetName: { [key in EventCategory]?: string } = {
+        'theaters': 'Театр',
+        'exhibitions': 'Выставки',
+        'concerts': 'Концерты',
+        'events': 'Мероприятия',
+        'movies': 'Кино',
+        'walks': 'Прогулки'
     }
 
 // Load client secrets from a local file.
 ; (async function run() {
     try {
 
+        console.log('Connection from excel...')
         const excel = await loadExcel()
 
-        const ranges = Object.values(categoryToSheetName).map(name => `${name}!A4:Q`);
+        const ranges = Object.values(categoryToSheetName).map(name => `${name}!A2:Q`);
 
+        console.log(`Loading from excel [${ranges}]...`)
         const res = await excel.spreadsheets.values.batchGet({
             spreadsheetId: process.env.GOOGLE_DOCS_ID,
             ranges,
         })
+        console.log('Saving to db...')
 
         const rows: object[] = []
         res.data.valueRanges.map((sheet, sheetNo) => {
@@ -32,6 +40,7 @@ const categoryToSheetName = {
             // Print columns A and E, which correspond to indices 0 and 4.
             sheet.values.map((row: any) => {
                 const notNull = (s: string) => s === undefined ? '' : s;
+                const forceDigit = (n: string) => n === undefined ? 0 : +n;
                 let c = 1;
                 const data = {
                     'category': Object.keys(categoryToSheetName)[sheetNo] as string,
@@ -49,7 +58,7 @@ const categoryToSheetName = {
                     'tag_level_1': notNull(row[c++]),
                     'tag_level_2': notNull(row[c++]),
                     'tag_level_3': notNull(row[c++]),
-                    'rating': notNull(row[c++]),
+                    'rating': forceDigit(row[c++]),
                     'reviewer': notNull(row[c]),
                 }
                 if (data.publish && data.publish.toLocaleLowerCase() === 'публиковать') {
@@ -79,7 +88,7 @@ const categoryToSheetName = {
             await db.tx(async t => {
                 await t.none('DELETE FROM cb_events')
                 const s = pgp.helpers.insert(rows, cachedColumnsSet)
-                console.log(s)
+                // console.log(s)
                 await t.none(s)
             })
             pgp.end();

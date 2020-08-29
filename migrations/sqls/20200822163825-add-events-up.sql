@@ -14,8 +14,9 @@ CREATE TABLE cb_events (
     tag_level_1 VARCHAR NOT null,
     tag_level_2 VARCHAR NOT null,
     tag_level_3 VARCHAR NOT null,
-    rating VARCHAR NOT null,
+    rating INT NOT null,
     reviewer VARCHAR NOT null
 );
 
 CREATE UNIQUE INDEX cb_events_category_idx ON cb_events (category,title);
+CREATE INDEX cb_events_rating_idx ON cb_events (category, rating);

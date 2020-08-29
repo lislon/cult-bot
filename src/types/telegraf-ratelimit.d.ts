@@ -1,6 +1,7 @@
-import { ContextMessageUpdate } from 'telegraf'
+import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 
 declare module 'telegraf-ratelimit' {
+
     export interface RateLimitConfig {
         window: number,
         limit: number,
@@ -8,5 +9,5 @@ declare module 'telegraf-ratelimit' {
         keyGenerator?: (ctx: ContextMessageUpdate) => any
     }
 
-    export function rateLimit(config: RateLimitConfig): any;
+    export default function rateLimit(config: RateLimitConfig): any;
 }
