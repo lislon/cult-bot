@@ -12,7 +12,7 @@ export const categoryToSheetName: { [key in EventCategory]?: string } = {
 export function mapSheetRow(row: string[], category: EventCategory): {} {
     const notNull = (s: string) => s === undefined ? '' : s;
     const forceDigit = (n: string) => n === undefined ? 0 : +n;
-    const splitTags = (s: string) => s.replace(/(\w)#/, '$1 #')
+    const splitTags = (s: string) => s.replace(/([^\s])#/g, '$1 #')
 
 
     let c = 1;
