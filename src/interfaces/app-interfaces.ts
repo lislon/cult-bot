@@ -2,6 +2,7 @@ import { SceneContextMessageUpdate } from 'telegraf/typings/stage'
 import { I18n } from 'telegraf-i18n'
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
+export const allCategories: EventCategory[] = ['theaters', 'exhibitions', 'movies', 'events', 'walks', 'concerts']
 
 export interface ContextMessageUpdate extends SceneContextMessageUpdate {
     i18n: I18n;

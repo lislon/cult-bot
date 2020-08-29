@@ -6,10 +6,10 @@ import { getMainKeyboard } from './util/keyboards';
 import TelegrafI18n, { match } from 'telegraf-i18n';
 import rp from 'request-promise';
 import path from 'path'
-import theaters from './controllers/theaters'
+import listScenes from './controllers/list'
 import { RateLimitConfig } from 'telegraf-ratelimit';
 import updateLogger from 'telegraf-update-logger'
-import { ContextMessageUpdate } from './interfaces/app-interfaces'
+import { allCategories, ContextMessageUpdate } from './interfaces/app-interfaces'
 import rateLimit from 'telegraf-ratelimit'
 
 console.log(`starting bot...`);
@@ -30,9 +30,7 @@ const limitConfig: RateLimitConfig = {
     onLimitExceeded: (ctx: ContextMessageUpdate) => ctx.reply('Rate limit exceeded')
 }
 
-const stage = new Stage([
-    theaters,
-]);
+const stage = new Stage(listScenes);
 
 bot.use(session());
 bot.use(i18n.middleware());
@@ -52,16 +50,12 @@ bot.command('/saveme', async (ctx: ContextMessageUpdate) => {
     await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
 });
 
-bot.hears(
-    match('keyboards.main_keyboard.theaters'),
-    asyncWrapper(async (ctx: ContextMessageUpdate) => await ctx.scene.enter('theaters'))
-);
-
-bot.hears(
-    match('keyboards.main_keyboard.exhibitions'),
-    asyncWrapper(async (ctx: ContextMessageUpdate) => await ctx.scene.enter('exhibitions'))
-);
-
+for (const cat of allCategories) {
+    bot.hears(
+        match(`keyboards.main_keyboard.${cat}`),
+        asyncWrapper(async (ctx: ContextMessageUpdate) => await ctx.scene.enter(cat))
+    );
+}
 
 bot.start((ctx) => ctx.reply('Welcome!'))
 bot.help((ctx) => ctx.reply('Send me a sticker'))
