@@ -28,7 +28,7 @@ scenes.forEach((scene: MyScene)  => {
         const events = await loadTop5Events(scene.id as EventCategory);
 
         for (const event of events) {
-            await ctx.replyWithHTML(formatEvent(event));
+            await ctx.replyWithHTML(formatEvent(event), { disable_web_page_preview: true });
         }
 
         if (events.length == 0) {
@@ -45,7 +45,7 @@ scenes.forEach((scene: MyScene)  => {
 
         const {mainKeyboard} = getMainKeyboard(ctx);
 
-        await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
+        await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard );
     });
 
     scene.command('saveme', Stage.leave());

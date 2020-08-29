@@ -7,7 +7,8 @@ export function formatEvent(row: Event) {
     text += '\n'
     text += `${row.description} \n`
     text += '\n'
-    text += `<b>Где:</b> ${row.address}\n`
+    text += `<b>Где:</b> ${row.place}\n`
+    text += `<b>Адрес:</b> ${row.address}\n`
     text += `<b>Время:</b> ${row.timetable}\n`
     text += `<b>Длительность:</b> ${row.duration}\n`
     text += `<b>Стоимость:</b> ${row.price}\n`
