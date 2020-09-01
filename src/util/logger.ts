@@ -26,7 +26,7 @@ const logFormat = printf(info => {
 const logger = winston.createLogger({
     transports: [
         new winston.transports.Console({
-            level: process.env.NODE_ENV === 'production' ? 'debug' : 'debug'
+            level: process.env.NODE_ENV === 'production' ? 'debug' : 'debugM'
         }),
         new winston.transports.File({filename: 'debug.log', level: 'debug'})
     ],
