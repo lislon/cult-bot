@@ -1,5 +1,5 @@
 import { db } from '../../db';
-import { EventCategory } from '../../interfaces/app-interfaces'
+import { Event, EventCategory } from '../../interfaces/app-interfaces'
 
 export async function loadTop5Events(cat: EventCategory): Promise<Event[]> {
     const data = await db.any<Event>('' +

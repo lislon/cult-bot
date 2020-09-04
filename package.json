@@ -2,6 +2,8 @@
   "name": "bot",
   "version": "0.0.0",
   "private": true,
+  "esm": true,
+  "mode": "auto",
   "scripts": {
     "prod": "cross-env NODE_ENV=production node dist/bot.js",
     "dev": "cross-env NODE_ENV=development node dist/bot.js",
@@ -22,12 +24,15 @@
     "db:down": "db-migrate down"
   },
   "dependencies": {
+    "@types/parsimmon": "^1.10.2",
     "anymatch": "^3.1.1",
     "cross-env": "^7.0.2",
     "db-migrate": "^0.11.11",
     "db-migrate-pg": "^1.2.2",
     "dotenv": "^8.2.0",
     "googleapis": "^39.2.0",
+    "moment": "^2.27.0",
+    "parsimmon": "^1.16.0",
     "pg": "^8.3.2",
     "pg-promise": "^10.6.0",
     "request": "^2.88.2",
@@ -36,7 +41,8 @@
     "telegraf-i18n": "^6.6.0",
     "telegraf-ratelimit": "^2.0.0",
     "telegraf-update-logger": "^1.2.0",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "xstate": "^4.13.0"
   },
   "devDependencies": {
     "@types/jest": "^26.0.12",
@@ -44,6 +50,7 @@
     "@types/pg": "^7.14.4",
     "@types/request-promise": "^4.1.46",
     "concurrently": "^5.3.0",
+    "esm": "^3.2.25",
     "jest": "^26.4.2",
     "nodemon": "^2.0.4",
     "ts-jest": "^26.3.0",
