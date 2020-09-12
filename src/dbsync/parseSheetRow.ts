@@ -69,6 +69,10 @@ export function getOnlyBotTimetable(timetable: string) {
     return botTimetable
 }
 
+export function getOnlyHumanTimetable(timetable: string) {
+    return  timetable.replace(/{бот:([^}]+)}/, '').trim()
+}
+
 function prepareTimetable(data: Event, result: ExcelRowResult) {
     const botTimetable = getOnlyBotTimetable(data.timetable)
 

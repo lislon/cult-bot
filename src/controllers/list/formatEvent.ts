@@ -1,4 +1,6 @@
 import { escapeHTML } from '../../util/string-utils'
+import { Event } from '../../interfaces/app-interfaces'
+import { getOnlyHumanTimetable } from '../../dbsync/parseSheetRow'
 
 export function formatEvent(row: Event) {
 
@@ -9,7 +11,7 @@ export function formatEvent(row: Event) {
     text += '\n'
     text += `<b>Где:</b> ${row.place}\n`
     text += `<b>Адрес:</b> ${row.address}\n`
-    text += `<b>Время:</b> ${row.timetable}\n`
+    text += `<b>Время:</b> ${getOnlyHumanTimetable(row.timetable)}\n`
     text += `<b>Длительность:</b> ${row.duration}\n`
     text += `<b>Стоимость:</b> ${row.price}\n`
     text += `<b>Особенности:</b>  ${row.notes}\n`
