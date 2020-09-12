@@ -1,4 +1,4 @@
-import { annotateCell, CellColor, clearFormat, colorCell, colorRow, loadExcel } from './googlesheets'
+import { annotateCell, CellColor, clearFormat, colorCell, loadExcel } from './googlesheets'
 import { EventCategory } from '../interfaces/app-interfaces'
 import { db, pgp } from '../db'
 import {
@@ -11,11 +11,10 @@ import {
 } from './parseSheetRow'
 import { sheets_v4 } from 'googleapis'
 import Schema$Request = sheets_v4.Schema$Request
-import { mapInterval, predictIntervals } from '../lib/timetable/intervals'
 import moment = require('moment')
-import { parseTimetable } from '../lib/timetable/parser'
-import { language } from 'googleapis/build/src/apis/language'
 import { Moment } from 'moment'
+import { parseTimetable } from '../lib/timetable/parser'
+import { predictIntervals } from '../lib/timetable/intervals'
 
 // our set of columns, to be created only once (statically), and then reused,
 // to let it cache up its formatting templates for high performance:
