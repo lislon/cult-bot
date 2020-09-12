@@ -5,8 +5,7 @@
   "esm": true,
   "mode": "auto",
   "scripts": {
-    "prod": "cross-env NODE_ENV=production node dist/bot.js",
-    "dev": "cross-env NODE_ENV=development node dist/bot.js",
+    "start": "node dist/bot.js",
     "build": "npm run build-ts && npm run tslint",
     "build-dev": "npm run build-ts && node dist/bot.js",
     "watch-node": "nodemon dist/bot.js",
@@ -16,9 +15,9 @@
     "watch-ts": "tsc -w",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
     "debug": "npm run build && npm run watch-debug",
-    "dbsync": "npx ts-node src/dbsync/run-dbsync.ts",
     "serve-debug": "nodemon --inspect dist/bot.js",
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run serve-debug\"",
+    "dbsync": "npx ts-node src/dbsync/run-dbsync.ts",
     "db:sync": "node dist/dbsync/run-dbsync.js",
     "db:up": "db-migrate up",
     "db:down": "db-migrate down"
@@ -26,7 +25,6 @@
   "dependencies": {
     "@types/parsimmon": "^1.10.2",
     "anymatch": "^3.1.1",
-    "cross-env": "^7.0.2",
     "db-migrate": "^0.11.11",
     "db-migrate-pg": "^1.2.2",
     "dotenv": "^8.2.0",

@@ -21,3 +21,10 @@ Get URL connection for local:
 ```
 heroku pg:credentials:url DATABASE
 ```
+
+
+Unused scripts:
+```
+    "build-dev": "npm run build-ts && node dist/bot.js",
+    "watch-node": "nodemon dist/bot.js",
+```
