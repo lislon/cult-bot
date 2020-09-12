@@ -1,0 +1,7 @@
+{
+    "name": "Cult Hub Bot",
+    "description": "St. Petersburg culture evenets",
+    "repository": "https://github.com/lislon/cult-bot",
+    "logo": "https://node-js-sample.herokuapp.com/node.png",
+    "keywords": ["node", "express", "static"]
+}

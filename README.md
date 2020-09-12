@@ -36,3 +36,13 @@ heroku pg:backup -a <app name>
 ```
 heroku releases:rollback -a <app name> 
 ```
+
+### Deploy button
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/lislon/cult-bot/tree/master)
+
+https://github.com/app-json/app.json#validating-a-manifest
+
+```
+npm install app.json --global
+```

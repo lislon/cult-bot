@@ -86,8 +86,13 @@ bot.hears(/.+/, (ctx, next) => {
 
 process.env.NODE_ENV === 'production' ? startProdMode(bot) : startDevMode(bot);
 
+function printDiagnostic() {
+    logger.debug(undefined, `google docs db: https://docs.google.com/spreadsheets/d/${process.env.GOOGLE_DOCS_ID}` );
+}
+
 function startDevMode(bot: Telegraf<ContextMessageUpdate>) {
     logger.debug(undefined, 'Starting a bot in development mode');
+    printDiagnostic()
 
     rp(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook`).then(() =>
         bot.startPolling()
@@ -95,8 +100,9 @@ function startDevMode(bot: Telegraf<ContextMessageUpdate>) {
 }
 
 async function startProdMode(bot: Telegraf<ContextMessageUpdate>) {
-    // If webhook not working, check fucking motherfucking UFW that probably blocks a port...
     logger.debug(undefined, 'Starting a bot in production mode');
+    // If webhook not working, check fucking motherfucking UFW that probably blocks a port...
+    printDiagnostic()
     // const tlsOptions = {
     //     key: fs.readFileSync(process.env.PATH_TO_KEY),
     //     cert: fs.readFileSync(process.env.PATH_TO_CERT)
