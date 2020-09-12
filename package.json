@@ -4,23 +4,12 @@
   "private": true,
   "esm": true,
   "mode": "auto",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
     "start": "node dist/bot.js",
-    "build": "npm run build-ts && npm run tslint",
-    "build-dev": "npm run build-ts && node dist/bot.js",
-    "watch-node": "nodemon dist/bot.js",
-    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\"  \"npm run watch-ts\" \"npm run watch-node\"",
+    "build": "tsc && npm run lint",
+    "debug": "tsc && node dist/bot.js",
+    "lint": "tslint -c tslint.json -p tsconfig.json",
     "test": "jest",
-    "build-ts": "tsc",
-    "watch-ts": "tsc -w",
-    "tslint": "tslint -c tslint.json -p tsconfig.json",
-    "debug": "npm run build && npm run watch-debug",
-    "serve-debug": "nodemon --inspect dist/bot.js",
-    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run serve-debug\"",
-    "dbsync": "npx ts-node src/dbsync/run-dbsync.ts",
     "db:sync": "node dist/dbsync/run-dbsync.js",
     "db:up": "db-migrate up",
     "db:down": "db-migrate down"
