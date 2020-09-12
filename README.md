@@ -9,22 +9,30 @@ To load latest version from excel
 heroku run npm run db:sync
 ```
 
+\<app name\>:
+- cult-hub-bot-dev
+- cult-hub-bot-uat
+- cult-hub-bot-prod
+
 Show all env vars:
 ```
-heroku config -a cult-hub-bot-dev
+heroku config -a <app name>
 ```
 
-
-# Database
-
-Get URL connection for local:
+### Add new heroku env:
 ```
-heroku pg:credentials:url DATABASE
+heroku create <app name>
+heroku addons:create -a <app name> heroku-postgresql:hobby-dev
+heroku pg:credentials:url -a <app name> DATABASE
+heroku labs:enable runtime-dyno-metadata -a <app name>
 ```
 
-
-Unused scripts:
+### Backup
 ```
-    "build-dev": "npm run build-ts && node dist/bot.js",
-    "watch-node": "nodemon dist/bot.js",
+heroku pg:backup -a <app name>
+```
+
+### Rollback to previous release
+```
+heroku releases:rollback -a <app name> 
 ```
