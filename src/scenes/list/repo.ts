@@ -6,7 +6,7 @@ export async function loadTop5Events(cat: EventCategory): Promise<Event[]> {
         'select * ' +
         'from cb_events ce ' +
         'where category = $1 ' +
-        'order by rating  desc ' +
+        'order by rating  desc, random() ' +
         'limit 5', [cat.toString()]);
     return data;
 }

@@ -18,8 +18,6 @@ export function formatEvent(row: Event) {
     text += '\n'
     text += `<a href="${row.url}">${row.url}</a>\n`
     text += '\n'
-    text += `${escapeHTML(row.tag_level_1)}\n`
-    text += `${escapeHTML(row.tag_level_2)}\n`
     text += `${escapeHTML(row.tag_level_3)}\n`
     console.log(text)
     return text;
