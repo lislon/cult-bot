@@ -3,46 +3,51 @@ import session from 'telegraf/session';
 import logger from './util/logger';
 import asyncWrapper from './util/error-handler'
 import { getMainKeyboard } from './util/keyboards';
-import TelegrafI18n, { match } from 'telegraf-i18n';
+import { match } from 'telegraf-i18n';
 import rp from 'request-promise';
-import path from 'path'
-import listScenes from './controllers/list'
-import { RateLimitConfig } from 'telegraf-ratelimit';
-import updateLogger from 'telegraf-update-logger'
+import listScenes from './scenes/list/list-scene'
 import { allCategories, ContextMessageUpdate } from './interfaces/app-interfaces'
-import rateLimit from 'telegraf-ratelimit'
 import dbsync from './dbsync/dbsync'
-import { Markup, Extra } from 'telegraf';
 import { db } from './db';
-
+import middlewares from './bot-middleware-utils'
+import { customizeScene } from './scenes/customize/customize-scene'
+import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
+import { timetableScene } from './scenes/timetable/timetable-scene'
+import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
 
 console.log(`starting bot...`);
 db.any('select 1 + 1')
 
 const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
+const stage = new Stage([])
 
-const i18n = new TelegrafI18n({
-    defaultLanguage: 'ru',
-    directory: path.resolve(__dirname, 'locales'),
-    useSession: false,
-    allowMissing: false,
-    sessionName: 'session'
-});
-
-// Set limit to 9 messages per 3 seconds
-const limitConfig: RateLimitConfig = {
-    window: 3000,
-    limit: 9,
-    onLimitExceeded: (ctx: ContextMessageUpdate) => ctx.reply('Rate limit exceeded')
+function registerListStage() {
+    stage.register(...listScenes)
+    for (const cat of allCategories) {
+        bot.action(cat, asyncWrapper(async (ctx: ContextMessageUpdate) => await ctx.scene.enter(cat)));
+    }
 }
 
-const stage = new Stage(listScenes);
+function registerSimpleScene<TContext extends SceneContextMessageUpdate>(...scenes: Scene<TContext>[]) {
+    stage.register(customizeScene, timetableScene, timeIntervalScene)
+    bot.action('customize', async (ctx: ContextMessageUpdate) => await ctx.scene.enter('customize'))
+}
 
+
+bot.use(middlewares.rateLimit)
+bot.use(middlewares.logger)
 bot.use(session());
-bot.use(i18n.middleware());
+bot.use(middlewares.i18n);
 bot.use(stage.middleware());
-bot.use(rateLimit(limitConfig))
-bot.use(updateLogger({colors: true}))
+
+
+registerListStage()
+registerSimpleScene()
+
+bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
+    console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
+    await ctx.reply(ctx.i18n.t('shared.something_went_wrong_dev', { error: error.toString().substr(0, 300) }))
+})
 
 bot.start(asyncWrapper(async (ctx: ContextMessageUpdate) => {
     const {mainKeyboard} = getMainKeyboard(ctx);
@@ -57,9 +62,6 @@ bot.command('/saveme', async (ctx: ContextMessageUpdate) => {
     await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
 });
 
-for (const cat of allCategories) {
-    bot.action( cat, asyncWrapper(async (ctx: ContextMessageUpdate) => await ctx.scene.enter(cat)));
-}
 
 bot.start((ctx) => ctx.reply('Welcome!'))
 bot.help((ctx) => ctx.reply('Send me a sticker'))
@@ -69,19 +71,33 @@ bot.hears(match('keyboards.back_keyboard.back'), async (ctx) => {
     const {mainKeyboard} = getMainKeyboard(ctx);
     await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
 });
+bot.command('back', async (ctx) => {
+    const {mainKeyboard} = getMainKeyboard(ctx);
+    await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
+});
+
 bot.command('sync', async (ctx) => {
     await ctx.reply('Пошла скачивать эксельчик...')
     try {
-        const count = await dbsync()
-        await ctx.reply(`✅ База обновлена. Всего у нас ${count} событий...`)
+        const { updated, errors }  = await dbsync()
+        await ctx.reply(`✅ База обновлена. Всего загужено ${updated} событий. У ${errors} событий ошибки.`)
     } catch (e) {
         await ctx.reply(`❌ Эх, что-то не удалось :(...` + e.toString().substr(0, 100))
     }
 })
 
+bot.action('back', async (ctx) => {
+    const {mainKeyboard} = getMainKeyboard(ctx);
+    await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
+})
+
 bot.hears(/.+/, (ctx, next) => {
-    // console.debug(ctx)
-    console.debug(`@${ctx.from.username}: ${ctx.message.text}`)
+    console.debug(`@${ctx.from.username}: [type=${ctx.updateType}], [text=${ctx.message.text}]`)
+})
+bot.action(/.+[.]back$/, async (ctx, next) => {
+    console.log('Аварийный выход');
+    const {mainKeyboard} = getMainKeyboard(ctx);
+    await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
 })
 
 process.env.NODE_ENV === 'production' ? startProdMode(bot) : startDevMode(bot);
@@ -94,9 +110,10 @@ function startDevMode(bot: Telegraf<ContextMessageUpdate>) {
     logger.debug(undefined, 'Starting a bot in development mode');
     printDiagnostic()
 
-    rp(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook`).then(() =>
+    rp(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook`).then(() => {
+        console.log(`Bot started`)
         bot.startPolling()
-    );
+    });
 }
 
 async function startProdMode(bot: Telegraf<ContextMessageUpdate>) {

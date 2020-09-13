@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node dist/bot.js",
     "build": "tsc && npm run lint",
-    "debug": "tsc && node dist/bot.js",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"tsc -w\" \"nodemon --inspect\"",
+    "dev-no-restart": "tsc && nodemon --inspect",
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "test": "jest",
     "db:sync": "node dist/dbsync/run-dbsync.js",

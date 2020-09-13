@@ -111,7 +111,11 @@ function debugTimetable(mapped: any, excelUpdater: ExcelUpdater, sheetId: number
     excelUpdater.annotateCell(sheetId, 'timetable', rowNo, text.join('\n'))
 }
 
-export default async function run(): Promise<number> {
+export default async function run(): Promise<{ updated: number, errors: number }> {
+    const result = {
+        updated: 0,
+        errors: 0
+    }
     try {
         console.log('Connection from excel...')
         const excel = await loadExcel()
@@ -156,8 +160,9 @@ export default async function run(): Promise<number> {
                         excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
 
                         debugTimetable(mapped, excelUpdater, sheetId, rowNo)
-
+                        result.updated++;
                     } else {
+                        result.errors++;
                         // rows.push(mapped.data);
                         if (mapped.errors.timetable) {
                             excelUpdater.annotateCell(sheetId, 'timetable', rowNo, mapped.errors.timetable.join('\n'))
@@ -171,10 +176,10 @@ export default async function run(): Promise<number> {
 
         await updateDatabase(rows)
 
-        console.log(`Insertion done. Rows inserted: ${rows.length}`);
+        console.log(`Insertion done. Rows inserted: ${result.updated}, Errors: ${result.errors}`);
         await excelUpdater.update();
         console.log(`Excel updated`);
-        return rows.length;
+        return result;
 
     } catch (e) {
         console.log(e);
