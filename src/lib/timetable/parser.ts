@@ -3,13 +3,14 @@ import { Result } from 'parsimmon'
 import { EventDate } from './intervals';
 import { cleanText } from './timetable-utils'
 import moment = require('moment')
+import { mskMoment } from '../../util/moment-msk'
 
 
 type FromToPair = { from: string, to: string }
 const Lang = P.createLanguage({
     DayOfMonth: () => P.regexp(/[0-9]{1,2}/).map(s => s.padStart(2, '0')).desc('День месяца'),
     Year: () => P.regexp(/20[0-9]{2}/)
-        .fallback(moment().year())
+        .fallback(mskMoment().year())
         .desc('Год')
     ,
     Month: () => P.regexp(/[а-я]+/)
@@ -91,9 +92,9 @@ const Lang = P.createLanguage({
     WeekDayEveryDay: () => P.string('ежедневно').map(() => [1, 2, 3, 4, 5, 6, 7]),
     WeekDay: (r) => r.WeekDayRange.or(r.WeekDaySingle.map(r => [r])),
     WeekDays: (r) => P.alt(
-            P.sepBy1(r.WeekDay, P.seq(r._, r[','], r._))
+        P.sepBy1(r.WeekDay, P.seq(r._, r[','], r._))
             .map(results => results.flatMap(z => z)),
-            r.WeekDayEveryDay
+        r.WeekDayEveryDay
     ),
     ExactDateTimes: (r) => P.seq(r.DateOrDateRange, r[':'], r._, r.TimesOrTimeRanges)
         .map(([dateRange, , , times]) => {
@@ -119,7 +120,7 @@ const Lang = P.createLanguage({
         .map(([dateRange, , , times]) => {
             return {dateRange, times}
         }),
-    DateRangeTimetables: (r) => P.sepBy1(r.DateRangeTimetable, P.seq(r._, r[';'], r._))
+    DateRangeTimetables: (r) => P.sepBy1(r.DateRangeTimetable, P.seq(r._, r.Divider, r._))
         .map(([dateRangesTimetable]) => {
             return {dateRangesTimetable}
         }),
@@ -130,8 +131,8 @@ const Lang = P.createLanguage({
             .or(r.WeekDatesTimetable),
     Everything: (r) => P.alt(
         r.AnyTime.result([{anytime: true}]),
-        P.sepBy1(r.DateRangeTimetablesOrExactDatesOrWeekDateTimetable, P.seq(r._, r[';'], r._))),
-    // .map(([])),
+        P.sepBy1(r.DateRangeTimetablesOrExactDatesOrWeekDateTimetable, P.seq(r._, r.Divider, r._))),
+    Divider: (r) => P.alt(r[';'], P.newline),
     [';']: () => P.string(';').desc('точка с запятой'),
     [',']: () => P.string(',').desc('запятая'),
     ['-']: () => P.string('-').desc('диапазон через дефис'),

@@ -1,4 +1,5 @@
 import moment, { duration, Moment } from 'moment'
+import { mskMoment } from '../../util/moment-msk'
 
 const DAYS_AHEAD = 7;
 
@@ -35,7 +36,7 @@ export type MomentIntervals = MomentOrInterval[]
 
 function toMoment(date: string) {
     if (date === undefined) return undefined
-    return moment(date, 'YYYY-MM-DD')
+    return mskMoment(date, 'YYYY-MM-DD')
 }
 
 function subDateRange([fromIncl, toIncl]: DateOrDateRange, dateFrom: string) {
@@ -66,7 +67,7 @@ function timeToStruct(t: string) {
 
 function findTimesToday(weekTimes: WeekTime[], d: moment.Moment): DayTime[] {
     return weekTimes
-        .filter(wt => wt.weekdays.includes(d.weekday()))
+        .filter(wt => wt.weekdays.includes(d.isoWeekday()))
         .flatMap(wt => wt.times);
 }
 
@@ -149,7 +150,7 @@ export function filterByByRange(a: MomentIntervals, [restrictStart, restrictEnd]
 function intervalsFromTime(d: Moment, endExcl: Moment, times: DayTime[]) {
     const timeIntervals: MomentIntervals = []
     for (let i = 0; i < DAYS_AHEAD && d.isBefore(endExcl); i++, d.add(1, 'd')) {
-        timeIntervals.push.apply(timeIntervals, (times || []).flatMap(t => {
+        timeIntervals.push.apply(timeIntervals, (times || []).map(t => {
             return mapInterval(t, st => d.clone().add(timeToStruct(st)))
         }));
     }
@@ -201,6 +202,7 @@ export function mapInterval<T, U>(m: T|T[], mapper: (v: T) => U): U|U[] {
 
 export function predictIntervals(time: Moment, timetable: Partial<EventDate>) {
     let intervals: MomentIntervals = []
+    if (timetable === undefined) return undefined
     // console.log(JSON.stringify(timetable, undefined, 2))
 
     const regularWeekTimes = flatIntervalsWeekdays(time, timetable.weekTimes)

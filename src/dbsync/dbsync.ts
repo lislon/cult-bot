@@ -15,6 +15,7 @@ import moment = require('moment')
 import { Moment } from 'moment'
 import { parseTimetable } from '../lib/timetable/parser'
 import { predictIntervals } from '../lib/timetable/intervals'
+import { mskMoment } from '../util/moment-msk'
 
 // our set of columns, to be created only once (statically), and then reused,
 // to let it cache up its formatting templates for high performance:
@@ -83,7 +84,7 @@ async function updateDatabase(rows: object[]) {
 }
 
 function debugTimetable(mapped: any, excelUpdater: ExcelUpdater, sheetId: number, rowNo: number) {
-    const fromTime = moment().locale('ru')
+    const fromTime = mskMoment().locale('ru')
     const timetable = parseTimetable(getOnlyBotTimetable(mapped.data.timetable)).value
     const intervals = predictIntervals(fromTime, timetable)
 

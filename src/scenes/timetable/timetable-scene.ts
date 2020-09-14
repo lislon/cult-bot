@@ -52,14 +52,13 @@ const content = (ctx: ContextMessageUpdate) => {
     const rows: CallbackButton[][] = [
         [
             Markup.callbackButton(i18Btn( 'week6'), actionName('interval_0')),
-            Markup.callbackButton(formatInterval(week6), actionName('interval_0')),
         ],
         [
             Markup.callbackButton(i18Btn('week7'), actionName('interval_1')),
-            Markup.callbackButton(formatInterval(week7), actionName('interval_1')),
         ],
         [
-            backButton(ctx)
+            Markup.callbackButton('◀ Продолжить настройки', actionName('back')),
+            Markup.callbackButton('Выдать события', actionName('ok')),
         ]
     ]
 
