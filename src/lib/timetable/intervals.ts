@@ -5,7 +5,7 @@ const DAYS_AHEAD = 7;
 
 type DayTime = string | [string, string]
 type DateRange = [string, string]
-type DateOrDateRange = [string] | [string, string]
+export type DateOrDateRange = [string] | [string, string]
 
 
 export interface DateExact {
@@ -39,7 +39,8 @@ function toMoment(date: string) {
     return mskMoment(date, 'YYYY-MM-DD')
 }
 
-function subDateRange([fromIncl, toIncl]: DateOrDateRange, dateFrom: string) {
+
+export function subDateRange([fromIncl, toIncl]: DateOrDateRange, dateFrom: string) {
     if (toIncl === undefined) {
         toIncl = fromIncl
     }
@@ -48,8 +49,13 @@ function subDateRange([fromIncl, toIncl]: DateOrDateRange, dateFrom: string) {
     // TODO +7 day
 
     const momentFrom = toMoment(fromIncl)
+    if (!momentFrom.isValid()) {
+        throw new Error(`Дата "${fromIncl}" не может существовать`)
+    }
     const momentTo = toMoment(toIncl).add(1, 'd')
-
+    if (!momentTo.isValid()) {
+        throw new Error(`Дата "${toIncl}" не может существовать`)
+    }
 
     const intervalLen = duration(momentTo.diff(momentFrom)).asDays();
 
