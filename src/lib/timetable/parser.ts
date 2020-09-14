@@ -1,8 +1,8 @@
 import * as P from 'parsimmon'
 import { Result } from 'parsimmon'
-import { EventDate } from './intervals';
+import { Success } from 'parsimmon'
+import { DateExact, EventDate } from './intervals';
 import { cleanText } from './timetable-utils'
-import moment = require('moment')
 import { mskMoment } from '../../util/moment-msk'
 
 
@@ -148,10 +148,45 @@ function arrayfie(): (result: any[]) => any[] {
     return (d) => Array.isArray(d) ? d : [d];
 }
 
+
+function validaDate(p: string, errors: string[]) {
+    if (!mskMoment(p).isValid()) {
+        errors.push(`Дата "${p}" не может существовать`)
+    }
+}
+
+function validateDates(parse: Success<any>, dateValidation: string[]) {
+    for (const p of parse.value) {
+        if (p.dateRange !== undefined) {
+            p.dateRange.forEach((d: string) => {
+                validaDate(d, dateValidation)
+            })
+        } else if (p.dateRangesTimetable !== undefined) {
+            p.dateRangesTimetable.dateRange.forEach((d: string) => {
+                validaDate(d, dateValidation)
+            })
+        } else if (p.exactDates) {
+            p.exactDates.forEach((d: DateExact) => {
+                d.dateRange.forEach(dd => {
+                    validaDate(dd, dateValidation)
+                })
+            })
+        }
+    }
+}
+
 export function parseTimetable(text: string) {
     const input = cleanText(text)
     const parse: Result<any> = Lang.Everything.parse(input);
+
+
     if (parse.status === true) {
+
+        const dateValidation: string[] = []
+        validateDates(parse, dateValidation)
+        if (dateValidation.length > 0) {
+            return {status: false, errors: dateValidation}
+        }
 
         const result: EventDate = {
             dateRangesTimetable: [],
@@ -177,21 +212,21 @@ export function parseTimetable(text: string) {
         }
         return {status: parse.status, value: result}
     } else {
-        const text = []
+        const errors: string[] = []
         if (input.length === 0) {
-            text.push(`Пустая строка`)
+            errors.push(`Пустая строка`)
         } else if (parse.index.offset === input.length) {
-            text.push(`После строки "${input}" я ожидала получить, например, следующее:`)
-            parse.expected.forEach(e => text.push(` - ${e}`))
-            text.push(`Но в строке больше ничего нет`)
+            errors.push(`После строки "${input}" я ожидала получить, например, следующее:`)
+            parse.expected.forEach(e => errors.push(` - ${e}`))
+            errors.push(`Но в строке больше ничего нет`)
         } else if (parse.index.offset === 0) {
-            text.push(`Не смогла понять что это: "${input}". Я ожидала одно из:`)
-            parse.expected.forEach(e => text.push(` - ${e}`))
+            errors.push(`Не смогла понять что это: "${input}". Я ожидала одно из:`)
+            parse.expected.forEach(e => errors.push(` - ${e}`))
         } else {
-            text.push(`После строки "${input.substr(0, parse.index.offset)}" я ожидала:`)
-            parse.expected.forEach(e => text.push(` - ${e}`))
-            text.push(`И текст "${input.substr(parse.index.offset)}" не подходит к вышеперечисленному`)
+            errors.push(`После строки "${input.substr(0, parse.index.offset)}" я ожидала:`)
+            parse.expected.forEach(e => errors.push(` - ${e}`))
+            errors.push(`И текст "${input.substr(parse.index.offset)}" не подходит к вышеперечисленному`)
         }
-        return {status: parse.status, error: text}
+        return {status: parse.status, errors: errors}
     }
 }

@@ -1,4 +1,10 @@
-import { filterByByRange, predictIntervals, MomentIntervals, mapInterval } from '../../../src/lib/timetable/intervals'
+import {
+    filterByByRange,
+    predictIntervals,
+    MomentIntervals,
+    mapInterval,
+    subDateRange, DateOrDateRange
+} from '../../../src/lib/timetable/intervals'
 import { parseTimetable } from '../../../src/lib/timetable/parser'
 import 'moment-timezone/index'
 import { mskMoment } from '../../../src/util/moment-msk'
@@ -108,10 +114,10 @@ describe('integration', () => {
         [
             'с 4 января 2020 до 24 декабря 2020: 11:00-22:00',
             [
-                [ '2020-Jan-04 11:00', '2020-Jan-04 22:00' ],
-                [ '2020-Jan-05 11:00', '2020-Jan-05 22:00' ],
-                [ '2020-Jan-06 11:00', '2020-Jan-06 22:00' ],
-                [ '2020-Jan-07 11:00', '2020-Jan-07 22:00' ]
+                ['2020-Jan-04 11:00', '2020-Jan-04 22:00'],
+                ['2020-Jan-05 11:00', '2020-Jan-05 22:00'],
+                ['2020-Jan-06 11:00', '2020-Jan-06 22:00'],
+                ['2020-Jan-07 11:00', '2020-Jan-07 22:00']
             ]
         ],
         [

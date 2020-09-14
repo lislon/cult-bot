@@ -18,7 +18,7 @@ async function validateDb() {
         const timetable = parseTimetable(row.timetable)
         if (timetable.status === false) {
             console.log('>>>> ' + row.timetable)
-            console.log(timetable.error)
+            console.log(timetable.errors)
         }
     }
 

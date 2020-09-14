@@ -85,7 +85,7 @@ function prepareTimetable(data: Event, result: ExcelRowResult) {
         console.log(' > parse: ' + data.timetable)
 
         result.valid = false
-        result.errors.timetable = timetableResult.error
+        result.errors.timetable = timetableResult.errors
     }
 }
 
