@@ -3,7 +3,7 @@ export function cleanText(text: string) {
     const russianC = 'с'
     return text.toLowerCase()
         .replace(englishC, russianC)
-        .replace('—', '-')
+        .replace('[—‑]', '-')
         .replace(/\s+/, ' ')
         .trim()
         ;
