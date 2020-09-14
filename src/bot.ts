@@ -137,22 +137,19 @@ async function startProdMode(bot: Telegraf<ContextMessageUpdate>) {
         `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:${process.env.WEBHOOK_PORT}/${process.env.TELEGRAM_TOKEN}`
     )
     if (success) {
-        console.log(`hook is set. To delete: https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook`)
+        console.log(`hook is set. (To delete: https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook ) Starting app at ${process.env.PORT}`)
     } else {
         console.error(`hook was not set!`)
+        const webhookStatus = await bot.telegram.getWebhookInfo();
+        console.log('Webhook status', webhookStatus);
+        process.exit(2)
     }
 
     await bot.startWebhook(`/${process.env.TELEGRAM_TOKEN}`, undefined, +process.env.PORT);
 
     const webhookStatus = await bot.telegram.getWebhookInfo();
 
-    if (success) {
-        console.log('Webhook status', webhookStatus);
-    } else {
-        console.error('Webhook status', webhookStatus);
-        process.exit(2)
-    }
 
-
+    console.log('Webhook status', webhookStatus);
     // checkUnreleasedMovies();
 }
