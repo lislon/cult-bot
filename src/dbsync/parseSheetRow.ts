@@ -8,6 +8,7 @@ export const EXCEL_COLUMN_NAMES = [
     'title',
     'place',
     'address',
+    'geotag',
     'timetable',
     'duration',
     'price',
