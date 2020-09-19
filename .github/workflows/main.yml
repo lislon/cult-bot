@@ -10,7 +10,6 @@ jobs:
     services:
       postgres:
         image: postgres:12
-        command: -c fsync=off
         env:
           POSTGRES_ROOT_PASSWORD: root
           POSTGRES_DATABASE: cult-test
