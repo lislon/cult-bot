@@ -38,7 +38,8 @@ export function getMockEvent(timeIntervals: MomentIntervals, category: EventCate
             tag_level_2: '',
             tag_level_3: '',
             rating: 5,
-            reviewer: ''
+            reviewer: '',
+            geotag: ''
         },
         timetable: {
         },
