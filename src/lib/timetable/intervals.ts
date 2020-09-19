@@ -40,7 +40,7 @@ function toMoment(date: string) {
 }
 
 
-export function subDateRange([fromIncl, toIncl]: DateOrDateRange, dateFrom: string) {
+export function subDateRange([fromIncl, toIncl]: DateOrDateRange, dateFrom: string, daysahead = DAYS_AHEAD) {
     if (toIncl === undefined) {
         toIncl = fromIncl
     }
@@ -59,8 +59,8 @@ export function subDateRange([fromIncl, toIncl]: DateOrDateRange, dateFrom: stri
 
     const intervalLen = duration(momentTo.diff(momentFrom)).asDays();
 
-    if (intervalLen > DAYS_AHEAD) {
-        momentTo.subtract(intervalLen - DAYS_AHEAD, 'd')
+    if (intervalLen > daysahead) {
+        momentTo.subtract(intervalLen - daysahead, 'd')
     }
 
     return [momentFrom, momentTo]
@@ -78,28 +78,6 @@ function findTimesToday(weekTimes: WeekTime[], d: moment.Moment): DayTime[] {
 }
 
 
-
-function flatIntervalsDatesExact(intervals: MomentIntervals, time: Moment, datesExact: DateExact[]): MomentIntervals {
-
-    const dateStr = time.format('YYYY-MM-DD')
-
-    for (const {dateRange, times} of (datesExact || [])) {
-        const from = toMoment(dateRange[0])
-        const to = toMoment(dateRange[1]) || from.clone().add(1, 'd')
-
-        intervals = filterByByRange(intervals, [from, to], 'out')
-
-        const [fromIncl, toExcl] = subDateRange(dateRange, dateStr)
-        if (!fromIncl) continue
-
-        for (const d: Moment = fromIncl; d.isBefore(toExcl); d.add(1, 'd')) {
-            for (const t of times) {
-                intervals.push(mapInterval(t, st => d.clone().add(timeToStruct(st))))
-            }
-        }
-    }
-    return intervals
-}
 
 function filterOneMoment(i: MomentOrInterval, restrictStart: Moment, restrictEnd: Moment, inRange: 'in' | 'out'): (MomentOrInterval)[] {
     if (Array.isArray(i)) {
@@ -153,47 +131,6 @@ export function filterByByRange(a: MomentIntervals, [restrictStart, restrictEnd]
         .filter(s => s !== undefined)
 }
 
-function intervalsFromTime(d: Moment, endExcl: Moment, times: DayTime[]) {
-    const timeIntervals: MomentIntervals = []
-    for (let i = 0; i < DAYS_AHEAD && d.isBefore(endExcl); i++, d.add(1, 'd')) {
-        timeIntervals.push.apply(timeIntervals, (times || []).map(t => {
-            return mapInterval(t, st => d.clone().add(timeToStruct(st)))
-        }));
-    }
-    return timeIntervals
-}
-
-function flatIntervalsDateRangeTimetable(time: Moment, rangeTimetables: DateRangeTimetable[]): MomentIntervals {
-    const intervals: MomentIntervals = []
-
-    const dateStr = time.format('YYYY-MM-DD')
-
-    for (const {dateRange, times, weekTimes} of (rangeTimetables || [])) {
-        const [startIncl, endExcl] = subDateRange(dateRange, dateStr)
-
-        const weekIntervals = flatIntervalsWeekdays(startIncl, weekTimes)
-        intervals.push.apply(intervals, filterByByRange(weekIntervals, [startIncl, endExcl], 'in'));
-
-        const d = startIncl.clone()
-
-        intervals.push.apply(intervals, intervalsFromTime(d, endExcl, times));
-
-    }
-    return intervals
-}
-
-function flatIntervalsWeekdays(time: Moment, weekTimes: WeekTime[]): MomentIntervals {
-    const d = time.clone().startOf('day')
-    const intervals: MomentIntervals = []
-
-    for (let i = 0; i < DAYS_AHEAD; i++, d.add(1, 'd')) {
-        const times = findTimesToday(weekTimes || [], d)
-        intervals.push.apply(intervals, times.map(t => mapInterval(t, (st) => {
-            return  d.clone().add(timeToStruct(st))
-        })));
-    }
-    return intervals;
-}
 
 function intervalToToMoment(dr: DateRange): [Moment, Moment] {
     return [toMoment(dr[0]), toMoment(dr[1])]
@@ -206,33 +143,115 @@ export function mapInterval<T, U>(m: T|T[], mapper: (v: T) => U): U|U[] {
     return mapper(m)
 }
 
-export function predictIntervals(time: Moment, timetable: Partial<EventDate>) {
-    let intervals: MomentIntervals = []
-    if (timetable === undefined) return undefined
-    // console.log(JSON.stringify(timetable, undefined, 2))
+export function predictIntervals(time: Moment, timetable: Partial<EventDate>, daysAhead = DAYS_AHEAD) {
+    return new IntervalGenerator(time, daysAhead).generate(timetable)
+}
 
-    const regularWeekTimes = flatIntervalsWeekdays(time, timetable.weekTimes)
+export class IntervalGenerator {
+    private readonly fromTime: Moment
+    private readonly daysAhead: number
 
-    const filteredRegularWeekTimes = (timetable.dateRangesTimetable || [])
-        .reduce((ints, dr) => filterByByRange(ints, intervalToToMoment(dr.dateRange), 'out'), regularWeekTimes)
-
-
-    intervals.push.apply(intervals, filteredRegularWeekTimes);
-    intervals.push.apply(intervals, flatIntervalsDateRangeTimetable(time, timetable.dateRangesTimetable));
-
-    intervals = flatIntervalsDatesExact(intervals, time, timetable.datesExact);
-
-    if (timetable.anytime) {
-        intervals = [[time, time.clone().startOf('day').add(DAYS_AHEAD, 'd')]]
+    constructor(time: Moment, daysAhead: number = 7) {
+        this.daysAhead = daysAhead
+        this.fromTime = time.clone()
     }
 
-    intervals.sort((a: MomentOrInterval, b: MomentOrInterval) => {
-        const am: Moment = Array.isArray(a) ? a[0] : a
-        const bm: Moment = Array.isArray(b) ? b[0] : b
-        return am.diff(bm)
-    })
+    generate(timetable: Partial<EventDate>) {
+        let intervals: MomentIntervals = []
+        if (timetable === undefined) return undefined
+        // console.log(JSON.stringify(timetable, undefined, 2))
 
-    const final = filterByByRange(intervals, [time, time.clone().startOf('day').add(DAYS_AHEAD, 'd')], 'in')
+        const regularWeekTimes = this.flatIntervalsWeekdays(this.fromTime, timetable.weekTimes)
 
-    return final
+        const filteredRegularWeekTimes = (timetable.dateRangesTimetable || [])
+            .reduce((ints, dr) => filterByByRange(ints, intervalToToMoment(dr.dateRange), 'out'), regularWeekTimes)
+
+
+        intervals.push.apply(intervals, filteredRegularWeekTimes);
+        intervals.push.apply(intervals, this.flatIntervalsDateRangeTimetable(timetable.dateRangesTimetable));
+
+        intervals = this.flatIntervalsDatesExact(intervals, timetable.datesExact);
+
+        const restrictedRange: [moment.Moment, moment.Moment] = [
+            this.fromTime,
+            this.fromTime.clone().startOf('day').add(this.daysAhead, 'd')
+        ]
+        if (timetable.anytime) {
+            return [restrictedRange]
+        } else {
+
+            intervals.sort((a: MomentOrInterval, b: MomentOrInterval) => {
+                const am: Moment = Array.isArray(a) ? a[0] : a
+                const bm: Moment = Array.isArray(b) ? b[0] : b
+                return am.diff(bm)
+            })
+
+            return filterByByRange(intervals, restrictedRange, 'in')
+        }
+    }
+
+    private flatIntervalsWeekdays(time: Moment, weekTimes: WeekTime[]): MomentIntervals {
+        const d = time.clone().startOf('day')
+        const intervals: MomentIntervals = []
+
+        for (let i = 0; i < DAYS_AHEAD; i++, d.add(1, 'd')) {
+            const times = findTimesToday(weekTimes || [], d)
+            intervals.push.apply(intervals, times.map(t => mapInterval(t, (st) => {
+                return  d.clone().add(timeToStruct(st))
+            })));
+        }
+        return intervals;
+    }
+
+    private flatIntervalsDatesExact(intervals: MomentIntervals, datesExact: DateExact[]): MomentIntervals {
+
+        const dateStr = this.fromTime.format('YYYY-MM-DD')
+
+        for (const {dateRange, times} of (datesExact || [])) {
+            const from = toMoment(dateRange[0])
+            const to = toMoment(dateRange[1]) || from.clone().add(1, 'd')
+
+            intervals = filterByByRange(intervals, [from, to], 'out')
+
+            const [fromIncl, toExcl] = subDateRange(dateRange, dateStr, this.daysAhead)
+            if (!fromIncl) continue
+
+            for (const d: Moment = fromIncl; d.isBefore(toExcl); d.add(1, 'd')) {
+                for (const t of times) {
+                    intervals.push(mapInterval(t, st => d.clone().add(timeToStruct(st))))
+                }
+            }
+        }
+        return intervals
+    }
+
+    private flatIntervalsDateRangeTimetable(rangeTimetables: DateRangeTimetable[]): MomentIntervals {
+        const intervals: MomentIntervals = []
+
+        const dateStr = this.fromTime.format('YYYY-MM-DD')
+
+        for (const {dateRange, times, weekTimes} of (rangeTimetables || [])) {
+            const [startIncl, endExcl] = subDateRange(dateRange, dateStr)
+
+            const weekIntervals = this.flatIntervalsWeekdays(startIncl, weekTimes)
+            intervals.push.apply(intervals, filterByByRange(weekIntervals, [startIncl, endExcl], 'in'));
+
+            const d = startIncl.clone()
+
+            intervals.push.apply(intervals, this.intervalsFromTime(d, endExcl, times));
+
+        }
+        return intervals
+    }
+
+    private intervalsFromTime(d: Moment, endExcl: Moment, times: DayTime[]) {
+        const timeIntervals: MomentIntervals = []
+        for (let i = 0; i < DAYS_AHEAD && d.isBefore(endExcl); i++, d.add(1, 'd')) {
+            timeIntervals.push.apply(timeIntervals, (times || []).map(t => {
+                return mapInterval(t, st => d.clone().add(timeToStruct(st)))
+            }));
+        }
+        return timeIntervals
+    }
+
 }
