@@ -4,5 +4,5 @@ module.exports = {
   "roots": [
     "<rootDir>/test"
   ],
-  setupFiles: ["<rootDir>/.jest/set-env.js"]
+  setupFiles: ["dotenv/config", "<rootDir>/.jest/set-env.js"]
 };

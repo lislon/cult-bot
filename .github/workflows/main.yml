@@ -43,3 +43,5 @@ jobs:
       env:
         CI: true
     - run: npm run test
+      env:
+        DATABASE_URL: postgres://cult-test:cult-test@localhost:5434/cult-test

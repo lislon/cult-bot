@@ -202,7 +202,7 @@ describe('integration', () => {
             const intervals = predictIntervals(mskMoment('2020-01-01 01:00:00'), timetable.value)
 
             const formatIntervals = intervals.map(i =>
-                mapInterval(i, (ms) => format(ms))
+                mapInterval(i, (ms) => ms.tz('Europe/Moscow').format('YYYY-MMM-DD HH:mm'))
             )
 
             expect(formatIntervals).toStrictEqual(expected)
