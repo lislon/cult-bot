@@ -27,6 +27,7 @@ export interface Event {
     title: string
     place: string
     address: string
+    geotag: string
     timetable: string
     duration: string
     price: string

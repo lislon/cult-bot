@@ -103,6 +103,7 @@ export function processRow(row: Partial<ExcelRow>, category: EventCategory): Exc
         'title': row.title,
         'place': notNull(row.place),
         'address': notNull(row.address),
+        'geotag': notNull(row.geotag),
         'timetable': notNull(row.timetable),
         'duration': notNull(row.duration),
         'price': notNull(row.price),

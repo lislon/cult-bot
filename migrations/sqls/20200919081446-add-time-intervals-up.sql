@@ -16,3 +16,4 @@ COMMENT ON COLUMN cb_time_intervals.time_from IS 'including interval';
 COMMENT ON COLUMN cb_time_intervals.time_to IS 'excluding interval';
 
 ALTER TABLE cb_events ADD is_anytime bool NOT NULL DEFAULT false;
+ALTER TABLE cb_events ADD geotag varchar NOT NULL DEFAULT '';

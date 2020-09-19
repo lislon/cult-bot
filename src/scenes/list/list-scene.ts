@@ -22,8 +22,8 @@ const scenes: MyScene[] = [
 
 function getWeekdaysRange() {
     const now = moment().tz('Europe/Moscow')
-    const weekendEnds = moment().tz('Europe/Moscow').endOf('week')
-    const weekendStarts = weekendEnds.clone().subtract(2, 'day')
+    const weekendStarts = moment().tz('Europe/Moscow').startOf('week').add(6, 'd')
+    const weekendEnds = moment().tz('Europe/Moscow').startOf('week').add(8, 'd')
 
     const range = [moment.max(now, weekendStarts), weekendEnds]
     return range
@@ -35,7 +35,7 @@ scenes.forEach((scene: MyScene)  => {
         logger.debug(ctx, 'Enter list ' + scene.id);
         const {backKeyboard} = getBackKeyboard(ctx);
 
-        const range = getWeekdaysRange()
+        const range =   getWeekdaysRange()
         const events = await findTopEventsInRange(scene.id as EventCategory, range);
 
         for (const event of events) {
@@ -43,7 +43,10 @@ scenes.forEach((scene: MyScene)  => {
         }
 
         if (events.length == 0) {
-            await ctx.reply(ctx.i18n.t('scenes.list.nothing_found'), backKeyboard);
+            await ctx.reply(ctx.i18n.t('scenes.list.nothing_found_in_interval', {
+                from: range[0].locale('ru').format('DD.MM HH:mm'),
+                to: range[1].locale('ru').subtract('1', 'second').format('DD.MM HH:mm')
+            }), backKeyboard);
         } else {
             await ctx.reply(ctx.i18n.t('scenes.list.welcome_to_list'), backKeyboard);
         }

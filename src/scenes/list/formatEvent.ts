@@ -10,7 +10,8 @@ export function formatEvent(row: Event) {
     text += `${row.description} \n`
     text += '\n'
     text += `<b>Где:</b> ${row.place}\n`
-    text += `<b>Адрес:</b> ${row.address}\n`
+    const map = row.geotag != '' ? ` <a href="${row.geotag}">(Я.Карта)</a>` : ``
+    text += `<b>Адрес:</b> ${row.address}${map}\n`
     text += `<b>Время:</b> ${getOnlyHumanTimetable(row.timetable)}\n`
     text += `<b>Длительность:</b> ${row.duration}\n`
     text += `<b>Стоимость:</b> ${row.price}\n`

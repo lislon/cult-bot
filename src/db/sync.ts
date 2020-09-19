@@ -1,6 +1,5 @@
 import { DbEvent, EventToSave } from '../interfaces/db-interfaces'
 import { db, pgp } from '../db'
-import { Event } from '../interfaces/app-interfaces'
 
 function mapToDb(event: EventToSave): DbEvent {
     delete event.primaryData.publish
