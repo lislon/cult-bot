@@ -1,22 +1,23 @@
 import { annotateCell, CellColor, clearFormat, colorCell, loadExcel } from './googlesheets'
 import { EventCategory } from '../interfaces/app-interfaces'
-import { db, pgp } from '../db'
 import {
     CAT_TO_SHEET_NAME,
     EXCEL_COLUMN_NAMES,
-    EXCEL_HEADER_RESERVED_ROWS,
+    EXCEL_HEADER_SKIP_ROWS,
     ExcelColumnName,
-    ExcelRow, getOnlyBotTimetable,
+    ExcelRow,
+    getOnlyBotTimetable,
     processRow
 } from './parseSheetRow'
 import { sheets_v4 } from 'googleapis'
-import Schema$Request = sheets_v4.Schema$Request
-import moment = require('moment')
 import { Moment } from 'moment'
 import { parseTimetable } from '../lib/timetable/parser'
 import { predictIntervals } from '../lib/timetable/intervals'
 import { mskMoment } from '../util/moment-msk'
-import { DbEventToUpdate } from '../interfaces/db-interfaces'
+import { EventToSave } from '../interfaces/db-interfaces'
+import { syncDatabase } from '../db/sync'
+import Schema$Request = sheets_v4.Schema$Request
+import { WrongExcelColumnsError } from './WrongFormatException'
 
 // our set of columns, to be created only once (statically), and then reused,
 // to let it cache up its formatting templates for high performance:
@@ -38,8 +39,8 @@ class ExcelUpdater {
         this.requests.push(clearFormat(sheetId, {
             startColumnIndex: getColumnIndex(column) - 1,
             endColumnIndex: getColumnIndex(column),
-            startRowIndex: EXCEL_HEADER_RESERVED_ROWS,
-            endRowIndex: EXCEL_HEADER_RESERVED_ROWS + numOfRows
+            startRowIndex: EXCEL_HEADER_SKIP_ROWS,
+            endRowIndex: EXCEL_HEADER_SKIP_ROWS + numOfRows
         }))
     }
 
@@ -55,7 +56,7 @@ class ExcelUpdater {
     async update() {
         await this.excel.spreadsheets.batchUpdate({
             spreadsheetId,
-            requestBody: { requests: this.requests }
+            requestBody: {requests: this.requests}
         });
     }
 }
@@ -68,46 +69,6 @@ function mapRowToColumnObject(row: string[]) {
     const keyValueRow: Partial<ExcelRow> = {}
     row.forEach((val: string, index) => keyValueRow[EXCEL_COLUMN_NAMES[index]] = val)
     return keyValueRow
-}
-
-async function syncDatabase(rows: DbEventToUpdate[]) {
-    if (rows.length > 0) {
-
-        const dbColEvents = new pgp.helpers.ColumnSet(Object.keys(rows[0].primaryData), {table: 'cb_events'});
-        const dbColIntervals = new pgp.helpers.ColumnSet(['event_id', 'time_from', 'time_to'], {table: 'cb_time_intervals'});
-
-        await db.tx(async dbTx => {
-            await dbTx.none('DELETE FROM cb_events')
-            const s = pgp.helpers.insert(rows.map(r => r.primaryData), dbColEvents) + ' RETURNING id'
-            // console.log(s)
-            const ids = await dbTx.map(s, [], r => +r.id)
-
-
-
-            const allIntervals = rows.flatMap((r, index) => {
-                const eventId = ids[index]
-
-                const m = r.timeIntervals.map(ti => {
-                    if (Array.isArray(ti)) {
-                        return {
-                            event_id: eventId,
-                            time_from: ti[0],
-                            time_to: ti[1],
-                        }
-                    } else {
-                        return {
-                            event_id: eventId,
-                            time_from: ti,
-                            time_to: undefined,
-                        }
-                    }
-                })
-                return m;
-            })
-
-            await dbTx.none(pgp.helpers.insert(allIntervals, dbColIntervals))
-        })
-    }
 }
 
 function debugTimetable(mapped: any, excelUpdater: ExcelUpdater, sheetId: number, rowNo: number) {
@@ -151,7 +112,7 @@ export default async function run(): Promise<{ updated: number, errors: number }
         console.log('Connection from excel...')
         const excel = await loadExcel()
 
-        const ranges = Object.values(CAT_TO_SHEET_NAME).map(name => `${name}!A2:Q`);
+        const ranges = Object.values(CAT_TO_SHEET_NAME).map(name => `${name}!A1:AA`);
 
         console.log(`Loading from excel [${ranges}]...`)
 
@@ -161,14 +122,13 @@ export default async function run(): Promise<{ updated: number, errors: number }
         ]);
 
         console.log('Saving to db...')
-        const rows: DbEventToUpdate[] = []
+        const rows: EventToSave[] = []
 
         // let max = 1;
 
         const excelUpdater = new ExcelUpdater(excel)
 
-        sheetsData.data.valueRanges.map(async (sheet, sheetNo: number) => {
-
+        sheetsData.data.valueRanges.forEach((sheet, sheetNo: number) => {
             const sheetId = sheetsMetaData.data.sheets[sheetNo].properties.sheetId;
             const numOfRows = sheet.values.length
 
@@ -177,21 +137,36 @@ export default async function run(): Promise<{ updated: number, errors: number }
 
             // Print columns A and E, which correspond to indices 0 and 4.
 
-            const dateFrom = moment().startOf('week')
+            const dateFrom = mskMoment().startOf('week')
 
             sheet.values.forEach((row: string[], rowNo: number) => {
+
+                if (rowNo == 0) {
+                    const columnNo = EXCEL_COLUMN_NAMES.indexOf('wasOrNot')
+                    if (row[columnNo] !== 'Была/не была') {
+                        throw new WrongExcelColumnsError({
+                                listName: sheetsMetaData.data.sheets[sheetNo].properties.title,
+                                columnName: `${String.fromCharCode('A'.charCodeAt(0) + columnNo)}1`,
+                                expected: 'Была/не была',
+                                actual: row[columnNo]
+                            });
+                    }
+                    return
+                }
+
                 const keyValueRow = mapRowToColumnObject(row)
 
                 const mapped = processRow(keyValueRow, getSheetCategory(sheetNo))
 
-                rowNo = EXCEL_HEADER_RESERVED_ROWS + rowNo;
+                rowNo = EXCEL_HEADER_SKIP_ROWS + rowNo;
 
                 if (mapped.publish) {
 
                     if (mapped.valid) {
                         rows.push({
                             primaryData: mapped.data,
-                            timeIntervals: predictIntervals(dateFrom, mapped.timetable)
+                            timetable: mapped.timetable,
+                            timeIntervals: predictIntervals(dateFrom, mapped.timetable, 14),
                         });
                         excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
 
@@ -208,7 +183,7 @@ export default async function run(): Promise<{ updated: number, errors: number }
                     }
                 }
             })
-        });
+        })
 
         await syncDatabase(rows)
 

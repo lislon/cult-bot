@@ -1,12 +1,7 @@
-import { cleanText } from './timetable-utils'
-import { predictIntervals } from './intervals';
 import { parseTimetable } from './parser'
-import moment = require('moment')
-import { loadTop5Events } from '../../scenes/list/repo'
 
 import { db } from '../../db';
 import { Event } from '../../interfaces/app-interfaces'
-import dbsync from '../../dbsync/dbsync'
 
 
 async function validateDb() {

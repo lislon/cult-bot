@@ -10,10 +10,6 @@ import 'moment-timezone/index'
 import { mskMoment } from '../../../src/util/moment-msk'
 import moment, { Moment } from 'moment'
 
-console.log('test1: ' + moment('2020-01-01 15:00').tz('Europe/Moscow', true).locale('en').toISOString(true))
-console.log('test2: ' + moment('2020-01-01 15:00').tz('Europe/Moscow', true).locale('en').toISOString(false))
-console.log('test3: ' + moment('2020-01-01 15:00').tz('Europe/Moscow', true).locale('en').format('HH:mm'))
-
 function format(e: Moment) {
     return e.tz('Europe/Moscow').format('YYYY-MM-DD HH:mm')
 }

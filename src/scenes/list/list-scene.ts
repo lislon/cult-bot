@@ -2,9 +2,10 @@ import { match } from 'telegraf-i18n';
 import { Stage, BaseScene } from 'telegraf'
 import logger from '../../util/logger';
 import { getBackKeyboard, getMainKeyboard } from '../../util/keyboards';
-import { loadTop5Events } from './repo'
 import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
 import { formatEvent } from './formatEvent'
+import { findTopEventsInRange } from '../../db/events'
+import moment = require('moment')
 
 declare class MyScene extends BaseScene<ContextMessageUpdate> {
     constructor(id: EventCategory);
@@ -19,13 +20,23 @@ const scenes: MyScene[] = [
     new BaseScene<ContextMessageUpdate>('concerts'),
 ]
 
+function getWeekdaysRange() {
+    const now = moment().tz('Europe/Moscow')
+    const weekendEnds = moment().tz('Europe/Moscow').endOf('week')
+    const weekendStarts = weekendEnds.clone().subtract(2, 'day')
+
+    const range = [moment.max(now, weekendStarts), weekendEnds]
+    return range
+}
+
 scenes.forEach((scene: MyScene)  => {
 
     scene.enter(async (ctx: ContextMessageUpdate) => {
         logger.debug(ctx, 'Enter list ' + scene.id);
         const {backKeyboard} = getBackKeyboard(ctx);
 
-        const events = await loadTop5Events(scene.id as EventCategory);
+        const range = getWeekdaysRange()
+        const events = await findTopEventsInRange(scene.id as EventCategory, range);
 
         for (const event of events) {
             await ctx.replyWithHTML(formatEvent(event), { disable_web_page_preview: true });

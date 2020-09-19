@@ -25,7 +25,8 @@ export const EXCEL_COLUMN_NAMES = [
     'entryDate',
 ] as const
 
-export const EXCEL_HEADER_RESERVED_ROWS = 1
+// Header row
+export const EXCEL_HEADER_SKIP_ROWS = 0
 
 export type ExcelColumnName = typeof EXCEL_COLUMN_NAMES[number]
 export type ExcelRow = {
@@ -53,7 +54,7 @@ interface ExcelRowResult {
 }
 
 function preparePublish(data: Event, result: ExcelRowResult) {
-    if (data.publish && data.publish.toLocaleLowerCase() === 'публиковать') {
+    if (data.publish && (data.publish.toLocaleLowerCase() === 'публиковать' || data.publish === 'TRUE')) {
         delete result.data.publish
         return true
     } else {
@@ -122,14 +123,15 @@ export function processRow(row: Partial<ExcelRow>, category: EventCategory): Exc
         data
     }
 
-
     const timetable = prepareTimetable(data)
     if (timetable.status === true) {
         result.timetable = timetable.value
     } else {
         result.errors.timetable = timetable.errors
+        result.valid = false
     }
     result.publish = preparePublish(data, result)
+
 
     return result
 }

@@ -14,6 +14,7 @@ import { customizeScene } from './scenes/customize/customize-scene'
 import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
 import { timetableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
+import { WrongExcelColumnsError } from './dbsync/WrongFormatException'
 
 console.log(`starting bot...`);
 db.any('select 1 + 1')
@@ -46,7 +47,7 @@ registerSimpleScene()
 
 bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
     console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
-    await ctx.reply(ctx.i18n.t('shared.something_went_wrong_dev', { error: error.toString().substr(0, 300) }))
+    await ctx.reply(ctx.i18n.t('shared.something_went_wrong_dev', { error: error.toString().substr(0, 1000) }))
 })
 
 bot.start(asyncWrapper(async (ctx: ContextMessageUpdate) => {
@@ -77,12 +78,17 @@ bot.command('back', async (ctx) => {
 });
 
 bot.command('sync', async (ctx) => {
-    await ctx.reply('Пошла скачивать эксельчик...')
+    await ctx.replyWithHTML(`Пошла скачивать <a href="${getGoogleSpreadSheetURL()}">эксельчик</a>...`)
     try {
         const { updated, errors }  = await dbsync()
-        await ctx.reply(`✅ База обновлена. Всего загужено ${updated} событий. У ${errors} событий ошибки.`)
-    } catch (e) {
-        await ctx.reply(`❌ Эх, что-то не удалось :(...` + e.toString().substr(0, 100))
+        await ctx.replyWithHTML(ctx.i18n.t('sync.sync_success', { updated, errors }))
+    }
+    catch (e) {
+        if (e instanceof WrongExcelColumnsError) {
+            await ctx.reply(ctx.i18n.t('sync.wrong_format', e.data))
+        } else {
+            await ctx.reply(`❌ Эх, что-то не удалось :(...` + e.toString().substr(0, 100))
+        }
     }
 })
 
@@ -102,8 +108,12 @@ bot.action(/.+[.]back$/, async (ctx, next) => {
 
 process.env.NODE_ENV === 'production' ? startProdMode(bot) : startDevMode(bot);
 
+function getGoogleSpreadSheetURL() {
+    return `https://docs.google.com/spreadsheets/d/${process.env.GOOGLE_DOCS_ID}`
+}
+
 function printDiagnostic() {
-    logger.debug(undefined, `google docs db: https://docs.google.com/spreadsheets/d/${process.env.GOOGLE_DOCS_ID}` );
+    logger.debug(undefined, `google docs db: ${getGoogleSpreadSheetURL()}` );
 }
 
 function startDevMode(bot: Telegraf<ContextMessageUpdate>) {
