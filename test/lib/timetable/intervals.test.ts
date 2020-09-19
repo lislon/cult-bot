@@ -11,7 +11,7 @@ import { mskMoment } from '../../../src/util/moment-msk'
 import moment, { Moment } from 'moment'
 
 function format(e: Moment) {
-    return e.format('YYYY-MM-DD HH:mm')
+    return e.tz('Europe/Moscow').format('YYYY-MM-DD HH:mm')
 }
 
 function formatIntervals(actual: MomentIntervals) {
@@ -202,7 +202,7 @@ describe('integration', () => {
             const intervals = predictIntervals(mskMoment('2020-01-01 01:00:00'), timetable.value)
 
             const formatIntervals = intervals.map(i =>
-                mapInterval(i, (ms) => ms.tz('Europe/Moscow').format('YYYY-MMM-DD HH:mm'))
+                mapInterval(i, (ms) => format(ms))
             )
 
             expect(formatIntervals).toStrictEqual(expected)

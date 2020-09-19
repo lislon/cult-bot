@@ -11,5 +11,9 @@ const dbCfg = {
     ssl: process.env.HEROKU_APP_ID === undefined ? undefined : { rejectUnauthorized: false }
 }
 
+console.log('db')
+console.log(process.env.NODE_ENV)
+console.log(dbCfg)
+
 const db = pgp(dbCfg); // database instance;
 export { db, pgp, dbCfg }
