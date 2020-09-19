@@ -16,6 +16,7 @@ import { Moment } from 'moment'
 import { parseTimetable } from '../lib/timetable/parser'
 import { predictIntervals } from '../lib/timetable/intervals'
 import { mskMoment } from '../util/moment-msk'
+import { DbEventToUpdate } from '../interfaces/db-interfaces'
 
 // our set of columns, to be created only once (statically), and then reused,
 // to let it cache up its formatting templates for high performance:
@@ -69,24 +70,53 @@ function mapRowToColumnObject(row: string[]) {
     return keyValueRow
 }
 
-async function updateDatabase(rows: object[]) {
+async function syncDatabase(rows: DbEventToUpdate[]) {
     if (rows.length > 0) {
 
-        const cachedColumnsSet = new pgp.helpers.ColumnSet(Object.keys(rows[0]), {table: 'cb_events'});
+        const dbColEvents = new pgp.helpers.ColumnSet(Object.keys(rows[0].primaryData), {table: 'cb_events'});
+        const dbColIntervals = new pgp.helpers.ColumnSet(['event_id', 'time_from', 'time_to'], {table: 'cb_time_intervals'});
 
-        await db.tx(async t => {
-            await t.none('DELETE FROM cb_events')
-            const s = pgp.helpers.insert(rows, cachedColumnsSet)
+        await db.tx(async dbTx => {
+            await dbTx.none('DELETE FROM cb_events')
+            const s = pgp.helpers.insert(rows.map(r => r.primaryData), dbColEvents) + ' RETURNING id'
             // console.log(s)
-            await t.none(s)
+            const ids = await dbTx.map(s, [], r => +r.id)
+
+
+
+            const allIntervals = rows.flatMap((r, index) => {
+                const eventId = ids[index]
+
+                const m = r.timeIntervals.map(ti => {
+                    if (Array.isArray(ti)) {
+                        return {
+                            event_id: eventId,
+                            time_from: ti[0],
+                            time_to: ti[1],
+                        }
+                    } else {
+                        return {
+                            event_id: eventId,
+                            time_from: ti,
+                            time_to: undefined,
+                        }
+                    }
+                })
+                return m;
+            })
+
+            await dbTx.none(pgp.helpers.insert(allIntervals, dbColIntervals))
         })
     }
 }
 
 function debugTimetable(mapped: any, excelUpdater: ExcelUpdater, sheetId: number, rowNo: number) {
     const fromTime = mskMoment().locale('ru')
-    const timetable = parseTimetable(getOnlyBotTimetable(mapped.data.timetable)).value
-    const intervals = predictIntervals(fromTime, timetable)
+    const timetableParseResult = parseTimetable(getOnlyBotTimetable(mapped.data.timetable))
+    if (timetableParseResult.status !== true) {
+        throw new Error('wtf')
+    }
+    const intervals = predictIntervals(fromTime, timetableParseResult.value)
 
     const text = [`События после ${fromTime.format('MM.DD HH:mm')}: `, '-----------']
     if (intervals.length === 0) {
@@ -131,7 +161,7 @@ export default async function run(): Promise<{ updated: number, errors: number }
         ]);
 
         console.log('Saving to db...')
-        const rows: object[] = []
+        const rows: DbEventToUpdate[] = []
 
         // let max = 1;
 
@@ -147,6 +177,8 @@ export default async function run(): Promise<{ updated: number, errors: number }
 
             // Print columns A and E, which correspond to indices 0 and 4.
 
+            const dateFrom = moment().startOf('week')
+
             sheet.values.forEach((row: string[], rowNo: number) => {
                 const keyValueRow = mapRowToColumnObject(row)
 
@@ -157,7 +189,10 @@ export default async function run(): Promise<{ updated: number, errors: number }
                 if (mapped.publish) {
 
                     if (mapped.valid) {
-                        rows.push(mapped.data);
+                        rows.push({
+                            primaryData: mapped.data,
+                            timeIntervals: predictIntervals(dateFrom, mapped.timetable)
+                        });
                         excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
 
                         debugTimetable(mapped, excelUpdater, sheetId, rowNo)
@@ -175,7 +210,7 @@ export default async function run(): Promise<{ updated: number, errors: number }
             })
         });
 
-        await updateDatabase(rows)
+        await syncDatabase(rows)
 
         console.log(`Insertion done. Rows inserted: ${result.updated}, Errors: ${result.errors}`);
         await excelUpdater.update();

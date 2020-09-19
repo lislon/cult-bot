@@ -198,12 +198,16 @@ describe('integration', () => {
         // mskMoment().isoWeekday(1);
     ])('%s', (text, expected: any) => {
         const timetable = parseTimetable(text)
-        const intervals = predictIntervals(mskMoment('2020-01-01 01:00:00'), timetable.value)
+        if (timetable.status === true) {
+            const intervals = predictIntervals(mskMoment('2020-01-01 01:00:00'), timetable.value)
 
-        const formatIntervals = intervals.map(i =>
-            mapInterval(i, (ms) => ms.format('YYYY-MMM-DD HH:mm'))
-        )
+            const formatIntervals = intervals.map(i =>
+                mapInterval(i, (ms) => ms.format('YYYY-MMM-DD HH:mm'))
+            )
 
-        expect(formatIntervals).toStrictEqual(expected)
+            expect(formatIntervals).toStrictEqual(expected)
+        } else {
+            fail(timetable.errors.join('\n'))
+        }
     });
 });

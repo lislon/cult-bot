@@ -1,7 +1,7 @@
 import * as P from 'parsimmon'
 import { Result } from 'parsimmon'
 import { Success } from 'parsimmon'
-import { DateExact, EventDate } from './intervals';
+import { DateExact, EventTimetable } from './intervals';
 import { cleanText } from './timetable-utils'
 import { mskMoment } from '../../util/moment-msk'
 
@@ -175,7 +175,15 @@ function validateDates(parse: Success<any>, dateValidation: string[]) {
     }
 }
 
-export function parseTimetable(text: string) {
+export type TimetableParseResult = {
+    status: true
+    value: EventTimetable
+} | {
+    status: false
+    errors: string[]
+}
+
+export function parseTimetable(text: string): TimetableParseResult {
     const input = cleanText(text)
     const parse: Result<any> = Lang.Everything.parse(input);
 
@@ -188,7 +196,7 @@ export function parseTimetable(text: string) {
             return {status: false, errors: dateValidation}
         }
 
-        const result: EventDate = {
+        const result: EventTimetable = {
             dateRangesTimetable: [],
             datesExact: [],
             weekTimes: [],

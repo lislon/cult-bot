@@ -154,6 +154,10 @@ describe('parser', () => {
             expected.weekTimes = expected.weekTimes || []
         }
         const actual = parseTimetable(text)
-        expect(actual.value).toStrictEqual(expected)
+        if (actual.status === true) {
+            expect(actual.value).toStrictEqual(expected)
+        } else {
+            expect(undefined).toStrictEqual(expected)
+        }
     });
 });

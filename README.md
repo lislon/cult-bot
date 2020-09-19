@@ -36,3 +36,7 @@ heroku pg:backup -a <app name>
 ```
 heroku releases:rollback -a <app name> 
 ```
+
+### Db migrtaions
+
+`db-migrate` uses `DATABASE_URL` env for migrations. 

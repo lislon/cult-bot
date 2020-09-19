@@ -1,12 +1,5 @@
 {
   "development": {
-    "username": "postgres",
-    "driver": "pg",
-    "password": "cult",
-    "host": "localhost",
-    "database": "cult",
-    "port": "5433",
-    "ssl": false
   },
   "pg": {
     "driver": "pg"

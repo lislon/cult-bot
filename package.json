@@ -13,7 +13,8 @@
     "test": "jest",
     "db:sync": "node dist/dbsync/run-dbsync.js",
     "db:up": "db-migrate up",
-    "db:down": "db-migrate down"
+    "db:down": "db-migrate down",
+    "db:up-test": "cross-env DATABASE_URL=postgres://cult-test:cult-test@localhost:5434/cult-test db-migrate up"
   },
   "dependencies": {
     "@types/parsimmon": "^1.10.2",
@@ -37,6 +38,7 @@
     "xstate": "^4.13.0"
   },
   "devDependencies": {
+    "@databases/pg-test": "^2.0.0",
     "@types/jest": "^26.0.12",
     "@types/node": "^14.6.0",
     "@types/pg": "^7.14.4",

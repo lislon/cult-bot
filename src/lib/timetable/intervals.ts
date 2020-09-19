@@ -24,7 +24,7 @@ export interface DateRangeTimetable {
     times?: DayTime[]         // ежедневно часы
 }
 
-export interface EventDate {
+export interface EventTimetable {
     weekTimes?: WeekTime[]
     dateRangesTimetable?: DateRangeTimetable[]
     datesExact?: DateExact[]
@@ -143,7 +143,7 @@ export function mapInterval<T, U>(m: T|T[], mapper: (v: T) => U): U|U[] {
     return mapper(m)
 }
 
-export function predictIntervals(time: Moment, timetable: Partial<EventDate>, daysAhead = DAYS_AHEAD) {
+export function predictIntervals(time: Moment, timetable: Partial<EventTimetable>, daysAhead = DAYS_AHEAD) {
     return new IntervalGenerator(time, daysAhead).generate(timetable)
 }
 
@@ -156,7 +156,7 @@ export class IntervalGenerator {
         this.fromTime = time.clone()
     }
 
-    generate(timetable: Partial<EventDate>) {
+    generate(timetable: Partial<EventTimetable>): MomentIntervals {
         let intervals: MomentIntervals = []
         if (timetable === undefined) return undefined
         // console.log(JSON.stringify(timetable, undefined, 2))

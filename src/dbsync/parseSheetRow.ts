@@ -1,5 +1,6 @@
 import { Event, EventCategory } from '../interfaces/app-interfaces'
-import { parseTimetable } from '../lib/timetable/parser'
+import { parseTimetable, TimetableParseResult } from '../lib/timetable/parser'
+import { EventTimetable } from '../lib/timetable/intervals'
 
 export const EXCEL_COLUMN_NAMES = [
     'no',
@@ -47,19 +48,20 @@ interface ExcelRowResult {
     errors?: {
         timetable?: string[]
     }
+    timetable?: EventTimetable,
     data: Event
 }
 
 function preparePublish(data: Event, result: ExcelRowResult) {
     if (data.publish && data.publish.toLocaleLowerCase() === 'публиковать') {
         delete result.data.publish
-        result.publish = true;
+        return true
     } else {
-        result.publish = false;
+        return false
     }
 }
 
-export function getOnlyBotTimetable(timetable: string) {
+export function getOnlyBotTimetable(timetable: string): string {
     let botTimetable = timetable
         .replace(/[(].+?[)]/, '')
 
@@ -74,7 +76,7 @@ export function getOnlyHumanTimetable(timetable: string) {
     return  timetable.replace(/{бот:([^}]+)}/, '').trim()
 }
 
-function prepareTimetable(data: Event, result: ExcelRowResult) {
+function prepareTimetable(data: Event): TimetableParseResult {
     const botTimetable = getOnlyBotTimetable(data.timetable)
 
     if (data.timetable !== botTimetable) {
@@ -82,12 +84,9 @@ function prepareTimetable(data: Event, result: ExcelRowResult) {
     }
     const timetableResult = parseTimetable(botTimetable)
     if (timetableResult.status === false) {
-
         console.log(' > parse: ' + data.timetable)
-
-        result.valid = false
-        result.errors.timetable = timetableResult.errors
     }
+    return timetableResult;
 }
 
 export function processRow(row: Partial<ExcelRow>, category: EventCategory): ExcelRowResult {
@@ -124,8 +123,13 @@ export function processRow(row: Partial<ExcelRow>, category: EventCategory): Exc
     }
 
 
-    prepareTimetable(data, result)
-    preparePublish(data, result)
+    const timetable = prepareTimetable(data)
+    if (timetable.status === true) {
+        result.timetable = timetable.value
+    } else {
+        result.errors.timetable = timetable.errors
+    }
+    result.publish = preparePublish(data, result)
 
     return result
 }
