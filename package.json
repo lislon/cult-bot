@@ -5,7 +5,7 @@
   "esm": true,
   "mode": "auto",
   "scripts": {
-    "start": "node dist/bot.js",
+    "start": "node dist/bot-start.js",
     "build": "tsc && npm run lint",
     "dev": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"tsc -w\" \"nodemon --inspect\"",
     "dev-no-restart": "tsc && nodemon --inspect",

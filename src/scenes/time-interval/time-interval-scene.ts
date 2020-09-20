@@ -2,7 +2,7 @@ import { BaseScene, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { backButtonRegister } from '../../util/scene-helper'
 
-const timeIntervalScene = new BaseScene<ContextMessageUpdate>('time_interval');
+const scene = new BaseScene<ContextMessageUpdate>('time_interval');
 
 export interface TimeIntervalSceneState {
     weekday: string
@@ -10,7 +10,7 @@ export interface TimeIntervalSceneState {
     messageId?: number
 }
 
-const { backButton, sceneHelper, actionName } = backButtonRegister(timeIntervalScene)
+const { backButton, sceneHelper, actionName } = backButtonRegister(scene)
 
 enum Actions {
     ALL_DAY = 'slot_all_day'
@@ -53,7 +53,7 @@ const content = (ctx: ContextMessageUpdate) => {
     }
 }
 
-timeIntervalScene.enter(async (ctx: ContextMessageUpdate) => {
+scene.enter(async (ctx: ContextMessageUpdate) => {
     if (ctx.session.timeInterval === undefined) {
         ctx.session.timeInterval = {
             weekday: '???',
@@ -68,7 +68,7 @@ timeIntervalScene.enter(async (ctx: ContextMessageUpdate) => {
 })
 
 
-timeIntervalScene.action(/time_interval[.]slot_(\d+|all_day)/, async (ctx: ContextMessageUpdate) => {
+scene.action(/time_interval[.]slot_(\d+|all_day)/, async (ctx: ContextMessageUpdate) => {
     const slot = ctx.match[1]
 
     function makeInterval(startHour: number) {
@@ -98,5 +98,4 @@ timeIntervalScene.action(/time_interval[.]slot_(\d+|all_day)/, async (ctx: Conte
     await ctx.editMessageText(msg, markup.inReplyTo(ctx.session.timetable.messageId))
 })
 
-export { timeIntervalScene }
-
+export { scene as timeIntervalScene }

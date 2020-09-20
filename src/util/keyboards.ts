@@ -16,23 +16,3 @@ export const getBackKeyboard = (ctx: ContextMessageUpdate) => {
     backKeyboardBack
   };
 };
-
-/**
- * Returns main keyboard and its buttons according to the language
- * @param ctx - telegram context
- */
-export const getMainKeyboard = (ctx: ContextMessageUpdate) => {
-  const menu = [
-    [ 'theaters', 'exhibitions' ],
-    [ 'movies', 'events' ],
-    [ 'walks', 'concerts' ],
-    [ 'customize' ]
-  ]
-  const mainKeyboard = menu.map(row =>
-    row.map(slug => {
-      const title = ctx.i18n.t(`keyboards.main_keyboard.${slug}`);
-      return Markup.callbackButton(title, slug);
-    })
-  );
-  return { mainKeyboard: Extra.markup(Markup.inlineKeyboard(mainKeyboard)) }
-};

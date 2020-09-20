@@ -1,6 +1,5 @@
 import { BaseScene, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
-import { customizeScene } from '../scenes/customize/customize-scene'
 
 export function backButtonRegister(scene: BaseScene<ContextMessageUpdate>) {
     console.log(`backButtonRegister(${scene.id})`)
@@ -54,9 +53,9 @@ export function backButtonRegister(scene: BaseScene<ContextMessageUpdate>) {
             }
         },
         onActionPushScene: (action: string, nextSceneId: string) => {
-            customizeScene.action(action, async (ctx: ContextMessageUpdate) => {
-                pushEnterScene(ctx, nextSceneId)
-            })
+            // customizeScene.action(action, async (ctx: ContextMessageUpdate) => {
+            //     await pushEnterScene(ctx, nextSceneId)
+            // })
         }
     }
 }

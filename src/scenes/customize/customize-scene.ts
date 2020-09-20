@@ -2,9 +2,9 @@ import { BaseScene, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { backButtonRegister } from '../../util/scene-helper'
 
-const customizeScene = new BaseScene<ContextMessageUpdate>('customize');
+const scene = new BaseScene<ContextMessageUpdate>('customize');
 
-const { backButton, sceneHelper, actionName, onActionPushScene } = backButtonRegister(customizeScene)
+const { backButton, sceneHelper, actionName, onActionPushScene } = backButtonRegister(scene)
 
 onActionPushScene(actionName('timetable'), 'timetable')
 
@@ -41,7 +41,7 @@ const content = (ctx: ContextMessageUpdate) => {
     }
 }
 
-customizeScene.enter(async (ctx: ContextMessageUpdate) => {
+scene.enter(async (ctx: ContextMessageUpdate) => {
     if (ctx.session.customize === undefined) {
         ctx.session.customize = {
             hoursFrom: '12:00',
@@ -70,10 +70,10 @@ async function nothing(ctx: ContextMessageUpdate) {
     }
 }
 
-customizeScene.action(actionName('oblasti'), nothing)
-customizeScene.action(actionName('cennosti'), nothing)
+scene.action(actionName('oblasti'), nothing)
+scene.action(actionName('cennosti'), nothing)
 
-export { customizeScene }
+export { scene as customizeScene }
 
 export interface CustomizeSceneState {
     hoursFrom: string,

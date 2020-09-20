@@ -1,18 +1,16 @@
 import Telegraf, { Stage } from 'telegraf'
 import session from 'telegraf/session';
 import logger from './util/logger';
-import asyncWrapper from './util/error-handler'
-import { getMainKeyboard } from './util/keyboards';
-import { match } from 'telegraf-i18n';
 import rp from 'request-promise';
-import listScenes from './scenes/list/list-scene'
-import { allCategories, ContextMessageUpdate } from './interfaces/app-interfaces'
+import { match } from 'telegraf-i18n';
+import { mainScene } from './scenes/main/main-scene'
+import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import dbsync from './dbsync/dbsync'
 import { db } from './db';
 import middlewares from './bot-middleware-utils'
 import { customizeScene } from './scenes/customize/customize-scene'
 import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
-import { timetableScene } from './scenes/timetable/timetable-scene'
+import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
 import { WrongExcelColumnsError } from './dbsync/WrongFormatException'
 
@@ -22,19 +20,6 @@ db.any('select 1 + 1')
 const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
 const stage = new Stage([])
 
-function registerListStage() {
-    stage.register(...listScenes)
-    for (const cat of allCategories) {
-        bot.action(cat, asyncWrapper(async (ctx: ContextMessageUpdate) => await ctx.scene.enter(cat)));
-    }
-}
-
-function registerSimpleScene<TContext extends SceneContextMessageUpdate>(...scenes: Scene<TContext>[]) {
-    stage.register(customizeScene, timetableScene, timeIntervalScene)
-    bot.action('customize', async (ctx: ContextMessageUpdate) => await ctx.scene.enter('customize'))
-}
-
-
 bot.use(middlewares.rateLimit)
 bot.use(middlewares.logger)
 bot.use(session());
@@ -42,25 +27,23 @@ bot.use(middlewares.i18n);
 bot.use(stage.middleware());
 
 
-registerListStage()
-registerSimpleScene()
+stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene)
+
+
+bot.start(async (ctx: ContextMessageUpdate) => {
+    console.log('bot.start')
+    await ctx.scene.enter('main_scene');
+});
+
 
 bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
     console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
     await ctx.reply(ctx.i18n.t('shared.something_went_wrong_dev', { error: error.toString().substr(0, 1000) }))
 })
 
-bot.start(asyncWrapper(async (ctx: ContextMessageUpdate) => {
-    const {mainKeyboard} = getMainKeyboard(ctx);
-    await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard)
-}));
 
-bot.command('/saveme', async (ctx: ContextMessageUpdate) => {
-    logger.debug(ctx, 'User uses /saveme command');
-
-    const {mainKeyboard} = getMainKeyboard(ctx);
-
-    await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
+bot.command('/start', async (ctx: ContextMessageUpdate) => {
+    await ctx.scene.enter('main_scene');
 });
 
 
@@ -68,14 +51,25 @@ bot.start((ctx) => ctx.reply('Welcome!'))
 bot.help((ctx) => ctx.reply('Send me a sticker'))
 bot.on('sticker', (ctx) => ctx.reply('👍'))
 bot.hears('hi', (ctx) => ctx.reply('Hey there'))
+
 bot.hears(match('keyboards.back_keyboard.back'), async (ctx) => {
-    const {mainKeyboard} = getMainKeyboard(ctx);
-    await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
+    console.log('keyboards.back_keyboard.back')
+    await ctx.scene.enter('main_scene');
 });
-bot.command('back', async (ctx) => {
-    const {mainKeyboard} = getMainKeyboard(ctx);
-    await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
-});
+// bot.command('back', async (ctx) => {
+//     console.log('bot.command(\'back\',')
+//     await ctx.scene.enter('main_scene');
+// });
+//
+// bot.action('back', async (ctx) => {
+//     console.log('bot.command(\'back\',')
+//     await ctx.scene.enter('main_scene');
+// })
+
+bot.action(/.+[.]back$/, async (ctx, next) => {
+    console.log('Аварийный выход');
+    await ctx.scene.enter('main_scene');
+})
 
 bot.command('sync', async (ctx) => {
     await ctx.replyWithHTML(`Пошла скачивать <a href="${getGoogleSpreadSheetURL()}">эксельчик</a>...`)
@@ -92,18 +86,9 @@ bot.command('sync', async (ctx) => {
     }
 })
 
-bot.action('back', async (ctx) => {
-    const {mainKeyboard} = getMainKeyboard(ctx);
-    await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
-})
-
 bot.hears(/.+/, (ctx, next) => {
     console.debug(`@${ctx.from.username}: [type=${ctx.updateType}], [text=${ctx.message.text}]`)
-})
-bot.action(/.+[.]back$/, async (ctx, next) => {
-    console.log('Аварийный выход');
-    const {mainKeyboard} = getMainKeyboard(ctx);
-    await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard);
+    return next()
 })
 
 process.env.NODE_ENV === 'production' ? startProdMode(bot) : startDevMode(bot);

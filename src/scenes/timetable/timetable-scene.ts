@@ -3,9 +3,9 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { backButtonRegister } from '../../util/scene-helper'
 
-const timetableScene = new BaseScene<ContextMessageUpdate>('timetable');
+const scene = new BaseScene<ContextMessageUpdate>('timetable');
 
-const { backButton, sceneHelper, actionName, pushEnterScene } = backButtonRegister(timetableScene)
+const { backButton, sceneHelper, actionName, pushEnterScene } = backButtonRegister(scene)
 
 const content = (ctx: ContextMessageUpdate) => {
     const [week6, week7] = ctx.session.timetable.weekSlots
@@ -68,7 +68,7 @@ const content = (ctx: ContextMessageUpdate) => {
     }
 }
 
-timetableScene.enter(async (ctx: ContextMessageUpdate) => {
+scene.enter(async (ctx: ContextMessageUpdate) => {
     if (ctx.session.timetable === undefined) {
         ctx.session.timetable = {
             weekSlots: [
@@ -83,7 +83,7 @@ timetableScene.enter(async (ctx: ContextMessageUpdate) => {
 })
 
 
-timetableScene.action(/timetable.interval_(\d)/, async (ctx: ContextMessageUpdate) => {
+scene.action(/timetable.interval_(\d)/, async (ctx: ContextMessageUpdate) => {
 
     const { i18Msg } = sceneHelper(ctx)
 
@@ -102,7 +102,7 @@ timetableScene.action(/timetable.interval_(\d)/, async (ctx: ContextMessageUpdat
     await pushEnterScene(ctx, 'time_interval')
 })
 
-export { timetableScene }
+export { scene as timeTableScene }
 
 export interface TimetableSceneState {
     weekSlots: string[][]
