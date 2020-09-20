@@ -47,7 +47,8 @@ interface ExcelRowResult {
     valid: boolean,
     publish: boolean,
     errors?: {
-        timetable?: string[]
+        timetable?: string[],
+        emptyRows?: ExcelColumnName[]
     }
     timetable?: EventTimetable,
     data: Event
@@ -93,6 +94,7 @@ function prepareTimetable(data: Event): TimetableParseResult {
 export function processRow(row: Partial<ExcelRow>, category: EventCategory): ExcelRowResult {
 
     const notNull = (s: string) => s === undefined ? '' : s;
+    const notNullOrUnknown = (s: string) => s === undefined || s.match('/[?]+/') ? '' : s;
     const forceDigit = (n: string) => n === undefined ? 0 : +n;
     const splitTags = (s: string) => s.replace(/([^\s])#/g, '$1 #')
 
@@ -106,7 +108,7 @@ export function processRow(row: Partial<ExcelRow>, category: EventCategory): Exc
         'geotag': notNull(row.geotag),
         'timetable': notNull(row.timetable),
         'duration': notNull(row.duration),
-        'price': notNull(row.price),
+        'price': notNullOrUnknown(row.price),
         'notes': notNull(row.notes),
         'description': row.description,
         'url': notNull(row.url),
@@ -120,7 +122,9 @@ export function processRow(row: Partial<ExcelRow>, category: EventCategory): Exc
     const result: ExcelRowResult = {
         valid: true,
         publish: true,
-        errors: {},
+        errors: {
+            emptyRows: []
+        },
         data
     }
 
@@ -133,6 +137,14 @@ export function processRow(row: Partial<ExcelRow>, category: EventCategory): Exc
     }
     result.publish = preparePublish(data, result)
 
+    if (data.place === '') {
+        result.errors.emptyRows.push('place');
+    }
+    if (data.address === '') {
+        result.errors.emptyRows.push('address');
+    }
+
+    result.valid = result.valid && result.errors.emptyRows.length == 0
 
     return result
 }

@@ -233,6 +233,7 @@ export class IntervalGenerator {
         for (const {dateRange, times, weekTimes} of (rangeTimetables || [])) {
             const [startIncl, endExcl] = subDateRange(dateRange, dateStr)
 
+            if (startIncl === undefined) continue
             const weekIntervals = this.flatIntervalsWeekdays(startIncl, weekTimes)
             intervals.push.apply(intervals, filterByByRange(weekIntervals, [startIncl, endExcl], 'in'));
 

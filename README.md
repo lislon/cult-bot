@@ -39,4 +39,10 @@ heroku releases:rollback -a <app name>
 
 ### Db migrtaions
 
-`db-migrate` uses `DATABASE_URL` env for migrations. 
+`db-migrate` uses `DATABASE_URL` env for migrations.
+
+Fix db on remote:
+```
+heroku run npm run db:down
+heroku run npm run db:up
+``` 

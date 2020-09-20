@@ -18,6 +18,7 @@ import { EventToSave } from '../interfaces/db-interfaces'
 import { syncDatabase } from '../db/sync'
 import Schema$Request = sheets_v4.Schema$Request
 import { WrongExcelColumnsError } from './WrongFormatException'
+import { pgp } from '../db'
 
 // our set of columns, to be created only once (statically), and then reused,
 // to let it cache up its formatting templates for high performance:
@@ -132,9 +133,9 @@ export default async function run(): Promise<{ updated: number, errors: number }
             const sheetId = sheetsMetaData.data.sheets[sheetNo].properties.sheetId;
             const numOfRows = sheet.values.length
 
-            excelUpdater.clearColumnFormat(sheetId, 'publish', numOfRows);
-            excelUpdater.clearColumnFormat(sheetId, 'timetable', numOfRows);
+            const columnToClearFormat: ExcelColumnName[] = ['publish', 'timetable', 'address', 'place']
 
+            columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, numOfRows))
             // Print columns A and E, which correspond to indices 0 and 4.
 
             const dateFrom = mskMoment().startOf('week')
@@ -175,10 +176,17 @@ export default async function run(): Promise<{ updated: number, errors: number }
                     } else {
                         result.errors++;
                         // rows.push(mapped.data);
-                        if (mapped.errors.timetable) {
+                        if (mapped.errors.timetable && !mapped.data.timetable.includes('?')) {
                             excelUpdater.annotateCell(sheetId, 'timetable', rowNo, mapped.errors.timetable.join('\n'))
                             excelUpdater.colorCell(sheetId, 'timetable', rowNo, 'red')
+                        } else {
+                            excelUpdater.annotateCell(sheetId, 'timetable', rowNo, '')
                         }
+
+                        for (const mappedElement of mapped.errors.emptyRows) {
+                            excelUpdater.colorCell(sheetId, mappedElement, rowNo, 'red')
+                        }
+
                         excelUpdater.colorCell(sheetId, 'publish', rowNo, 'lightred')
                     }
                 }
@@ -197,7 +205,6 @@ export default async function run(): Promise<{ updated: number, errors: number }
         throw e;
     }
 }
-
 
 
 
