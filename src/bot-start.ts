@@ -86,7 +86,9 @@ bot.action(/.+[.]back$/, async (ctx, next) => {
 })
 
 bot.command('sync', async (ctx) => {
-    await ctx.replyWithHTML(`Пошла скачивать <a href="${getGoogleSpreadSheetURL()}">эксельчик</a>...`)
+    await ctx.replyWithHTML(`Пошла скачивать <a href="${getGoogleSpreadSheetURL()}">эксельчик</a>...`, {
+        disable_web_page_preview: true
+    })
     try {
         const { updated, errors }  = await dbsync()
         await ctx.replyWithHTML(ctx.i18n.t('sync.sync_success', { updated, errors }))

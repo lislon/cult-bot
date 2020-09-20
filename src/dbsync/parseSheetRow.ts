@@ -1,6 +1,7 @@
 import { Event, EventCategory } from '../interfaces/app-interfaces'
 import { parseTimetable, TimetableParseResult } from '../lib/timetable/parser'
 import { EventTimetable } from '../lib/timetable/intervals'
+import { Tag, TagCategory } from '../interfaces/db-interfaces'
 
 export const EXCEL_COLUMN_NAMES = [
     'no',
@@ -48,9 +49,13 @@ interface ExcelRowResult {
     publish: boolean,
     errors?: {
         timetable?: string[],
-        emptyRows?: ExcelColumnName[]
+        emptyRows?: ExcelColumnName[],
+        invalidTagLevel1?: string[]
+        invalidTagLevel2?: string[]
+        invalidTagLevel3?: string[]
     }
     timetable?: EventTimetable,
+    tags: Tag[]
     data: Event
 }
 
@@ -78,6 +83,31 @@ export function getOnlyHumanTimetable(timetable: string) {
     return  timetable.replace(/{бот:([^}]+)}/, '').trim()
 }
 
+function splitTags(tagStr: string) {
+    return tagStr.trim()
+        .split(/\s+/)
+        .filter(e => e !== '')
+}
+
+function zipTag(category: TagCategory): (tagName: string) => Tag {
+    return (tagName: string) => {
+        return {
+            name: tagName,
+            category: category
+        }
+    }
+}
+
+export function listAllEventTags(row: Event) {
+    const allTags = [
+        ...splitTags(row.tag_level_1).map(zipTag('tag_level_1')),
+        ...splitTags(row.tag_level_2).map(zipTag('tag_level_2')),
+        ...splitTags(row.tag_level_3).map(zipTag('tag_level_3'))
+    ]
+    return allTags
+}
+
+
 function prepareTimetable(data: Event): TimetableParseResult {
     const botTimetable = getOnlyBotTimetable(data.timetable)
 
@@ -91,12 +121,19 @@ function prepareTimetable(data: Event): TimetableParseResult {
     return timetableResult;
 }
 
+function validateTag(tagValue: string, errorCallback: (errors: string[]) => void) {
+    const badTag = splitTags(tagValue).find(t => t.match(/^#[^_\s#?@$%^&*()!]+$/) === null )
+    if (badTag !== undefined) {
+        errorCallback([`Плохой тег ${badTag}`])
+    }
+}
+
 export function processRow(row: Partial<ExcelRow>, category: EventCategory): ExcelRowResult {
 
     const notNull = (s: string) => s === undefined ? '' : s;
     const notNullOrUnknown = (s: string) => s === undefined || s.match('/[?]+/') ? '' : s;
     const forceDigit = (n: string) => n === undefined ? 0 : +n;
-    const splitTags = (s: string) => s.replace(/([^\s])#/g, '$1 #')
+    const splitTags = (s: string) => s.replace('\n', ' ').replace(/([^\s])#/g, '$1 #')
 
     const data: Event = {
         'category': category,
@@ -123,8 +160,12 @@ export function processRow(row: Partial<ExcelRow>, category: EventCategory): Exc
         valid: true,
         publish: true,
         errors: {
-            emptyRows: []
+            emptyRows: [],
+            invalidTagLevel1: [],
+            invalidTagLevel2: [],
+            invalidTagLevel3: [],
         },
+        tags: listAllEventTags(data),
         data
     }
 
@@ -144,7 +185,19 @@ export function processRow(row: Partial<ExcelRow>, category: EventCategory): Exc
         result.errors.emptyRows.push('address');
     }
 
+    if (data.address === '') {
+        result.errors.emptyRows.push('address');
+    }
+
+    validateTag(data.tag_level_1, (errors) => result.errors.invalidTagLevel1 = errors)
+    validateTag(data.tag_level_2, (errors) => result.errors.invalidTagLevel2 = errors)
+    validateTag(data.tag_level_3, (errors) => result.errors.invalidTagLevel3 = errors)
+
+
     result.valid = result.valid && result.errors.emptyRows.length == 0
+    result.valid = result.valid && result.errors.invalidTagLevel1.length == 0
+    result.valid = result.valid && result.errors.invalidTagLevel2.length == 0
+    result.valid = result.valid && result.errors.invalidTagLevel3.length == 0
 
     return result
 }

@@ -25,7 +25,7 @@ const backMarkup = (ctx: ContextMessageUpdate) => {
 
     const btn = Markup.button(i18SharedBtn('back'))
     // return Extra.HTML(true).markup(Markup.keyboard([btn]).resize().oneTime())
-    return Markup.keyboard([btn]).resize().oneTime()
+    return Markup.keyboard([btn]).resize()
 }
 
 const content = (ctx: ContextMessageUpdate) => {
@@ -46,7 +46,7 @@ const content = (ctx: ContextMessageUpdate) => {
     );
     return {
         msg: i18Msg('select_category'),
-        markupMainMenu: Extra.HTML(true).markup(Markup.keyboard(mainButtons).resize().oneTime())
+        markupMainMenu: Extra.HTML(true).markup(Markup.keyboard(mainButtons).resize())
     }
 }
 
@@ -77,7 +77,7 @@ scene.leave(async (ctx: ContextMessageUpdate) => {
  })
 
 async function cleanOldMessages(ctx: ContextMessageUpdate) {
-    console.log(`old messages clean (${ctx.session.mainScene.gcMessages.length})`)
+    // console.log(`old messages clean (${ctx.session.mainScene.gcMessages.length})`)
     // for (const messageId of ctx.session.mainScene.gcMessages) {
     //     await ctx.deleteMessage(messageId)
     // }
@@ -92,15 +92,35 @@ function isWeekendsNow(range: [Moment, Moment]) {
     return filterByByRange([mskMoment()], range, 'in').length > 0
 }
 
+function interavalTemplateParams(range: [Moment, Moment]) {
+    return {
+        from: range[0].locale('ru').format('DD.MM HH:mm'),
+        to: range[1].locale('ru').subtract('1', 'second').format('DD.MM HH:mm')
+    }
+}
+
 async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
     const {i18Btn, i18Msg} = sceneHelper(ctx)
     const {range, events} = await getTopEvents(cat)
     const gcMessages = ctx.session.mainScene.gcMessages
+    const { msg, markupMainMenu} = content(ctx)
+    const intervalTemplateParams = interavalTemplateParams(range)
 
-    const intervalTemplateParams = {
-        from: range[0].locale('ru').format('DD.MM HH:mm'),
-        to: range[1].locale('ru').subtract('1', 'second').format('DD.MM HH:mm')
-    }
+    // ctx.replyWithMarkdown('BIG', markupMainMenu)
+    // await sleep(2000)
+    // ctx.replyWithMarkdown('SMALL', Extra.HTML(true).markup(backMarkup(ctx)))
+    // await sleep(2000)
+    // ctx.replyWithMarkdown('BIG', markupMainMenu)
+    // await sleep(2000)
+    // await ctx.reply(i18Msg('nothing_found_in_interval', intervalTemplateParams),
+    //     Extra.HTML(true).markup(backMarkup(ctx))
+    // )
+    // await sleep(2000)
+    // ctx.replyWithMarkdown('SMALL', Extra.HTML(true).markup(backMarkup(ctx)))
+    // await sleep(2000)
+
+
+
     // await cleanOldMessages(ctx)
     await sleep(500)
     if (events.length > 0) {
@@ -108,7 +128,9 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
             cat: i18Msg(`keyboard.${cat}`)
         }
         if (isWeekendsNow(range)) {
-            gcMessages.push((await ctx.replyWithHTML(i18Msg('let_me_show_this_weekend', tplData))).message_id)
+            gcMessages.push((await ctx.replyWithHTML(i18Msg('let_me_show_this_weekend', tplData), {
+                reply_markup: markupMainMenu.reply_markup
+            })).message_id)
         } else {
             let humanDateRange = ''
             if (range[0].month() === range[1].month()) {
@@ -143,15 +165,19 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
 
 
     if (events.length == 0) {
-        gcMessages.push((await ctx.reply(i18Msg('nothing_found_in_interval', intervalTemplateParams),
+        await ctx.reply(i18Msg('nothing_found_in_interval', intervalTemplateParams),
             Extra.HTML(true).markup(backMarkup(ctx))
-        )).message_id)
+        )
     }
-    console.log(`old messages count: ${ctx.session.mainScene.gcMessages.length} vs ${gcMessages.length}`)
+    console.log(`${events.length} events returned for cat=${cat}`)
 }
 
 scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
     console.log('main-scene-back')
+    const { msg, markupMainMenu} = content(ctx)
+    // await sleep(2000)
+    // ctx.replyWithMarkdown('BIG', markupMainMenu)
+    // await sleep(2000)
     await cleanOldMessages(ctx)
     await ctx.scene.reenter()
 });

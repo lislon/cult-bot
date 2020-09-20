@@ -25,4 +25,12 @@ export interface EventToSave {
     primaryData: Event
     timetable: EventTimetable
     timeIntervals: MomentIntervals
+    tags: Tag[]
+}
+
+export type TagCategory = 'tag_level_1' | 'tag_level_2' | 'tag_level_3'
+
+export interface Tag {
+    category: TagCategory
+    name: string
 }

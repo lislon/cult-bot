@@ -16,9 +16,8 @@ import { predictIntervals } from '../lib/timetable/intervals'
 import { mskMoment } from '../util/moment-msk'
 import { EventToSave } from '../interfaces/db-interfaces'
 import { syncDatabase } from '../db/sync'
-import Schema$Request = sheets_v4.Schema$Request
 import { WrongExcelColumnsError } from './WrongFormatException'
-import { pgp } from '../db'
+import Schema$Request = sheets_v4.Schema$Request
 
 // our set of columns, to be created only once (statically), and then reused,
 // to let it cache up its formatting templates for high performance:
@@ -133,7 +132,7 @@ export default async function run(): Promise<{ updated: number, errors: number }
             const sheetId = sheetsMetaData.data.sheets[sheetNo].properties.sheetId;
             const numOfRows = sheet.values.length
 
-            const columnToClearFormat: ExcelColumnName[] = ['publish', 'timetable', 'address', 'place']
+            const columnToClearFormat: ExcelColumnName[] = ['publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3']
 
             columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, numOfRows))
             // Print columns A and E, which correspond to indices 0 and 4.
@@ -168,6 +167,7 @@ export default async function run(): Promise<{ updated: number, errors: number }
                             primaryData: mapped.data,
                             timetable: mapped.timetable,
                             timeIntervals: predictIntervals(dateFrom, mapped.timetable, 14),
+                            tags: mapped.tags
                         });
                         excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
 
@@ -185,6 +185,16 @@ export default async function run(): Promise<{ updated: number, errors: number }
 
                         for (const mappedElement of mapped.errors.emptyRows) {
                             excelUpdater.colorCell(sheetId, mappedElement, rowNo, 'red')
+                        }
+
+                        if (mapped.errors.invalidTagLevel1.length > 0) {
+                            excelUpdater.colorCell(sheetId, 'tag_level_1', rowNo, 'red')
+                        }
+                        if (mapped.errors.invalidTagLevel2.length > 0) {
+                            excelUpdater.colorCell(sheetId, 'tag_level_2', rowNo, 'red')
+                        }
+                        if (mapped.errors.invalidTagLevel3.length > 0) {
+                            excelUpdater.colorCell(sheetId, 'tag_level_3', rowNo, 'red')
                         }
 
                         excelUpdater.colorCell(sheetId, 'publish', rowNo, 'lightred')

@@ -46,3 +46,16 @@ Fix db on remote:
 heroku run npm run db:down
 heroku run npm run db:up
 ``` 
+
+### Tests:
+
+1. Run `cd .jest && composer up -v`
+2. Run `npm run db:up-test`
+3. Run `npm run test` or `npx jest` (will be faster)
+
+### Restart app
+```
+heroku -a cult-hub-bot-dev scale web:0
+heroku -a cult-hub-bot-dev scale web:1
+
+```

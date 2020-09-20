@@ -14,9 +14,12 @@ initializeDbTests()
 describe('Top events', () => {
     beforeAll(async () => {
         await cleanDb()
-        await syncDatabase([getMockEvent([
-            [mskMoment('2020-01-02 15:00')]
-        ], 'theaters')])
+        await syncDatabase([getMockEvent({
+            timeIntervals: [
+                [mskMoment('2020-01-02 15:00')]
+            ],
+            category: 'theaters'
+        })])
     })
 
     test('single event', async () => {
@@ -31,9 +34,11 @@ describe('Search intervals', () => {
     describe('SINGLE_INTERVAL [restriction]', () => {
         beforeAll(async () => {
             await cleanDb()
-            await syncDatabase([getMockEvent([
-                [mskMoment('2020-01-02 15:00')]
-            ])])
+            await syncDatabase([getMockEvent({
+                timeIntervals: [
+                    [mskMoment('2020-01-02 15:00')]
+                ]
+            })])
         })
 
         test('[ SINGLE_INTERVAL ]', async () => {
@@ -58,10 +63,10 @@ describe('Search intervals', () => {
     describe('(range). [restriction]', () => {
         beforeAll(async () => {
             await cleanDb()
-            await syncDatabase([getMockEvent([[
+            await syncDatabase([getMockEvent({ timeIntervals: [[
                 mskMoment('2020-01-01 12:00'),
                 mskMoment('2020-01-01 18:00')],
-            ])])
+            ]})])
         })
 
         test('()  []', async () => {
