@@ -18,7 +18,7 @@ import { sleep } from './util/scene-helper'
 console.log(`starting bot...`);
 db.any('select 1 + 1')
 
-const quick = true;
+const quick = process.env.NODE_ENV === 'development';
 
 const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
 const stage = new Stage([])
