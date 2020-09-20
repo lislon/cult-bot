@@ -4,7 +4,7 @@ import path from 'path'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import updateLogger from 'telegraf-update-logger'
 
-const i18n = new TelegrafI18n({
+export const i18n = new TelegrafI18n({
     defaultLanguage: 'ru',
     directory: path.resolve(__dirname, 'locales'),
     useSession: false,
@@ -24,3 +24,4 @@ export default {
     rateLimit: rateLimit(limitConfig),
     logger: updateLogger({colors: true})
 }
+

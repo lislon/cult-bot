@@ -1,21 +1,24 @@
-import Telegraf, { Stage } from 'telegraf'
+import Telegraf, { Extra, Markup, Stage } from 'telegraf'
 import session from 'telegraf/session';
 import logger from './util/logger';
 import rp from 'request-promise';
 import { match } from 'telegraf-i18n';
-import { mainScene } from './scenes/main/main-scene'
+import { mainScene, mainRegisterActions } from './scenes/main/main-scene'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import dbsync from './dbsync/dbsync'
 import { db } from './db';
-import middlewares from './bot-middleware-utils'
+import middlewares, { i18n } from './middleware-utils'
 import { customizeScene } from './scenes/customize/customize-scene'
 import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
 import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
 import { WrongExcelColumnsError } from './dbsync/WrongFormatException'
+import { sleep } from './util/scene-helper'
 
 console.log(`starting bot...`);
 db.any('select 1 + 1')
+
+const quick = true;
 
 const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
 const stage = new Stage([])
@@ -28,10 +31,21 @@ bot.use(stage.middleware());
 
 
 stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene)
+mainRegisterActions(bot, i18n)
 
 
 bot.start(async (ctx: ContextMessageUpdate) => {
     console.log('bot.start')
+    const name = ctx.message.from.first_name
+    if (!quick) await sleep(500)
+    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome1', { name: name }))
+    if (!quick) await sleep(1800)
+    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome2'), { disable_notification: true })
+    if (!quick) await sleep(4000)
+    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome3'), { disable_notification: true })
+    if (!quick) await sleep(5000)
+    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome4'), { disable_notification: true })
+    await sleep(2000)
     await ctx.scene.enter('main_scene');
 });
 
@@ -42,7 +56,7 @@ bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
 })
 
 
-bot.command('/start', async (ctx: ContextMessageUpdate) => {
+bot.command('menu', async (ctx: ContextMessageUpdate) => {
     await ctx.scene.enter('main_scene');
 });
 
@@ -148,3 +162,85 @@ async function startProdMode(bot: Telegraf<ContextMessageUpdate>) {
     console.log('Webhook status', webhookStatus);
     // checkUnreleasedMovies();
 }
+
+
+// bot.command('pyramid', (ctx) => {
+//     return ctx.reply('Keyboard wrap', Extra.markup(
+//         Markup.keyboard(['one', 'two', 'three', 'four', 'five', 'six'], {
+//             wrap: (btn, index, currentRow) => currentRow.length >= (index + 1) / 2
+//         })
+//     ))
+// })
+//
+// bot.command('simple', (ctx) => {
+//     return ctx.replyWithHTML('<b>Coke</b> or <i>Pepsi?</i>', Extra.markup(
+//         Markup.keyboard(['Coke', 'Pepsi'])
+//     ))
+// })
+//
+// bot.command('inline', (ctx) => {
+//     return ctx.reply('<b>Coke</b> or <i>Pepsi?</i>', Extra.HTML().markup((m) =>
+//         m.inlineKeyboard([
+//             m.callbackButton('Coke', 'Coke'),
+//             m.callbackButton('Pepsi', 'Pepsi')
+//         ])))
+// })
+//
+// bot.command('random', (ctx) => {
+//     return ctx.reply('random example',
+//         Markup.inlineKeyboard([
+//             Markup.callbackButton('Coke', 'Coke'),
+//             Markup.callbackButton('Dr Pepper', 'Dr Pepper', Math.random() > 0.5),
+//             Markup.callbackButton('Pepsi', 'Pepsi')
+//         ]).extra()
+//     )
+// })
+//
+// bot.command('caption', (ctx) => {
+//     return ctx.replyWithPhoto({ url: 'https://picsum.photos/200/300/?random' },
+//         Extra.load({ caption: 'Caption' })
+//             .markdown()
+//             .markup((m) =>
+//                 m.inlineKeyboard([
+//                     m.callbackButton('Plain', 'plain'),
+//                     m.callbackButton('Italic', 'italic')
+//                 ])
+//             )
+//     )
+// })
+//
+// bot.hears(/\/wrap (\d+)/, (ctx) => {
+//     return ctx.reply('Keyboard wrap', Extra.markup(
+//         Markup.keyboard(['one', 'two', 'three', 'four', 'five', 'six'], {
+//             columns: parseInt(ctx.match[1])
+//         })
+//     ))
+// })
+//
+// bot.action(/.+/, (ctx) => {
+//     return ctx.answerCbQuery(`Oh, ${ctx.match[0]}! Great choice 1`)
+// })
+//
+// bot.action(/.+/, (ctx) => {
+//     return ctx.answerCbQuery(`Oh, ${ctx.match[0]}! Great choice 2`)
+// })
+//
+// bot.action('Dr Pepper', (ctx, next) => {
+//     return ctx.reply('👍').then(() => next())
+// })
+//
+// bot.action('plain', async (ctx) => {
+//     await ctx.answerCbQuery()
+//     await ctx.editMessageCaption('Caption', Markup.inlineKeyboard([
+//         Markup.callbackButton('Plain', 'plain'),
+//         Markup.callbackButton('Italic', 'italic')
+//     ]))
+// })
+//
+// bot.action('italic', async (ctx) => {
+//     await ctx.answerCbQuery()
+//     await ctx.editMessageCaption('_Caption_', Extra.markdown().markup(Markup.inlineKeyboard([
+//         Markup.callbackButton('Plain', 'plain'),
+//         Markup.callbackButton('* Italic *', 'italic')
+//     ])))
+// })

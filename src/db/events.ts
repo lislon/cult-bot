@@ -1,6 +1,6 @@
 import { Moment } from 'moment'
 import { db } from '../db'
-import { EventCategory } from '../interfaces/app-interfaces'
+import { Event, EventCategory } from '../interfaces/app-interfaces'
 
 export async function findEventsDuringRange(interval: Moment[]) {
     return await db.any('' +
@@ -16,7 +16,7 @@ export async function findEventsDuringRange(interval: Moment[]) {
         [interval[0].toDate(), interval[1].toDate()])
 }
 
-export async function findTopEventsInRange(category: EventCategory, interval: Moment[]) {
+export async function findTopEventsInRange(category: EventCategory, interval: Moment[]): Promise<Event[]> {
     return await db.any('' +
         ' SELECT cb.* ' +
         ' FROM cb_events cb ' +
@@ -32,5 +32,5 @@ export async function findTopEventsInRange(category: EventCategory, interval: Mo
         '   AND cb.category = $3' +
         '   AND cb.is_anytime = false' +
         ' ORDER BY cb.rating DESC, random() ' +
-        ' LIMIT 5', [interval[0].toDate(), interval[1].toDate(), category.toString()]);
+        ' LIMIT 3', [interval[0].toDate(), interval[1].toDate(), category.toString()]) as Event[];
 }
