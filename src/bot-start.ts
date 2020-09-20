@@ -1,15 +1,14 @@
-import Telegraf, { Extra, Markup, Stage } from 'telegraf'
+import Telegraf, { Stage } from 'telegraf'
 import session from 'telegraf/session';
 import logger from './util/logger';
 import rp from 'request-promise';
 import { match } from 'telegraf-i18n';
-import { mainScene, mainRegisterActions } from './scenes/main/main-scene'
+import { mainRegisterActions, mainScene } from './scenes/main/main-scene'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import dbsync from './dbsync/dbsync'
 import { db } from './db';
 import middlewares, { i18n } from './middleware-utils'
-import { customizeScene } from './scenes/customize/customize-scene'
-import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
+import { customizeRegisterActions, customizeScene } from './scenes/customize/customize-scene'
 import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
 import { WrongExcelColumnsError } from './dbsync/WrongFormatException'
@@ -33,6 +32,7 @@ bot.use(stage.middleware());
 
 stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene)
 mainRegisterActions(bot, i18n)
+customizeRegisterActions(bot, i18n)
 
 
 bot.start(async (ctx: ContextMessageUpdate) => {
@@ -88,8 +88,9 @@ bot.action(/.+[.]back$/, async (ctx, next) => {
 
 bot.command('version', async (ctx) => {
     const info = [
-        ['Commit:', process.env.HEROKU_SLUG_COMMIT],
-        ['Date:', `${process.env.HEROKU_RELEASE_CREATED_AT} (${moment(process.env.HEROKU_RELEASE_CREATED_AT).fromNow()}`],
+        ['Release', process.env.HEROKU_RELEASE_VERSION],
+        ['Commit', process.env.HEROKU_SLUG_COMMIT],
+        ['Date', `${process.env.HEROKU_RELEASE_CREATED_AT} (${moment(process.env.HEROKU_RELEASE_CREATED_AT).fromNow()})`],
     ]
     await ctx.replyWithHTML(info.map(row => `<b>${row[0]}</b>: ${row[1]}`).join('\n'))
 })

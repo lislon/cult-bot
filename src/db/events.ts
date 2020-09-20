@@ -1,6 +1,7 @@
 import { Moment } from 'moment'
 import { db } from '../db'
 import { Event, EventCategory } from '../interfaces/app-interfaces'
+import { TagCategory } from '../interfaces/db-interfaces'
 
 export async function findEventsDuringRange(interval: Moment[]) {
     return await db.any('' +
@@ -33,4 +34,20 @@ export async function findTopEventsInRange(category: EventCategory, interval: Mo
         '   AND cb.is_anytime = false' +
         ' ORDER BY cb.rating DESC, random() ' +
         ' LIMIT 3', [interval[0].toDate(), interval[1].toDate(), category.toString()]) as Event[];
+}
+
+async function laodTags(cat: TagCategory) {
+    return await db.map('' +
+        ' SELECT t.name ' +
+        ' FROM cb_tags t' +
+        ' WHERE t.category = $1' +
+        ' ORDER BY t.name', [cat], (row) => row.name) as string[];
+}
+
+export async function loadAllCennosti(): Promise<string[]> {
+    return await laodTags('tag_level_2')
+}
+
+export async function loadAllOblasti(): Promise<string[]> {
+    return await laodTags('tag_level_1')
 }

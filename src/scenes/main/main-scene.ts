@@ -182,58 +182,6 @@ scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpda
     await ctx.scene.reenter()
 });
 
-// declare class MyScene extends BaseScene<ContextMessageUpdate> {
-//     constructor(id: EventCategory);
-// }
-//
-// const scenes: MyScene[] = [
-//     new BaseScene<ContextMessageUpdate>('theaters'),
-//     new BaseScene<ContextMessageUpdate>('exhibitions'),
-//     new BaseScene<ContextMessageUpdate>('movies'),
-//     new BaseScene<ContextMessageUpdate>('events'),
-//     new BaseScene<ContextMessageUpdate>('walks'),
-//     new BaseScene<ContextMessageUpdate>('concerts'),
-// ]
-//
-// scenes.forEach((scene: MyScene)  => {
-//
-//     scene.enter(async (ctx: ContextMessageUpdate) => {
-//         const {backKeyboard} = getBackKeyboard(ctx);
-//
-//         const {range, events} = await getTopEvents(scene.id as EventCategory)
-//
-//         for (const event of events) {
-//             await ctx.replyWithHTML(cardFormat(event), { disable_web_page_preview: true });
-//         }
-//
-//         if (events.length == 0) {
-//             await ctx.reply(ctx.i18n.t('scenes.list.nothing_found_in_interval', {
-//                 from: range[0].locale('ru').format('DD.MM HH:mm'),
-//                 to: range[1].locale('ru').subtract('1', 'second').format('DD.MM HH:mm')
-//             }), backKeyboard);
-//         } else {
-//             await ctx.reply(ctx.i18n.t('scenes.list.welcome_to_list'), backKeyboard);
-//         }
-//
-//     });
-//
-//     scene.leave(async (ctx: ContextMessageUpdate) => {
-//         logger.debug(ctx, 'Leaves list scene');
-//
-//         const {mainKeyboard} = getMainKeyboard(ctx);
-//
-//         await ctx.reply(ctx.i18n.t('shared.what_next'), mainKeyboard );
-//     });
-//
-//     scene.command('start', Stage.leave());
-//     scene.hears(match('keyboards.back_keyboard.back'), Stage.leave());
-// });
-//
-// export default scenes;
-// for (const cat of allCategories) {
-//     bot.action(cat, asyncWrapper(async (ctx: ContextMessageUpdate) => await ctx.scene.enter(cat)));
-// }
-
 function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
     for (const cat of allCategories) {
 
@@ -243,11 +191,10 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             await showEvents(ctx, cat as EventCategory)
         });
 
-        // bot.action(actionName(cat), async (ctx: ContextMessageUpdate) => {
-        //     prepareSessionStateIfNeeded(ctx)
-        //     await ctx.answerCbQuery()
-        //     await showEvents(ctx, cat as EventCategory)
-        // });
+
+        bot.hears(i18n.t(`ru`, `scenes.main_scene.keyboard.customize`), async (ctx: ContextMessageUpdate) => {
+            await ctx.scene.enter('customize_scene')
+        });
     }
 }
 

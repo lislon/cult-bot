@@ -3,7 +3,7 @@ import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 
 export function backButtonRegister(scene: BaseScene<ContextMessageUpdate>) {
     console.log(`backButtonRegister(${scene.id})`)
-    const backAction = scene.id + '.back'
+    const backAction = scene.id + 'button..back'
 
     // scene.action(backAction, async (ctx: ContextMessageUpdate) => {
     //     console.log('backButtonRegister works!: ' + backAction )
@@ -39,7 +39,7 @@ export function backButtonRegister(scene: BaseScene<ContextMessageUpdate>) {
     }
 
     return {
-        backButton: (ctx: ContextMessageUpdate) => Markup.callbackButton(ctx.i18n.t('shared.back'), backAction),
+        backButton: (ctx: ContextMessageUpdate) => Markup.callbackButton(ctx.i18n.t('shared.keyboard.back'), backAction),
         actionName,
         pushEnterScene,
         sceneHelper: (ctx: ContextMessageUpdate) => {
