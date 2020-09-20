@@ -14,6 +14,7 @@ import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
 import { WrongExcelColumnsError } from './dbsync/WrongFormatException'
 import { sleep } from './util/scene-helper'
+import moment = require('moment')
 
 console.log(`starting bot...`);
 db.any('select 1 + 1')
@@ -83,6 +84,14 @@ bot.hears(match('keyboards.back_keyboard.back'), async (ctx) => {
 bot.action(/.+[.]back$/, async (ctx, next) => {
     console.log('Аварийный выход');
     await ctx.scene.enter('main_scene');
+})
+
+bot.command('version', async (ctx) => {
+    const info = [
+        ['Commit:', process.env.HEROKU_SLUG_COMMIT],
+        ['Date:', `${process.env.HEROKU_RELEASE_CREATED_AT} (${moment(process.env.HEROKU_RELEASE_CREATED_AT).fromNow()}`],
+    ]
+    await ctx.replyWithHTML(info.map(row => `<b>${row[0]}</b>: ${row[1]}`).join('\n'))
 })
 
 bot.command('sync', async (ctx) => {
