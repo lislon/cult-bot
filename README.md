@@ -19,12 +19,20 @@ Show all env vars:
 heroku config -a <app name>
 ```
 
-### Add new heroku env:
+### New app :
 ```
 heroku create <app name>
 heroku addons:create -a <app name> heroku-postgresql:hobby-dev
 heroku pg:credentials:url -a <app name> DATABASE
 heroku labs:enable runtime-dyno-metadata -a <app name>
+```
+
+Configure ENV:
+```
+GOOGLE_DOCS_ID = ??
+TELEGRAM_TOKEN = ??
+NODE_ENV = production
+WEBHOOK_PORT = 443
 ```
 
 ### Backup

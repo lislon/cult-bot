@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX cb_events_category_idx ON cb_events (category,title);
