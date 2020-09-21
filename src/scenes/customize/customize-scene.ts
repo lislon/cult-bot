@@ -3,6 +3,7 @@ import { allCategories, ContextMessageUpdate, EventCategory } from '../../interf
 import { backButtonRegister } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { loadAllCennosti, loadAllOblasti } from '../../db/events'
+import { i18n } from '../../middleware-utils'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
@@ -70,7 +71,10 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
 
 }
 
-
+scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
+    console.log('customize-scene-back')
+    await ctx.scene.enter('customize_scene')
+});
 
 
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
@@ -86,6 +90,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
 scene.enter(async (ctx: ContextMessageUpdate) => {
     prepareSessionStateIfNeeded(ctx)
+    console.log('enter customize-scene')
 
     const {msg, markup} = content(ctx)
     ctx.session.customize.messageId = (await ctx.replyWithMarkdown(msg, markup)).message_id
