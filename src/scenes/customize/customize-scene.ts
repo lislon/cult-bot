@@ -1,9 +1,8 @@
-import Telegraf, { BaseScene, Composer, Extra, Markup } from 'telegraf'
-import { allCategories, ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
+import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
+import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { backButtonRegister } from '../../util/scene-helper'
-import TelegrafI18n from "telegraf-i18n"
+import TelegrafI18n from 'telegraf-i18n'
 import { loadAllCennosti, loadAllOblasti } from '../../db/events'
-import { createHash } from 'crypto'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
