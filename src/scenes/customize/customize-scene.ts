@@ -1,5 +1,5 @@
-import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
-import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
+import Telegraf, { BaseScene, Composer, Extra, Markup } from 'telegraf'
+import { allCategories, ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
 import { backButtonRegister } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { loadAllCennosti, loadAllOblasti } from '../../db/events'
@@ -42,9 +42,11 @@ const content = (ctx: ContextMessageUpdate) => {
 }
 
 function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
-    bot.hears(i18n.t(`ru`, `scenes.customize_scene.keyboard.oblasti`), async (ctx: ContextMessageUpdate) => {
+    bot.hears(i18n.t(`ru`, `scenes.customize_scene.keyboard.oblasti`, {}), async (ctx: ContextMessageUpdate) => {
+        // please_select_cennosti
         await prepareSessionStateIfNeeded(ctx)
         const strings = await loadAllOblasti()
+        strings.push(i18n.t(`ru`, 'shared.keyboard.back', {}))
 
         const keyboard = Markup.keyboard(strings, {
              columns: 2
@@ -56,6 +58,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
     bot.hears(i18n.t(`ru`, `scenes.customize_scene.keyboard.cennosti`), async (ctx: ContextMessageUpdate) => {
         await prepareSessionStateIfNeeded(ctx)
         const strings = await loadAllCennosti()
+        strings.push(i18n.t(`ru`, 'shared.keyboard.back', {}))
 
         const keyboard = Markup.keyboard(strings, {
             columns: 2
