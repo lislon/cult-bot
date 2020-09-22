@@ -39,8 +39,8 @@ class ExcelUpdater {
         this.requests.push(clearFormat(sheetId, {
             startColumnIndex: getColumnIndex(column) - 1,
             endColumnIndex: getColumnIndex(column),
-            startRowIndex: EXCEL_HEADER_SKIP_ROWS,
-            endRowIndex: EXCEL_HEADER_SKIP_ROWS + numOfRows
+            startRowIndex: 1,
+            endRowIndex: 1 + numOfRows
         }))
     }
 
