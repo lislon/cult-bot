@@ -24,23 +24,29 @@ export function initializeDbTests() {
 }
 
 export interface MockEvent {
+    title: string,
     timeIntervals: MomentIntervals
     category: EventCategory
     tag_level_1: string
+    rating: number
+    anytime: boolean
 }
 
 export function getMockEvent(
     {
         timeIntervals = [],
+        title = 'Event title',
         category = 'theaters',
-        tag_level_1 = ''
+        tag_level_1 = '',
+        rating = 5,
+        anytime = false
     }: Partial<MockEvent> = {}
 ): EventToSave {
     const event = {
         category: category,
         publish: '',
         subcategory: '',
-        title: 'Фейк',
+        title: title,
         place: '',
         address: '',
         timetable: 'пн-вт: 15:00-18:00',
@@ -52,13 +58,15 @@ export function getMockEvent(
         tag_level_1: tag_level_1,
         tag_level_2: '',
         tag_level_3: '',
-        rating: 5,
+        rating: rating,
         reviewer: '',
         geotag: ''
     }
     return {
         primaryData: event,
-        timetable: {},
+        timetable: {
+            anytime: anytime
+        },
         timeIntervals: timeIntervals,
         tags: listAllEventTags(event)
     }
