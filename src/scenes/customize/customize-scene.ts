@@ -21,7 +21,7 @@ const content = (ctx: ContextMessageUpdate) => {
         '<i>...тут надо придумать что писать...</i>',
         '',
         `<b>Время</b>: `,
-        `  - в субботу ${ctx.session.customize.hoursFrom}-${ctx.session.customize.hoursTo}`,
+        `  - в субботу ?`,
         `  - в воскресенье: 12-18`,
         '',
         '<b>Ценности</b>: #комфорт #новыеформы  #доступноподеньгам #влюбоевремя',
@@ -80,10 +80,12 @@ scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpda
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     if (ctx.session.customize === undefined) {
         ctx.session.customize = {
-            hoursFrom: '12:00',
-            hoursTo: '18:00',
-            hour: 12,
-            nothingNum: 0
+            time: {
+                weekdays: {
+                    '6': [],
+                    '7': []
+                }
+            }
         }
     }
 }
@@ -93,22 +95,22 @@ scene.enter(async (ctx: ContextMessageUpdate) => {
     console.log('enter customize-scene')
 
     const {msg, markup} = content(ctx)
-    ctx.session.customize.messageId = (await ctx.replyWithMarkdown(msg, markup)).message_id
+    // ctx.session.customize.messageId = (await ctx.replyWithMarkdown(msg, markup)).message_id
 })
 
 async function nothing(ctx: ContextMessageUpdate) {
 
-    switch (ctx.session.customize.nothingNum++) {
-        case 0:
-            await ctx.reply('Пока тут ничего нет :(')
-            break
-        case 1:
-            await ctx.reply('И тут тоже :(')
-            break
-        default:
-            await ctx.reply('И тут :(')
-            break
-    }
+    // switch (ctx.session.customize.nothingNum++) {
+    //     case 0:
+    //         await ctx.reply('Пока тут ничего нет :(')
+    //         break
+    //     case 1:
+    //         await ctx.reply('И тут тоже :(')
+    //         break
+    //     default:
+    //         await ctx.reply('И тут :(')
+    //         break
+    // }
 }
 
 scene.action(actionName('oblasti'), nothing)
@@ -120,9 +122,15 @@ export {
 }
 
 export interface CustomizeSceneState {
-    hoursFrom: string,
-    hoursTo: string,
-    messageId?: number,
-    hour: number,
-    nothingNum: number
+    time: CustomizeSceneTimeState
 }
+
+export interface CustomizeSceneTimeState {
+    weekdays: WeekDayTimeSlot
+}
+export type WeekDayTimeSlot = {
+    ['6']?: string[]
+    ['7']?: string[]
+}
+
+export type Slot = '12:00-13:00' | '13:00-14:00'

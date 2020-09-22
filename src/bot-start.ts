@@ -1,5 +1,4 @@
 import Telegraf, { Stage } from 'telegraf'
-import session from 'telegraf/session';
 import logger from './util/logger';
 import rp from 'request-promise';
 import { match } from 'telegraf-i18n';
@@ -15,6 +14,7 @@ import { WrongExcelColumnsError } from './dbsync/WrongFormatException'
 import { sleep } from './util/scene-helper'
 import moment = require('moment')
 
+
 console.log(`starting bot...`);
 db.any('select 1 + 1')
 
@@ -25,7 +25,7 @@ const stage = new Stage([])
 
 bot.use(middlewares.rateLimit)
 bot.use(middlewares.logger)
-bot.use(session());
+bot.use(middlewares.session);
 bot.use(middlewares.i18n);
 bot.use(stage.middleware());
 
