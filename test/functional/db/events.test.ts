@@ -69,7 +69,7 @@ describe('Top events', () => {
         )
         const range = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-01 23:59')]
         const events = await findTopEventsInRange('theaters', range)
-        expect(events.map(e => e.title)).toEqual(['AUX', 'PRIMARY'])
+        expect(events.map(e => e.title)).toEqual(['PRIMARY', 'AUX'])
     })
 
     test('sorting is done by rating', async () => {

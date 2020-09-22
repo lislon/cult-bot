@@ -60,7 +60,7 @@ export async function findTopEventsInRange(category: EventCategory, interval: Mo
         ' LIMIT $4'
 
     const finalQuery = `` +
-    ` (${primaryEvents}) UNION ALL (${secondaryEvents}) ORDER BY title LIMIT $4`
+    ` (${primaryEvents}) UNION ALL (${secondaryEvents}) LIMIT $4`
 
     return await db.any(finalQuery,
         [
