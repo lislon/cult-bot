@@ -107,11 +107,14 @@ class Menu {
 
 }
 
+const chidrensMenus = ['#сдетьми0+', '#сдетьми4+', '#сдетьми12+', '#сдетьми16+']
+
 function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
     const menu = new Menu(ctx, state.interests, state.uiMenuState)
 
+
     const buttons = [
-        ...(menu.dropDownButtons('дети', ['#сдетьми0+', '#сдетьми4+', '#сдетьми12+', '#сдетьми16+'])),
+        ...(menu.dropDownButtons('дети', chidrensMenus)),
         [menu.button('#комфорт')],
         [menu.button('#компанией')],
         [menu.button('#ЗОЖ')],
@@ -190,9 +193,13 @@ scene
     })
     .action(/customize_scene[.]select_(.+)/, async (ctx: ContextMessageUpdate) => {
         const selected = ctx.match[1]
+
         if (ctx.session.customize.interests.includes(selected)) {
             ctx.session.customize.interests = ctx.session.customize.interests.filter(s => s !== selected)
         } else {
+            if (chidrensMenus.includes(selected)) {
+                ctx.session.customize.interests = ctx.session.customize.interests.filter(s => !chidrensMenus.includes(s))
+            }
             ctx.session.customize.interests.push(selected)
         }
         await ctx.editMessageReplyMarkup(getKeyboard(ctx, ctx.session.customize))
