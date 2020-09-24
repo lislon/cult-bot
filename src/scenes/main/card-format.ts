@@ -9,6 +9,8 @@ function escapeWithUrls(text: string) {
 export function cardFormat(row: Event) {
 
     let text = ``;
+    text += `<b>${escapeHTML(row.tag_level_1)}</b>\n`
+    text += '\n'
     text += `<b>${escapeWithUrls(row.title)}</b>\n`
     text += '\n'
     text += `${escapeWithUrls(row.description)} \n`

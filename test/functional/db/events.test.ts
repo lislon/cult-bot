@@ -1,6 +1,6 @@
 import { mskMoment } from '../../../src/util/moment-msk'
 import { findEventsDuringRange, findTopEventsInRange } from '../../../src/db/events'
-import { cleanDb, getMockEvent, initializeDbTests } from './db-test-utils'
+import { cleanDb, freshDb, getMockEvent, initializeDbTests } from './db-test-utils'
 import { syncDatabase } from '../../../src/db/sync'
 
 async function expectResults(number: number, [from, to]: string[]) {
@@ -9,12 +9,11 @@ async function expectResults(number: number, [from, to]: string[]) {
     expect(findEventsDuringRange1.length).toEqual(number)
 }
 
+
 initializeDbTests()
 
 describe('Top events', () => {
-    beforeEach(async () => {
-        await cleanDb()
-    })
+    freshDb()
 
     test('single event', async () => {
         await syncDatabase([getMockEvent({
@@ -77,21 +76,21 @@ describe('Top events', () => {
             [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-01 20:00')]
         ]
         await syncDatabase([
-            getMockEvent({
-                title: '1. NOT SO GOOD',
-                timeIntervals: timeIntervals,
-                rating: 1
-            }),
-            getMockEvent({
-                title: '2. BEST',
-                timeIntervals: timeIntervals,
-                rating: 19
-            }),
-            getMockEvent({
-                title: '3. BETTER',
-                timeIntervals: timeIntervals,
-                rating: 10
-            })
+                getMockEvent({
+                    title: '1. NOT SO GOOD',
+                    timeIntervals: timeIntervals,
+                    rating: 1
+                }),
+                getMockEvent({
+                    title: '2. BEST',
+                    timeIntervals: timeIntervals,
+                    rating: 19
+                }),
+                getMockEvent({
+                    title: '3. BETTER',
+                    timeIntervals: timeIntervals,
+                    rating: 10
+                })
             ]
         )
         const range = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-01 23:59')]
@@ -101,6 +100,8 @@ describe('Top events', () => {
 })
 
 describe('Search intervals', () => {
+
+    freshDb()
 
     describe('SINGLE_INTERVAL [restriction]', () => {
         beforeAll(async () => {

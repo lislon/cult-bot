@@ -11,6 +11,12 @@ export async function cleanDb() {
 }
 
 export function initializeDbTests() {
+    afterAll(async () => {
+        pgp.end()
+    })
+}
+
+export function freshDb() {
     beforeAll(async () => {
         expect(dbCfg.connectionString).toContain('test')
         await db.query('BEGIN')
@@ -19,7 +25,6 @@ export function initializeDbTests() {
 
     afterAll(async () => {
         await db.query('COMMIT')
-        pgp.end()
     })
 }
 

@@ -12,8 +12,8 @@ import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
 import { WrongExcelColumnsError } from './dbsync/WrongFormatException'
 import { sleep } from './util/scene-helper'
-import moment = require('moment')
-
+import 'source-map-support/register'
+import moment from 'moment'
 
 console.log(`starting bot...`);
 db.any('select 1 + 1')
@@ -21,14 +21,16 @@ db.any('select 1 + 1')
 const quick = process.env.NODE_ENV === 'development';
 
 const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
-const stage = new Stage([])
+const stage = new Stage([], {
+    default: 'main_scene'
+})
+
 
 bot.use(middlewares.rateLimit)
 bot.use(middlewares.logger)
 bot.use(middlewares.session);
 bot.use(middlewares.i18n);
 bot.use(stage.middleware());
-
 
 stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene)
 mainRegisterActions(bot, i18n)
@@ -61,16 +63,22 @@ bot.command('menu', async (ctx: ContextMessageUpdate) => {
     await ctx.scene.enter('main_scene');
 });
 
-
 bot.start((ctx) => ctx.reply('Welcome!'))
 bot.help((ctx) => ctx.reply('Send me a sticker'))
 bot.on('sticker', (ctx) => ctx.reply('👍'))
 bot.hears('hi', (ctx) => ctx.reply('Hey there'))
 
-bot.hears(match('keyboards.back_keyboard.back'), async (ctx) => {
-    console.log('keyboards.back_keyboard.back')
-    await ctx.scene.enter('main_scene');
-});
+i18n.resourceKeys('ru')
+    .filter(id => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.].*back/))
+    .forEach(id => {
+        bot.hears(match(id), async (ctx) => {
+            console.log('main catch', id)
+            await ctx.scene.enter('main_scene');
+        });
+    })
+
+
+
 // bot.command('back', async (ctx) => {
 //     console.log('bot.command(\'back\',')
 //     await ctx.scene.enter('main_scene');

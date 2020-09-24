@@ -1,15 +1,13 @@
-import { db, dbCfg } from '../../../src/db'
+import { db } from '../../../src/db'
 import { mskMoment } from '../../../src/util/moment-msk'
-import { cleanDb, getMockEvent, initializeDbTests } from './db-test-utils'
+import { freshDb, getMockEvent, initializeDbTests } from './db-test-utils'
 import { syncDatabase } from '../../../src/db/sync'
 
 initializeDbTests()
 
 describe('db sync test', () => {
 
-    beforeEach(async () => {
-        await cleanDb()
-    })
+    freshDb()
 
     test('sync should save intervals', async () => {
             await syncDatabase([getMockEvent({

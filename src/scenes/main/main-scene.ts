@@ -62,6 +62,12 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         }
     }
 }
+//
+// scene.hears('g', async (ctx: ContextMessageUpdate) => {
+//     await prepareSessionStateIfNeeded(ctx)
+//     ctx.session.mainScene.gcMessages.push(ctx.session.mainScene.gcMessages.length)
+//     await ctx.replyWithMarkdown('x ' + ctx.session.mainScene.gcMessages)
+// })
 
 scene.enter(async (ctx: ContextMessageUpdate) => {
     console.log('enter scene main_scene')
@@ -81,7 +87,7 @@ async function cleanOldMessages(ctx: ContextMessageUpdate) {
     // for (const messageId of ctx.session.mainScene.gcMessages) {
     //     await ctx.deleteMessage(messageId)
     // }
-    ctx.session.mainScene.gcMessages.length = 0
+    // ctx.session.mainScene.gcMessages.length = 0
     // if (ctx.session.mainScene.messageId !== undefined) {
     //     await ctx.deleteMessage(ctx.session.mainScene.messageId)
     //     ctx.session.mainScene.messageId = undefined
@@ -102,24 +108,9 @@ function interavalTemplateParams(range: [Moment, Moment]) {
 async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
     const {i18Btn, i18Msg} = sceneHelper(ctx)
     const {range, events} = await getTopEvents(cat)
-    const gcMessages = ctx.session.mainScene.gcMessages
+    // const gcMessages = ctx.session.mainScene.gcMessages
     const { msg, markupMainMenu} = content(ctx)
     const intervalTemplateParams = interavalTemplateParams(range)
-
-    // ctx.replyWithMarkdown('BIG', markupMainMenu)
-    // await sleep(2000)
-    // ctx.replyWithMarkdown('SMALL', Extra.HTML(true).markup(backMarkup(ctx)))
-    // await sleep(2000)
-    // ctx.replyWithMarkdown('BIG', markupMainMenu)
-    // await sleep(2000)
-    // await ctx.reply(i18Msg('nothing_found_in_interval', intervalTemplateParams),
-    //     Extra.HTML(true).markup(backMarkup(ctx))
-    // )
-    // await sleep(2000)
-    // ctx.replyWithMarkdown('SMALL', Extra.HTML(true).markup(backMarkup(ctx)))
-    // await sleep(2000)
-
-
 
     // await cleanOldMessages(ctx)
     await sleep(500)
@@ -128,9 +119,9 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
             cat: i18Msg(`keyboard.${cat}`)
         }
         if (isWeekendsNow(range)) {
-            gcMessages.push((await ctx.replyWithHTML(i18Msg('let_me_show_this_weekend', tplData), {
+            await ctx.replyWithHTML(i18Msg('let_me_show_this_weekend', tplData), {
                 reply_markup: markupMainMenu.reply_markup
-            })).message_id)
+            })
         } else {
             let humanDateRange = ''
             if (range[0].month() === range[1].month()) {
@@ -139,7 +130,7 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
                 humanDateRange = range[0].locale('ru').format('DD MMMM') + '-' + range[1].locale('ru').format('DD MMMM')
             }
 
-            gcMessages.push((await ctx.replyWithHTML(i18Msg('let_me_show_next_weekend', {humanDateRange, ...tplData}))).message_id)
+            await ctx.replyWithHTML(i18Msg('let_me_show_next_weekend', {humanDateRange, ...tplData}))
         }
 
         await sleep(1500)
@@ -149,11 +140,10 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
     let count = 0
     for (const event of events) {
 
-        const msgId = (await ctx.replyWithHTML(cardFormat(event), {
+        await ctx.replyWithHTML(cardFormat(event), {
             disable_web_page_preview: true,
             reply_markup: (++count == events.length ? backMarkup(ctx) : undefined)
-        })).message_id;
-        gcMessages.push(msgId)
+        })
 
         if (sortedByRating.length > 0 && sortedByRating[0] === event) {
             await sleep(300)
@@ -179,7 +169,7 @@ scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpda
     // ctx.replyWithMarkdown('BIG', markupMainMenu)
     // await sleep(2000)
     await cleanOldMessages(ctx)
-    await ctx.scene.reenter()
+    await ctx.scene.enter('main_scene')
 });
 
 function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
@@ -202,3 +192,61 @@ export {
     scene as mainScene,
     registerActions as mainRegisterActions
 }
+
+
+
+// function getKeybaord(menuOpen: boolean) {
+//     const buttons = [
+//         [Markup.callbackButton( (menuOpen ? '➖ ' : '➕ ') + 'дети ✔ '  + '', 'deti')],
+//         true ? [
+//             Markup.callbackButton('0+ ✔', 'data', !menuOpen),
+//             Markup.callbackButton('4+ ✔ ', 'data', !menuOpen),
+//             Markup.callbackButton('12+', 'data', !menuOpen),
+//             Markup.callbackButton('18+', 'data', !menuOpen),
+//         ] : [],
+//         [Markup.callbackButton('        комфорт ✔️', 'data')],
+//         [Markup.callbackButton('     доступно по деньгам  ✔️', 'data')],
+//         [Markup.callbackButton('эксперимент  ✔️', 'data')],
+//         [Markup.callbackButton('      на почувствовать ✔️', 'data')],
+//         [Markup.callbackButton('в любое время ✔️', 'data')],
+//         [Markup.callbackButton('новые формы ✔️', 'data')],
+//         [Markup.callbackButton('для подготовленных ✔️', 'data')],
+//         [Markup.callbackButton('на воздухе ✔️', 'data')],
+//         [Markup.callbackButton('премьера ✔️', 'data')],
+//         [Markup.callbackButton('доступноподеньгам ✔️', 'data')],
+//         [Markup.callbackButton('ЗОЖ ✔️', 'data')],
+//     ];
+//     return buttons
+// }
+
+// function getKeybaord(menuOpen: boolean) {
+//     const buttons = [
+//         [Markup.callbackButton((menuOpen ? '➖ ' : '➕ ') + 'дети ✔ ' + '', 'deti')],
+//
+//         [
+//             Markup.callbackButton('драматическийтеатр', 'data', !menuOpen),
+//             Markup.callbackButton('танец', 'data', !menuOpen)
+//         ],
+//         [
+//             Markup.callbackButton('эксперимент', 'data', !menuOpen),
+//             Markup.callbackButton('опера', 'data', !menuOpen)
+//         ],
+//         [
+//             Markup.callbackButton('мюзикл', 'data', !menuOpen),
+//             Markup.callbackButton('фестиваль', 'data', !menuOpen)
+//         ],
+//         //
+//         // [Markup.callbackButton((menuOpen ? '➖ ' : '➕ ') + 'кино ✔ ' + '', 'ф')],
+//         // [Markup.callbackButton('художественное', 'data'),
+//         //     Markup.callbackButton('документальное', 'data')],
+//         // [Markup.callbackButton('анимация', 'data'),
+//         //     Markup.callbackButton('короткийметр', 'data')],
+//
+//         [Markup.callbackButton((false ? '➖ ' : '➕ ') + 'выставки ✔ ' + '', 'a')],
+//         [Markup.callbackButton((false ? '➖ ' : '➕ ') + 'прогулки ✔ ' + '', 'b')],
+//         [Markup.callbackButton((false ? '➖ ' : '➕ ') + 'прогулки ✔ ' + '', 'c')],
+//         [Markup.callbackButton('', 'data')],
+//
+//     ];
+//     return buttons
+// }

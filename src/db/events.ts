@@ -79,7 +79,7 @@ async function loadTags(cat: TagCategory) {
         ' ORDER BY t.name', [cat], (row) => row.name) as string[];
 }
 
-export async function loadAllCennosti(): Promise<string[]> {
+export async function loadAllPriorities(): Promise<string[]> {
     return await loadTags('tag_level_2')
 }
 

@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node dist/bot-start.js",
     "build": "tsc && npm run lint",
-    "dev": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"tsc -w\" \"nodemon --inspect\"",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"tsc -w\" \"nodemon -r source-map-support/register --inspect\"",
     "dev-no-restart": "tsc && nodemon --inspect",
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "test": "jest",
@@ -31,10 +31,11 @@
     "pg-promise": "^10.6.0",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
+    "slonik": "^22.5.0",
+    "source-map-support": "^0.5.19",
     "telegraf": "^3.38.0",
     "telegraf-i18n": "^6.6.0",
     "telegraf-ratelimit": "^2.0.0",
-    "telegraf-session-redis": "^5.1.0",
     "telegraf-update-logger": "^1.2.0",
     "winston": "^3.3.3",
     "xstate": "^4.13.0"

@@ -6,14 +6,14 @@ import updateLogger from 'telegraf-update-logger'
 import session from 'telegraf/session';
 
 const Telegraf = require('telegraf')
-const RedisSession = require('telegraf-session-redis')
-
-const reddisSession = new RedisSession({
-    store: {
-        host: process.env.REGIS_HOST || '127.0.0.1',
-        port: process.env.REGIS_PORT || 6379
-    }
-})
+// const RedisSession = require('telegraf-session-redis')
+//
+// const reddisSession = new RedisSession({
+//     store: {
+//         host: process.env.REDIS_HOST || '127.0.0.1',
+//         port: process.env.REDIS_PORT || 6379
+//     }
+// })
 
 
 export const i18n = new TelegrafI18n({
@@ -35,6 +35,6 @@ export default {
     i18n: i18n.middleware(),
     rateLimit: rateLimit(limitConfig),
     logger: updateLogger({colors: true}),
-    session: reddisSession
+    session: session()
 }
 
