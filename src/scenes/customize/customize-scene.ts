@@ -114,17 +114,16 @@ function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
 
 
     const buttons = [
-        ...(menu.dropDownButtons('дети', chidrensMenus)),
         [menu.button('#комфорт')],
+        [menu.button('#премьера')],
+        [menu.button('#навоздухе')],
         [menu.button('#компанией')],
         [menu.button('#ЗОЖ')],
-        [menu.button('#комфорт')],
         [menu.button('#новыеформы')],
         [menu.button('#успетьзачас')],
-        [menu.button('#навоздухе')],
-        [menu.button('#премьера')],
         [menu.button('#культурныйбазис')],
-        ...(menu.dropDownButtons('стоимость', ['#доступноподеньгам', '#бесплатно']))
+        ...(menu.dropDownButtons('стоимость', ['#доступноподеньгам', '#бесплатно'])),
+        ...(menu.dropDownButtons('с детьми', chidrensMenus))
     ]
     return Markup.inlineKeyboard(buttons)
 }
