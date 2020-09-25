@@ -98,9 +98,10 @@ class Menu {
 
         const isAnySubmenuSelected = submenus.find(tag => this.selected.includes(tag)) !== undefined;
 
-        const isOpen = this.uiMenusState.get(i18Btn(`${this.section}.menu_${title}`))
+        const menuTitle = i18Btn(`${this.section}.${title}`)
+        const isOpen = this.uiMenusState.get(title)
         return [
-            [Markup.callbackButton((isOpen ? '➖ ' : '➕ ') + title + putCheckbox(isAnySubmenuSelected), actionName(`menu_${title}`))],
+            [Markup.callbackButton((isOpen ? '➖ ' : '➕ ') + menuTitle + putCheckbox(isAnySubmenuSelected), actionName(`${title}`))],
             [...submenus.map(tag => this.button(tag, !isOpen))]
         ]
     }
@@ -122,8 +123,8 @@ function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
         [menu.button('#новыеформы')],
         [menu.button('#успетьзачас')],
         [menu.button('#культурныйбазис')],
-        ...(menu.dropDownButtons('стоимость', ['#доступноподеньгам', '#бесплатно'])),
-        ...(menu.dropDownButtons('с детьми', chidrensMenus))
+        ...(menu.dropDownButtons('menu_стоимость', ['#доступноподеньгам', '#бесплатно'])),
+        ...(menu.dropDownButtons('menu_childrens', chidrensMenus))
     ]
     return Markup.inlineKeyboard(buttons)
 }
@@ -184,7 +185,7 @@ scene
     })
     .action(actionName('oblasti'), nothing)
     .action(actionName('priorities'), nothing)
-    .action(/customize_scene[.]menu_(.+)/, async (ctx: ContextMessageUpdate) => {
+    .action(/customize_scene[.](menu_.+)/, async (ctx: ContextMessageUpdate) => {
         const menuState = ctx.session.customize.uiMenuState
         menuState.set(ctx.match[1], !menuState.get(ctx.match[1]))
 
