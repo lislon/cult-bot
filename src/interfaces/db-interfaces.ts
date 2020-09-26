@@ -13,9 +13,9 @@ export interface DbEvent {
     notes: string
     description: string
     url: string
-    tag_level_1: string
-    tag_level_2: string
-    tag_level_3: string
+    tag_level_1: string[]
+    tag_level_2: string[]
+    tag_level_3: string[]
     rating: number
     reviewer: string
     is_anytime: boolean
@@ -25,7 +25,6 @@ export interface EventToSave {
     primaryData: Event
     timetable: EventTimetable
     timeIntervals: MomentIntervals
-    tags: Tag[]
 }
 
 export type TagCategory = 'tag_level_1' | 'tag_level_2' | 'tag_level_3'

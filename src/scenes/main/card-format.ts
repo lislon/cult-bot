@@ -9,7 +9,7 @@ function escapeWithUrls(text: string) {
 export function cardFormat(row: Event) {
 
     let text = ``;
-    text += `<b>${escapeHTML(row.tag_level_1)}</b>\n`
+    text += `<b>${escapeHTML(row.tag_level_1.join(' '))}</b>\n`
     text += '\n'
     text += `<b>${escapeWithUrls(row.title)}</b>\n`
     text += '\n'
@@ -31,7 +31,7 @@ export function cardFormat(row: Event) {
     text += '\n'
     text += `<a href="${escapeHTML(row.url)}">${escapeHTML(row.url)}</a>\n`
     text += '\n'
-    text += `${escapeHTML(row.tag_level_3)}\n`
+    text += `${escapeHTML(row.tag_level_3.join(' '))}\n`
 
     return text;
 }

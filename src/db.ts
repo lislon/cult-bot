@@ -3,7 +3,11 @@ import { config } from 'dotenv'
 
 config();
 
-const pgp = pg_promise({})
+const pgp = pg_promise({
+    // query(e) {
+    //     console.log(e.query);
+    // }
+})
 
 const dbCfg = {
     connectionString: process.env.DATABASE_URL,

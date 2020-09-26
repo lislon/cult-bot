@@ -1,13 +1,11 @@
 import { db, dbCfg, pgp } from '../../../src/db'
 import { MomentIntervals } from '../../../src/lib/timetable/intervals'
-import { EventCategory } from '../../../src/interfaces/app-interfaces'
+import { Event, EventCategory, TagLevel2 } from '../../../src/interfaces/app-interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
-import { listAllEventTags } from '../../../src/dbsync/parseSheetRow'
 
 
 export async function cleanDb() {
     await db.none('DELETE FROM cb_events')
-    await db.none('DELETE FROM cb_tags')
 }
 
 export function initializeDbTests() {
@@ -28,26 +26,29 @@ export function freshDb() {
     })
 }
 
+
 export interface MockEvent {
     title: string,
-    timeIntervals: MomentIntervals
+    eventTime: MomentIntervals
     category: EventCategory
-    tag_level_1: string
+    tag_level_1: string[]
+    tag_level_2: TagLevel2[]
     rating: number
     anytime: boolean
 }
 
 export function getMockEvent(
     {
-        timeIntervals = [],
+        eventTime = [],
         title = 'Event title',
         category = 'theaters',
-        tag_level_1 = '',
+        tag_level_1 = [],
+        tag_level_2 = [],
         rating = 5,
         anytime = false
     }: Partial<MockEvent> = {}
 ): EventToSave {
-    const event = {
+    const event: Event = {
         category: category,
         publish: '',
         subcategory: '',
@@ -61,8 +62,8 @@ export function getMockEvent(
         description: '',
         url: '',
         tag_level_1: tag_level_1,
-        tag_level_2: '',
-        tag_level_3: '',
+        tag_level_2: tag_level_2,
+        tag_level_3: [],
         rating: rating,
         reviewer: '',
         geotag: ''
@@ -72,7 +73,6 @@ export function getMockEvent(
         timetable: {
             anytime: anytime
         },
-        timeIntervals: timeIntervals,
-        tags: listAllEventTags(event)
+        timeIntervals: eventTime
     }
 }

@@ -1,5 +1,5 @@
 import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
-import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
+import { chidrensTags, ContextMessageUpdate, TagLevel2 } from '../../interfaces/app-interfaces'
 import { backButtonRegister } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
@@ -7,44 +7,6 @@ import { InlineKeyboardButton } from 'telegraf/typings/markup'
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
 const {backButton, sceneHelper, actionName, i18nModuleBtnName} = backButtonRegister(scene)
-
-
-// SELECT DISTINCT cb_events.category, ct."name"
-// FROM cb_tags ct
-// JOIN cb_events_to_tags ON (cb_events_to_tags.tag_id  = ct.id)
-// JOIN cb_events  ON (cb_events.id  = cb_events_to_tags.event_id)
-// WHERE ct.category  = 'tag_level_1'
-// ORDER  BY category , name
-// concerts	#классическийконцерт
-// concerts	#сборныйконцерт
-// concerts	#сольныйконцерт
-// events	#встречасперсоной
-// events	#курс
-// events	#лекция
-// events	#мастеркласс
-// events	#онлайн
-// events	#подкаст
-// exhibitions	#временнаявыставка
-// exhibitions	#выставка
-// exhibitions	#выставочныйпроект
-// exhibitions	#доммузей
-// exhibitions	#онлайн
-// exhibitions	#постояннаяэкспозиция
-// theaters	#аудиоспектакль
-// theaters	#драматическийтеатр
-// theaters	#мюзикл
-// theaters	#онлайн
-// theaters	#опера
-// theaters	#прогулка
-// theaters	#танец
-// theaters	#эксперимент
-// walks	#аудиоэкскурсия
-// walks	#городсгидом
-// walks	#знакомствоспространством
-// walks	#онлайн
-// walks	#экскурсиясгидом
-
-
 
 function countFilteredEvents(ctx: ContextMessageUpdate) {
     return 5
@@ -90,7 +52,7 @@ class Menu {
         const {i18Btn} = sceneHelper(this.ctx)
 
         const isSelected = this.selected.includes(tag)
-        return Markup.callbackButton(i18Btn(`${this.section}.${tag}`) + putCheckbox(isSelected), actionName(`select_${tag}`), hide)
+        return Markup.callbackButton(i18Btn(`${this.section}.${tag}`) + putCheckbox(isSelected), actionName(`select_priorities_${tag}`), hide)
     }
 
     dropDownButtons(title: string, submenus: string[]): InlineKeyboardButton[][] {
@@ -108,8 +70,6 @@ class Menu {
 
 }
 
-const chidrensMenus = ['#сдетьми0+', '#сдетьми4+', '#сдетьми12+', '#сдетьми16+']
-
 function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
     const menu = new Menu(ctx, state.interests, state.uiMenuState)
 
@@ -124,7 +84,7 @@ function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
         [menu.button('#успетьзачас')],
         [menu.button('#культурныйбазис')],
         ...(menu.dropDownButtons('menu_стоимость', ['#доступноподеньгам', '#бесплатно'])),
-        ...(menu.dropDownButtons('menu_childrens', chidrensMenus))
+        ...(menu.dropDownButtons('menu_childrens', chidrensTags))
     ]
     return Markup.inlineKeyboard(buttons)
 }
@@ -191,14 +151,14 @@ scene
 
         await ctx.editMessageReplyMarkup(getKeyboard(ctx, ctx.session.customize))
     })
-    .action(/customize_scene[.]select_(.+)/, async (ctx: ContextMessageUpdate) => {
-        const selected = ctx.match[1]
+    .action(/customize_scene[.]select_priorities_(.+)/, async (ctx: ContextMessageUpdate) => {
+        const selected = ctx.match[1] as TagLevel2
 
         if (ctx.session.customize.interests.includes(selected)) {
             ctx.session.customize.interests = ctx.session.customize.interests.filter(s => s !== selected)
         } else {
-            if (chidrensMenus.includes(selected)) {
-                ctx.session.customize.interests = ctx.session.customize.interests.filter(s => !chidrensMenus.includes(s))
+            if (chidrensTags.includes(selected)) {
+                ctx.session.customize.interests = ctx.session.customize.interests.filter(s => !chidrensTags.includes(s))
             }
             ctx.session.customize.interests.push(selected)
         }
@@ -227,18 +187,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
 
 async function nothing(ctx: ContextMessageUpdate) {
-
-    // switch (ctx.session.customize.nothingNum++) {
-    //     case 0:
-    //         await ctx.reply('Пока тут ничего нет :(')
-    //         break
-    //     case 1:
-    //         await ctx.reply('И тут тоже :(')
-    //         break
-    //     default:
-    //         await ctx.reply('И тут :(')
-    //         break
-    // }
+    await ctx.reply('Пока тут ничего нет :(')
 }
 
 
@@ -253,7 +202,7 @@ export interface UIMenusState extends Map<string, boolean> {
 export interface CustomizeSceneState {
     time: CustomizeSceneTimeState
     uiMenuState: UIMenusState
-    interests: string[]
+    interests: TagLevel2[]
 }
 
 export interface CustomizeSceneTimeState {

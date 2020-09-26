@@ -1,12 +1,12 @@
 import { mskMoment } from '../../../src/util/moment-msk'
-import { findEventsDuringRange, findTopEventsInRange } from '../../../src/db/events'
+import { findTopEventsInRange } from '../../../src/db/events'
 import { cleanDb, freshDb, getMockEvent, initializeDbTests } from './db-test-utils'
 import { syncDatabase } from '../../../src/db/sync'
 
 async function expectResults(number: number, [from, to]: string[]) {
     const range = [mskMoment(from), mskMoment(to)]
-    const findEventsDuringRange1 = await findEventsDuringRange(range)
-    expect(findEventsDuringRange1.length).toEqual(number)
+    const top = await findTopEventsInRange('theaters', range)
+    expect(top.length).toEqual(number)
 }
 
 
@@ -17,8 +17,8 @@ describe('Top events', () => {
 
     test('single event', async () => {
         await syncDatabase([getMockEvent({
-            timeIntervals: [
-                [mskMoment('2020-01-02 15:00')]
+            eventTime: [
+                mskMoment('2020-01-02 15:00')
             ],
             category: 'theaters'
         })])
@@ -30,7 +30,7 @@ describe('Top events', () => {
 
     test('do not show exhibition before close 1.5 hours', async () => {
         await syncDatabase([getMockEvent({
-            timeIntervals: [
+            eventTime: [
                 [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-01 20:00')]
             ],
             category: 'exhibitions'
@@ -51,7 +51,7 @@ describe('Top events', () => {
         await syncDatabase([
             getMockEvent({
                 title: 'PRIMARY',
-                timeIntervals: [
+                eventTime: [
                     [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-01 20:00')]
                 ],
                 anytime: false,
@@ -59,7 +59,7 @@ describe('Top events', () => {
             }),
             getMockEvent({
                 title: 'AUX',
-                timeIntervals: [
+                eventTime: [
                     [mskMoment('2000-01-01 00:00'), mskMoment('2022-01-01 00:00')]
                 ],
                 anytime: true,
@@ -78,17 +78,17 @@ describe('Top events', () => {
         await syncDatabase([
                 getMockEvent({
                     title: '1. NOT SO GOOD',
-                    timeIntervals: timeIntervals,
+                    eventTime: timeIntervals,
                     rating: 1
                 }),
                 getMockEvent({
                     title: '2. BEST',
-                    timeIntervals: timeIntervals,
+                    eventTime: timeIntervals,
                     rating: 19
                 }),
                 getMockEvent({
                     title: '3. BETTER',
-                    timeIntervals: timeIntervals,
+                    eventTime: timeIntervals,
                     rating: 10
                 })
             ]
@@ -107,8 +107,8 @@ describe('Search intervals', () => {
         beforeAll(async () => {
             await cleanDb()
             await syncDatabase([getMockEvent({
-                timeIntervals: [
-                    [mskMoment('2020-01-02 15:00')]
+                eventTime: [
+                    mskMoment('2020-01-02 15:00')
                 ]
             })])
         })
@@ -136,7 +136,7 @@ describe('Search intervals', () => {
         beforeAll(async () => {
             await cleanDb()
             await syncDatabase([getMockEvent({
-                timeIntervals: [[
+                eventTime: [[
                     mskMoment('2020-01-01 12:00'),
                     mskMoment('2020-01-01 18:00')],
                 ]

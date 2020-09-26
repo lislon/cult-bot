@@ -167,7 +167,6 @@ export default async function run(): Promise<{ updated: number, errors: number }
                             primaryData: mapped.data,
                             timetable: mapped.timetable,
                             timeIntervals: predictIntervals(dateFrom, mapped.timetable, 14),
-                            tags: mapped.tags
                         });
                         excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
 

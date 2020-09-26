@@ -55,7 +55,6 @@ interface ExcelRowResult {
         invalidTagLevel3?: string[]
     }
     timetable?: EventTimetable,
-    tags: Tag[]
     data: Event
 }
 
@@ -98,16 +97,6 @@ function zipTag(category: TagCategory): (tagName: string) => Tag {
     }
 }
 
-export function listAllEventTags(row: Event) {
-    const allTags = [
-        ...splitTags(row.tag_level_1).map(zipTag('tag_level_1')),
-        ...splitTags(row.tag_level_2).map(zipTag('tag_level_2')),
-        ...splitTags(row.tag_level_3).map(zipTag('tag_level_3'))
-    ]
-    return allTags
-}
-
-
 function prepareTimetable(data: Event): TimetableParseResult {
     const botTimetable = getOnlyBotTimetable(data.timetable)
 
@@ -121,8 +110,8 @@ function prepareTimetable(data: Event): TimetableParseResult {
     return timetableResult;
 }
 
-function validateTag(tagValue: string, errorCallback: (errors: string[]) => void) {
-    const badTag = splitTags(tagValue).find(t => t.match(/^#[^_\s#?@$%^&*()!]+$/) === null )
+function validateTag(tags: string[], errorCallback: (errors: string[]) => void) {
+    const badTag = tags.find(t => t.match(/^#[^_\s#?@$%^&*()!]+$/) === null )
     if (badTag !== undefined) {
         errorCallback([`Плохой тег ${badTag}`])
     }
@@ -133,7 +122,7 @@ export function processRow(row: Partial<ExcelRow>, category: EventCategory): Exc
     const notNull = (s: string) => s === undefined ? '' : s;
     const notNullOrUnknown = (s: string) => s === undefined || s.match('/[?]+/') ? '' : s;
     const forceDigit = (n: string) => n === undefined ? 0 : +n;
-    const splitTags = (s: string) => s.replace('\n', ' ').replace(/([^\s])#/g, '$1 #')
+    const splitTags = (s: string) => s.split(/\s+|(?<=[^\s])(?=#)/)
 
     const data: Event = {
         'category': category,
@@ -165,7 +154,6 @@ export function processRow(row: Partial<ExcelRow>, category: EventCategory): Exc
             invalidTagLevel2: [],
             invalidTagLevel3: [],
         },
-        tags: listAllEventTags(data),
         data
     }
 

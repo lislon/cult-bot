@@ -1,63 +1,83 @@
-import { Event } from '../interfaces/app-interfaces'
+import { chidrensTags, Event, TagLevel2 } from '../interfaces/app-interfaces'
+import { db } from '../db'
+import { Moment } from 'moment'
+import { mapToPgInterval } from './db-utils'
 
 export interface CustomFilter {
-    interests: string[]
-    cennosti: string[]
-    offset: number
-    limit: number
+    weekendRange: Moment[]
+    oblasti?: string[]
+    cennosti?: TagLevel2[]
+    offset?: number
+    limit?: number
+}
+
+function childAlternativesLogic(cennosti: TagLevel2[]): TagLevel2[] {
+    const childTag = cennosti.find(c => chidrensTags.includes(c))
+
+    switch (childTag) {
+        case '#сдетьми0+':
+            return ['#сдетьми0+']
+        case '#сдетьми6+':
+            return ['#сдетьми0+', '#сдетьми6+']
+        case '#сдетьми12+':
+            return ['#сдетьми6+', '#сдетьми12+']
+        case '#сдетьми16+':
+            return ['#сдетьми12+', '#сдетьми16+']
+        default:
+            return []
+    }
+}
+
+function doQueryCore(customFilter: CustomFilter) {
+    const queryBody = `        FROM cb_events cb
+        WHERE
+            EXISTS(
+                SELECT *
+                FROM cb_events_entrance_times cbet
+                where cbet.event_id = cb.id AND $(interval) && cbet.entrance)
+            AND cb.tag_level_1 @> $(oblasti)
+            AND cb.tag_level_2 @> $(cennosti)
+            AND (cb.tag_level_2 && $(childTagsAlternatives) OR $(childTagsAlternatives) = '{}')`
+
+    const cennosti = customFilter.cennosti || [];
+    const cennostiFilteredFromHardTags = cennosti.filter(c => !chidrensTags.includes(c))
+
+    const queryParams = {
+        oblasti: customFilter.oblasti || [],
+        cennosti: cennostiFilteredFromHardTags || [],
+        childTagsAlternatives: childAlternativesLogic(cennosti),
+        interval: `[${mapToPgInterval(customFilter.weekendRange)}]`,
+    }
+    return {queryBody, queryParams}
 }
 
 export async function findEventsCustomFilter(customFilter: CustomFilter): Promise<Event[]> {
-    return undefined
-    // const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
-    // if (category === 'exhibitions') {
-    //     adjustedIntervals[0].add(90, 'minutes')
-    // }
-    //
-    // const primaryEvents = '' +
-    //     ' SELECT cb.* ' +
-    //     ' FROM cb_events cb ' +
-    //     ' WHERE cb.id IN (' +
-    //     '    SELECT DISTINCT cbi.event_id ' +
-    //     '    FROM cb_time_intervals AS cbi' +
-    //     '    WHERE ' +
-    //     '         (cbi.time_from >= $1 AND cbi.time_from < $2 AND cbi.time_to IS NULL) ' +
-    //     '      OR (cbi.time_from <= $1 AND cbi.time_to > $1)' +
-    //     '      OR (cbi.time_from >= $1 AND cbi.time_to < $2) ' +
-    //     '      OR (cbi.time_from <= $2 AND cbi.time_to > $2)' +
-    //     '   )' +
-    //     '   AND cb.category = $3' +
-    //     '   AND cb.is_anytime = false' +
-    //     ' ORDER BY cb.rating DESC, random() ' +
-    //     ' LIMIT $4'
-    //
-    // const secondaryEvents = '' +
-    //     ' SELECT' +
-    //     '     top30.*' +
-    //     ' FROM' +
-    //     '     (' +
-    //     '     SELECT' +
-    //     '         cb.*' +
-    //     '     FROM' +
-    //     '         cb_events cb' +
-    //     '     WHERE' +
-    //     '         cb.category = $3' +
-    //     '         AND cb.is_anytime = TRUE' +
-    //     '     ORDER BY' +
-    //     '         cb.rating DESC' +
-    //     '     LIMIT 30 ) AS top30' +
-    //     ' ORDER BY' +
-    //     '     RANDOM()' +
-    //     ' LIMIT $4'
-    //
-    // const finalQuery = `` +
-    //     ` (${primaryEvents}) UNION ALL (${secondaryEvents}) LIMIT $4`
-    //
-    // return await db.any(finalQuery,
-    //     [
-    //         adjustedIntervals[0].toDate(), // $1
-    //         adjustedIntervals[1].toDate(), // $2
-    //         category.toString(), // $3
-    //         limit // $4
-    //     ]) as Event[];
+    const {queryBody, queryParams} = doQueryCore(customFilter)
+
+    const sql = `
+        SELECT cb.*
+            ${queryBody}
+        order by
+            cb.is_anytime ASC,
+            cb.rating DESC,
+            cb.title ASC
+        limit $(limit)
+        offset $(offset)
+    `
+    return await db.any(sql,
+        {
+            ...queryParams,
+            limit: customFilter.limit || 3,
+            offset: customFilter.offset || 0
+        }
+    ) as Event[];
+}
+
+
+export async function countEventsCustomFilter(customFilter: CustomFilter): Promise<number> {
+    const {queryBody, queryParams} = doQueryCore(customFilter)
+
+    const sql = `SELECT COUNT(*) AS count ${queryBody}`
+    const numberPromise = await db.one(sql, queryParams)
+    return +(numberPromise['count'])
 }

@@ -1,1 +1,0 @@
-DROP INDEX cb_events_category_idx;

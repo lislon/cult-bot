@@ -8,6 +8,19 @@ import { MainSceneState } from '../scenes/main/main-scene'
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
 export const allCategories: EventCategory[] = ['theaters', 'exhibitions', 'movies', 'events', 'walks', 'concerts']
 
+export type TagLevel2 = '#сдетьми0+'
+    | '#сдетьми6+'
+    | '#сдетьми12+'
+    | '#сдетьми16+'
+    | '#ЗОЖ'
+    | '#комфорт'
+    | 'премьера'
+    | '#доступноподеньгам'
+    | '#бесплатно'
+
+
+export const chidrensTags: TagLevel2[] = ['#сдетьми0+', '#сдетьми6+', '#сдетьми12+', '#сдетьми16+']
+export const moneyTags: TagLevel2[] = ['#сдетьми0+', '#сдетьми6+', '#сдетьми12+', '#сдетьми16+']
 
 export interface ContextMessageUpdate extends SceneContextMessageUpdate {
     i18n: I18n
@@ -36,9 +49,9 @@ export interface Event {
     notes: string
     description: string
     url: string
-    tag_level_1: string
-    tag_level_2: string
-    tag_level_3: string
+    tag_level_1: string[]
+    tag_level_2: string[]
+    tag_level_3: string[]
     rating: number
     reviewer: string
 }
