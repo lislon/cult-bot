@@ -25,6 +25,7 @@ heroku create <app name>
 heroku addons:create -a <app name> heroku-postgresql:hobby-dev
 heroku pg:credentials:url -a <app name> DATABASE
 heroku labs:enable runtime-dyno-metadata -a <app name>
+heroku addons:create heroku-redis:hobby-dev -a <app name>
 ```
 
 Configure ENV:
@@ -33,6 +34,12 @@ GOOGLE_DOCS_ID = ??
 TELEGRAM_TOKEN = ??
 NODE_ENV = production
 WEBHOOK_PORT = 443
+```
+
+This env vars will be configured automatically:
+```
+REDIS_URL
+DATABASE_URL
 ```
 
 ### Backup

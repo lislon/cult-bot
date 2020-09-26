@@ -47,13 +47,13 @@ function putCheckbox(isSelected: boolean) {
 
 class Menu {
     private readonly selected: string[]
-    private readonly uiMenusState: UIMenusState
+    private readonly openedMenus: string[]
     private readonly ctx: ContextMessageUpdate
     private readonly section: string
 
-    constructor(ctx: ContextMessageUpdate, selected: string[], uiMenusState: UIMenusState) {
+    constructor(ctx: ContextMessageUpdate, selected: string[], openedMenus: string[]) {
         this.selected = selected
-        this.uiMenusState = uiMenusState;
+        this.openedMenus = openedMenus;
         this.ctx = ctx;
         this.section = 'interests'
     }
@@ -71,7 +71,7 @@ class Menu {
         const isAnySubmenuSelected = submenus.find(tag => this.selected.includes(tag)) !== undefined;
 
         const menuTitle = i18Btn(`${this.section}.${title}`)
-        const isOpen = this.uiMenusState.get(title)
+        const isOpen = this.openedMenus.includes(title)
         return [
             [Markup.callbackButton((isOpen ? '➖ ' : '➕ ') + menuTitle + putCheckbox(isAnySubmenuSelected), actionName(`${title}`))],
             [...submenus.map(tag => this.button(tag, !isOpen))]
@@ -81,7 +81,7 @@ class Menu {
 }
 
 async function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
-    const menu = new Menu(ctx, state.cennosti, state.uiMenuState)
+    const menu = new Menu(ctx, state.cennosti, state.openedMenus)
     const {i18Btn} = sceneHelper(ctx)
 
     const buttons = [
@@ -224,9 +224,13 @@ scene
         await showNextPortionOfResults(ctx)
     })
     .action(/customize_scene[.](menu_.+)/, async (ctx: ContextMessageUpdate) => {
-        const menuState = ctx.session.customize.uiMenuState
-        menuState.set(ctx.match[1], !menuState.get(ctx.match[1]))
-
+        const menuTitle = ctx.match[1]
+        const menuState = ctx.session.customize.openedMenus
+        if (ctx.session.customize.openedMenus.includes(menuTitle)) {
+            ctx.session.customize.openedMenus = ctx.session.customize.openedMenus.filter(e => e === menuTitle)
+        } else {
+            ctx.session.customize.openedMenus = [menuTitle, ...ctx.session.customize.openedMenus]
+        }
         await ctx.editMessageReplyMarkup(await getKeyboard(ctx, ctx.session.customize))
     })
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
@@ -258,22 +262,21 @@ function resetPaging(ctx: ContextMessageUpdate) {
 }
 
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
-    if (ctx.session.customize === undefined) {
-        ctx.session.customize = {
-            uiMenuState: new Map(),
-            cennosti: [],
-            time: {
-                weekdays: {
-                    '6': [],
-                    '7': []
-                }
-            },
-            resultsFound: undefined,
-            pagingOffset: 0
-        }
+    const {openedMenus, cennosti, time, resultsFound, pagingOffset} = ctx.session.customize
+
+    ctx.session.customize = {
+        openedMenus: Array.isArray(openedMenus) ? openedMenus : [],
+        cennosti: Array.isArray(cennosti) ? cennosti : [],
+        time: time === undefined ? {
+            weekdays: {
+                '6': [],
+                '7': []
+            }
+        } : time,
+        resultsFound: typeof resultsFound === 'number' ? resultsFound : undefined,
+        pagingOffset: typeof resultsFound === 'number' ? pagingOffset : undefined,
     }
 }
-
 
 async function nothing(ctx: ContextMessageUpdate) {
     await ctx.reply('Пока тут ничего нет :(')
@@ -285,12 +288,9 @@ export {
     registerActions as customizeRegisterActions
 }
 
-export interface UIMenusState extends Map<string, boolean> {
-}
-
 export interface CustomizeSceneState {
     time: CustomizeSceneTimeState
-    uiMenuState: UIMenusState
+    openedMenus: string[]
     cennosti: TagLevel2[]
     markupKbId?: number
     pagingOffset: number

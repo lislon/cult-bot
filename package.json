@@ -35,6 +35,7 @@
     "source-map-support": "^0.5.19",
     "telegraf": "^3.38.0",
     "telegraf-i18n": "^6.6.0",
+    "telegraf-session-redis": "^5.1.0",
     "telegraf-throttler": "^0.2.0",
     "telegraf-update-logger": "^1.2.0",
     "winston": "^3.3.3",

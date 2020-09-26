@@ -3,17 +3,18 @@ import path from 'path'
 import updateLogger from 'telegraf-update-logger'
 import session from 'telegraf/session';
 import telegrafThrottler from 'telegraf-throttler';
+import { config } from 'dotenv'
+import RedisSession from 'telegraf-session-redis'
 
-const Telegraf = require('telegraf')
-// const RedisSession = require('telegraf-session-redis')
-//
-// const reddisSession = new RedisSession({
-//     store: {
-//         host: process.env.REDIS_HOST || '127.0.0.1',
-//         port: process.env.REDIS_PORT || 6379
-//     }
-// })
+config();
 
+const reddisSession = new RedisSession({
+    store: {
+        host: undefined,
+        port: undefined,
+        url: process.env.REDIS_URL
+    }
+})
 
 export const i18n = new TelegrafI18n({
     defaultLanguage: 'ru',
@@ -31,6 +32,6 @@ export default {
         }
     }),
     logger: updateLogger({colors: true}),
-    session: session()
+    session: reddisSession
 }
 
