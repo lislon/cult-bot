@@ -30,6 +30,7 @@
     "parsimmon": "^1.16.0",
     "pg": "^8.3.2",
     "pg-promise": "^10.6.0",
+    "plural-ru": "^2.0.2",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
     "source-map-support": "^0.5.19",

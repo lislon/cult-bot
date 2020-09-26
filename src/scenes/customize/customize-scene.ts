@@ -6,6 +6,7 @@ import { InlineKeyboardButton } from 'telegraf/typings/markup'
 import { countEventsCustomFilter, findEventsCustomFilter } from '../../db/custom-filter'
 import { getNextWeekEndRange } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
+import plural from 'plural-ru'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
@@ -94,8 +95,8 @@ async function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState
         [menu.button('#успетьзачас')],
         [menu.button('#культурныйбазис')],
         ...(menu.dropDownButtons('menu_стоимость', ['#доступноподеньгам', '#бесплатно'])),
-        ...(menu.dropDownButtons('menu_childrens', chidrensTags)),
-        [Markup.callbackButton(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}), actionName('show_filtered_events'))]
+        ...(menu.dropDownButtons('menu_childrens', chidrensTags))
+        // [Markup.callbackButton(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}), actionName('show_filtered_events'))]
     ]
     return Markup.inlineKeyboard(buttons)
 }
@@ -141,6 +142,28 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
     }
 }
 
+async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
+    const {i18Msg} = sceneHelper(ctx)
+
+    const count = await countFilteredEvents(ctx)
+    const eventPlural = plural(count, i18Msg('plural.event.one'), i18Msg('plural.event.two'), i18Msg('plural.event.many'))
+    const msg = i18Msg('select_priorities_counter', {eventPlural})
+
+    if (ctx.session.customize.eventsCounterMsgText !== msg) {
+        if (ctx.session.customize.eventsCounterMsgId === undefined) {
+            const counterMsg = await ctx.replyWithHTML(msg)
+            console.log(' > putOrRefreshCounterMessage fresh msg: ', counterMsg.message_id)
+            ctx.session.customize.eventsCounterMsgId = counterMsg.message_id
+        } else {
+            console.log(' > putOrRefreshCounterMessage update old msg: ', ctx.session.customize.eventsCounterMsgId)
+            await ctx.telegram.editMessageText(ctx.chat.id, ctx.session.customize.eventsCounterMsgId, undefined, msg)
+        }
+        ctx.session.customize.eventsCounterMsgText = msg
+    } else {
+        console.log(' > putOrRefreshCounterMessage: ', 'message is same')
+    }
+}
+
 function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
     bot
         .hears(i18nModuleBtnName('oblasti'), async (ctx: ContextMessageUpdate) => {
@@ -160,12 +183,10 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             const {i18Btn, i18Msg} = sceneHelper(ctx)
 
             await prepareSessionStateIfNeeded(ctx)
-            const inlineKeyboard = await getKeyboard(ctx, ctx.session.customize)
+            await ctx.replyWithHTML(i18Msg('select_priorities'), Extra.markup((await getKeyboard(ctx, ctx.session.customize))))
+            await ctx.replyWithHTML(i18Msg('select_priorities_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
 
-
-            const msg = await ctx.replyWithHTML(i18Msg('select_priorities'), Extra.markup((inlineKeyboard)))
-            const markupKbMsg = await ctx.replyWithHTML(i18Msg('select_priorities_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
-            // ctx.session.customize.markupKbId = markupKbMsg.message_id
+            await putOrRefreshCounterMessage(ctx)
             // const msg = await ctx.replyWithHTML(i18Msg('select_priorities'))
 
             // await sleep(1000)
@@ -200,10 +221,12 @@ scene
         await ctx.replyWithMarkdown(msg, markup)
     })
     .leave((ctx: ContextMessageUpdate) => {
+        console.log('leave customize-scene')
+        ctx.session.customize.eventsCounterMsgId = undefined
+        ctx.session.customize.eventsCounterMsgText = undefined
         resetPaging(ctx)
     })
     .action(actionName('oblasti'), nothing)
-    .action(actionName('priorities'), nothing)
     .action(/.+/, (ctx: ContextMessageUpdate, next) => {
         if (ctx.match[0] !== actionName('show_more')) {
             resetPaging(ctx)
@@ -225,9 +248,8 @@ scene
     })
     .action(/customize_scene[.](menu_.+)/, async (ctx: ContextMessageUpdate) => {
         const menuTitle = ctx.match[1]
-        const menuState = ctx.session.customize.openedMenus
         if (ctx.session.customize.openedMenus.includes(menuTitle)) {
-            ctx.session.customize.openedMenus = ctx.session.customize.openedMenus.filter(e => e === menuTitle)
+            ctx.session.customize.openedMenus = ctx.session.customize.openedMenus.filter(e => e !== menuTitle)
         } else {
             ctx.session.customize.openedMenus = [menuTitle, ...ctx.session.customize.openedMenus]
         }
@@ -239,6 +261,7 @@ scene
         childrenOptionLogic(ctx, selected)
 
         await ctx.editMessageReplyMarkup(await getKeyboard(ctx, ctx.session.customize))
+        await putOrRefreshCounterMessage(ctx)
 
         // const {i18Btn, i18Msg} = sceneHelper(ctx)
         // if (ctx.session.customize.markupKbId === undefined) {
@@ -262,7 +285,15 @@ function resetPaging(ctx: ContextMessageUpdate) {
 }
 
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
-    const {openedMenus, cennosti, time, resultsFound, pagingOffset} = ctx.session.customize || {}
+    const {
+        openedMenus,
+        cennosti,
+        time,
+        resultsFound,
+        pagingOffset,
+        eventsCounterMsgId,
+        eventsCounterMsgText
+    } = ctx.session.customize || {}
 
     ctx.session.customize = {
         openedMenus: Array.isArray(openedMenus) ? openedMenus : [],
@@ -273,8 +304,10 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
                 '7': []
             }
         } : time,
+        eventsCounterMsgText,
         resultsFound: typeof resultsFound === 'number' ? resultsFound : undefined,
-        pagingOffset: typeof resultsFound === 'number' ? pagingOffset : undefined,
+        pagingOffset: typeof pagingOffset === 'number' ? pagingOffset : undefined,
+        eventsCounterMsgId: typeof eventsCounterMsgId === 'number' ? eventsCounterMsgId : undefined,
     }
 }
 
@@ -292,7 +325,8 @@ export interface CustomizeSceneState {
     time: CustomizeSceneTimeState
     openedMenus: string[]
     cennosti: TagLevel2[]
-    markupKbId?: number
+    eventsCounterMsgId?: number
+    eventsCounterMsgText: string
     pagingOffset: number
     resultsFound: number
 }
