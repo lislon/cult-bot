@@ -1,6 +1,5 @@
 import * as P from 'parsimmon'
-import { Result } from 'parsimmon'
-import { Success } from 'parsimmon'
+import { Result, Success } from 'parsimmon'
 import { DateExact, EventTimetable } from './intervals';
 import { cleanText } from './timetable-utils'
 import { mskMoment } from '../../util/moment-msk'
@@ -84,7 +83,9 @@ const Lang = P.createLanguage({
     WeekDayRange: (r) => P.seq(r.WeekDaySingle, r._, r['-'], r._, r.WeekDaySingle)
         .chain(([from, , , , to]) => {
             if (+to - +from + 1 <= 0) {
-                return P.fail(`День недели перепутан`);
+                const before = [...Array(+to).keys()].map(x => 1 + x)
+                const after = [...Array(+7 - +from + 1).keys()].map(x => +x + +from)
+                return P.succeed([...before, ...after])
             } else {
                 return P.succeed([...Array(+to - +from + 1).keys()].map(x => +x + +from))
             }

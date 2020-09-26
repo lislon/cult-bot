@@ -144,8 +144,25 @@ describe('parser', () => {
                 ]
             },
         ],
-        ['31 ноября 2020: с 12 до 18', undefined]
-        ,
+        ['31 ноября 2020: с 12 до 18', undefined],
+        ['вс-пн: с 12 до 18',
+            {
+                'weekTimes': [
+                    {
+                        'times': [
+                            [
+                                '12:00',
+                                '18:00'
+                            ]
+                        ],
+                        'weekdays': [
+                            1,
+                            7
+                        ]
+                    }
+                ]
+            }
+        ],
     ])('%s', (text: string, expected: any) => {
         if (expected) {
             expected.dateRangesTimetable = expected.dateRangesTimetable || []
