@@ -1,22 +1,25 @@
 import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
 import { chidrensTags, ContextMessageUpdate, TagLevel2 } from '../../interfaces/app-interfaces'
-import { backButtonRegister } from '../../util/scene-helper'
+import { backButtonRegister, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
-import { countEventsCustomFilter } from '../../db/custom-filter'
+import { countEventsCustomFilter, findEventsCustomFilter } from '../../db/custom-filter'
 import { getNextWeekEndRange } from '../shared/shared-logic'
+import { cardFormat } from '../shared/card-format'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
+const limitToPage = 3
 const {backButton, sceneHelper, actionName, i18nModuleBtnName} = backButtonRegister(scene)
 
 async function countFilteredEvents(ctx: ContextMessageUpdate) {
-    return await countEventsCustomFilter({
-        limit: 3,
-        offset: 0,
-        weekendRange: getNextWeekEndRange(),
-        cennosti: ctx.session.customize.cennosti
-    })
+    if (ctx.session.customize.resultsFound === undefined) {
+        ctx.session.customize.resultsFound = await countEventsCustomFilter({
+            weekendRange: getNextWeekEndRange(),
+            cennosti: ctx.session.customize.cennosti
+        })
+    }
+    return ctx.session.customize.resultsFound;
 }
 
 const content = async (ctx: ContextMessageUpdate) => {
@@ -92,7 +95,7 @@ async function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState
         [menu.button('#культурныйбазис')],
         ...(menu.dropDownButtons('menu_стоимость', ['#доступноподеньгам', '#бесплатно'])),
         ...(menu.dropDownButtons('menu_childrens', chidrensTags)),
-        [Markup.callbackButton(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}), 'show')]
+        [Markup.callbackButton(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}), actionName('show_filtered_events'))]
     ]
     return Markup.inlineKeyboard(buttons)
 }
@@ -106,6 +109,36 @@ async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
         [Markup.button(i18Btn('go_back_to_main'))]
     ]).resize()
     return markupKeyabord
+}
+
+async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
+    prepareSessionStateIfNeeded(ctx)
+    const {i18Btn, i18Msg} = sceneHelper(ctx)
+
+    const events = await findEventsCustomFilter({
+        cennosti: ctx.session.customize.cennosti,
+        weekendRange: getNextWeekEndRange(),
+        limit: limitToPage,
+        offset: ctx.session.customize.pagingOffset
+    })
+
+    const totalCount = await countFilteredEvents(ctx)
+
+    let count = 0
+    for (const event of events) {
+        const nextBtn = Markup.inlineKeyboard([
+            Markup.callbackButton(i18Btn('show_more'), actionName('show_more'))
+        ])
+        await ctx.replyWithHTML(cardFormat(event), {
+            disable_web_page_preview: true,
+            reply_markup: (++count == events.length && ctx.session.customize.pagingOffset + count != totalCount ? nextBtn : undefined)
+        })
+        await sleep(200)
+    }
+
+    if (events.length === 0) {
+        await ctx.replyWithHTML(i18Msg('nothing_found'))
+    }
 }
 
 function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
@@ -140,11 +173,22 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             // await ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, undefined, 'lisa', Extra.markup((inlineKeyboard)))
         })
         .hears(/события по фильтру/, async (ctx: ContextMessageUpdate) => {
-            await ctx.replyWithHTML('скоро будет')
+            await showNextPortionOfResults(ctx)
         })
     ;
 
 
+}
+
+function childrenOptionLogic(ctx: ContextMessageUpdate, selected: TagLevel2) {
+    if (ctx.session.customize.cennosti.includes(selected)) {
+        ctx.session.customize.cennosti = ctx.session.customize.cennosti.filter(s => s !== selected)
+    } else {
+        if (chidrensTags.includes(selected)) {
+            ctx.session.customize.cennosti = ctx.session.customize.cennosti.filter(s => !chidrensTags.includes(s))
+        }
+        ctx.session.customize.cennosti.push(selected)
+    }
 }
 
 scene
@@ -155,8 +199,30 @@ scene
         const {msg, markup} = await content(ctx)
         await ctx.replyWithMarkdown(msg, markup)
     })
+    .leave((ctx: ContextMessageUpdate) => {
+        resetPaging(ctx)
+    })
     .action(actionName('oblasti'), nothing)
     .action(actionName('priorities'), nothing)
+    .action(/.+/, (ctx: ContextMessageUpdate, next) => {
+        if (ctx.match[0] !== actionName('show_more')) {
+            resetPaging(ctx)
+        }
+        return next()
+    })
+    .hears(/.+/, (ctx: ContextMessageUpdate, next) => {
+        resetPaging(ctx)
+        return next()
+    })
+    .action(actionName('show_more'), async (ctx: ContextMessageUpdate) => {
+        ctx.session.customize.pagingOffset += limitToPage;
+        await ctx.editMessageReplyMarkup()
+        await showNextPortionOfResults(ctx)
+    })
+    .action(actionName('show_filtered_events'), async (ctx: ContextMessageUpdate) => {
+        await ctx.answerCbQuery()
+        await showNextPortionOfResults(ctx)
+    })
     .action(/customize_scene[.](menu_.+)/, async (ctx: ContextMessageUpdate) => {
         const menuState = ctx.session.customize.uiMenuState
         menuState.set(ctx.match[1], !menuState.get(ctx.match[1]))
@@ -166,14 +232,7 @@ scene
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
         const selected = ctx.match[1] as TagLevel2
 
-        if (ctx.session.customize.cennosti.includes(selected)) {
-            ctx.session.customize.cennosti = ctx.session.customize.cennosti.filter(s => s !== selected)
-        } else {
-            if (chidrensTags.includes(selected)) {
-                ctx.session.customize.cennosti = ctx.session.customize.cennosti.filter(s => !chidrensTags.includes(s))
-            }
-            ctx.session.customize.cennosti.push(selected)
-        }
+        childrenOptionLogic(ctx, selected)
 
         await ctx.editMessageReplyMarkup(await getKeyboard(ctx, ctx.session.customize))
 
@@ -187,10 +246,16 @@ scene
         //  editMessageText('qq', Extra.inReplyTo(ctx.session.customize.markupKbId).markup((markupKeyabord)))
     })
     .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {
-        console.log('customize-scene-back')
+        // console.log('customize-scene-back')
         await ctx.scene.enter('customize_scene')
     });
 
+
+function resetPaging(ctx: ContextMessageUpdate) {
+    prepareSessionStateIfNeeded(ctx)
+    ctx.session.customize.pagingOffset = 0;
+    ctx.session.customize.resultsFound = undefined;
+}
 
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     if (ctx.session.customize === undefined) {
@@ -202,7 +267,9 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
                     '6': [],
                     '7': []
                 }
-            }
+            },
+            resultsFound: undefined,
+            pagingOffset: 0
         }
     }
 }
@@ -226,6 +293,8 @@ export interface CustomizeSceneState {
     uiMenuState: UIMenusState
     cennosti: TagLevel2[]
     markupKbId?: number
+    pagingOffset: number
+    resultsFound: number
 }
 
 export interface CustomizeSceneTimeState {
