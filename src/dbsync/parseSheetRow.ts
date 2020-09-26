@@ -111,7 +111,7 @@ function prepareTimetable(data: Event): TimetableParseResult {
 }
 
 function validateTag(tags: string[], errorCallback: (errors: string[]) => void) {
-    const badTag = tags.find(t => t.match(/^#[^_\s#?@$%^&*()!]+$/) === null )
+    const badTag = tags.find(t => t.match(/^#[^_\s#?@$%^&*()!-]+$/) === null )
     if (badTag !== undefined) {
         errorCallback([`Плохой тег ${badTag}`])
     }
