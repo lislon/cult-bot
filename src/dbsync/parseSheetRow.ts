@@ -73,7 +73,7 @@ export function getOnlyBotTimetable(timetable: string): string {
 
     const matches = botTimetable.match(/{(?:бот|bot):([^}]+)}/)
     if (matches) {
-        botTimetable = matches.groups[1]
+        botTimetable = matches[1]
     }
     return botTimetable
 }
