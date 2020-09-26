@@ -262,7 +262,7 @@ function resetPaging(ctx: ContextMessageUpdate) {
 }
 
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
-    const {openedMenus, cennosti, time, resultsFound, pagingOffset} = ctx.session.customize
+    const {openedMenus, cennosti, time, resultsFound, pagingOffset} = ctx.session.customize || {}
 
     ctx.session.customize = {
         openedMenus: Array.isArray(openedMenus) ? openedMenus : [],
