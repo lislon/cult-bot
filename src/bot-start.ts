@@ -5,16 +5,15 @@ import { match } from 'telegraf-i18n';
 import { mainRegisterActions, mainScene } from './scenes/main/main-scene'
 import { adminRegisterActions, adminScene } from './scenes/admin/admin-scene'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
-import dbsync from './dbsync/dbsync'
 import { db } from './db';
 import middlewares, { i18n } from './middleware-utils'
 import { customizeRegisterActions, customizeScene } from './scenes/customize/customize-scene'
 import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
-import { WrongExcelColumnsError } from './dbsync/WrongFormatException'
 import { sleep } from './util/scene-helper'
 import 'source-map-support/register'
 import moment from 'moment'
+import { getGoogleSpreadSheetURL, syncrhonizeDbByUser } from './scenes/shared/shared-logic'
 
 console.log(`starting bot...`);
 db.any('select 1 + 1')
@@ -106,20 +105,7 @@ bot.command('version', async (ctx) => {
 })
 
 bot.command('sync', async (ctx) => {
-    await ctx.replyWithHTML(`Пошла скачивать <a href="${getGoogleSpreadSheetURL()}">эксельчик</a>...`, {
-        disable_web_page_preview: true
-    })
-    try {
-        const { updated, errors }  = await dbsync()
-        await ctx.replyWithHTML(ctx.i18n.t('sync.sync_success', { updated, errors }))
-    }
-    catch (e) {
-        if (e instanceof WrongExcelColumnsError) {
-            await ctx.reply(ctx.i18n.t('sync.wrong_format', e.data))
-        } else {
-            await ctx.reply(`❌ Эх, что-то не удалось :(...` + e.toString().substr(0, 100))
-        }
-    }
+    await syncrhonizeDbByUser(ctx)
 })
 
 bot.hears(/.+/, (ctx, next) => {
@@ -128,10 +114,6 @@ bot.hears(/.+/, (ctx, next) => {
 })
 
 process.env.NODE_ENV === 'production' ? startProdMode(bot) : startDevMode(bot);
-
-function getGoogleSpreadSheetURL() {
-    return `https://docs.google.com/spreadsheets/d/${process.env.GOOGLE_DOCS_ID}`
-}
 
 function printDiagnostic() {
     logger.debug(undefined, `google docs db: ${getGoogleSpreadSheetURL()}` );

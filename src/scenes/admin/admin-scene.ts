@@ -5,6 +5,7 @@ import TelegrafI18n from 'telegraf-i18n'
 import { cardFormat } from '../shared/card-format'
 import { findAllEventsAdmin, findStats } from '../../db/db-admin'
 import { mskMoment } from '../../util/moment-msk'
+import { syncrhonizeDbByUser } from '../shared/shared-logic'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
@@ -30,7 +31,10 @@ const content = async (ctx: ContextMessageUpdate) => {
             return Markup.callbackButton(i18Btn(btnName, { count: count === undefined ? 0 : count.count }), actionName(btnName));
         })
     );
-    mainButtons.push([Markup.callbackButton(i18SharedBtn('back'), actionName('back'))])
+    mainButtons.push([
+        Markup.callbackButton(i18SharedBtn('back'), actionName('back')),
+        Markup.callbackButton(i18Btn('sync'), actionName('sync')),
+    ])
     return {
         msg: i18Msg('welcome'),
         markup: Extra.HTML().markup(Markup.inlineKeyboard(mainButtons))
@@ -43,6 +47,10 @@ scene
 
         const {msg, markup} = await content(ctx)
         await ctx.replyWithMarkdown(msg, markup)
+    })
+    .action(actionName('sync'), async (ctx: ContextMessageUpdate) => {
+        await ctx.answerCbQuery()
+        await syncrhonizeDbByUser(ctx)
     })
 
 menu.flatMap(m => m).forEach(menuItem => {
