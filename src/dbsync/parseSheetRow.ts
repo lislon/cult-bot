@@ -71,7 +71,7 @@ export function getOnlyBotTimetable(timetable: string): string {
     let botTimetable = timetable
         .replace(/[(].+?[)]/, '')
 
-    const matches = botTimetable.match(/{бот:([^}]+)}/)
+    const matches = botTimetable.match(/{(?:бот|bot):([^}]+)}/)
     if (matches) {
         botTimetable = matches.groups[1]
     }
@@ -79,7 +79,7 @@ export function getOnlyBotTimetable(timetable: string): string {
 }
 
 export function getOnlyHumanTimetable(timetable: string) {
-    return  timetable.replace(/{бот:([^}]+)}/, '').trim()
+    return  timetable.replace(/{(?:бот|bot):([^}]+)}/, '').trim()
 }
 
 function splitTags(tagStr: string) {
