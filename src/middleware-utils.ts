@@ -1,9 +1,8 @@
 import TelegrafI18n from 'telegraf-i18n'
-import rateLimit, { RateLimitConfig } from 'telegraf-ratelimit';
 import path from 'path'
-import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import updateLogger from 'telegraf-update-logger'
 import session from 'telegraf/session';
+import telegrafThrottler from 'telegraf-throttler';
 
 const Telegraf = require('telegraf')
 // const RedisSession = require('telegraf-session-redis')
@@ -24,16 +23,13 @@ export const i18n = new TelegrafI18n({
     sessionName: 'session'
 });
 
-// Set limit to 9 messages per 3 seconds
-const limitConfig: RateLimitConfig = {
-    window: 3000,
-    limit: 9,
-    onLimitExceeded: (ctx: ContextMessageUpdate) => ctx.reply('Rate limit exceeded')
-}
-
 export default {
     i18n: i18n.middleware(),
-    rateLimit: rateLimit(limitConfig),
+    telegrafThrottler: telegrafThrottler({
+        onThrottlerError: async (ctx, next, throttlerName, error) => {
+            console.log(throttlerName, error)
+        }
+    }),
     logger: updateLogger({colors: true}),
     session: session()
 }

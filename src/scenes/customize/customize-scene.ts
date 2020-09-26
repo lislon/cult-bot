@@ -3,16 +3,23 @@ import { chidrensTags, ContextMessageUpdate, TagLevel2 } from '../../interfaces/
 import { backButtonRegister } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
+import { countEventsCustomFilter } from '../../db/custom-filter'
+import { mskMoment } from '../../util/moment-msk'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
 const {backButton, sceneHelper, actionName, i18nModuleBtnName} = backButtonRegister(scene)
 
-function countFilteredEvents(ctx: ContextMessageUpdate) {
-    return 5
+async function countFilteredEvents(ctx: ContextMessageUpdate) {
+    return await countEventsCustomFilter({
+        limit: 3,
+        offset: 0,
+        weekendRange: [mskMoment('2020-01-01'), mskMoment('2021-01-01')],
+        cennosti: ctx.session.customize.cennosti
+    })
 }
 
-const content = (ctx: ContextMessageUpdate) => {
+const content = async (ctx: ContextMessageUpdate) => {
     const {i18Btn, i18Msg} = sceneHelper(ctx)
 
     const keyboard = [
@@ -21,7 +28,7 @@ const content = (ctx: ContextMessageUpdate) => {
             Markup.button(i18Btn('oblasti')),
             Markup.button(i18Btn('priorities'))
         ],
-        [Markup.button(i18Btn('show_personalized_events', {count: countFilteredEvents(ctx)}))],
+        [Markup.button(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}))],
         [backButton(ctx)],
     ]
 
@@ -52,7 +59,7 @@ class Menu {
         const {i18Btn} = sceneHelper(this.ctx)
 
         const isSelected = this.selected.includes(tag)
-        return Markup.callbackButton(i18Btn(`${this.section}.${tag}`) + putCheckbox(isSelected), actionName(`select_priorities_${tag}`), hide)
+        return Markup.callbackButton(i18Btn(`${this.section}.${tag}`) + putCheckbox(isSelected), actionName(`p_${tag}`), hide)
     }
 
     dropDownButtons(title: string, submenus: string[]): InlineKeyboardButton[][] {
@@ -71,7 +78,7 @@ class Menu {
 }
 
 function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
-    const menu = new Menu(ctx, state.interests, state.uiMenuState)
+    const menu = new Menu(ctx, state.cennosti, state.uiMenuState)
 
 
     const buttons = [
@@ -89,6 +96,15 @@ function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
     return Markup.inlineKeyboard(buttons)
 }
 
+
+async function getMarkupKeyboard(i18Btn, ctx: ContextMessageUpdate) {
+    const markupKeyabord = Markup.keyboard([
+        [Markup.button(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}))],
+        [Markup.button(i18Btn('go_back_to_customize'))],
+        [Markup.button(i18Btn('go_back_to_main'))]
+    ]).resize()
+    return markupKeyabord
+}
 
 function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
     bot
@@ -112,15 +128,9 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             const inlineKeyboard = getKeyboard(ctx, ctx.session.customize)
 
 
-            const markupKeyabord = Markup.keyboard([
-                [Markup.button(i18Btn('show_personalized_events', {count: countFilteredEvents(ctx)}))],
-                [Markup.button(i18Btn('go_back_to_customize'))],
-                [Markup.button(i18Btn('go_back_to_main'))]
-            ]).resize()
-
-
             const msg = await ctx.replyWithHTML(i18Msg('select_priorities'), Extra.markup((inlineKeyboard)))
-            const msg2 = await ctx.replyWithHTML(i18Msg('select_priorities_footer'), Extra.markup((markupKeyabord)))
+            const markupKbMsg = await ctx.replyWithHTML(i18Msg('select_priorities_footer'), Extra.markup((await getMarkupKeyboard(i18Btn, ctx))))
+            ctx.session.customize.markupKbId = markupKbMsg.message_id
             // const msg = await ctx.replyWithHTML(i18Msg('select_priorities'))
 
             // await sleep(1000)
@@ -140,7 +150,7 @@ scene
         prepareSessionStateIfNeeded(ctx)
         console.log('enter customize-scene')
 
-        const {msg, markup} = content(ctx)
+        const {msg, markup} = await content(ctx)
         await ctx.replyWithMarkdown(msg, markup)
     })
     .action(actionName('oblasti'), nothing)
@@ -151,18 +161,26 @@ scene
 
         await ctx.editMessageReplyMarkup(getKeyboard(ctx, ctx.session.customize))
     })
-    .action(/customize_scene[.]select_priorities_(.+)/, async (ctx: ContextMessageUpdate) => {
+    .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
         const selected = ctx.match[1] as TagLevel2
 
-        if (ctx.session.customize.interests.includes(selected)) {
-            ctx.session.customize.interests = ctx.session.customize.interests.filter(s => s !== selected)
+        if (ctx.session.customize.cennosti.includes(selected)) {
+            ctx.session.customize.cennosti = ctx.session.customize.cennosti.filter(s => s !== selected)
         } else {
             if (chidrensTags.includes(selected)) {
-                ctx.session.customize.interests = ctx.session.customize.interests.filter(s => !chidrensTags.includes(s))
+                ctx.session.customize.cennosti = ctx.session.customize.cennosti.filter(s => !chidrensTags.includes(s))
             }
-            ctx.session.customize.interests.push(selected)
+            ctx.session.customize.cennosti.push(selected)
         }
+
         await ctx.editMessageReplyMarkup(getKeyboard(ctx, ctx.session.customize))
+
+        const {i18Btn, i18Msg} = sceneHelper(ctx)
+        if (ctx.session.customize.markupKbId !== undefined)
+        await ctx.deleteMessage(ctx.session.customize.markupKbId)
+        const markupKbMsg = await ctx.replyWithHTML(i18Msg('select_priorities_footer'), Extra.markup((await getMarkupKeyboard(i18Btn, ctx))))
+        ctx.session.customize.markupKbId = markupKbMsg.message_id
+        //  editMessageText('qq', Extra.inReplyTo(ctx.session.customize.markupKbId).markup((markupKeyabord)))
     })
     .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {
         console.log('customize-scene-back')
@@ -174,7 +192,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     if (ctx.session.customize === undefined) {
         ctx.session.customize = {
             uiMenuState: new Map(),
-            interests: [],
+            cennosti: [],
             time: {
                 weekdays: {
                     '6': [],
@@ -202,7 +220,8 @@ export interface UIMenusState extends Map<string, boolean> {
 export interface CustomizeSceneState {
     time: CustomizeSceneTimeState
     uiMenuState: UIMenusState
-    interests: TagLevel2[]
+    cennosti: TagLevel2[]
+    markupKbId?: number
 }
 
 export interface CustomizeSceneTimeState {
