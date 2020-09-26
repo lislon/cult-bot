@@ -55,6 +55,7 @@ scene
 
 menu.flatMap(m => m).forEach(menuItem => {
     scene.action(actionName(menuItem), async (ctx: ContextMessageUpdate) => {
+        await ctx.answerCbQuery()
         const events = await findAllEventsAdmin(menuItem as EventCategory, globalInterval)
         // let count = 0
         for (const event of events) {
