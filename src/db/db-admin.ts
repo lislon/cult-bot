@@ -21,6 +21,7 @@ export async function findStats(interval: Moment[]): Promise<Stat[]> {
                 where $(interval) && cbet.entrance AND cbet.event_id = cb.id
                  )
         GROUP BY cb.category
+        ORDER BY cb.category
     `
     return await db.any(finalQuery,
         {

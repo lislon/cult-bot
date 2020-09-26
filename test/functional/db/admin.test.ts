@@ -30,6 +30,15 @@ describe('Admin', () => {
             ]
         )
         const actual = await findStats(yearRange)
-        expect(actual).toEqual([{'category': 'theaters', 'count': '1'}, {'category': 'movies', 'count': '1'}])
+        expect(actual).toEqual([
+            {
+                'category': 'movies',
+                'count': '1'
+            },
+            {
+                'category': 'theaters',
+                'count': '1'
+            }
+        ])
     })
 })
