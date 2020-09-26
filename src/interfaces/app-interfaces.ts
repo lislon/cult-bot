@@ -4,6 +4,7 @@ import { TimetableSceneState } from '../scenes/timetable/timetable-scene'
 import { CustomizeSceneState } from '../scenes/customize/customize-scene'
 import { TimeIntervalSceneState } from '../scenes/time-interval/time-interval-scene'
 import { MainSceneState } from '../scenes/main/main-scene'
+import { AdminSceneState } from '../scenes/admin/admin-scene'
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
 export const allCategories: EventCategory[] = ['theaters', 'exhibitions', 'movies', 'events', 'walks', 'concerts']
@@ -29,6 +30,7 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         customize: CustomizeSceneState
         timetable: TimetableSceneState
         timeInterval: TimeIntervalSceneState
+        adminScene: AdminSceneState
         language: 'en' | 'ru'
         sceneStack: string[]
     }

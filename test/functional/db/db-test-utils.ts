@@ -76,3 +76,11 @@ export function getMockEvent(
         timeIntervals: eventTime
     }
 }
+
+export function expectedTitles(titles: string[], events: Event[]) {
+    expect(events.map(t => t.title)).toEqual(expect.arrayContaining(titles))
+}
+
+export function expectedTitlesStrict(titles: string[], events: Event[]) {
+    expect(events.map(t => t.title)).toEqual(titles)
+}

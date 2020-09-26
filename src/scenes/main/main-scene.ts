@@ -36,7 +36,7 @@ const content = (ctx: ContextMessageUpdate) => {
         ['theaters', 'exhibitions'],
         ['movies', 'events'],
         ['walks', 'concerts'],
-        ['customize']
+        ['customize', 'admin']
     ]
 
     const mainButtons = menu.map(row =>
@@ -113,7 +113,7 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
     const intervalTemplateParams = interavalTemplateParams(range)
 
     // await cleanOldMessages(ctx)
-    await sleep(500)
+    await sleep(400)
     if (events.length > 0) {
         const tplData = {
             cat: i18Msg(`keyboard.${cat}`)
@@ -133,12 +133,14 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
             await ctx.replyWithHTML(i18Msg('let_me_show_next_weekend', {humanDateRange, ...tplData}))
         }
 
-        await sleep(1500)
+        await sleep(1300)
     }
 
     const sortedByRating = events.filter(e => e.rating >= 17).sort(e => e.rating)
     let count = 0
     for (const event of events) {
+
+        const {range, events} = await getTopEvents(cat)
 
         await ctx.replyWithHTML(cardFormat(event), {
             disable_web_page_preview: true,
@@ -152,7 +154,6 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
 
         await sleep(1000)
     }
-
 
     if (events.length == 0) {
         await ctx.reply(i18Msg('nothing_found_in_interval', intervalTemplateParams),
@@ -185,6 +186,9 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
         bot.hears(i18n.t(`ru`, `scenes.main_scene.keyboard.customize`), async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('customize_scene')
         });
+        bot.hears(i18n.t(`ru`, `scenes.main_scene.keyboard.admin`), async (ctx: ContextMessageUpdate) => {
+            await ctx.scene.enter('admin_scene')
+        });
     }
 }
 
@@ -192,61 +196,3 @@ export {
     scene as mainScene,
     registerActions as mainRegisterActions
 }
-
-
-
-// function getKeybaord(menuOpen: boolean) {
-//     const buttons = [
-//         [Markup.callbackButton( (menuOpen ? '➖ ' : '➕ ') + 'дети ✔ '  + '', 'deti')],
-//         true ? [
-//             Markup.callbackButton('0+ ✔', 'data', !menuOpen),
-//             Markup.callbackButton('4+ ✔ ', 'data', !menuOpen),
-//             Markup.callbackButton('12+', 'data', !menuOpen),
-//             Markup.callbackButton('18+', 'data', !menuOpen),
-//         ] : [],
-//         [Markup.callbackButton('        комфорт ✔️', 'data')],
-//         [Markup.callbackButton('     доступно по деньгам  ✔️', 'data')],
-//         [Markup.callbackButton('эксперимент  ✔️', 'data')],
-//         [Markup.callbackButton('      на почувствовать ✔️', 'data')],
-//         [Markup.callbackButton('в любое время ✔️', 'data')],
-//         [Markup.callbackButton('новые формы ✔️', 'data')],
-//         [Markup.callbackButton('для подготовленных ✔️', 'data')],
-//         [Markup.callbackButton('на воздухе ✔️', 'data')],
-//         [Markup.callbackButton('премьера ✔️', 'data')],
-//         [Markup.callbackButton('доступноподеньгам ✔️', 'data')],
-//         [Markup.callbackButton('ЗОЖ ✔️', 'data')],
-//     ];
-//     return buttons
-// }
-
-// function getKeybaord(menuOpen: boolean) {
-//     const buttons = [
-//         [Markup.callbackButton((menuOpen ? '➖ ' : '➕ ') + 'дети ✔ ' + '', 'deti')],
-//
-//         [
-//             Markup.callbackButton('драматическийтеатр', 'data', !menuOpen),
-//             Markup.callbackButton('танец', 'data', !menuOpen)
-//         ],
-//         [
-//             Markup.callbackButton('эксперимент', 'data', !menuOpen),
-//             Markup.callbackButton('опера', 'data', !menuOpen)
-//         ],
-//         [
-//             Markup.callbackButton('мюзикл', 'data', !menuOpen),
-//             Markup.callbackButton('фестиваль', 'data', !menuOpen)
-//         ],
-//         //
-//         // [Markup.callbackButton((menuOpen ? '➖ ' : '➕ ') + 'кино ✔ ' + '', 'ф')],
-//         // [Markup.callbackButton('художественное', 'data'),
-//         //     Markup.callbackButton('документальное', 'data')],
-//         // [Markup.callbackButton('анимация', 'data'),
-//         //     Markup.callbackButton('короткийметр', 'data')],
-//
-//         [Markup.callbackButton((false ? '➖ ' : '➕ ') + 'выставки ✔ ' + '', 'a')],
-//         [Markup.callbackButton((false ? '➖ ' : '➕ ') + 'прогулки ✔ ' + '', 'b')],
-//         [Markup.callbackButton((false ? '➖ ' : '➕ ') + 'прогулки ✔ ' + '', 'c')],
-//         [Markup.callbackButton('', 'data')],
-//
-//     ];
-//     return buttons
-// }

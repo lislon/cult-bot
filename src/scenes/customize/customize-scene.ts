@@ -4,7 +4,7 @@ import { backButtonRegister } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
 import { countEventsCustomFilter } from '../../db/custom-filter'
-import { mskMoment } from '../../util/moment-msk'
+import { getNextWeekEndRange } from '../shared/shared-logic'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
@@ -14,7 +14,7 @@ async function countFilteredEvents(ctx: ContextMessageUpdate) {
     return await countEventsCustomFilter({
         limit: 3,
         offset: 0,
-        weekendRange: [mskMoment('2020-01-01'), mskMoment('2021-01-01')],
+        weekendRange: getNextWeekEndRange(),
         cennosti: ctx.session.customize.cennosti
     })
 }
@@ -77,9 +77,9 @@ class Menu {
 
 }
 
-function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
+async function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
     const menu = new Menu(ctx, state.cennosti, state.uiMenuState)
-
+    const {i18Btn} = sceneHelper(ctx)
 
     const buttons = [
         [menu.button('#комфорт')],
@@ -91,13 +91,15 @@ function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
         [menu.button('#успетьзачас')],
         [menu.button('#культурныйбазис')],
         ...(menu.dropDownButtons('menu_стоимость', ['#доступноподеньгам', '#бесплатно'])),
-        ...(menu.dropDownButtons('menu_childrens', chidrensTags))
+        ...(menu.dropDownButtons('menu_childrens', chidrensTags)),
+        [Markup.callbackButton(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}), 'show')]
     ]
     return Markup.inlineKeyboard(buttons)
 }
 
 
-async function getMarkupKeyboard(i18Btn, ctx: ContextMessageUpdate) {
+async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
+    const {i18Btn} = sceneHelper(ctx)
     const markupKeyabord = Markup.keyboard([
         [Markup.button(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}))],
         [Markup.button(i18Btn('go_back_to_customize'))],
@@ -125,12 +127,12 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             const {i18Btn, i18Msg} = sceneHelper(ctx)
 
             await prepareSessionStateIfNeeded(ctx)
-            const inlineKeyboard = getKeyboard(ctx, ctx.session.customize)
+            const inlineKeyboard = await getKeyboard(ctx, ctx.session.customize)
 
 
             const msg = await ctx.replyWithHTML(i18Msg('select_priorities'), Extra.markup((inlineKeyboard)))
-            const markupKbMsg = await ctx.replyWithHTML(i18Msg('select_priorities_footer'), Extra.markup((await getMarkupKeyboard(i18Btn, ctx))))
-            ctx.session.customize.markupKbId = markupKbMsg.message_id
+            const markupKbMsg = await ctx.replyWithHTML(i18Msg('select_priorities_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
+            // ctx.session.customize.markupKbId = markupKbMsg.message_id
             // const msg = await ctx.replyWithHTML(i18Msg('select_priorities'))
 
             // await sleep(1000)
@@ -159,7 +161,7 @@ scene
         const menuState = ctx.session.customize.uiMenuState
         menuState.set(ctx.match[1], !menuState.get(ctx.match[1]))
 
-        await ctx.editMessageReplyMarkup(getKeyboard(ctx, ctx.session.customize))
+        await ctx.editMessageReplyMarkup(await getKeyboard(ctx, ctx.session.customize))
     })
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
         const selected = ctx.match[1] as TagLevel2
@@ -173,13 +175,15 @@ scene
             ctx.session.customize.cennosti.push(selected)
         }
 
-        await ctx.editMessageReplyMarkup(getKeyboard(ctx, ctx.session.customize))
+        await ctx.editMessageReplyMarkup(await getKeyboard(ctx, ctx.session.customize))
 
-        const {i18Btn, i18Msg} = sceneHelper(ctx)
-        if (ctx.session.customize.markupKbId !== undefined)
-        await ctx.deleteMessage(ctx.session.customize.markupKbId)
-        const markupKbMsg = await ctx.replyWithHTML(i18Msg('select_priorities_footer'), Extra.markup((await getMarkupKeyboard(i18Btn, ctx))))
-        ctx.session.customize.markupKbId = markupKbMsg.message_id
+        // const {i18Btn, i18Msg} = sceneHelper(ctx)
+        // if (ctx.session.customize.markupKbId === undefined) {
+        //     const markupKbMsg = await ctx.replyWithHTML(`По вашему фильтру ${await countFilteredEvents(ctx)} событий`)
+        //     ctx.session.customize.markupKbId = markupKbMsg.message_id
+        // } else {
+        //     const nm = await ctx.telegram.editMessageText(ctx.chat.id, ctx.session.customize.markupKbId, undefined, `По вашему фильтру ${await countFilteredEvents(ctx)} событий`)
+        // }
         //  editMessageText('qq', Extra.inReplyTo(ctx.session.customize.markupKbId).markup((markupKeyabord)))
     })
     .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {

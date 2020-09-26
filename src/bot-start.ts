@@ -3,6 +3,7 @@ import logger from './util/logger';
 import rp from 'request-promise';
 import { match } from 'telegraf-i18n';
 import { mainRegisterActions, mainScene } from './scenes/main/main-scene'
+import { adminRegisterActions, adminScene } from './scenes/admin/admin-scene'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import dbsync from './dbsync/dbsync'
 import { db } from './db';
@@ -32,9 +33,10 @@ bot.use(middlewares.session);
 bot.use(middlewares.i18n);
 bot.use(stage.middleware());
 
-stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene)
+stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene)
 mainRegisterActions(bot, i18n)
 customizeRegisterActions(bot, i18n)
+adminRegisterActions(bot, i18n)
 
 
 bot.start(async (ctx: ContextMessageUpdate) => {

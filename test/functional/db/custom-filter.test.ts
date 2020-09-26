@@ -1,14 +1,9 @@
 import { mskMoment } from '../../../src/util/moment-msk'
-import { freshDb, getMockEvent, initializeDbTests, MockEvent } from './db-test-utils'
+import { expectedTitles, freshDb, getMockEvent, initializeDbTests, MockEvent } from './db-test-utils'
 import { syncDatabase } from '../../../src/db/sync'
 import { countEventsCustomFilter, findEventsCustomFilter } from '../../../src/db/custom-filter'
-import { Event } from '../../../src/interfaces/app-interfaces'
 
 initializeDbTests()
-
-function expectWillReturn(titles: string[], events: Event[]) {
-    expect(events.map(t => t.title)).toEqual(expect.arrayContaining(titles))
-}
 
 describe('Filtering', () => {
     freshDb()
@@ -24,7 +19,7 @@ describe('Filtering', () => {
             getMockEvent({title: 'C', category: 'concerts', eventTime, tag_level_1: ['#A']})
         ])
 
-        expectWillReturn(['A', 'B'], await findEventsCustomFilter({oblasti: ['#A', '#B'], weekendRange}))
+        expectedTitles(['A', 'B'], await findEventsCustomFilter({oblasti: ['#A', '#B'], weekendRange}))
     }, 1000000)
 
     test('search only by cennosti works', async () => {
@@ -34,7 +29,7 @@ describe('Filtering', () => {
             getMockEvent({title: 'C', category: 'concerts', eventTime, tag_level_2: ['#ЗОЖ']})
         ])
 
-         expectWillReturn(['A', 'B'], await findEventsCustomFilter({cennosti: ['#ЗОЖ', '#комфорт'], weekendRange}))
+         expectedTitles(['A', 'B'], await findEventsCustomFilter({cennosti: ['#ЗОЖ', '#комфорт'], weekendRange}))
     }, 1000000)
 
     test('search without tags works', async () => {
@@ -43,7 +38,7 @@ describe('Filtering', () => {
             getMockEvent({title: 'B', category: 'concerts', eventTime, tag_level_2: ['#ЗОЖ']})
         ])
 
-        expectWillReturn(['A', 'B'], await findEventsCustomFilter({weekendRange}))
+        expectedTitles(['A', 'B'], await findEventsCustomFilter({weekendRange}))
     }, 1000000)
 
     test('search filters out of interval', async () => {
@@ -52,7 +47,7 @@ describe('Filtering', () => {
             getMockEvent({title: 'B', eventTime})
         ])
 
-        expectWillReturn(['B'], await findEventsCustomFilter({weekendRange}))
+        expectedTitles(['B'], await findEventsCustomFilter({weekendRange}))
     }, 1000000)
 
     describe('Логика с детьми', () => {
@@ -67,19 +62,19 @@ describe('Filtering', () => {
         })
 
         test('Если выбран 16+, то ищем два тега: 16+ и 12+', async () => {
-            await expectWillReturn(['D16', 'D12'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми16+']}))
+            await expectedTitles(['D16', 'D12'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми16+']}))
         }, 1000000)
 
         test('Если выбран 12+, то ищем 12+ и 6+', async () => {
-            expectWillReturn(['D12', 'D6'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми12+']}))
+            expectedTitles(['D12', 'D6'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми12+']}))
         }, 1000000)
 
         test('Если выбран 6+, то ищем 6+ и 0+', async () => {
-            expectWillReturn(['D6', 'D0'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми6+']}))
+            expectedTitles(['D6', 'D0'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми6+']}))
         }, 1000000)
 
         test('Если выбран 0+, то ищем только 0+', async () => {
-            expectWillReturn(['D0'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми0+']}))
+            expectedTitles(['D0'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми0+']}))
         }, 1000000)
     })
 

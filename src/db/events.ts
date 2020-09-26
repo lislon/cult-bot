@@ -4,6 +4,7 @@ import { Event, EventCategory } from '../interfaces/app-interfaces'
 import { TagCategory } from '../interfaces/db-interfaces'
 import { mapToPgInterval } from './db-utils'
 
+
 export async function findTopEventsInRange(category: EventCategory, interval: Moment[], limit: number = 3): Promise<Event[]> {
     const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
     if (category === 'exhibitions') {
@@ -13,9 +14,12 @@ export async function findTopEventsInRange(category: EventCategory, interval: Mo
     const primaryEvents = `
         SELECT cb.*
         FROM cb_events cb
-        join cb_events_entrance_times cbet on (cbet.event_id = cb.id)
-        where
-            $(interval) && cbet.entrance
+        WHERE
+            EXISTS(
+                select id
+                FROM cb_events_entrance_times cbet
+                where $(interval) && cbet.entrance AND cbet.event_id = cb.id
+                 )
             AND cb.category = $(category)
             AND cb.is_anytime = false
         ORDER BY cb.rating DESC, random()

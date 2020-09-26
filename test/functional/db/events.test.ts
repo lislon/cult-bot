@@ -1,9 +1,9 @@
 import { mskMoment } from '../../../src/util/moment-msk'
 import { findTopEventsInRange } from '../../../src/db/events'
-import { cleanDb, freshDb, getMockEvent, initializeDbTests } from './db-test-utils'
+import { cleanDb, expectedTitlesStrict, freshDb, getMockEvent, initializeDbTests } from './db-test-utils'
 import { syncDatabase } from '../../../src/db/sync'
 
-async function expectResults(number: number, [from, to]: string[]) {
+export async function expectResults(number: number, [from, to]: string[]) {
     const range = [mskMoment(from), mskMoment(to)]
     const top = await findTopEventsInRange('theaters', range)
     expect(top.length).toEqual(number)
@@ -17,15 +17,16 @@ describe('Top events', () => {
 
     test('single event', async () => {
         await syncDatabase([getMockEvent({
+            title: 'A',
             eventTime: [
-                mskMoment('2020-01-02 15:00')
+                mskMoment('2020-01-02 15:00'),
+                mskMoment('2020-01-02 16:00')
             ],
             category: 'theaters'
         })])
 
         const range = [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-03 15:00')]
-        const top = await findTopEventsInRange('theaters', range)
-        expect(top.length).toEqual(1)
+        expectedTitlesStrict(['A'], await findTopEventsInRange('theaters', range))
     })
 
     test('do not show exhibition before close 1.5 hours', async () => {
@@ -175,3 +176,4 @@ describe('Search intervals', () => {
 
     })
 });
+
