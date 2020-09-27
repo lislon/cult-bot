@@ -29,7 +29,7 @@ const content = async (ctx: ContextMessageUpdate) => {
 
     const keyboard = [
         [
-            Markup.button(i18Btn('timetable')),
+            Markup.button(i18Btn('time')),
             Markup.button(i18Btn('oblasti')),
             Markup.button(i18Btn('priorities'))
         ],
@@ -77,6 +77,7 @@ class Menu {
         switch (this.section) {
             case 'cennosti_section': return actionName(`p_${postfix}`)
             case 'oblasti_section': return actionName(`o_${postfix}`)
+            case 'time': return actionName(`t_${postfix}`)
             default: throw new Error(`Unknown section name ${this.section}`);
         }
     }
@@ -131,8 +132,11 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate, state: CustomizeSce
 
     const buttons = [
         ...(menu.dropDownButtons('menu_movies', [
-            ['#художественное', '#документальное'],
-            ['#анимация', '#короткийметр', '#фестиваль']
+            ['#художественное'],
+            ['#документальное'],
+            ['#анимация'],
+            ['#короткийметр'],
+            ['#фестиваль']
         ])),
         ...(menu.dropDownButtons('menu_concerts', [
             ['#сольныйконцерт'],
@@ -151,8 +155,8 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate, state: CustomizeSce
         ...(menu.dropDownButtons('menu_theaters', [
             ['#драматическийтеатр'],
             ['#эксперимент'],
-            ['#опера', '#танец', '#мюзикл'],
-            ['#фестиваль'],
+            ['#опера', '#танец'],
+            ['#фестиваль', '#мюзикл'],
             ['#аудиоспектакль'],
             ['#кукольныйтеатр'],
         ])),
@@ -171,52 +175,21 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate, state: CustomizeSce
     return Markup.inlineKeyboard(buttons)
 }
 
-async function getKeyboardTime(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
-    const menu = new Menu(ctx, state.time, state.openedMenus, 'time')
+async function getKeyboardTime(ctx: ContextMessageUpdate) {
+    const menu = new Menu(ctx, ctx.session.customize.time, ctx.session.customize.openedMenus, 'time')
 
     const buttons = [
-        ...(menu.dropDownButtons('menu_movies', [
-            ['#художественное', '#документальное'],
-            ['#анимация', '#короткийметр', '#фестиваль']
+        ...(menu.dropDownButtons('menu_saturday', [
+            ['09:00-10:00', '12:00-13:00'],
+            ['10:00-11:00', '13:00-14:00']
         ])),
-        ...(menu.dropDownButtons('menu_concerts', [
-            ['#сольныйконцерт'],
-            ['#сборныйконцерт'],
-            ['#камерныйконцерт'],
-            ['#классическийконцерт'],
-            ['#творческийвечер'],
-            ['#фестиваль']
+        ...(menu.dropDownButtons('menu_sunday', [
+            ['09:00-10:00', '12:00-13:00'],
+            ['10:00-11:00', '13:00-14:00']
         ])),
-        ...(menu.dropDownButtons('menu_exhibitions', [
-            ['#постояннаяэкспозиция'],
-            ['#выставочныйпроект'],
-            ['#персональнаявыставка'],
-            ['#доммузей']
-        ])),
-        ...(menu.dropDownButtons('menu_theaters', [
-            ['#драматическийтеатр'],
-            ['#эксперимент'],
-            ['#опера', '#танец', '#мюзикл'],
-            ['#фестиваль'],
-            ['#аудиоспектакль'],
-            ['#кукольныйтеатр'],
-        ])),
-        ...(menu.dropDownButtons('menu_events', [
-            ['#лекция', '#встречасперсоной'],
-            ['#мастеркласс', '#курс', '#подкаст'],
-        ])),
-        ...(menu.dropDownButtons('menu_walks', [
-            ['#активныйотдых'],
-            ['#городсгидом'],
-            ['#загородсгидом'],
-            ['#аудиоэкскурсия'],
-            ['#знакомствоспространством'],
-        ]))
     ]
     return Markup.inlineKeyboard(buttons)
 }
-
-
 
 
 
@@ -321,11 +294,24 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
 
             await putOrRefreshCounterMessage(ctx)
         })
+        .hears(i18nModuleBtnName('time'), async (ctx: ContextMessageUpdate) => {
+            const {i18Btn, i18Msg} = sceneHelper(ctx)
+
+            prepareSessionStateIfNeeded(ctx)
+            resetOpenMenus(ctx)
+            await ctx.replyWithHTML(i18Msg('select_time'), Extra.markup((await getKeyboardTime(ctx))))
+            await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
+
+            await putOrRefreshCounterMessage(ctx)
+        })
         .hears(i18nModuleBtnName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
             await showNextPortionOfResults(ctx)
         })
         .hears(i18nModuleBtnName('reset_filter'), async (ctx: ContextMessageUpdate) => {
             await resetFilter(ctx)
+        })
+        .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {
+            await ctx.scene.enter('customize_scene')
         })
     ;
 
@@ -402,7 +388,7 @@ scene
     })
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
         cennostiOptionLogic(ctx, ctx.match[1])
-
+        await ctx.answerCbQuery()
         await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
         await putOrRefreshCounterMessage(ctx)
     })
@@ -412,12 +398,9 @@ scene
     })
     .action(/customize_scene[.]o_(.+)/, async (ctx: ContextMessageUpdate) => {
         oblastiOptionLogic(ctx, ctx.match[1])
+        await ctx.answerCbQuery()
         await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx, ctx.session.customize))
         await putOrRefreshCounterMessage(ctx)
-    })
-    .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {
-        // console.log('customize-scene-back')
-        await ctx.scene.enter('customize_scene')
     });
 
 
