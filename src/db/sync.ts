@@ -80,13 +80,13 @@ export async function syncDatabase(events: EventToSave[]) {
             }
         }
         for (let index = 0; index < 3; index++) {
-        try {
-            await db.tx(func)
-        } catch (e) {
-            console.log("opsik " + index + " " + e.code);
-            console.log(e);
-            await sleep(1000 * Math.random())
-        }
+            try {
+                await db.tx(func)
+            } catch (e) {
+                console.log('opsik ' + index + ' ' + e.code);
+                console.log(e);
+                await sleep(1000 * Math.random())
+            }
 
         }
     }
