@@ -1,7 +1,8 @@
 import { DbEvent, EventToSave } from '../interfaces/db-interfaces'
 import { db, pgp } from '../db'
 import { encodeTagLevel1 } from '../util/tag-level1-encoder'
-
+import { ITask } from 'pg-promise';
+import { sleep } from './../util/scene-helper';
 
 function mapToDb(event: EventToSave): DbEvent {
     delete event.primaryData.publish
@@ -66,7 +67,7 @@ export async function syncDatabase(events: EventToSave[]) {
         const dbColEvents = new pgp.helpers.ColumnSet(Object.keys(dbRows[0]), {table: 'cb_events'});
         const dbColIntervals = new pgp.helpers.ColumnSet(['event_id', 'entrance'], {table: 'cb_events_entrance_times'});
 
-        await db.tx(async dbTx => {
+        const func = async (dbTx: ITask<{}> & {}) => {
             // await dbTx.none('TRUNCATE cb_time_intervals, cb_events_to_tags, cb_tags, cb_events RESTART identity')
             await dbTx.none('DELETE FROM cb_events')
 
@@ -77,21 +78,16 @@ export async function syncDatabase(events: EventToSave[]) {
             if (allIntervalsData.length > 0) {
                 await dbTx.none(pgp.helpers.insert(allIntervalsData, dbColIntervals))
             }
-            //
-            // let tagIds: number[] = []
-            // if (allTagsData.length > 0) {
-            //     const tagsQuery = pgp.helpers.insert(allTagsData, dbColTags) + ' RETURNING id'
-            //     tagIds = await dbTx.map(tagsQuery, [], r => +r.id)
-            // }
-            //
-            //
-            // const allEventsToTagsData = convertsToTagsData(allTagsData, tagIds, events, eventIds)
-            //
-            // if (allEventsToTagsData.length > 0) {
-            //     await dbTx.none(pgp.helpers.insert(allEventsToTagsData, dbColEventsToTags))
-            // }
+        }
+        for (let index = 0; index < 3; index++) {
+        try {
+            await db.tx(func)
+        } catch (e) {
+            console.log("opsik " + index + " " + e.code);
+            console.log(e);
+            await sleep(1000 * Math.random())
+        }
 
-
-        })
+        }
     }
 }

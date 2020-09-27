@@ -7,16 +7,22 @@ import { config } from 'dotenv'
 import RedisSession from 'telegraf-session-redis'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { mskMoment } from './util/moment-msk'
+import { Session } from 'inspector';
 
 config();
 
-const reddisSession = new RedisSession({
-    store: {
-        host: undefined,
-        port: undefined,
-        url: process.env.REDIS_URL
-    }
-})
+let sessionMechanism
+if (process.env.REDIS_URL !== undefined) {
+    sessionMechanism = new RedisSession({
+        store: {
+            host: undefined,
+            port: undefined,
+            url: process.env.REDIS_URL
+        }
+    })
+} else {
+    sessionMechanism = session()
+}
 
 export const i18n = new TelegrafI18n({
     defaultLanguage: 'ru',
@@ -40,6 +46,6 @@ export default {
         }
     }),
     logger: updateLogger({colors: true}),
-    session: reddisSession
+    session: sessionMechanism
 }
 

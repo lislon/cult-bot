@@ -9,6 +9,10 @@ export async function cleanDb() {
 }
 
 export function initializeDbTests() {
+    beforeAll(async () => {
+        await db.result('SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE READ WRITE')
+    })
+
     afterAll(async () => {
         db.$pool.end()
     })

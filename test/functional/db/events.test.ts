@@ -1,6 +1,6 @@
 import { mskMoment } from '../../../src/util/moment-msk'
 import { findTopEventsInRange } from '../../../src/db/events'
-import { cleanDb, expectedTitlesStrict, freshDb, getMockEvent } from './db-test-utils'
+import { cleanDb, expectedTitlesStrict, freshDb, getMockEvent, initializeDbTests } from './db-test-utils'
 import { syncDatabase } from '../../../src/db/sync'
 
 export async function expectResults(number: number, [from, to]: string[]) {
@@ -8,6 +8,8 @@ export async function expectResults(number: number, [from, to]: string[]) {
     const top = await findTopEventsInRange('theaters', range)
     expect(top.length).toEqual(number)
 }
+
+initializeDbTests()
 
 describe('Top events', () => {
     freshDb()
