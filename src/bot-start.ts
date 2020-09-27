@@ -25,7 +25,6 @@ const stage = new Stage([], {
     default: 'main_scene'
 })
 
-
 bot.use(middlewares.telegrafThrottler)
 bot.use(middlewares.logger)
 bot.use(middlewares.session);
@@ -37,6 +36,10 @@ mainRegisterActions(bot, i18n)
 customizeRegisterActions(bot, i18n)
 adminRegisterActions(bot, i18n)
 
+// bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
+//     console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
+//     await ctx.reply(ctx.i18n.t('shared.something_went_wrong_dev', { error: error.toString().substr(0, 1000) }))
+// })
 
 bot.start(async (ctx: ContextMessageUpdate) => {
     console.log('bot.start')
@@ -53,11 +56,6 @@ bot.start(async (ctx: ContextMessageUpdate) => {
     await ctx.scene.enter('main_scene');
 });
 
-
-bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
-    console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
-    await ctx.reply(ctx.i18n.t('shared.something_went_wrong_dev', { error: error.toString().substr(0, 1000) }))
-})
 
 
 bot.command('menu', async (ctx: ContextMessageUpdate) => {

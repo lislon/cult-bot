@@ -7,18 +7,45 @@ import { countEventsCustomFilter, findEventsCustomFilter } from '../../db/custom
 import { getNextWeekEndRange, SessionEnforcer } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import plural from 'plural-ru'
+import { i18n } from '../../middleware-utils'
+import { Moment } from 'moment'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
 const limitToPage = 3
 const {backButton, sceneHelper, actionName, i18nModuleBtnName, revertActionName} = i18nSceneHelper(scene)
 
+export function mapUserInputToTimeIntervals(times: string[], [sat, sun]: Moment[]): Moment[][] {
+    return (times)
+        .map(t => t.split(/[-.]/))
+        .map(([day, from, to]) => [
+            day,
+            +from.replace(/:00/, ''),
+            +to.replace(/:00/, '')
+        ])
+        .flatMap(([day, from, to]) => {
+            if (from < to) {
+                return [[day, from, to]]
+            } else {
+                return [[day, 0, to], [day, from, 24]]
+            }
+        })
+        .map(([day, from, to]: [string, number, number]) => {
+            const baseDay = (day === 'saturday' ? sat : sun).clone().startOf('day')
+            return [
+                baseDay.clone().add(from, 'hour'),
+                baseDay.clone().add(to, 'hour'),
+            ]
+        });
+}
+
 async function countFilteredEvents(ctx: ContextMessageUpdate) {
     if (ctx.session.customize.resultsFound === undefined) {
         ctx.session.customize.resultsFound = await countEventsCustomFilter({
+            timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange()),
             weekendRange: getNextWeekEndRange(),
             cennosti: ctx.session.customize.cennosti,
-            oblasti: ctx.session.customize.oblasti
+            oblasti: ctx.session.customize.oblasti,
         })
     }
     return ctx.session.customize.resultsFound;
@@ -47,7 +74,7 @@ function checkboxName(isSelected: boolean) {
     return `checkbox_${isSelected ? 'on' : 'off'}`;
 }
 
-type SectionName = 'oblasti_section' | 'cennosti_section' | 'time'
+type SectionName = 'oblasti_section' | 'cennosti_section' | 'time_section'
 
 class Menu {
     private readonly selected: string[]
@@ -77,7 +104,7 @@ class Menu {
         switch (this.section) {
             case 'cennosti_section': return actionName(`p_${postfix}`)
             case 'oblasti_section': return actionName(`o_${postfix}`)
-            case 'time': return actionName(`t_${postfix}`)
+            case 'time_section': return actionName(`t_${postfix}`)
             default: throw new Error(`Unknown section name ${this.section}`);
         }
     }
@@ -85,7 +112,7 @@ class Menu {
     dropDownButtons(menuTitle: string, submenus: string[][]): InlineKeyboardButton[][] {
         const {i18Btn} = sceneHelper(this.ctx)
 
-        const decorateTag = (tag: string) => this.section === 'oblasti_section'
+        const decorateTag = (tag: string) => ['oblasti_section', 'time_section'].includes(this.section)
                 ? `${menuTitle.replace('menu_', '')}.${tag}`
                 : tag
 
@@ -127,8 +154,8 @@ async function getKeyboardCennosti(ctx: ContextMessageUpdate, state: CustomizeSc
     return Markup.inlineKeyboard(buttons)
 }
 
-async function getKeyboardOblasti(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
-    const menu = new Menu(ctx, state.oblasti, state.openedMenus, 'oblasti_section')
+async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
+    const menu = new Menu(ctx, ctx.session.customize.oblasti, ctx.session.customize.openedMenus, 'oblasti_section')
 
     const buttons = [
         ...(menu.dropDownButtons('menu_movies', [
@@ -179,22 +206,24 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate, state: CustomizeSce
 }
 
 async function getKeyboardTime(ctx: ContextMessageUpdate) {
-    const menu = new Menu(ctx, ctx.session.customize.time, ctx.session.customize.openedMenus, 'time')
+    const menu = new Menu(ctx, ctx.session.customize.time, ctx.session.customize.openedMenus, 'time_section')
+
+    function getIntervalsFromI18N(day: string) {
+        return i18n.resourceKeys('ru')
+            .filter(key => key.startsWith(`scenes.customize_scene.keyboard.time_section.${day}.`))
+            .map(key => [key.replace(/^.+[.](?=[^.]+$)/, '')])
+    }
 
     const buttons = [
         ...(menu.dropDownButtons('menu_saturday', [
-            ['09:00-10:00', '12:00-13:00'],
-            ['10:00-11:00', '13:00-14:00']
+            ...getIntervalsFromI18N('saturday')
         ])),
         ...(menu.dropDownButtons('menu_sunday', [
-            ['09:00-10:00', '12:00-13:00'],
-            ['10:00-11:00', '13:00-14:00']
+            ...getIntervalsFromI18N('sunday')
         ])),
     ]
     return Markup.inlineKeyboard(buttons)
 }
-
-
 
 async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
     const {i18Btn} = sceneHelper(ctx)
@@ -228,6 +257,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
     const events = await findEventsCustomFilter({
         cennosti: ctx.session.customize.cennosti,
         oblasti: ctx.session.customize.oblasti,
+        timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange()),
         weekendRange: getNextWeekEndRange(),
         limit: limitToPage,
         offset: ctx.session.customize.pagingOffset
@@ -282,7 +312,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             prepareSessionStateIfNeeded(ctx)
             resetOpenMenus(ctx)
 
-            await ctx.replyWithHTML(i18Msg('select_oblasti'), Extra.markup((await getKeyboardOblasti(ctx, ctx.session.customize))))
+            await ctx.replyWithHTML(i18Msg('select_oblasti'), Extra.markup((await getKeyboardOblasti(ctx))))
             await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
 
             await putOrRefreshCounterMessage(ctx)
@@ -343,6 +373,14 @@ function oblastiOptionLogic(ctx: ContextMessageUpdate, selected: string) {
     }
 }
 
+function timeOptionLogic(ctx: ContextMessageUpdate, selected: string) {
+    if (ctx.session.customize.time.includes(selected)) {
+        ctx.session.customize.time = ctx.session.customize.time.filter(s => s !== selected)
+    } else {
+        ctx.session.customize.time.push(selected)
+    }
+}
+
 function checkOrUncheckMenu(ctx: ContextMessageUpdate) {
     const menuTitle = ctx.match[1]
     if (ctx.session.customize.openedMenus.includes(menuTitle)) {
@@ -389,22 +427,33 @@ scene
         checkOrUncheckMenu(ctx)
         await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
     })
+    .action(/customize_scene[.]o_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
+        checkOrUncheckMenu(ctx)
+        await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx))
+    })
+    .action(/customize_scene[.]t_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
+        checkOrUncheckMenu(ctx)
+        await ctx.editMessageReplyMarkup(await getKeyboardTime(ctx))
+    })
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
         cennostiOptionLogic(ctx, ctx.match[1])
         await ctx.answerCbQuery()
         await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
         await putOrRefreshCounterMessage(ctx)
     })
-    .action(/customize_scene[.]o_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
-        checkOrUncheckMenu(ctx)
-        await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx, ctx.session.customize))
-    })
     .action(/customize_scene[.]o_(.+)/, async (ctx: ContextMessageUpdate) => {
         oblastiOptionLogic(ctx, ctx.match[1])
         await ctx.answerCbQuery()
-        await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx, ctx.session.customize))
+        await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx))
         await putOrRefreshCounterMessage(ctx)
-    });
+    })
+    .action(/customize_scene[.]t_(.+)/, async (ctx: ContextMessageUpdate) => {
+        timeOptionLogic(ctx, ctx.match[1])
+        await ctx.answerCbQuery()
+        await ctx.editMessageReplyMarkup(await getKeyboardTime(ctx))
+        await putOrRefreshCounterMessage(ctx)
+    })
+;
 
 
 function resetPaging(ctx: ContextMessageUpdate) {

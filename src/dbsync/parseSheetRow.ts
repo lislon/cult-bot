@@ -103,7 +103,7 @@ function validateTag(tags: string[], errorCallback: (errors: string[]) => void) 
 
 export function processRow(row: Partial<ExcelRow>, category: EventCategory): ExcelRowResult {
 
-    const notNull = (s: string) => s === undefined ? '' : s;
+    const notNull = (s: string) => s === undefined ? '' : s.trim();
     const notNullOrUnknown = (s: string) => s === undefined || s.match('/[?]+/') ? '' : s;
     const forceDigit = (n: string) => n === undefined ? 0 : +n;
     const splitTags = (s: string) => s.split(/\s+|(?<=[^\s])(?=#)/)

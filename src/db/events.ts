@@ -47,7 +47,7 @@ export async function findTopEventsInRange(category: EventCategory, interval: Mo
 
     return await db.any(finalQuery,
         {
-            interval: `[${mapToPgInterval(adjustedIntervals)}]`,
+            interval: mapToPgInterval(adjustedIntervals),
             category,
             limit
         }) as Event[];

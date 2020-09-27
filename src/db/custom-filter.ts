@@ -5,6 +5,7 @@ import { mapToPgInterval } from './db-utils'
 
 export interface CustomFilter {
     weekendRange: Moment[]
+    timeIntervals?: Moment[][]
     oblasti?: string[]
     cennosti?: TagLevel2[]
     offset?: number
@@ -31,11 +32,23 @@ function childAlternativesLogic(cennosti: TagLevel2[]): TagLevel2[] {
 function doQueryCore(customFilter: CustomFilter) {
     const queryBody = `
         FROM cb_events cb
-        WHERE
-            EXISTS(
+        WHERE EXISTS
+            (
                 SELECT *
                 FROM cb_events_entrance_times cbet
-                where cbet.event_id = cb.id AND $(interval) && cbet.entrance)
+                where cbet.event_id = cb.id
+                    AND ($(weekendRange) && cbet.entrance)
+                    AND
+                    (
+                        $(timeIntervals)::tstzrange[] = '{}'
+                        OR EXISTS
+                        (
+                               select *
+                               from unnest($(timeIntervals)::tstzrange[]) range
+                               where range && cbet.entrance
+                        )
+                    )
+            )
             AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
             AND cb.tag_level_2 @> $(cennosti)
             AND (cb.tag_level_2 && $(childTagsAlternatives) OR $(childTagsAlternatives) = '{}')`
@@ -43,11 +56,13 @@ function doQueryCore(customFilter: CustomFilter) {
     const cennosti = customFilter.cennosti || [];
     const cennostiFilteredFromHardTags = cennosti.filter(c => !chidrensTags.includes(c))
 
+
     const queryParams = {
         oblasti: customFilter.oblasti || [],
         cennosti: cennostiFilteredFromHardTags || [],
         childTagsAlternatives: childAlternativesLogic(cennosti),
-        interval: `[${mapToPgInterval(customFilter.weekendRange)}]`,
+        weekendRange: mapToPgInterval(customFilter.weekendRange),
+        timeIntervals: (customFilter.timeIntervals || []).map(i => mapToPgInterval(i)),
     }
     return {queryBody, queryParams}
 }

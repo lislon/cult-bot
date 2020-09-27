@@ -22,6 +22,7 @@ describe('db sync test', () => {
         }, 100000
     )
 
+
     test('sync should save tags', async () => {
             await syncDatabase([
                 getMockEvent({ tag_level_1: ['#A', '#B'], category: 'theaters'}),

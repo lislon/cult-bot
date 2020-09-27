@@ -9,8 +9,8 @@ describe('Filtering', () => {
     freshDb()
 
     const weekendRange = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-02 24:00')]
-    const eventTime = [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]
-    const outOfIntervalEventTime = [mskMoment('2020-02-01 12:00'), mskMoment('2020-02-03 15:00')]
+    const eventTime = [[mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]]
+    const outOfIntervalEventTime = [[mskMoment('2020-02-01 12:00'), mskMoment('2020-02-03 15:00')]]
 
     test('search only by oblasti works', async () => {
         await syncDatabase([
@@ -60,6 +60,25 @@ describe('Filtering', () => {
 
         expectedTitles(['B'], await findEventsCustomFilter({weekendRange}))
     }, 1000000)
+
+    test('search by many intervals', async () => {
+        await syncDatabase([
+            getMockEvent({title: 'A10', eventTime: [[mskMoment('2020-01-01 10:00'), mskMoment('2020-01-01 11:00')]]}),
+            getMockEvent({title: 'A11', eventTime: [[mskMoment('2020-01-01 11:00'), mskMoment('2020-01-01 12:00')]]}),
+            getMockEvent({title: 'A12', eventTime: [[mskMoment('2020-01-01 12:00'), mskMoment('2020-01-01 13:00')]]}),
+            getMockEvent({title: 'A13', eventTime: [[mskMoment('2020-01-01 13:00'), mskMoment('2020-01-01 14:00')]]}),
+            getMockEvent({title: 'A14', eventTime: [[mskMoment('2020-01-01 14:00'), mskMoment('2020-01-01 15:00')]]}),
+            getMockEvent({title: 'B10', eventTime: [[mskMoment('2020-01-03 10:00'), mskMoment('2020-01-03 15:00')]]})
+        ])
+        const weekendAlreadyStartedRange = [mskMoment('2020-01-01 11:00'), mskMoment('2020-01-02 24:00')]
+
+        expectedTitles(['A12', 'A13'], await findEventsCustomFilter({weekendRange: weekendAlreadyStartedRange, timeIntervals: [
+                [mskMoment('2020-01-01 10:00'), mskMoment('2020-01-01 11:00')],
+                [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-01 13:00')],
+                [mskMoment('2020-01-01 13:30'), mskMoment('2020-01-01 13:35')],
+            ]}))
+    }, 1000000)
+
 
     describe('Логика с детьми', () => {
         beforeAll(async () => {
@@ -124,7 +143,7 @@ describe('Filtering', () => {
 
     // test('search by all three works', async () => {
     //     await syncDatabase([
-    //         getMockEvent({ tag_level_1: ['#A'], tag_level_2: ['#A'], timeIntervals = }),
+    //         getMockEvent({ tag_level_1: ['#A'], tag_level_2: ['#A'], weekendRange = }),
     //         getMockEvent({ tag_level_2: ['#A', '#B'], category: 'theaters'}),
     //         getMockEvent({ tag_level_2: ['#A'], category: 'concerts'})
     //     ])
