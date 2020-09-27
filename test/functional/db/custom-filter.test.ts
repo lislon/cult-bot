@@ -16,10 +16,20 @@ describe('Filtering', () => {
         await syncDatabase([
             getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_1: ['#A', '#B', '#C']}),
             getMockEvent({title: 'B', category: 'theaters', eventTime, tag_level_1: ['#A', '#B']}),
-            getMockEvent({title: 'C', category: 'concerts', eventTime, tag_level_1: ['#A']})
+            getMockEvent({title: 'C', category: 'theaters', eventTime, tag_level_1: ['#A']})
         ])
 
-        expectedTitles(['A', 'B'], await findEventsCustomFilter({oblasti: ['#A', '#B'], weekendRange}))
+        expectedTitles(['A', 'B', 'C'], await findEventsCustomFilter({oblasti: ['theaters.#A', 'theaters.#B'], weekendRange}))
+    }, 1000000)
+
+    test('no oblasti means all oblasti', async () => {
+        await syncDatabase([
+            getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_1: ['#A', '#B', '#C']}),
+            getMockEvent({title: 'B', category: 'theaters', eventTime, tag_level_1: ['#A', '#B']}),
+            getMockEvent({title: 'C', category: 'theaters', eventTime, tag_level_1: ['#A']})
+        ])
+
+        expectedTitles(['A', 'B', 'C'], await findEventsCustomFilter({oblasti: [], weekendRange}))
     }, 1000000)
 
     test('search only by cennosti works', async () => {
@@ -31,6 +41,7 @@ describe('Filtering', () => {
 
          expectedTitles(['A', 'B'], await findEventsCustomFilter({cennosti: ['#ЗОЖ', '#комфорт'], weekendRange}))
     }, 1000000)
+
 
     test('search without tags works', async () => {
         await syncDatabase([

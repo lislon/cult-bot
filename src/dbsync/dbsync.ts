@@ -132,7 +132,9 @@ export default async function run(): Promise<{ updated: number, errors: number }
             const sheetId = sheetsMetaData.data.sheets[sheetNo].properties.sheetId;
             const numOfRows = sheet.values.length
 
-            const columnToClearFormat: ExcelColumnName[] = ['publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3']
+            const columnToClearFormat: ExcelColumnName[] = [
+                'publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3'
+            ]
 
             columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, numOfRows))
             // Print columns A and E, which correspond to indices 0 and 4.
@@ -146,7 +148,7 @@ export default async function run(): Promise<{ updated: number, errors: number }
                     if (row[columnNo] !== 'Была/не была') {
                         throw new WrongExcelColumnsError({
                                 listName: sheetsMetaData.data.sheets[sheetNo].properties.title,
-                                columnName: `${String.fromCharCode('A'.charCodeAt(0) + columnNo)}1`,
+                                columnName: String.fromCharCode('A'.charCodeAt(0) + columnNo) + `1`,
                                 expected: 'Была/не была',
                                 actual: row[columnNo]
                             });

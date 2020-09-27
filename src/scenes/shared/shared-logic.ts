@@ -36,3 +36,17 @@ export async function syncrhonizeDbByUser(ctx: ContextMessageUpdate) {
 export function getGoogleSpreadSheetURL() {
     return `https://docs.google.com/spreadsheets/d/${process.env.GOOGLE_DOCS_ID}`
 }
+
+export class SessionEnforcer {
+    static array<T>(any: any): T[] {
+        return Array.isArray(any) ? any : []
+    }
+
+    static default<T>(original: T, def: T): T {
+        return (original === undefined) ? def : original;
+    }
+
+    static number(original: number): number {
+        return typeof original === 'number' ? original : undefined;
+    }
+}

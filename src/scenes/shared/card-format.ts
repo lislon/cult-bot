@@ -1,6 +1,7 @@
 import { escapeHTML } from '../../util/string-utils'
 import { Event } from '../../interfaces/app-interfaces'
 import { getOnlyHumanTimetable } from '../../dbsync/parseSheetRow'
+import { cleanTagLevel1 } from '../../util/tag-level1-encoder'
 
 function escapeWithUrls(text: string) {
     return escapeHTML(text).replace(/\[(.+?)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
@@ -9,7 +10,7 @@ function escapeWithUrls(text: string) {
 export function cardFormat(row: Event) {
 
     let text = ``;
-    text += `<b>${escapeHTML(row.tag_level_1.join(' '))}</b>\n`
+    text += `<b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>\n`
     text += '\n'
     text += `<b>${escapeWithUrls(row.title)}</b>\n`
     text += '\n'

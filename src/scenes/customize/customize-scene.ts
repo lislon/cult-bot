@@ -1,23 +1,24 @@
 import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
 import { chidrensTags, ContextMessageUpdate, TagLevel2 } from '../../interfaces/app-interfaces'
-import { backButtonRegister, sleep } from '../../util/scene-helper'
+import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
 import { countEventsCustomFilter, findEventsCustomFilter } from '../../db/custom-filter'
-import { getNextWeekEndRange } from '../shared/shared-logic'
+import { getNextWeekEndRange, SessionEnforcer } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import plural from 'plural-ru'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
 const limitToPage = 3
-const {backButton, sceneHelper, actionName, i18nModuleBtnName} = backButtonRegister(scene)
+const {backButton, sceneHelper, actionName, i18nModuleBtnName, revertActionName} = i18nSceneHelper(scene)
 
 async function countFilteredEvents(ctx: ContextMessageUpdate) {
     if (ctx.session.customize.resultsFound === undefined) {
         ctx.session.customize.resultsFound = await countEventsCustomFilter({
             weekendRange: getNextWeekEndRange(),
-            cennosti: ctx.session.customize.cennosti
+            cennosti: ctx.session.customize.cennosti,
+            oblasti: ctx.session.customize.oblasti
         })
     }
     return ctx.session.customize.resultsFound;
@@ -42,47 +43,71 @@ const content = async (ctx: ContextMessageUpdate) => {
     }
 }
 
-function putCheckbox(isSelected: boolean) {
-    return isSelected ? ' ✔' : ''
+function checkboxName(isSelected: boolean) {
+    return `checkbox_${isSelected ? 'on' : 'off'}`;
 }
+
+type SectionName = 'oblasti_section' | 'cennosti_section'
 
 class Menu {
     private readonly selected: string[]
     private readonly openedMenus: string[]
     private readonly ctx: ContextMessageUpdate
-    private readonly section: string
+    private readonly section: SectionName
 
-    constructor(ctx: ContextMessageUpdate, selected: string[], openedMenus: string[]) {
+    constructor(ctx: ContextMessageUpdate,
+                selected: string[],
+                openedMenus: string[],
+                section: SectionName) {
         this.selected = selected
         this.openedMenus = openedMenus;
         this.ctx = ctx;
-        this.section = 'interests'
+        this.section = section
     }
 
     button(tag: string, hide: boolean = false): InlineKeyboardButton {
         const {i18Btn} = sceneHelper(this.ctx)
 
         const isSelected = this.selected.includes(tag)
-        return Markup.callbackButton(i18Btn(`${this.section}.${tag}`) + putCheckbox(isSelected), actionName(`p_${tag}`), hide)
+        const text = i18Btn(`${this.section}.${tag}`) + i18Btn(checkboxName(isSelected))
+        return Markup.callbackButton(text, this.actionName(`${tag}`), hide)
     }
 
-    dropDownButtons(title: string, submenus: string[]): InlineKeyboardButton[][] {
+    private actionName(postfix: string, parentMenuTitle: string = undefined) {
+        switch (this.section) {
+            case 'cennosti_section': return actionName(`p_${postfix}`)
+            case 'oblasti_section': return actionName(`o_${postfix}`)
+            default: throw new Error(`Unknown section name ${this.section}`);
+        }
+    }
+
+    dropDownButtons(menuTitle: string, submenus: string[][]): InlineKeyboardButton[][] {
         const {i18Btn} = sceneHelper(this.ctx)
 
-        const isAnySubmenuSelected = submenus.find(tag => this.selected.includes(tag)) !== undefined;
+        const decorateTag = (tag: string) => this.section === 'oblasti_section'
+                ? `${menuTitle.replace('menu_', '')}.${tag}`
+                : tag
 
-        const menuTitle = i18Btn(`${this.section}.${title}`)
-        const isOpen = this.openedMenus.includes(title)
+        const isAnySubmenuSelected = submenus
+            .flatMap(m => m)
+            .find(tag => this.selected.includes(decorateTag(tag))) !== undefined;
+
+        const menuTitleWord = i18Btn(`${this.section}.${menuTitle}`)
+        const isOpen = this.openedMenus.includes(menuTitle)
+        const menuTitleFull = i18Btn(`menu_${isOpen ? 'open' : 'closed'}`, {
+            title: menuTitleWord,
+            checkbox: i18Btn(checkboxName(isAnySubmenuSelected))
+        })
         return [
-            [Markup.callbackButton((isOpen ? '➖ ' : '➕ ') + menuTitle + putCheckbox(isAnySubmenuSelected), actionName(`${title}`))],
-            [...submenus.map(tag => this.button(tag, !isOpen))]
+            [Markup.callbackButton(menuTitleFull, this.actionName(menuTitle))],
+            ...submenus.map(rows => rows.map(tag => this.button(decorateTag(tag), !isOpen)))
         ]
     }
 
 }
 
-async function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
-    const menu = new Menu(ctx, state.cennosti, state.openedMenus)
+async function getKeyboardCennosti(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
+    const menu = new Menu(ctx, state.cennosti, state.openedMenus, 'cennosti_section')
     const {i18Btn} = sceneHelper(ctx)
 
     const buttons = [
@@ -94,9 +119,54 @@ async function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState
         [menu.button('#новыеформы')],
         [menu.button('#успетьзачас')],
         [menu.button('#культурныйбазис')],
-        ...(menu.dropDownButtons('menu_стоимость', ['#доступноподеньгам', '#бесплатно'])),
-        ...(menu.dropDownButtons('menu_childrens', chidrensTags))
+        ...(menu.dropDownButtons('menu_стоимость', [['#доступноподеньгам', '#бесплатно']])),
+        ...(menu.dropDownButtons('menu_childrens', [chidrensTags]))
         // [Markup.callbackButton(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}), actionName('show_filtered_events'))]
+    ]
+    return Markup.inlineKeyboard(buttons)
+}
+
+async function getKeyboardOblasti(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
+    const menu = new Menu(ctx, state.oblasti, state.openedMenus, 'oblasti_section')
+
+    const buttons = [
+        ...(menu.dropDownButtons('menu_movies', [
+            ['#художественное', '#документальное'],
+            ['#анимация', '#короткийметр', '#фестиваль']
+        ])),
+        ...(menu.dropDownButtons('menu_concerts', [
+            ['#сольныйконцерт'],
+            ['#сборныйконцерт'],
+            ['#камерныйконцерт'],
+            ['#классическийконцерт'],
+            ['#творческийвечер'],
+            ['#фестиваль']
+        ])),
+        ...(menu.dropDownButtons('menu_exhibitions', [
+            ['#постояннаяэкспозиция'],
+            ['#выставочныйпроект'],
+            ['#персональнаявыставка'],
+            ['#доммузей']
+        ])),
+        ...(menu.dropDownButtons('menu_theaters', [
+            ['#драматическийтеатр'],
+            ['#эксперимент'],
+            ['#опера', '#танец', '#мюзикл'],
+            ['#фестиваль'],
+            ['#аудиоспектакль'],
+            ['#кукольныйтеатр'],
+        ])),
+        ...(menu.dropDownButtons('menu_events', [
+            ['#лекция', '#встречасперсоной'],
+            ['#мастеркласс', '#курс', '#подкаст'],
+        ])),
+        ...(menu.dropDownButtons('menu_walks', [
+            ['#активныйотдых'],
+            ['#городсгидом'],
+            ['#загородсгидом'],
+            ['#аудиоэкскурсия'],
+            ['#знакомствоспространством'],
+        ]))
     ]
     return Markup.inlineKeyboard(buttons)
 }
@@ -105,11 +175,26 @@ async function getKeyboard(ctx: ContextMessageUpdate, state: CustomizeSceneState
 async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
     const {i18Btn} = sceneHelper(ctx)
     const markupKeyabord = Markup.keyboard([
-        [Markup.button(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}))],
+        [
+            Markup.button(i18Btn('reset_filter')),
+            Markup.button(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}))
+        ],
         [Markup.button(i18Btn('go_back_to_customize'))],
         [Markup.button(i18Btn('go_back_to_main'))]
     ]).resize()
     return markupKeyabord
+}
+
+function resetOpenMenus(ctx: ContextMessageUpdate) {
+    prepareSessionStateIfNeeded(ctx)
+    ctx.session.customize.openedMenus = []
+}
+
+async function resetFilter(ctx: ContextMessageUpdate) {
+    resetPaging(ctx)
+    ctx.session.customize.oblasti = []
+    ctx.session.customize.cennosti = []
+    await putOrRefreshCounterMessage(ctx)
 }
 
 async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
@@ -118,6 +203,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
 
     const events = await findEventsCustomFilter({
         cennosti: ctx.session.customize.cennosti,
+        oblasti: ctx.session.customize.oblasti,
         weekendRange: getNextWeekEndRange(),
         limit: limitToPage,
         offset: ctx.session.customize.pagingOffset
@@ -147,7 +233,7 @@ async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
 
     const count = await countFilteredEvents(ctx)
     const eventPlural = plural(count, i18Msg('plural.event.one'), i18Msg('plural.event.two'), i18Msg('plural.event.many'))
-    const msg = i18Msg('select_priorities_counter', {eventPlural})
+    const msg = i18Msg('select_counter', {eventPlural})
 
     if (ctx.session.customize.eventsCounterMsgText !== msg) {
         if (ctx.session.customize.eventsCounterMsgId === undefined) {
@@ -167,48 +253,65 @@ async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
 function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
     bot
         .hears(i18nModuleBtnName('oblasti'), async (ctx: ContextMessageUpdate) => {
-            // please_select_priorities
-            await prepareSessionStateIfNeeded(ctx)
-            // const strings = await loadAllOblasti()
-            // strings.push(i18n.t(`ru`, 'shared.keyboard.back', {}))
+            const {i18Btn, i18Msg} = sceneHelper(ctx)
 
-            // const keyboard = Markup.keyboard(strings, {
-            //      columns: 2
-            //  })
+            prepareSessionStateIfNeeded(ctx)
+            resetOpenMenus(ctx)
 
+            await ctx.replyWithHTML(i18Msg('select_oblasti'), Extra.markup((await getKeyboardOblasti(ctx, ctx.session.customize))))
+            await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
 
-            await ctx.replyWithHTML('Oblsati')
+            await putOrRefreshCounterMessage(ctx)
         })
         .hears(i18nModuleBtnName('priorities'), async (ctx: ContextMessageUpdate) => {
             const {i18Btn, i18Msg} = sceneHelper(ctx)
 
-            await prepareSessionStateIfNeeded(ctx)
-            await ctx.replyWithHTML(i18Msg('select_priorities'), Extra.markup((await getKeyboard(ctx, ctx.session.customize))))
-            await ctx.replyWithHTML(i18Msg('select_priorities_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
+            prepareSessionStateIfNeeded(ctx)
+            resetOpenMenus(ctx)
+            await ctx.replyWithHTML(i18Msg('select_priorities'), Extra.markup((await getKeyboardCennosti(ctx, ctx.session.customize))))
+            await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
 
             await putOrRefreshCounterMessage(ctx)
-            // const msg = await ctx.replyWithHTML(i18Msg('select_priorities'))
-
-            // await sleep(1000)
-            // const markup = Extra.inReplyTo(msg.message_id)
-            // await ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, undefined, 'lisa', Extra.markup((inlineKeyboard)))
         })
-        .hears(/события по фильтру/, async (ctx: ContextMessageUpdate) => {
+        .hears(i18nModuleBtnName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
             await showNextPortionOfResults(ctx)
+        })
+        .hears(i18nModuleBtnName('reset_filter'), async (ctx: ContextMessageUpdate) => {
+            await resetFilter(ctx)
         })
     ;
 
 
 }
 
-function childrenOptionLogic(ctx: ContextMessageUpdate, selected: TagLevel2) {
-    if (ctx.session.customize.cennosti.includes(selected)) {
-        ctx.session.customize.cennosti = ctx.session.customize.cennosti.filter(s => s !== selected)
+function cennostiOptionLogic(ctx: ContextMessageUpdate, selected: string) {
+    const tag = revertActionName(selected) as TagLevel2
+    if (ctx.session.customize.cennosti.includes(tag)) {
+        ctx.session.customize.cennosti = ctx.session.customize.cennosti.filter(s => s !== tag)
     } else {
-        if (chidrensTags.includes(selected)) {
+        if (chidrensTags.includes(tag)) {
             ctx.session.customize.cennosti = ctx.session.customize.cennosti.filter(s => !chidrensTags.includes(s))
         }
-        ctx.session.customize.cennosti.push(selected)
+        ctx.session.customize.cennosti.push(tag)
+    }
+}
+
+function oblastiOptionLogic(ctx: ContextMessageUpdate, selected: string) {
+    const [cat, tag] = selected.split('.')
+    const tagRus = `${cat}.${revertActionName(tag)}`
+    if (ctx.session.customize.oblasti.includes(tagRus)) {
+        ctx.session.customize.oblasti = ctx.session.customize.oblasti.filter(s => s !== tagRus)
+    } else {
+        ctx.session.customize.oblasti.push(tagRus)
+    }
+}
+
+function checkOrUncheckMenu(ctx: ContextMessageUpdate) {
+    const menuTitle = ctx.match[1]
+    if (ctx.session.customize.openedMenus.includes(menuTitle)) {
+        ctx.session.customize.openedMenus = []
+    } else {
+        ctx.session.customize.openedMenus = [menuTitle]
     }
 }
 
@@ -226,7 +329,6 @@ scene
         ctx.session.customize.eventsCounterMsgText = undefined
         resetPaging(ctx)
     })
-    .action(actionName('oblasti'), nothing)
     .action(/.+/, (ctx: ContextMessageUpdate, next) => {
         if (ctx.match[0] !== actionName('show_more')) {
             resetPaging(ctx)
@@ -246,21 +348,14 @@ scene
         await ctx.answerCbQuery()
         await showNextPortionOfResults(ctx)
     })
-    .action(/customize_scene[.](menu_.+)/, async (ctx: ContextMessageUpdate) => {
-        const menuTitle = ctx.match[1]
-        if (ctx.session.customize.openedMenus.includes(menuTitle)) {
-            ctx.session.customize.openedMenus = ctx.session.customize.openedMenus.filter(e => e !== menuTitle)
-        } else {
-            ctx.session.customize.openedMenus = [menuTitle, ...ctx.session.customize.openedMenus]
-        }
-        await ctx.editMessageReplyMarkup(await getKeyboard(ctx, ctx.session.customize))
+    .action(/customize_scene[.]p_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
+        checkOrUncheckMenu(ctx)
+        await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
     })
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
-        const selected = ctx.match[1] as TagLevel2
+        cennostiOptionLogic(ctx, ctx.match[1])
 
-        childrenOptionLogic(ctx, selected)
-
-        await ctx.editMessageReplyMarkup(await getKeyboard(ctx, ctx.session.customize))
+        await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
         await putOrRefreshCounterMessage(ctx)
 
         // const {i18Btn, i18Msg} = sceneHelper(ctx)
@@ -271,6 +366,15 @@ scene
         //     const nm = await ctx.telegram.editMessageText(ctx.chat.id, ctx.session.customize.markupKbId, undefined, `По вашему фильтру ${await countFilteredEvents(ctx)} событий`)
         // }
         //  editMessageText('qq', Extra.inReplyTo(ctx.session.customize.markupKbId).markup((markupKeyabord)))
+    })
+    .action(/customize_scene[.]o_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
+        checkOrUncheckMenu(ctx)
+        await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx, ctx.session.customize))
+    })
+    .action(/customize_scene[.]o_(.+)/, async (ctx: ContextMessageUpdate) => {
+        oblastiOptionLogic(ctx, ctx.match[1])
+        await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx, ctx.session.customize))
+        await putOrRefreshCounterMessage(ctx)
     })
     .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {
         // console.log('customize-scene-back')
@@ -292,29 +396,30 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         resultsFound,
         pagingOffset,
         eventsCounterMsgId,
-        eventsCounterMsgText
+        eventsCounterMsgText,
+        oblasti
     } = ctx.session.customize || {}
 
     ctx.session.customize = {
-        openedMenus: Array.isArray(openedMenus) ? openedMenus : [],
-        cennosti: Array.isArray(cennosti) ? cennosti : [],
-        time: time === undefined ? {
+        openedMenus: SessionEnforcer.array(openedMenus),
+        cennosti: SessionEnforcer.array(cennosti),
+        oblasti: SessionEnforcer.array(oblasti),
+        time: SessionEnforcer.default(time, {
             weekdays: {
                 '6': [],
                 '7': []
             }
-        } : time,
+        }),
         eventsCounterMsgText,
-        resultsFound: typeof resultsFound === 'number' ? resultsFound : undefined,
-        pagingOffset: typeof pagingOffset === 'number' ? pagingOffset : undefined,
-        eventsCounterMsgId: typeof eventsCounterMsgId === 'number' ? eventsCounterMsgId : undefined,
+        resultsFound: SessionEnforcer.number(resultsFound),
+        pagingOffset: SessionEnforcer.number(pagingOffset),
+        eventsCounterMsgId: SessionEnforcer.number(eventsCounterMsgId),
     }
 }
 
 async function nothing(ctx: ContextMessageUpdate) {
     await ctx.reply('Пока тут ничего нет :(')
 }
-
 
 export {
     scene as customizeScene,
@@ -325,6 +430,7 @@ export interface CustomizeSceneState {
     time: CustomizeSceneTimeState
     openedMenus: string[]
     cennosti: TagLevel2[]
+    oblasti: string[]
     eventsCounterMsgId?: number
     eventsCounterMsgText: string
     pagingOffset: number

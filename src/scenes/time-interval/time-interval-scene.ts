@@ -1,6 +1,6 @@
 import { BaseScene, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { backButtonRegister } from '../../util/scene-helper'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new BaseScene<ContextMessageUpdate>('time_interval');
 
@@ -10,7 +10,7 @@ export interface TimeIntervalSceneState {
     messageId?: number
 }
 
-const { backButton, sceneHelper, actionName } = backButtonRegister(scene)
+const { backButton, sceneHelper, actionName } = i18nSceneHelper(scene)
 
 enum Actions {
     ALL_DAY = 'slot_all_day'

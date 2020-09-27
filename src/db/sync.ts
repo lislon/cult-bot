@@ -1,8 +1,12 @@
 import { DbEvent, EventToSave } from '../interfaces/db-interfaces'
 import { db, pgp } from '../db'
+import { encodeTagLevel1 } from '../util/tag-level1-encoder'
+
 
 function mapToDb(event: EventToSave): DbEvent {
     delete event.primaryData.publish
+
+    event.primaryData.tag_level_1 = encodeTagLevel1(event.primaryData);
 
     return {
         ...event.primaryData,

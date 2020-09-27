@@ -29,13 +29,14 @@ function childAlternativesLogic(cennosti: TagLevel2[]): TagLevel2[] {
 }
 
 function doQueryCore(customFilter: CustomFilter) {
-    const queryBody = `        FROM cb_events cb
+    const queryBody = `
+        FROM cb_events cb
         WHERE
             EXISTS(
                 SELECT *
                 FROM cb_events_entrance_times cbet
                 where cbet.event_id = cb.id AND $(interval) && cbet.entrance)
-            AND cb.tag_level_1 @> $(oblasti)
+            AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
             AND cb.tag_level_2 @> $(cennosti)
             AND (cb.tag_level_2 && $(childTagsAlternatives) OR $(childTagsAlternatives) = '{}')`
 

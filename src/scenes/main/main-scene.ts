@@ -1,6 +1,6 @@
 import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
 import { allCategories, ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
-import { backButtonRegister, sleep } from '../../util/scene-helper'
+import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { getTopEvents } from './retrieve-logic'
 import { cardFormat } from '../shared/card-format'
 import * as events from 'events'
@@ -18,7 +18,7 @@ export interface MainSceneState {
 
 const scene = new BaseScene<ContextMessageUpdate>('main_scene');
 
-const {backButton, sceneHelper, actionName} = backButtonRegister(scene)
+const {backButton, sceneHelper, actionName} = i18nSceneHelper(scene)
 
 const backMarkup = (ctx: ContextMessageUpdate) => {
     const {i18SharedBtn} = sceneHelper(ctx)

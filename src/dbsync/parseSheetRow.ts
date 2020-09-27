@@ -1,7 +1,6 @@
 import { Event, EventCategory } from '../interfaces/app-interfaces'
 import { parseTimetable, TimetableParseResult } from '../lib/timetable/parser'
 import { EventTimetable } from '../lib/timetable/intervals'
-import { Tag, TagCategory } from '../interfaces/db-interfaces'
 
 export const EXCEL_COLUMN_NAMES = [
     'no',
@@ -80,21 +79,6 @@ export function getOnlyBotTimetable(timetable: string): string {
 
 export function getOnlyHumanTimetable(timetable: string) {
     return  timetable.replace(/{(?:бот|bot):([^}]+)}/, '').trim()
-}
-
-function splitTags(tagStr: string) {
-    return tagStr.trim()
-        .split(/\s+/)
-        .filter(e => e !== '')
-}
-
-function zipTag(category: TagCategory): (tagName: string) => Tag {
-    return (tagName: string) => {
-        return {
-            name: tagName,
-            category: category
-        }
-    }
 }
 
 function prepareTimetable(data: Event): TimetableParseResult {

@@ -1,6 +1,6 @@
 import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
-import { backButtonRegister, sleep } from '../../util/scene-helper'
+import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { cardFormat } from '../shared/card-format'
 import { findAllEventsAdmin, findStats } from '../../db/db-admin'
@@ -9,7 +9,7 @@ import { syncrhonizeDbByUser } from '../shared/shared-logic'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
-const {backButton, sceneHelper, actionName, i18nModuleBtnName} = backButtonRegister(scene)
+const {backButton, sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
 
 const globalInterval = [mskMoment(), mskMoment('2025-01-01')]
 

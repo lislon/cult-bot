@@ -1,11 +1,11 @@
 import { BaseScene, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { CallbackButton } from 'telegraf/typings/markup'
-import { backButtonRegister } from '../../util/scene-helper'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new BaseScene<ContextMessageUpdate>('timetable');
 
-const { backButton, sceneHelper, actionName, pushEnterScene } = backButtonRegister(scene)
+const { backButton, sceneHelper, actionName, pushEnterScene } = i18nSceneHelper(scene)
 
 const content = (ctx: ContextMessageUpdate) => {
     const [week6, week7] = ctx.session.timetable.weekSlots
