@@ -161,8 +161,11 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate, state: CustomizeSce
             ['#кукольныйтеатр'],
         ])),
         ...(menu.dropDownButtons('menu_events', [
-            ['#лекция', '#встречасперсоной'],
-            ['#мастеркласс', '#курс', '#подкаст'],
+            ['#лекция'],
+            ['#встречасперсоной'],
+            ['#мастеркласс'],
+            ['#курс'],
+            ['#подкаст']
         ])),
         ...(menu.dropDownButtons('menu_walks', [
             ['#активныйотдых'],
