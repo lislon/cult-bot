@@ -3,7 +3,6 @@ import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 import { i18n } from '../middleware-utils'
 import { StupidTranslit } from '../lib/translit/stupid-translit'
 
-
 export function i18nSceneHelper(scene: BaseScene<ContextMessageUpdate>) {
     const backAction = scene.id + 'button.back'
 

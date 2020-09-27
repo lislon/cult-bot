@@ -8,11 +8,11 @@ export class StupidTranslit {
         ['г', 'g'],
         ['д', 'd'],
         ['е', 'e'],
-        ['ё', '1'],
+        ['ё', 'Y'],
         ['ж', 'j'],
         ['з', 'z'],
         ['и', 'i'],
-        ['й', '2'],
+        ['й', 'I'],
         ['к', 'k'],
         ['л', 'l'],
         ['м', 'm'],
@@ -25,21 +25,27 @@ export class StupidTranslit {
         ['у', 'u'],
         ['ф', 'f'],
         ['х', 'h'],
-        ['ц', '3'],
+        ['ц', 'C'],
         ['ч', 'c'],
-        ['ш', '4'],
-        ['щ', '5'],
-        ['ъ', '6'],
+        ['ш', 'H'],
+        ['щ', 'S'],
+        ['ъ', 'J'],
         ['ы', 'y'],
-        ['ь', '7'],
-        ['э', '8'],
-        ['ю', '0'],
-        ['я', '9'],
+        ['ь', 'P'],
+        ['э', 'E'],
+        ['ю', 'U'],
+        ['я', 'A'],
         [' ', '_'],
     ]);
 
     static translit(str: string) {
-        return Array.from(str.toLowerCase())
+        if (str.match(/[А-ЯЁ]/)) {
+            return str;
+        }
+        if (str.toLowerCase() !== str) {
+            throw new Error(`Translit only lowercase but '${str}' given`)
+        }
+        return Array.from(str)
             .reduce((s, l) =>
                 s + (
                     StupidTranslit.dict.get(l)
@@ -48,7 +54,10 @@ export class StupidTranslit {
     }
 
     static reverse(str: string) {
-        return Array.from(str.toLowerCase())
+        if (str.match(/А-Я/)) {
+            return str;
+        }
+        return Array.from(str)
             .reduce((s, l) =>
                 s + (
                     StupidTranslit.dict.revGet(l)

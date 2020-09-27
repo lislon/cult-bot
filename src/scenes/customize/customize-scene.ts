@@ -47,7 +47,7 @@ function checkboxName(isSelected: boolean) {
     return `checkbox_${isSelected ? 'on' : 'off'}`;
 }
 
-type SectionName = 'oblasti_section' | 'cennosti_section'
+type SectionName = 'oblasti_section' | 'cennosti_section' | 'time'
 
 class Menu {
     private readonly selected: string[]
@@ -119,7 +119,7 @@ async function getKeyboardCennosti(ctx: ContextMessageUpdate, state: CustomizeSc
         [menu.button('#новыеформы')],
         [menu.button('#успетьзачас')],
         [menu.button('#культурныйбазис')],
-        ...(menu.dropDownButtons('menu_стоимость', [['#доступноподеньгам', '#бесплатно']])),
+        ...(menu.dropDownButtons('menu_cost', [['#доступноподеньгам', '#бесплатно']])),
         ...(menu.dropDownButtons('menu_childrens', [chidrensTags]))
         // [Markup.callbackButton(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}), actionName('show_filtered_events'))]
     ]
@@ -170,6 +170,54 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate, state: CustomizeSce
     ]
     return Markup.inlineKeyboard(buttons)
 }
+
+async function getKeyboardTime(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
+    const menu = new Menu(ctx, state.time, state.openedMenus, 'time')
+
+    const buttons = [
+        ...(menu.dropDownButtons('menu_movies', [
+            ['#художественное', '#документальное'],
+            ['#анимация', '#короткийметр', '#фестиваль']
+        ])),
+        ...(menu.dropDownButtons('menu_concerts', [
+            ['#сольныйконцерт'],
+            ['#сборныйконцерт'],
+            ['#камерныйконцерт'],
+            ['#классическийконцерт'],
+            ['#творческийвечер'],
+            ['#фестиваль']
+        ])),
+        ...(menu.dropDownButtons('menu_exhibitions', [
+            ['#постояннаяэкспозиция'],
+            ['#выставочныйпроект'],
+            ['#персональнаявыставка'],
+            ['#доммузей']
+        ])),
+        ...(menu.dropDownButtons('menu_theaters', [
+            ['#драматическийтеатр'],
+            ['#эксперимент'],
+            ['#опера', '#танец', '#мюзикл'],
+            ['#фестиваль'],
+            ['#аудиоспектакль'],
+            ['#кукольныйтеатр'],
+        ])),
+        ...(menu.dropDownButtons('menu_events', [
+            ['#лекция', '#встречасперсоной'],
+            ['#мастеркласс', '#курс', '#подкаст'],
+        ])),
+        ...(menu.dropDownButtons('menu_walks', [
+            ['#активныйотдых'],
+            ['#городсгидом'],
+            ['#загородсгидом'],
+            ['#аудиоэкскурсия'],
+            ['#знакомствоспространством'],
+        ]))
+    ]
+    return Markup.inlineKeyboard(buttons)
+}
+
+
+
 
 
 async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
@@ -357,15 +405,6 @@ scene
 
         await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
         await putOrRefreshCounterMessage(ctx)
-
-        // const {i18Btn, i18Msg} = sceneHelper(ctx)
-        // if (ctx.session.customize.markupKbId === undefined) {
-        //     const markupKbMsg = await ctx.replyWithHTML(`По вашему фильтру ${await countFilteredEvents(ctx)} событий`)
-        //     ctx.session.customize.markupKbId = markupKbMsg.message_id
-        // } else {
-        //     const nm = await ctx.telegram.editMessageText(ctx.chat.id, ctx.session.customize.markupKbId, undefined, `По вашему фильтру ${await countFilteredEvents(ctx)} событий`)
-        // }
-        //  editMessageText('qq', Extra.inReplyTo(ctx.session.customize.markupKbId).markup((markupKeyabord)))
     })
     .action(/customize_scene[.]o_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
         checkOrUncheckMenu(ctx)
@@ -404,12 +443,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         openedMenus: SessionEnforcer.array(openedMenus),
         cennosti: SessionEnforcer.array(cennosti),
         oblasti: SessionEnforcer.array(oblasti),
-        time: SessionEnforcer.default(time, {
-            weekdays: {
-                '6': [],
-                '7': []
-            }
-        }),
+        time: SessionEnforcer.array(time),
         eventsCounterMsgText,
         resultsFound: SessionEnforcer.number(resultsFound),
         pagingOffset: SessionEnforcer.number(pagingOffset),
@@ -427,7 +461,7 @@ export {
 }
 
 export interface CustomizeSceneState {
-    time: CustomizeSceneTimeState
+    time: string[]
     openedMenus: string[]
     cennosti: TagLevel2[]
     oblasti: string[]
