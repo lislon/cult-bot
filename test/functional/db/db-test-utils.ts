@@ -1,4 +1,4 @@
-import { db, dbCfg, pgp } from '../../../src/db'
+import { db, dbCfg } from '../../../src/db'
 import { MomentIntervals } from '../../../src/lib/timetable/intervals'
 import { Event, EventCategory, TagLevel2 } from '../../../src/interfaces/app-interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
@@ -10,7 +10,7 @@ export async function cleanDb() {
 
 export function initializeDbTests() {
     afterAll(async () => {
-        pgp.end()
+        db.$pool.end()
     })
 }
 

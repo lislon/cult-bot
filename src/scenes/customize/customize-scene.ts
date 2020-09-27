@@ -66,7 +66,7 @@ const content = async (ctx: ContextMessageUpdate) => {
 
     return {
         msg: i18Msg('welcome'),
-        markup: Extra.HTML(true).markup(Markup.keyboard(keyboard).resize())
+        markup: Extra.HTML().markup(Markup.keyboard(keyboard).resize())
     }
 }
 
@@ -100,7 +100,7 @@ class Menu {
         return Markup.callbackButton(text, this.actionName(`${tag}`), hide)
     }
 
-    private actionName(postfix: string, parentMenuTitle: string = undefined) {
+    private actionName(postfix: string) {
         switch (this.section) {
             case 'cennosti_section': return actionName(`p_${postfix}`)
             case 'oblasti_section': return actionName(`o_${postfix}`)
@@ -296,7 +296,7 @@ async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
             ctx.session.customize.eventsCounterMsgId = counterMsg.message_id
         } else {
             console.log(' > putOrRefreshCounterMessage update old msg: ', ctx.session.customize.eventsCounterMsgId)
-            await ctx.telegram.editMessageText(ctx.chat.id, ctx.session.customize.eventsCounterMsgId, undefined, msg)
+            await ctx.telegram.editMessageText(ctx.chat.id, ctx.session.customize.eventsCounterMsgId, undefined, msg, { parse_mode: 'HTML'})
         }
         ctx.session.customize.eventsCounterMsgText = msg
     } else {

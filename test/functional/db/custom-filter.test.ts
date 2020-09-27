@@ -1,12 +1,13 @@
 import { mskMoment } from '../../../src/util/moment-msk'
-import { expectedTitles, freshDb, getMockEvent, initializeDbTests, MockEvent } from './db-test-utils'
+import { cleanDb, expectedTitles, freshDb, getMockEvent, initializeDbTests, MockEvent } from './db-test-utils'
 import { syncDatabase } from '../../../src/db/sync'
 import { countEventsCustomFilter, findEventsCustomFilter } from '../../../src/db/custom-filter'
 
 initializeDbTests()
+freshDb()
 
 describe('Filtering', () => {
-    freshDb()
+
 
     const weekendRange = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-02 24:00')]
     const eventTime = [[mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]]
@@ -82,6 +83,7 @@ describe('Filtering', () => {
 
     describe('Логика с детьми', () => {
         beforeAll(async () => {
+            await cleanDb()
             await syncDatabase([
                 getMockEvent({title: 'D0', eventTime, tag_level_2: ['#сдетьми0+']}),
                 getMockEvent({title: 'D6', eventTime, tag_level_2: ['#сдетьми6+']}),
@@ -120,6 +122,7 @@ describe('Filtering', () => {
         ]
 
         beforeAll(async () => {
+            await cleanDb()
             const pseudoRandom = [...goodOrder].reverse()
             await syncDatabase(pseudoRandom.map(r => getMockEvent(r)))
         })

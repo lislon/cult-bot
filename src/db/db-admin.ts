@@ -25,7 +25,7 @@ export async function findStats(interval: Moment[]): Promise<Stat[]> {
     `
     return await db.any(finalQuery,
         {
-            interval: `[${mapToPgInterval(adjustedIntervals)}]`,
+            interval: mapToPgInterval(adjustedIntervals),
         }) as Stat[];
 }
 
@@ -47,7 +47,7 @@ export async function findAllEventsAdmin(category: EventCategory, interval: Mome
     `
     return await db.any(finalQuery,
         {
-            interval: `[${mapToPgInterval(adjustedIntervals)}]`,
+            interval: mapToPgInterval(adjustedIntervals),
             category,
             limit
         }) as Event[];

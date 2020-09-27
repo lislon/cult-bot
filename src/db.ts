@@ -12,8 +12,10 @@ const pgp = pg_promise({
 const dbCfg = {
     connectionString: process.env.DATABASE_URL,
     max: +20,
-    ssl: process.env.HEROKU_APP_ID === undefined ? undefined : { rejectUnauthorized: false }
+    ssl: process.env.HEROKU_APP_ID === undefined ? undefined : { rejectUnauthorized: false },
+
 }
 
 const db = pgp(dbCfg); // database instance;
+
 export { db, pgp, dbCfg }
