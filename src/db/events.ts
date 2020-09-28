@@ -15,11 +15,12 @@ export async function findTopEventsInRange(category: EventCategory, interval: Mo
         SELECT cb.*
         FROM cb_events cb
         WHERE
-            EXISTS(
+            EXISTS
+            (
                 select id
                 FROM cb_events_entrance_times cbet
                 where $(interval) && cbet.entrance AND cbet.event_id = cb.id
-                 )
+            )
             AND cb.category = $(category)
             AND cb.is_anytime = false
         ORDER BY cb.rating DESC, random()
@@ -33,7 +34,13 @@ export async function findTopEventsInRange(category: EventCategory, interval: Mo
             (select cb.*
             from cb_events cb
             where
-                cb.category =  $(category)
+                EXISTS
+                (
+                    select id
+                    FROM cb_events_entrance_times cbet
+                    where $(interval) && cbet.entrance AND cbet.event_id = cb.id
+                )
+                and cb.category =  $(category)
                 and cb.is_anytime = true
             order by
                 cb.rating desc

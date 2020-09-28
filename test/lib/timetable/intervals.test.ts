@@ -1,14 +1,8 @@
-import {
-    filterByByRange,
-    predictIntervals,
-    MomentIntervals,
-    mapInterval,
-    subDateRange, DateOrDateRange
-} from '../../../src/lib/timetable/intervals'
+import { filterByByRange, mapInterval, MomentIntervals, predictIntervals } from '../../../src/lib/timetable/intervals'
 import { parseTimetable } from '../../../src/lib/timetable/parser'
 import 'moment-timezone/index'
 import { mskMoment } from '../../../src/util/moment-msk'
-import moment, { Moment } from 'moment'
+import { Moment } from 'moment'
 
 function format(e: Moment) {
     return e.tz('Europe/Moscow').format('YYYY-MM-DD HH:mm')
@@ -94,6 +88,17 @@ describe('filterByByRange', () => {
 
 describe('integration', () => {
     test.each([
+        [
+            'с 1 января 2020 до 2 января 2020: в любое время',
+            [
+                [
+                    '2020-Jan-01 01:00', '2020-Jan-02 00:00'
+                ],
+                [
+                    '2020-Jan-02 00:00', '2020-Jan-03 00:00'
+                ],
+            ]
+        ],
         [
             'с 4 января 2020 до 24 декабря 2020: пн-вт: 11:00-20:00, ср: 11:00-21.00, чт-вс: 11:00-22:00',
             [

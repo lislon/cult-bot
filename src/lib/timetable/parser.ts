@@ -219,6 +219,9 @@ export function parseTimetable(text: string): TimetableParseResult {
                 result.anytime = true;
             }
         }
+        if (input.includes('в любое время')) {
+            result.anytime = true;
+        }
         return {status: parse.status, value: result}
     } else {
         const errors: string[] = []

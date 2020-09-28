@@ -176,18 +176,13 @@ export class IntervalGenerator {
             this.fromTime,
             this.fromTime.clone().startOf('day').add(this.daysAhead, 'd')
         ]
-        if (timetable.anytime) {
-            return [restrictedRange]
-        } else {
+        intervals.sort((a: MomentOrInterval, b: MomentOrInterval) => {
+            const am: Moment = Array.isArray(a) ? a[0] : a
+            const bm: Moment = Array.isArray(b) ? b[0] : b
+            return am.diff(bm)
+        })
 
-            intervals.sort((a: MomentOrInterval, b: MomentOrInterval) => {
-                const am: Moment = Array.isArray(a) ? a[0] : a
-                const bm: Moment = Array.isArray(b) ? b[0] : b
-                return am.diff(bm)
-            })
-
-            return filterByByRange(intervals, restrictedRange, 'in')
-        }
+        return filterByByRange(intervals, restrictedRange, 'in')
     }
 
     private flatIntervalsWeekdays(time: Moment, weekTimes: WeekTime[]): MomentIntervals {

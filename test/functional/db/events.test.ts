@@ -97,6 +97,25 @@ describe('Top events', () => {
         const events = await findTopEventsInRange('theaters', range, 2)
         expect(events.map(e => e.title)).toEqual(['2. BEST', '3. BETTER'])
     })
+
+    test('even with is_anytime = true we should intersect invervals', async () => {
+        await syncDatabase([
+                getMockEvent({
+                    title: 'A',
+                    eventTime: [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-01 10:00')],
+                    anytime: true
+                }),
+                getMockEvent({
+                    title: 'B',
+                    eventTime: [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-01 16:00')],
+                    anytime: true
+                }),
+            ]
+        )
+        const range = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-01 10:00')]
+        expectedTitlesStrict(['A'], await findTopEventsInRange('theaters', range))
+    })
+
 })
 
 describe('Search intervals', () => {
