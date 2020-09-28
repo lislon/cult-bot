@@ -308,7 +308,7 @@ async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
     }
 }
 
-export async function getMsgExplainFilter(ctx: ContextMessageUpdate): string|undefined {
+export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<string|undefined> {
     const {i18Btn, i18Msg} = sceneHelper(ctx)
     prepareSessionStateIfNeeded(ctx)
 
