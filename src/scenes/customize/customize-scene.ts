@@ -61,12 +61,11 @@ const content = async (ctx: ContextMessageUpdate) => {
             Markup.button(i18Btn('oblasti')),
             Markup.button(i18Btn('priorities'))
         ],
-        [Markup.button(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}))],
+        [Markup.button(i18Btn('show_personalized_events'))],
         [backButton(ctx)],
     ]
 
     return {
-        msg: i18Msg('welcome'),
         markup: Extra.HTML().markup(Markup.keyboard(keyboard).resize())
     }
 }
@@ -167,16 +166,14 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
             ['#художественное'],
             ['#документальное'],
             ['#анимация'],
-            ['#короткийметр'],
-            ['#фестиваль']
+            ['#короткийметр']
         ])),
         ...(menu.dropDownButtons('menu_concerts', [
             ['#сольныйконцерт'],
             ['#сборныйконцерт'],
             ['#камерныйконцерт'],
             ['#классическийконцерт'],
-            ['#творческийвечер'],
-            ['#фестиваль']
+            ['#творческийвечер']
         ])),
         ...(menu.dropDownButtons('menu_exhibitions', [
             ['#постояннаяэкспозиция'],
@@ -187,8 +184,9 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
         ...(menu.dropDownButtons('menu_theaters', [
             ['#драматическийтеатр'],
             ['#эксперимент'],
-            ['#опера', '#танец'],
-            ['#фестиваль', '#мюзикл'],
+            ['#опера'],
+            ['#танец'],
+            ['#мюзикл'],
             ['#аудиоспектакль'],
             ['#кукольныйтеатр'],
         ])),
@@ -253,7 +251,7 @@ async function resetFilter(ctx: ContextMessageUpdate) {
     resetPaging(ctx)
     ctx.session.customize.oblasti = []
     ctx.session.customize.cennosti = []
-    await putOrRefreshCounterMessage(ctx)
+    ctx.session.customize.time = []
 }
 
 async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
@@ -310,7 +308,7 @@ async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
     }
 }
 
-export async function sendMsgExplainFilter(ctx: ContextMessageUpdate) {
+export async function getMsgExplainFilter(ctx: ContextMessageUpdate): string|undefined {
     const {i18Btn, i18Msg} = sceneHelper(ctx)
     prepareSessionStateIfNeeded(ctx)
 
@@ -321,8 +319,11 @@ export async function sendMsgExplainFilter(ctx: ContextMessageUpdate) {
 
 
     if (lines.length > 0) {
-        await ctx.replyWithHTML(i18Msg('explain_filter.layout', { body: lines.join('\n') }))
+        const count = await countFilteredEvents(ctx)
+        const eventPlural = plural(count, i18Msg('plural.event.one'), i18Msg('plural.event.two'), i18Msg('plural.event.many'))
+        return i18Msg('explain_filter.layout', { body: lines.join('\n'), eventPlural })
     }
+    return undefined
 }
 
 function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
@@ -363,14 +364,24 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
         })
         .hears(i18nModuleBtnName('reset_filter'), async (ctx: ContextMessageUpdate) => {
             await resetFilter(ctx)
+            await goBackToCustomize(ctx)
         })
         .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {
-            await sendMsgExplainFilter(ctx)
-            await customizeInitialScreen(ctx)
+            await goBackToCustomize(ctx)
         })
     ;
 
 
+}
+
+async function goBackToCustomize(ctx: ContextMessageUpdate) {
+    prepareSessionStateIfNeeded(ctx)
+    const {i18Msg} = sceneHelper(ctx)
+    const explainMsg = await getMsgExplainFilter(ctx)
+    const msg = explainMsg !== undefined ? explainMsg : i18Msg('welcome')
+
+    const { markup} = await content(ctx)
+    await ctx.replyWithMarkdown(msg, markup)
 }
 
 function cennostiOptionLogic(ctx: ContextMessageUpdate, selected: string) {
@@ -412,17 +423,16 @@ function checkOrUncheckMenu(ctx: ContextMessageUpdate) {
     }
 }
 
-async function customizeInitialScreen(ctx: ContextMessageUpdate) {
-    prepareSessionStateIfNeeded(ctx)
-
-    const {msg, markup} = await content(ctx)
-    await ctx.replyWithMarkdown(msg, markup)
-}
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
         console.log('enter customize-scene')
-        await customizeInitialScreen(ctx)
+
+        prepareSessionStateIfNeeded(ctx)
+
+        const {i18Msg} = sceneHelper(ctx)
+        const { markup} = await content(ctx)
+        await ctx.replyWithMarkdown(i18Msg('welcome'), markup)
     })
     .leave((ctx: ContextMessageUpdate) => {
         console.log('leave customize-scene')
