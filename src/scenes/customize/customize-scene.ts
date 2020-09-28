@@ -400,9 +400,7 @@ scene
     })
     .leave((ctx: ContextMessageUpdate) => {
         console.log('leave customize-scene')
-        ctx.session.customize.eventsCounterMsgId = undefined
-        ctx.session.customize.eventsCounterMsgText = undefined
-        resetPaging(ctx)
+        ctx.session.customize = undefined
     })
     .action(/.+/, (ctx: ContextMessageUpdate, next) => {
         if (ctx.match[0] !== actionName('show_more')) {
