@@ -5,7 +5,7 @@ function joinTimeIntervals(time: string[], onlyWeekday: 'saturday' | 'sunday') {
     return time
         .sort()
         .map(t => t.split(/[-.]/))
-        .filter(([day,]) => day === onlyWeekday)
+        .filter(([day, ]) => day === onlyWeekday)
         .map(([, from, to]) => [+(from.replace(/:.+/, '')), +(to.replace(/:.+/, ''))])
         .reduceRight((acc: number[][], [from, to]) => {
             if (acc.length > 0 && to === acc[0][0]) {
@@ -24,7 +24,7 @@ export function formatExplainTime(ctx: ContextMessageUpdate, i18Msg: (id: string
         return []
     }
     const lines = []
-    const [saturdayTime, sundayTime] = getNextWeekEndRange()
+    const [saturdayTime] = getNextWeekEndRange()
     const weekdays = [
         joinTimeIntervals(time, 'saturday'),
         joinTimeIntervals(time, 'sunday')
@@ -54,11 +54,8 @@ export function formatExplainTime(ctx: ContextMessageUpdate, i18Msg: (id: string
             }
         }
     } else {
-        lines.push(i18Msg('explain_filter.time') + ' ' + i18Msg('explain_filter.time_line', {
-            weekday: 'СБ-ВС',
-            date: moments.map(t => t.format('DD.MM')).join(','),
-            timeIntervals: weekdays[0].join(', ')
-        }))
+        const [from, to] = moments.map(t => t.format('DD.MM'));
+        lines.push(`${i18Msg('explain_filter.time')} сб (${from}) - вс (${to}): ${weekdays[0].join(', ')}`)
     }
     lines.push('')
     return lines;
