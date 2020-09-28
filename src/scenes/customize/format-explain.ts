@@ -18,7 +18,7 @@ function joinTimeIntervals(time: string[], onlyWeekday: 'saturday' | 'sunday') {
         .map(([from, to]) => `${from}.00-${to}.00`)
 }
 
-export function formatExplainTime(ctx: ContextMessageUpdate, i18Msg: (id: string, tplData?: object) => string): string[] {
+export function formatExplainTime(ctx: ContextMessageUpdate, i18Msg: (id: string, tplData?: object, byDefault?: string) => string): string[] {
     const {time} = ctx.session.customize
     if (time.length === 0) {
         return []
@@ -63,9 +63,9 @@ export function formatExplainTime(ctx: ContextMessageUpdate, i18Msg: (id: string
 
 const MAX_LINE_LEN = 40;
 
-export function formatExplainOblasti(ctx: ContextMessageUpdate, i18Msg: (id: string, tplData?: object) => string): string[] {
+export function formatExplainOblasti(ctx: ContextMessageUpdate, i18Msg: (id: string, tplData?: object, byDefault?: string) => string): string[] {
     const { oblasti } = ctx.session.customize
-    const oblastiNice = oblasti.map(o => i18Msg(`keyboard.oblasti_section.${o}`))
+    const oblastiNice = oblasti.map(o => i18Msg(`explain_filter.oblasti_section.${o}`, {}, i18Msg(`keyboard.oblasti_section.${o}`)))
     if (oblastiNice.length === 0) {
         return []
     }
@@ -86,9 +86,9 @@ export function formatExplainOblasti(ctx: ContextMessageUpdate, i18Msg: (id: str
 
 
 
-export function formatExplainCennosti(ctx: ContextMessageUpdate, i18Msg: (id: string, tplData?: object) => string): string[] {
+export function formatExplainCennosti(ctx: ContextMessageUpdate, i18Msg: (id: string, tplData?: object,  byDefault?: string) => string): string[] {
     const { cennosti } = ctx.session.customize
-    const cennostiNice = cennosti.map(o => i18Msg(`keyboard.cennosti_section.${o}`))
+    const cennostiNice = cennosti.map(o => i18Msg(`explain_filter.cennosti_section.${o}`, {}, i18Msg(`keyboard.cennosti_section.${o}`)))
     if (cennostiNice.length === 0) {
         return []
     }
