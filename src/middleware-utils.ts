@@ -7,7 +7,6 @@ import { config } from 'dotenv'
 import RedisSession from 'telegraf-session-redis'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { mskMoment } from './util/moment-msk'
-import { Session } from 'inspector';
 
 config();
 

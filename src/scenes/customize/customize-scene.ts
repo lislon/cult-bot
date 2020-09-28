@@ -9,6 +9,7 @@ import { cardFormat } from '../shared/card-format'
 import plural from 'plural-ru'
 import { i18n } from '../../middleware-utils'
 import { Moment } from 'moment'
+import { formatExplainCennosti, formatExplainOblasti, formatExplainTime } from './format-explain'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
@@ -102,10 +103,14 @@ class Menu {
 
     private actionName(postfix: string) {
         switch (this.section) {
-            case 'cennosti_section': return actionName(`p_${postfix}`)
-            case 'oblasti_section': return actionName(`o_${postfix}`)
-            case 'time_section': return actionName(`t_${postfix}`)
-            default: throw new Error(`Unknown section name ${this.section}`);
+            case 'cennosti_section':
+                return actionName(`p_${postfix}`)
+            case 'oblasti_section':
+                return actionName(`o_${postfix}`)
+            case 'time_section':
+                return actionName(`t_${postfix}`)
+            default:
+                throw new Error(`Unknown section name ${this.section}`);
         }
     }
 
@@ -113,8 +118,8 @@ class Menu {
         const {i18Btn} = sceneHelper(this.ctx)
 
         const decorateTag = (tag: string) => ['oblasti_section', 'time_section'].includes(this.section)
-                ? `${menuTitle.replace('menu_', '')}.${tag}`
-                : tag
+            ? `${menuTitle.replace('menu_', '')}.${tag}`
+            : tag
 
         const isAnySubmenuSelected = submenus
             .flatMap(m => m)
@@ -296,11 +301,26 @@ async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
             ctx.session.customize.eventsCounterMsgId = counterMsg.message_id
         } else {
             console.log(' > putOrRefreshCounterMessage update old msg: ', ctx.session.customize.eventsCounterMsgId)
-            await ctx.telegram.editMessageText(ctx.chat.id, ctx.session.customize.eventsCounterMsgId, undefined, msg, { parse_mode: 'HTML'})
+            await ctx.telegram.editMessageText(ctx.chat.id, ctx.session.customize.eventsCounterMsgId, undefined, msg, {parse_mode: 'HTML'})
         }
         ctx.session.customize.eventsCounterMsgText = msg
     } else {
         console.log(' > putOrRefreshCounterMessage: ', 'message is same')
+    }
+}
+
+export async function sendMsgExplainFilter(ctx: ContextMessageUpdate) {
+    const {i18Btn, i18Msg} = sceneHelper(ctx)
+    prepareSessionStateIfNeeded(ctx)
+
+    let lines: string[] = [];
+    lines = [...lines, ...formatExplainTime(ctx, i18Msg)]
+    lines = [...lines, ...formatExplainOblasti(ctx, i18Msg)]
+    lines = [...lines, ...formatExplainCennosti(ctx, i18Msg)]
+
+
+    if (lines.length > 0) {
+        await ctx.replyWithHTML(i18Msg('explain_filter.layout', { body: lines.join('\n') }))
     }
 }
 
@@ -344,7 +364,8 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             await resetFilter(ctx)
         })
         .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {
-            await ctx.scene.enter('customize_scene')
+            await sendMsgExplainFilter(ctx)
+            await customizeInitialScreen(ctx)
         })
     ;
 
@@ -390,13 +411,17 @@ function checkOrUncheckMenu(ctx: ContextMessageUpdate) {
     }
 }
 
+async function customizeInitialScreen(ctx: ContextMessageUpdate) {
+    prepareSessionStateIfNeeded(ctx)
+
+    const {msg, markup} = await content(ctx)
+    await ctx.replyWithMarkdown(msg, markup)
+}
+
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
-        prepareSessionStateIfNeeded(ctx)
         console.log('enter customize-scene')
-
-        const {msg, markup} = await content(ctx)
-        await ctx.replyWithMarkdown(msg, markup)
+        await customizeInitialScreen(ctx)
     })
     .leave((ctx: ContextMessageUpdate) => {
         console.log('leave customize-scene')

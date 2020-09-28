@@ -25,10 +25,10 @@ const stage = new Stage([], {
     default: 'main_scene'
 })
 
+bot.use(middlewares.i18n);
 bot.use(middlewares.telegrafThrottler)
 bot.use(middlewares.logger)
 bot.use(middlewares.session);
-bot.use(middlewares.i18n);
 bot.use(stage.middleware());
 
 stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene)
@@ -88,10 +88,16 @@ i18n.resourceKeys('ru')
 //     await ctx.scene.enter('main_scene');
 // })
 
-bot.action(/.+[.]back$/, async (ctx, next) => {
+// bot.action(/.+[.]back$/, async (ctx, next) => {
+//     console.log('Аварийный выход');
+//     await ctx.scene.enter('main_scene');
+// })
+
+bot.action(/.+/, async (ctx, next) => {
     console.log('Аварийный выход');
     await ctx.scene.enter('main_scene');
 })
+
 
 bot.command('version', async (ctx) => {
     const info = [
