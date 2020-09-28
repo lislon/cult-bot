@@ -114,7 +114,7 @@ class Menu {
         }
     }
 
-    dropDownButtons(menuTitle: string, submenus: string[][]): InlineKeyboardButton[][] {
+    dropDownButtons(menuTitle: string, submenus: string[][], menuTitleData = {}): InlineKeyboardButton[][] {
         const {i18Btn} = sceneHelper(this.ctx)
 
         const decorateTag = (tag: string) => ['oblasti_section', 'time_section'].includes(this.section)
@@ -125,11 +125,11 @@ class Menu {
             .flatMap(m => m)
             .find(tag => this.selected.includes(decorateTag(tag))) !== undefined;
 
-        const menuTitleWord = i18Btn(`${this.section}.${menuTitle}`)
+        const menuTitleWord = i18Btn(`${this.section}.${menuTitle}`, menuTitleData)
         const isOpen = this.openedMenus.includes(menuTitle)
         const menuTitleFull = i18Btn(`menu_${isOpen ? 'open' : 'closed'}`, {
             title: menuTitleWord,
-            checkbox: i18Btn(checkboxName(isAnySubmenuSelected))
+            checkbox: i18Btn(checkboxName(isAnySubmenuSelected)),
         })
         return [
             [Markup.callbackButton(menuTitleFull, this.actionName(menuTitle))],
@@ -212,6 +212,7 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
 
 async function getKeyboardTime(ctx: ContextMessageUpdate) {
     const menu = new Menu(ctx, ctx.session.customize.time, ctx.session.customize.openedMenus, 'time_section')
+    const weekdays = getNextWeekEndRange().map(t => t.locale('ru').format('DD.MM'))
 
     function getIntervalsFromI18N(day: string) {
         return i18n.resourceKeys('ru')
@@ -222,10 +223,10 @@ async function getKeyboardTime(ctx: ContextMessageUpdate) {
     const buttons = [
         ...(menu.dropDownButtons('menu_saturday', [
             ...getIntervalsFromI18N('saturday')
-        ])),
+        ], { date: weekdays[0] })),
         ...(menu.dropDownButtons('menu_sunday', [
             ...getIntervalsFromI18N('sunday')
-        ])),
+        ], { date: weekdays[1] })),
     ]
     return Markup.inlineKeyboard(buttons)
 }
