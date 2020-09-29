@@ -42,7 +42,8 @@ adminRegisterActions(bot, i18n)
 // })
 
 bot.start(async (ctx: ContextMessageUpdate) => {
-    console.log('bot.start')
+    console.log(`bot.start userId=${ctx.from.id} first_name=${ctx.from.first_name} last_name=${ctx.from.last_name}`)
+
     const name = ctx.message.from.first_name
     if (!quick) await sleep(500)
     await ctx.replyWithHTML(ctx.i18n.t('shared.welcome1', { name: name }))
@@ -113,7 +114,7 @@ bot.command('sync', async (ctx) => {
 })
 
 bot.hears(/.+/, (ctx, next) => {
-    console.debug(`@${ctx.from.username}: [type=${ctx.updateType}], [text=${ctx.message.text}]`)
+    console.debug(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [text=${ctx.message.text}]`)
     return next()
 })
 
