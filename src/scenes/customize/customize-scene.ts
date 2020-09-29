@@ -282,46 +282,55 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
     }
 
     if (events.length === 0) {
-        await ctx.replyWithHTML(i18Msg('nothing_found'))
+
+        await ctx.replyWithHTML(i18Msg('nothing_found', {body: getExplainFilterBody(ctx)}))
     }
+}
+
+async function generateAmountSelectedPlural(ctx: ContextMessageUpdate, i18Msg: (id: string, tplData?: object, byDefault?: string) => string) {
+    const count = await countFilteredEvents(ctx)
+    return plural(count, i18Msg('plural.event.one'), i18Msg('plural.event.two'), i18Msg('plural.event.many'))
 }
 
 async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
     const {i18Msg} = sceneHelper(ctx)
 
-    const count = await countFilteredEvents(ctx)
-    const eventPlural = plural(count, i18Msg('plural.event.one'), i18Msg('plural.event.two'), i18Msg('plural.event.many'))
-    const msg = i18Msg('select_counter', {eventPlural})
+    const msg = i18Msg('select_counter', { eventPlural: await generateAmountSelectedPlural(ctx, i18Msg) })
 
     if (ctx.session.customize.eventsCounterMsgText !== msg) {
         if (ctx.session.customize.eventsCounterMsgId === undefined) {
             const counterMsg = await ctx.replyWithHTML(msg)
-            console.log(' > putOrRefreshCounterMessage fresh msg: ', counterMsg.message_id)
+            // console.log(' > putOrRefreshCounterMessage fresh msg: ', counterMsg.message_id)
             ctx.session.customize.eventsCounterMsgId = counterMsg.message_id
         } else {
-            console.log(' > putOrRefreshCounterMessage update old msg: ', ctx.session.customize.eventsCounterMsgId)
+            // console.log(' > putOrRefreshCounterMessage update old msg: ', ctx.session.customize.eventsCounterMsgId)
             await ctx.telegram.editMessageText(ctx.chat.id, ctx.session.customize.eventsCounterMsgId, undefined, msg, {parse_mode: 'HTML'})
         }
         ctx.session.customize.eventsCounterMsgText = msg
     } else {
-        console.log(' > putOrRefreshCounterMessage: ', 'message is same')
+        // console.log(' > putOrRefreshCounterMessage: ', 'message is same')
     }
+}
+
+function getExplainFilterBody(ctx: ContextMessageUpdate): string {
+    const {i18Btn, i18Msg} = sceneHelper(ctx)
+    let lines: string[] = [];
+    lines = [...lines, ...formatExplainTime(ctx, i18Msg)]
+    lines = [...lines, ...formatExplainOblasti(ctx, i18Msg)]
+    lines = [...lines, ...formatExplainCennosti(ctx, i18Msg)]
+    return lines.join('\n')
 }
 
 export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<string|undefined> {
     const {i18Btn, i18Msg} = sceneHelper(ctx)
     prepareSessionStateIfNeeded(ctx)
 
-    let lines: string[] = [];
-    lines = [...lines, ...formatExplainTime(ctx, i18Msg)]
-    lines = [...lines, ...formatExplainOblasti(ctx, i18Msg)]
-    lines = [...lines, ...formatExplainCennosti(ctx, i18Msg)]
+    const body = getExplainFilterBody(ctx)
 
-
-    if (lines.length > 0) {
+    if (body !== '') {
         const count = await countFilteredEvents(ctx)
         const eventPlural = plural(count, i18Msg('plural.event.one'), i18Msg('plural.event.two'), i18Msg('plural.event.many'))
-        return i18Msg('explain_filter.layout', { body: lines.join('\n'), eventPlural })
+        return i18Msg('explain_filter.layout', { body, eventPlural })
     }
     return undefined
 }
@@ -365,6 +374,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
         .hears(i18nModuleBtnName('reset_filter'), async (ctx: ContextMessageUpdate) => {
             await resetFilter(ctx)
             await goBackToCustomize(ctx)
+            await putOrRefreshCounterMessage(ctx)
         })
         .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {
             await goBackToCustomize(ctx)
@@ -471,20 +481,29 @@ scene
     })
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
         cennostiOptionLogic(ctx, ctx.match[1])
-        await ctx.answerCbQuery()
+        const {i18Msg} = sceneHelper(ctx)
         await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
+        await ctx.answerCbQuery(i18Msg('popup_selected',
+            { eventPlural:  await generateAmountSelectedPlural(ctx, i18Msg) }))
         await putOrRefreshCounterMessage(ctx)
     })
     .action(/customize_scene[.]o_(.+)/, async (ctx: ContextMessageUpdate) => {
         oblastiOptionLogic(ctx, ctx.match[1])
-        await ctx.answerCbQuery()
+        // await ctx.answerCbQuery()
+        const {i18Msg} = sceneHelper(ctx)
         await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx))
+        await ctx.answerCbQuery(i18Msg('popup_selected',
+            { eventPlural:  await generateAmountSelectedPlural(ctx, i18Msg) }))
         await putOrRefreshCounterMessage(ctx)
     })
     .action(/customize_scene[.]t_(.+)/, async (ctx: ContextMessageUpdate) => {
         timeOptionLogic(ctx, ctx.match[1])
-        await ctx.answerCbQuery()
+
+        const {i18Msg} = sceneHelper(ctx)
+
         await ctx.editMessageReplyMarkup(await getKeyboardTime(ctx))
+        await ctx.answerCbQuery(i18Msg('popup_selected',
+            { eventPlural:  await generateAmountSelectedPlural(ctx, i18Msg) }))
         await putOrRefreshCounterMessage(ctx)
     })
 ;
