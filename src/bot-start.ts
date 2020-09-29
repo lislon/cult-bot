@@ -12,8 +12,7 @@ import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
 import { ifAdmin, sleep } from './util/scene-helper'
 import 'source-map-support/register'
-import moment from 'moment'
-import { getGoogleSpreadSheetURL, syncrhonizeDbByUser } from './scenes/shared/shared-logic'
+import { getGoogleSpreadSheetURL, showBotVersion, syncrhonizeDbByUser } from './scenes/shared/shared-logic'
 
 console.log(`starting bot...`);
 db.any('select 1 + 1')
@@ -101,13 +100,9 @@ bot.action(/.+/, async (ctx, next) => {
 })
 
 
+
 bot.command('version', async (ctx) => {
-    const info = [
-        ['Release', process.env.HEROKU_RELEASE_VERSION],
-        ['Commit', process.env.HEROKU_SLUG_COMMIT],
-        ['Date', `${process.env.HEROKU_RELEASE_CREATED_AT} (${moment(process.env.HEROKU_RELEASE_CREATED_AT).fromNow()})`],
-    ]
-    await ctx.replyWithHTML(info.map(row => `<b>${row[0]}</b>: ${row[1]}`).join('\n'))
+    await showBotVersion(ctx)
 })
 
 bot.command('sync', async (ctx) => {

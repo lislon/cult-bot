@@ -50,3 +50,11 @@ export class SessionEnforcer {
         return typeof original === 'number' ? original : undefined;
     }
 }
+export async function showBotVersion(ctx: ContextMessageUpdate) {
+    const info = [
+        ['Release', process.env.HEROKU_RELEASE_VERSION || 'localhost'],
+        ['Commit', process.env.HEROKU_SLUG_COMMIT || 'localhost'],
+        ['Date', `${process.env.HEROKU_RELEASE_CREATED_AT} (${moment(process.env.HEROKU_RELEASE_CREATED_AT).fromNow()})`],
+    ]
+    await ctx.replyWithHTML(info.map(row => `<b>${row[0]}</b>: ${row[1]}`).join('\n'))
+}
