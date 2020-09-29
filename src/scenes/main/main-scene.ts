@@ -155,7 +155,7 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
     }
 
     if (events.length == 0) {
-        await ctx.reply(i18Msg('nothing_found_in_interval', intervalTemplateParams),
+        await ctx.reply(i18Msg('nothing_found_in_interval', intervalTemplateParams(range)),
             Extra.HTML(true).markup(backMarkup(ctx))
         )
     }
