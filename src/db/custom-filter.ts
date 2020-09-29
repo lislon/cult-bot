@@ -1,11 +1,13 @@
-import { chidrensTags, Event, TagLevel2 } from '../interfaces/app-interfaces'
+import { chidrensTags, Event, EventFormat, TagLevel2 } from '../interfaces/app-interfaces'
 import { db } from '../db'
 import { Moment } from 'moment'
 import { mapToPgInterval } from './db-utils'
 
+
 export interface CustomFilter {
     weekendRange: Moment[]
     timeIntervals?: Moment[][]
+    format?: EventFormat
     oblasti?: string[]
     cennosti?: TagLevel2[]
     offset?: number
@@ -51,7 +53,13 @@ function doQueryCore(customFilter: CustomFilter) {
             )
             AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
             AND cb.tag_level_2 @> $(cennosti)
-            AND (cb.tag_level_2 && $(childTagsAlternatives) OR $(childTagsAlternatives) = '{}')`
+            AND (cb.tag_level_2 && $(childTagsAlternatives) OR $(childTagsAlternatives) = '{}')
+            AND (
+                   ((CASE WHEN cb.address = 'онлайн' THEN 'online' ELSE 'outdoor' END) = $(format))
+                   OR
+                   $(format) IS NULL
+                )
+            `
 
     const cennosti = customFilter.cennosti || [];
     const cennostiFilteredFromHardTags = cennosti.filter(c => !chidrensTags.includes(c))
@@ -62,6 +70,7 @@ function doQueryCore(customFilter: CustomFilter) {
         cennosti: cennostiFilteredFromHardTags || [],
         childTagsAlternatives: childAlternativesLogic(cennosti),
         weekendRange: mapToPgInterval(customFilter.weekendRange),
+        format: customFilter.format,
         timeIntervals: (customFilter.timeIntervals || []).map(i => mapToPgInterval(i)),
     }
     return {queryBody, queryParams}

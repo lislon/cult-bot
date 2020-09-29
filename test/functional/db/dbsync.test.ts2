@@ -1,16 +1,18 @@
 import { db } from '../../../src/db'
 import { mskMoment } from '../../../src/util/moment-msk'
-import { freshDb, getMockEvent, initializeDbTests } from './db-test-utils'
+import { cleanDbBeforeEach, getMockEvent, initializeDbTests, syncDatabase4Test } from './db-test-utils'
 import { syncDatabase } from '../../../src/db/sync'
+
+console.log(`${process.pid}: ${__filename}`);
 
 initializeDbTests()
 
 describe('db sync test', () => {
 
-    freshDb()
+    cleanDbBeforeEach()
 
     test('sync should save intervals', async () => {
-            await syncDatabase([getMockEvent({
+            await syncDatabase4Test([getMockEvent({
                 eventTime: [
                     [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-01 18:00')],
                     mskMoment('2020-01-02 15:00')
@@ -24,7 +26,7 @@ describe('db sync test', () => {
 
 
     test('sync should save tags', async () => {
-            await syncDatabase([
+            await syncDatabase4Test([
                 getMockEvent({ tag_level_1: ['#A', '#B'], category: 'theaters'}),
                 getMockEvent({ tag_level_1: ['#A'], category: 'concerts'})
             ])

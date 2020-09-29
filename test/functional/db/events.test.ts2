@@ -1,7 +1,14 @@
 import { mskMoment } from '../../../src/util/moment-msk'
 import { findTopEventsInRange } from '../../../src/db/events'
-import { cleanDb, expectedTitlesStrict, freshDb, getMockEvent, initializeDbTests } from './db-test-utils'
-import { syncDatabase } from '../../../src/db/sync'
+import {
+    cleanDb,
+    expectedTitlesStrict,
+    cleanDbBeforeEach,
+    getMockEvent,
+    initializeDbTests,
+    syncDatabase4Test
+} from './db-test-utils'
+import { db, dbCfg } from '../../../src/db'
 
 export async function expectResults(number: number, [from, to]: string[]) {
     const range = [mskMoment(from), mskMoment(to)]
@@ -9,13 +16,14 @@ export async function expectResults(number: number, [from, to]: string[]) {
     expect(top.length).toEqual(number)
 }
 
+console.log(`${process.pid}: ${__filename}`);
 initializeDbTests()
 
 describe('Top events', () => {
-    freshDb()
+    cleanDbBeforeEach()
 
     test('single event', async () => {
-        await syncDatabase([getMockEvent({
+        await syncDatabase4Test([getMockEvent({
             title: 'A',
             eventTime: [
                 mskMoment('2020-01-02 15:00'),
@@ -29,7 +37,7 @@ describe('Top events', () => {
     })
 
     test('do not show exhibition before close 1.5 hours', async () => {
-        await syncDatabase([getMockEvent({
+        await syncDatabase4Test([getMockEvent({
             eventTime: [
                 [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-01 20:00')]
             ],
@@ -48,7 +56,7 @@ describe('Top events', () => {
     })
 
     test('include anytime events when no primary results', async () => {
-        await syncDatabase([
+        await syncDatabase4Test([
             getMockEvent({
                 title: 'PRIMARY',
                 eventTime: [
@@ -75,7 +83,7 @@ describe('Top events', () => {
         const timeIntervals = [
             [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-01 20:00')]
         ]
-        await syncDatabase([
+        await syncDatabase4Test([
                 getMockEvent({
                     title: '1. NOT SO GOOD',
                     eventTime: timeIntervals,
@@ -99,7 +107,7 @@ describe('Top events', () => {
     })
 
     test('even with is_anytime = true we should intersect invervals', async () => {
-        await syncDatabase([
+        await syncDatabase4Test([
                 getMockEvent({
                     title: 'A',
                     eventTime: [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-01 10:00')],
@@ -118,21 +126,34 @@ describe('Top events', () => {
 
 })
 
+
 describe('Search intervals', () => {
 
-    freshDb()
+    beforeEach(async () => {
+        expect(dbCfg.connectionString).toContain('test')
+        await db.query('BEGIN')
+        await cleanDb()
+    })
+
+    afterEach(async () => {
+        await db.query('COMMIT')
+    })
 
     describe('SINGLE_INTERVAL [restriction]', () => {
         beforeAll(async () => {
+            console.log('1')
             await cleanDb()
-            await syncDatabase([getMockEvent({
+            console.log('2')
+            await syncDatabase4Test([getMockEvent({
                 eventTime: [
                     mskMoment('2020-01-02 15:00')
                 ]
             })])
+            console.log('3')
         })
 
         test('[ SINGLE_INTERVAL ]', async () => {
+            console.log('4')
             await expectResults(1, [
                 '2020-01-02 15:00',
                 '2020-01-02 16:00'])
@@ -154,7 +175,7 @@ describe('Search intervals', () => {
     describe('(range). [restriction]', () => {
         beforeAll(async () => {
             await cleanDb()
-            await syncDatabase([getMockEvent({
+            await syncDatabase4Test([getMockEvent({
                 eventTime: [[
                     mskMoment('2020-01-01 12:00'),
                     mskMoment('2020-01-01 18:00')],

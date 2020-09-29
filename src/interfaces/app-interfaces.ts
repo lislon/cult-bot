@@ -21,7 +21,7 @@ export type TagLevel2 = '#сдетьми0+'
 
 
 export const chidrensTags: TagLevel2[] = ['#сдетьми0+', '#сдетьми6+', '#сдетьми12+', '#сдетьми16+']
-export const moneyTags: TagLevel2[] = ['#сдетьми0+', '#сдетьми6+', '#сдетьми12+', '#сдетьми16+']
+export type EventFormat = 'online' | 'outdoor' | undefined
 
 export interface ContextMessageUpdate extends SceneContextMessageUpdate {
     i18n: I18n

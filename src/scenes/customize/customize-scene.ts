@@ -1,5 +1,5 @@
 import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
-import { chidrensTags, ContextMessageUpdate, TagLevel2 } from '../../interfaces/app-interfaces'
+import { chidrensTags, ContextMessageUpdate, EventFormat, TagLevel2 } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
@@ -40,6 +40,13 @@ export function mapUserInputToTimeIntervals(times: string[], [sat, sun]: Moment[
         });
 }
 
+function mapFormatToDbQuery(format: string[]) {
+    if (format === undefined || format.length !== 1) {
+        return undefined;
+    }
+    return format[0] as EventFormat
+}
+
 async function countFilteredEvents(ctx: ContextMessageUpdate) {
     if (ctx.session.customize.resultsFound === undefined) {
         ctx.session.customize.resultsFound = await countEventsCustomFilter({
@@ -47,6 +54,7 @@ async function countFilteredEvents(ctx: ContextMessageUpdate) {
             weekendRange: getNextWeekEndRange(),
             cennosti: ctx.session.customize.cennosti,
             oblasti: ctx.session.customize.oblasti,
+            format: mapFormatToDbQuery(ctx.session.customize.format)
         })
     }
     return ctx.session.customize.resultsFound;
@@ -57,9 +65,12 @@ const content = async (ctx: ContextMessageUpdate) => {
 
     const keyboard = [
         [
-            Markup.button(i18Btn('time')),
             Markup.button(i18Btn('oblasti')),
             Markup.button(i18Btn('priorities'))
+        ],
+        [
+            Markup.button(i18Btn('time')),
+            Markup.button(i18Btn('format'))
         ],
         [Markup.button(i18Btn('show_personalized_events'))],
         [backButton(ctx)],
@@ -74,7 +85,7 @@ function checkboxName(isSelected: boolean) {
     return `checkbox_${isSelected ? 'on' : 'off'}`;
 }
 
-type SectionName = 'oblasti_section' | 'cennosti_section' | 'time_section'
+type SectionName = 'oblasti_section' | 'cennosti_section' | 'time_section' | 'format_section'
 
 class Menu {
     private readonly selected: string[]
@@ -108,6 +119,8 @@ class Menu {
                 return actionName(`o_${postfix}`)
             case 'time_section':
                 return actionName(`t_${postfix}`)
+            case 'format_section':
+                return actionName(`f_${postfix}`)
             default:
                 throw new Error(`Unknown section name ${this.section}`);
         }
@@ -242,6 +255,15 @@ async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
     return markupKeyabord
 }
 
+async function getKeyboardFormat(ctx: ContextMessageUpdate) {
+    const menu = new Menu(ctx, ctx.session.customize.format, ctx.session.customize.openedMenus, 'format_section')
+
+    const buttons = [
+        [menu.button('online'), menu.button('outdoor')]
+    ]
+    return Markup.inlineKeyboard(buttons)
+}
+
 function resetOpenMenus(ctx: ContextMessageUpdate) {
     prepareSessionStateIfNeeded(ctx)
     ctx.session.customize.openedMenus = []
@@ -261,6 +283,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
     const events = await findEventsCustomFilter({
         cennosti: ctx.session.customize.cennosti,
         oblasti: ctx.session.customize.oblasti,
+        format: mapFormatToDbQuery(ctx.session.customize.format),
         timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange()),
         weekendRange: getNextWeekEndRange(),
         limit: limitToPage,
@@ -368,6 +391,16 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
 
             await putOrRefreshCounterMessage(ctx)
         })
+        .hears(i18nModuleBtnName('format'), async (ctx: ContextMessageUpdate) => {
+            const {i18Btn, i18Msg} = sceneHelper(ctx)
+
+            prepareSessionStateIfNeeded(ctx)
+            resetOpenMenus(ctx)
+            await ctx.replyWithHTML(i18Msg('select_format'), Extra.markup((await getKeyboardFormat(ctx))))
+            await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
+
+            await putOrRefreshCounterMessage(ctx)
+        })
         .hears(i18nModuleBtnName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
             await showNextPortionOfResults(ctx)
         })
@@ -421,6 +454,14 @@ function timeOptionLogic(ctx: ContextMessageUpdate, selected: string) {
         ctx.session.customize.time = ctx.session.customize.time.filter(s => s !== selected)
     } else {
         ctx.session.customize.time.push(selected)
+    }
+}
+
+function formatOptionLogic(ctx: ContextMessageUpdate, selected: string) {
+    if (ctx.session.customize.format.includes(selected)) {
+        ctx.session.customize.format = ctx.session.customize.format.filter(s => s !== selected)
+    } else {
+        ctx.session.customize.format.push(selected)
     }
 }
 
@@ -506,6 +547,16 @@ scene
             { eventPlural:  await generateAmountSelectedPlural(ctx, i18Msg) }))
         await putOrRefreshCounterMessage(ctx)
     })
+    .action(/customize_scene[.]f_(.+)/, async (ctx: ContextMessageUpdate) => {
+        formatOptionLogic(ctx, ctx.match[1])
+
+        const {i18Msg} = sceneHelper(ctx)
+
+        await ctx.editMessageReplyMarkup(await getKeyboardFormat(ctx))
+        await ctx.answerCbQuery(i18Msg('popup_selected',
+            { eventPlural:  await generateAmountSelectedPlural(ctx, i18Msg) }))
+        await putOrRefreshCounterMessage(ctx)
+    })
 ;
 
 
@@ -524,7 +575,8 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         pagingOffset,
         eventsCounterMsgId,
         eventsCounterMsgText,
-        oblasti
+        oblasti,
+        format
     } = ctx.session.customize || {}
 
     ctx.session.customize = {
@@ -532,6 +584,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         cennosti: SessionEnforcer.array(cennosti),
         oblasti: SessionEnforcer.array(oblasti),
         time: SessionEnforcer.array(time),
+        format: SessionEnforcer.array(format),
         eventsCounterMsgText,
         resultsFound: SessionEnforcer.number(resultsFound),
         pagingOffset: SessionEnforcer.number(pagingOffset),
@@ -553,19 +606,20 @@ export interface CustomizeSceneState {
     openedMenus: string[]
     cennosti: TagLevel2[]
     oblasti: string[]
+    format: string[]
     eventsCounterMsgId?: number
     eventsCounterMsgText: string
     pagingOffset: number
     resultsFound: number
 }
 
-export interface CustomizeSceneTimeState {
-    weekdays: WeekDayTimeSlot
-}
-
 export type WeekDayTimeSlot = {
     ['6']?: string[]
     ['7']?: string[]
+}
+
+export interface CustomizeSceneTimeState {
+    weekdays: WeekDayTimeSlot
 }
 
 export type Slot = '12:00-13:00' | '13:00-14:00';

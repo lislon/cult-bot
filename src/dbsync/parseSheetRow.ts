@@ -101,6 +101,14 @@ function validateTag(tags: string[], errorCallback: (errors: string[]) => void) 
     }
 }
 
+function isAddressInvalid(data: Event) {
+    if (data.address.toLowerCase() === 'онлайн' && data.address.toLowerCase() !== data.address) {
+        return false
+    }
+
+    return data.address === ''
+}
+
 export function processRow(row: Partial<ExcelRow>, category: EventCategory): ExcelRowResult {
 
     const notNull = (s: string) => s === undefined ? '' : s.trim();
@@ -157,7 +165,7 @@ export function processRow(row: Partial<ExcelRow>, category: EventCategory): Exc
         result.errors.emptyRows.push('address');
     }
 
-    if (data.address === '') {
+    if (isAddressInvalid(data)) {
         result.errors.emptyRows.push('address');
     }
 
