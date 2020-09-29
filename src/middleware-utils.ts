@@ -35,12 +35,17 @@ export default {
     i18n: i18n.middleware(),
     telegrafThrottler: telegrafThrottler({
         onThrottlerError: async (ctx: ContextMessageUpdate, next, throttlerName, error) => {
-            console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
-            await ctx.replyWithHTML(ctx.i18n.t('shared.something_went_wrong_dev', {
-                error: error.toString().substr(0, 1000),
-                time: mskMoment().toISOString(),
-                session: JSON.stringify(ctx.session, undefined, 2)
-            }))
+
+            if (error.message === 'This job has been dropped by Bottleneck') {
+                console.log(`Throttle limit ${throttlerName}: ${error} for user ${ctx.from.username}`)
+            } else {
+                console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
+                await ctx.replyWithHTML(ctx.i18n.t('shared.something_went_wrong_dev', {
+                    error: error.toString().substr(0, 1000),
+                    time: mskMoment().toISOString(),
+                    session: JSON.stringify(ctx.session, undefined, 2)
+                }))
+            }
             // console.log(throttlerName, error)
         }
     }),

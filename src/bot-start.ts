@@ -10,7 +10,7 @@ import middlewares, { i18n } from './middleware-utils'
 import { customizeRegisterActions, customizeScene } from './scenes/customize/customize-scene'
 import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
-import { sleep } from './util/scene-helper'
+import { ifAdmin, sleep } from './util/scene-helper'
 import 'source-map-support/register'
 import moment from 'moment'
 import { getGoogleSpreadSheetURL, syncrhonizeDbByUser } from './scenes/shared/shared-logic'
@@ -42,7 +42,7 @@ adminRegisterActions(bot, i18n)
 // })
 
 bot.start(async (ctx: ContextMessageUpdate) => {
-    console.log(`bot.start userId=${ctx.from.id} first_name=${ctx.from.first_name} last_name=${ctx.from.last_name}`)
+    console.log(`bot.start userId=${ctx.from.id} first_name=${ctx.from.first_name} last_name=${ctx.from.last_name} username=${ctx.from.username}`)
 
     const name = ctx.message.from.first_name
     if (!quick) await sleep(500)
@@ -96,6 +96,7 @@ i18n.resourceKeys('ru')
 
 bot.action(/.+/, async (ctx, next) => {
     console.log('Аварийный выход');
+    await ctx.answerCbQuery()
     await ctx.scene.enter('main_scene');
 })
 
@@ -110,7 +111,7 @@ bot.command('version', async (ctx) => {
 })
 
 bot.command('sync', async (ctx) => {
-    await syncrhonizeDbByUser(ctx)
+    await ifAdmin(ctx, () => syncrhonizeDbByUser(ctx))
 })
 
 bot.hears(/.+/, (ctx, next) => {

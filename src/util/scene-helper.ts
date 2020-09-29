@@ -46,3 +46,18 @@ export function i18nSceneHelper(scene: BaseScene<ContextMessageUpdate>) {
 export function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+export function isAdmin(ctx: ContextMessageUpdate) {
+    const admins = [
+        '@lislon',
+        '@RemboTrembo',
+    ]
+    return admins.includes(`@${ctx.from.username}`) || true;
+}
+export async function ifAdmin(ctx: ContextMessageUpdate, callback: () => Promise<any>) {
+    if (isAdmin(ctx)) {
+        return await callback()
+    } else {
+        await ctx.replyWithHTML(ctx.i18n.t('shared.no_admin'));
+    }
+}

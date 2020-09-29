@@ -1,6 +1,6 @@
 import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
 import { allCategories, ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, sleep } from '../../util/scene-helper'
+import { i18nSceneHelper, ifAdmin, isAdmin, sleep } from '../../util/scene-helper'
 import { getTopEvents } from './retrieve-logic'
 import { cardFormat } from '../shared/card-format'
 import * as events from 'events'
@@ -36,7 +36,7 @@ const content = (ctx: ContextMessageUpdate) => {
         ['theaters', 'exhibitions'],
         ['movies', 'events'],
         ['walks', 'concerts'],
-        ['customize', 'admin']
+        ['customize', ...(isAdmin(ctx) ? ['admin'] : [])]
     ]
 
     const mainButtons = menu.map(row =>
@@ -186,7 +186,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             await ctx.scene.enter('customize_scene')
         });
         bot.hears(i18n.t(`ru`, `scenes.main_scene.keyboard.admin`), async (ctx: ContextMessageUpdate) => {
-            await ctx.scene.enter('admin_scene')
+            await ifAdmin(ctx, () => ctx.scene.enter('admin_scene'))
         });
     }
 }
