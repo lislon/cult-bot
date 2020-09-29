@@ -98,7 +98,7 @@ function isWeekendsNow(range: [Moment, Moment]) {
     return filterByByRange([mskMoment()], range, 'in').length > 0
 }
 
-function interavalTemplateParams(range: [Moment, Moment]) {
+function intervalTemplateParams(range: [Moment, Moment]) {
     return {
         from: range[0].locale('ru').format('DD.MM HH:mm'),
         to: range[1].locale('ru').subtract('1', 'second').format('DD.MM HH:mm')
@@ -110,7 +110,6 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
     const {range, events} = await getTopEvents(cat)
     // const gcMessages = ctx.session.mainScene.gcMessages
     const { msg, markupMainMenu} = content(ctx)
-    const intervalTemplateParams = interavalTemplateParams(range)
 
     // await cleanOldMessages(ctx)
     await sleep(400)
@@ -125,9 +124,9 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
         } else {
             let humanDateRange = ''
             if (range[0].month() === range[1].month()) {
-                humanDateRange = range[0].locale('ru').format('DD') + '-' + range[1].locale('ru').format('DD MMMM')
+                humanDateRange = range[0].locale('ru').format('D') + '-' + range[1].locale('ru').format('D MMMM')
             } else {
-                humanDateRange = range[0].locale('ru').format('DD MMMM') + '-' + range[1].locale('ru').format('DD MMMM')
+                humanDateRange = range[0].locale('ru').format('D MMMM') + '-' + range[1].locale('ru').format('D MMMM')
             }
 
             await ctx.replyWithHTML(i18Msg('let_me_show_next_weekend', {humanDateRange, ...tplData}))
