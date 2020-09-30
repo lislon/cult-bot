@@ -8,7 +8,7 @@ import { filterByByRange } from '../../lib/timetable/intervals'
 import { mskMoment } from '../../util/moment-msk'
 import { Moment } from 'moment'
 import TelegrafI18n from 'telegraf-i18n'
-import { i18n } from '../../middleware-utils'
+import { i18n } from '../../util/i18n'
 
 export interface MainSceneState {
     gcMessages: number[]

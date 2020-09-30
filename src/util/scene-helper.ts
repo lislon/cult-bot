@@ -1,7 +1,7 @@
 import { BaseScene, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
-import { i18n } from '../middleware-utils'
 import { StupidTranslit } from '../lib/translit/stupid-translit'
+import { i18n } from './i18n'
 
 export function i18nSceneHelper(scene: BaseScene<ContextMessageUpdate>) {
     const backAction = scene.id + 'button.back'

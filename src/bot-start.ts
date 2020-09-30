@@ -6,13 +6,14 @@ import { mainRegisterActions, mainScene } from './scenes/main/main-scene'
 import { adminRegisterActions, adminScene } from './scenes/admin/admin-scene'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { db } from './db';
-import middlewares, { i18n } from './middleware-utils'
+import middlewares from './middleware-utils'
 import { customizeRegisterActions, customizeScene } from './scenes/customize/customize-scene'
 import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
 import { ifAdmin, sleep } from './util/scene-helper'
 import 'source-map-support/register'
 import { getGoogleSpreadSheetURL, showBotVersion, syncrhonizeDbByUser } from './scenes/shared/shared-logic'
+import { i18n } from './util/i18n'
 
 console.log(`starting bot...`);
 db.any('select 1 + 1')
@@ -68,8 +69,8 @@ bot.on('sticker', (ctx) => ctx.reply('👍'))
 bot.hears('hi', (ctx) => ctx.reply('Hey there'))
 
 i18n.resourceKeys('ru')
-    .filter(id => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.].*back/))
-    .forEach(id => {
+    .filter((id: string) => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.].*back/))
+    .forEach((id: string) => {
         bot.hears(match(id), async (ctx) => {
             console.log('main catch', id)
             await ctx.scene.enter('main_scene');
