@@ -1,5 +1,5 @@
-import { mapUserInputToTimeIntervals } from '../../src/scenes/customize/customize-scene'
-import { mskMoment } from '../../src/util/moment-msk'
+import { mskMoment } from '../../../src/util/moment-msk'
+import { mapUserInputToTimeIntervals } from '../../../src/scenes/customize/customize-utils'
 
 describe('convert_to_intervals', () => {
      const weekends = [
@@ -17,7 +17,6 @@ describe('convert_to_intervals', () => {
         ]],
     ])('%s', (text: string, expected: string[][]) => {
         const ranges = mapUserInputToTimeIntervals([text], weekends)
-
         const actual = ranges.map(r => r.map(t => t.tz('Europe/Moscow').format('YYYY-MM-DD HH:mm')))
         expect(actual).toEqual(expected)
     })

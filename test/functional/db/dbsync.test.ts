@@ -1,15 +1,19 @@
 import { db } from '../../../src/db'
 import { mskMoment } from '../../../src/util/moment-msk'
-import { cleanDbBeforeEach, getMockEvent, initializeDbTests, syncDatabase4Test } from './db-test-utils'
-import { syncDatabase } from '../../../src/db/sync'
+import { cleanDb, getMockEvent, syncDatabase4Test } from './db-test-utils'
 
-console.log(`${process.pid}: ${__filename}`);
-
-initializeDbTests()
+afterAll(db.$pool.end);
 
 describe('db sync test', () => {
 
-    cleanDbBeforeEach()
+    beforeEach(async () => {
+        await db.query('BEGIN')
+        await cleanDb()
+    })
+
+    afterEach(async () => {
+        await db.query('COMMIT')
+    })
 
     test('sync should save intervals', async () => {
             await syncDatabase4Test([getMockEvent({

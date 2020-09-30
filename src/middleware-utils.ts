@@ -1,5 +1,3 @@
-import TelegrafI18n from 'telegraf-i18n'
-import path from 'path'
 import updateLogger from 'telegraf-update-logger'
 import session from 'telegraf/session';
 import telegrafThrottler from 'telegraf-throttler';
@@ -7,6 +5,7 @@ import { config } from 'dotenv'
 import RedisSession from 'telegraf-session-redis'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { mskMoment } from './util/moment-msk'
+import { i18n } from './util/i18n'
 
 config();
 
@@ -22,14 +21,6 @@ if (process.env.REDIS_URL !== undefined) {
 } else {
     sessionMechanism = session()
 }
-
-export const i18n = new TelegrafI18n({
-    defaultLanguage: 'ru',
-    directory: path.resolve(__dirname, 'locales'),
-    useSession: false,
-    allowMissing: false,
-    sessionName: 'session'
-});
 
 export default {
     i18n: i18n.middleware(),

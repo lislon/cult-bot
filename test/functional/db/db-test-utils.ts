@@ -20,32 +20,6 @@ export function initializeDbTests() {
 
 }
 
-export function cleanDbBeforeEach() {
-    beforeEach(async () => {
-        await db.query('BEGIN')
-        await cleanDb()
-    })
-
-    afterEach(async (done) => {
-        await db.query('COMMIT')
-        done()
-    })
-}
-
-export function cleanDbBeforeAll() {
-    beforeAll(async () => {
-        await db.query('BEGIN')
-        await cleanDb()
-    })
-
-    afterAll(async (done) => {
-        console.log('commit')
-        await db.query('COMMIT')
-        done()
-    })
-}
-
-
 export interface MockEvent {
     title: string,
     eventTime: MomentIntervals

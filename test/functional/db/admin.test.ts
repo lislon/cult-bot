@@ -1,13 +1,20 @@
-import { expectedTitles, cleanDbBeforeEach, getMockEvent, initializeDbTests, syncDatabase4Test } from './db-test-utils'
+import { cleanDb, expectedTitles, getMockEvent, syncDatabase4Test } from './db-test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
-import { syncDatabase } from '../../../src/db/sync'
 import { findAllEventsAdmin, findStats } from '../../../src/db/db-admin'
+import { db } from '../../../src/db'
 
-initializeDbTests()
+afterAll(db.$pool.end);
 
 describe('Admin', () => {
 
-    cleanDbBeforeEach()
+    beforeEach(async () => {
+        await db.query('BEGIN')
+        await cleanDb()
+    })
+
+    afterEach(async () => {
+        await db.query('COMMIT')
+    })
 
     const eventTime = [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]
     const yearRange = [mskMoment('2020-01-01 00:00'), mskMoment('2021-01-02 00:00')]

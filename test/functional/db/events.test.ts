@@ -1,14 +1,7 @@
 import { mskMoment } from '../../../src/util/moment-msk'
 import { findTopEventsInRange } from '../../../src/db/events'
-import {
-    cleanDb,
-    expectedTitlesStrict,
-    cleanDbBeforeEach,
-    getMockEvent,
-    initializeDbTests,
-    syncDatabase4Test
-} from './db-test-utils'
-import { db, dbCfg } from '../../../src/db'
+import { cleanDb, expectedTitlesStrict, getMockEvent, syncDatabase4Test } from './db-test-utils'
+import { db } from '../../../src/db'
 
 export async function expectResults(number: number, [from, to]: string[]) {
     const range = [mskMoment(from), mskMoment(to)]
@@ -16,11 +9,17 @@ export async function expectResults(number: number, [from, to]: string[]) {
     expect(top.length).toEqual(number)
 }
 
-console.log(`${process.pid}: ${__filename}`);
-initializeDbTests()
+afterAll(db.$pool.end);
 
 describe('Top events', () => {
-    cleanDbBeforeEach()
+    beforeEach(async () => {
+        await db.query('BEGIN')
+        await cleanDb()
+    })
+
+    afterEach(async () => {
+        await db.query('COMMIT')
+    })
 
     test('single event', async () => {
         await syncDatabase4Test([getMockEvent({
@@ -127,10 +126,8 @@ describe('Top events', () => {
 })
 
 
-describe('Search intervals', () => {
-
+describe('Search intervals - SINGLE_INTERVAL [restriction]', () => {
     beforeEach(async () => {
-        expect(dbCfg.connectionString).toContain('test')
         await db.query('BEGIN')
         await cleanDb()
     })
@@ -139,80 +136,82 @@ describe('Search intervals', () => {
         await db.query('COMMIT')
     })
 
-    describe('SINGLE_INTERVAL [restriction]', () => {
-        beforeAll(async () => {
-            console.log('1')
-            await cleanDb()
-            console.log('2')
-            await syncDatabase4Test([getMockEvent({
-                eventTime: [
-                    mskMoment('2020-01-02 15:00')
-                ]
-            })])
-            console.log('3')
-        })
-
-        test('[ SINGLE_INTERVAL ]', async () => {
-            console.log('4')
-            await expectResults(1, [
-                '2020-01-02 15:00',
-                '2020-01-02 16:00'])
-        })
-
-        test('SINGLE_INTERVAL   [  ]', async () => {
-            await expectResults(0, [
-                '2020-01-05 15:00',
-                '2020-01-05 16:00'])
-        })
-
-        test('[  ]   SINGLE_INTERVAL', async () => {
-            await expectResults(0, [
-                '2020-01-01 01:00',
-                '2020-01-01 02:00'])
-        })
+    beforeEach(async () => {
+        await syncDatabase4Test([getMockEvent({
+            eventTime: [
+                mskMoment('2020-01-02 15:00')
+            ]
+        })])
     })
 
-    describe('(range). [restriction]', () => {
-        beforeAll(async () => {
-            await cleanDb()
-            await syncDatabase4Test([getMockEvent({
-                eventTime: [[
-                    mskMoment('2020-01-01 12:00'),
-                    mskMoment('2020-01-01 18:00')],
-                ]
-            })])
-        })
-
-        test('()  []', async () => {
-            await expectResults(0, [
-                '2020-01-01 18:00',
-                '2020-01-01 20:00'])
-        })
-
-        test('( [ ) ]', async () => {
-            await expectResults(1, [
-                '2020-01-01 15:00',
-                '2020-01-01 20:00'])
-        })
-
-        test('[ ( ) ]', async () => {
-            await expectResults(1, [
-                '2020-01-01 00:00',
-                '2020-01-01 23:00'])
-        })
-
-        test('[ ( ] )', async () => {
-            await expectResults(1, [
-                '2020-01-01 00:00',
-                '2020-01-01 12:00'])
-        })
-
-        test('[  ]( )', async () => {
-            await expectResults(0, [
-                '2020-01-01 00:00',
-                '2020-01-01 01:00'])
-        })
-
+    test('[ SINGLE_INTERVAL ]', async () => {
+        await expectResults(1, [
+            '2020-01-02 15:00',
+            '2020-01-02 16:00'])
     })
-});
+
+    test('SINGLE_INTERVAL   [  ]', async () => {
+        await expectResults(0, [
+            '2020-01-05 15:00',
+            '2020-01-05 16:00'])
+    })
+
+    test('[  ]   SINGLE_INTERVAL', async () => {
+        await expectResults(0, [
+            '2020-01-01 01:00',
+            '2020-01-01 02:00'])
+    })
+})
+
+describe('Search intervals -  (range). [restriction]', () => {
+    beforeEach(async () => {
+        await db.query('BEGIN')
+        await cleanDb()
+    })
+
+    afterEach(async () => {
+        await db.query('COMMIT')
+    })
+
+    beforeEach(async () => {
+        await syncDatabase4Test([getMockEvent({
+            eventTime: [[
+                mskMoment('2020-01-01 12:00'),
+                mskMoment('2020-01-01 18:00')],
+            ]
+        })])
+    })
+
+    test('()  []', async () => {
+        await expectResults(0, [
+            '2020-01-01 18:00',
+            '2020-01-01 20:00'])
+    })
+
+    test('( [ ) ]', async () => {
+        await expectResults(1, [
+            '2020-01-01 15:00',
+            '2020-01-01 20:00'])
+    })
+
+    test('[ ( ) ]', async () => {
+        await expectResults(1, [
+            '2020-01-01 00:00',
+            '2020-01-01 23:00'])
+    })
+
+    test('[ ( ] )', async () => {
+        await expectResults(1, [
+            '2020-01-01 00:00',
+            '2020-01-01 12:00'])
+    })
+
+    test('[  ]( )', async () => {
+        await expectResults(0, [
+            '2020-01-01 00:00',
+            '2020-01-01 01:00'])
+    })
+
+})
+
 

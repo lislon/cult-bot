@@ -1,6 +1,5 @@
 import pg_promise, * as pgPromise from 'pg-promise'
 import { config } from 'dotenv'
-import monitor from 'pg-monitor'
 import * as pg from 'pg-promise/typescript/pg-subset'
 
 config();
@@ -21,7 +20,7 @@ const initOptions: pgPromise.IInitOptions<{}, pg.IClient> = {
 
 const pgp = pg_promise(initOptions)
 
-monitor.attach(initOptions);
+// monitor.attach(initOptions);
 
 const dbCfg = {
     connectionString: process.env.DATABASE_URL,
