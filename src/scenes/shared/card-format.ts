@@ -24,13 +24,13 @@ export function cardFormat(row: Event) {
         text += `<b>Длительность:</b> ${escapeHTML(row.duration)}\n`
     }
     if (row.price != '') {
-        text += `<b>Стоимость:</b> ${escapeHTML(row.price)}\n`
+        text += `<b>Стоимость:</b> ${escapeWithUrls(row.price)}\n`
     }
     if (row.notes != '') {
         text += `<b>Особенности:</b>  ${escapeWithUrls(row.notes)}\n`
     }
     text += '\n'
-    text += `<a href="${escapeHTML(row.url)}">${escapeHTML(row.url)}</a>\n`
+    text += `${escapeWithUrls(row.url)}\n`
     text += '\n'
     text += `${escapeHTML(row.tag_level_3.join(' '))}\n`
 
