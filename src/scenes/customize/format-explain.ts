@@ -141,7 +141,7 @@ export function formatExplainFormat(
 ): string[] {
   const { format } = ctx.session.customize;
   const formatNice = format.map((o) => i18Msg(`explain_filter.format_section.${o}`));
-  if (formatNice.length === 1) {
+  if (formatNice.length !== 1) {
     return [];
   }
   return [i18Msg('explain_filter.format', { format: formatNice.join(', ') }), ''];
