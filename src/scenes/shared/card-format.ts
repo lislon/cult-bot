@@ -14,7 +14,7 @@ function escapeWithPrice(text: string) {
 function formatUrl(text: string) {
     const niceUrls = addHtmlNiceUrls(text)
     if (niceUrls === text && text.match(/^https?:\/\//)) {
-        return `<a href="${text}">ссылка на событие</a>`
+        return `<a href="${text}">(ссылка на событие)</a>`
     }
     return niceUrls
 }
