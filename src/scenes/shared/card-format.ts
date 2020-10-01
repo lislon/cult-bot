@@ -4,7 +4,7 @@ import { getOnlyHumanTimetable } from '../../dbsync/parseSheetRow'
 import { cleanTagLevel1 } from '../../util/tag-level1-encoder'
 
 function escapeWithUrls(text: string) {
-    return escapeHTML(text).replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
+    return escapeHTML(text).replace(/\[(.+?)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
 }
 
 export function cardFormat(row: Event) {
@@ -29,6 +29,7 @@ export function cardFormat(row: Event) {
     if (row.notes != '') {
         text += `<b>Особенности:</b>  ${escapeWithUrls(row.notes)}\n`
     }
+    text += '\n'
     text += `${escapeWithUrls(row.url)}\n`
     text += '\n'
     text += `${escapeHTML(row.tag_level_3.join(' '))}\n`

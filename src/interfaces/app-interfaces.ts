@@ -5,6 +5,7 @@ import { CustomizeSceneState } from '../scenes/customize/customize-scene'
 import { TimeIntervalSceneState } from '../scenes/time-interval/time-interval-scene'
 import { MainSceneState } from '../scenes/main/main-scene'
 import { AdminSceneState } from '../scenes/admin/admin-scene'
+import * as tt from 'telegraf/typings/telegram-types'
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
 export const allCategories: EventCategory[] = ['theaters', 'exhibitions', 'movies', 'events', 'walks', 'concerts']
@@ -33,6 +34,7 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         adminScene: AdminSceneState
         language: 'en' | 'ru'
         sceneStack: string[]
+        user: tt.User
     }
     webhookReply: boolean;
 }

@@ -10,7 +10,7 @@ import middlewares from './middleware-utils'
 import { customizeRegisterActions, customizeScene } from './scenes/customize/customize-scene'
 import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
-import { ifAdmin, sleep } from './util/scene-helper'
+import { ifAdmin, isAdmin, sleep } from './util/scene-helper'
 import 'source-map-support/register'
 import { getGoogleSpreadSheetURL, showBotVersion, syncrhonizeDbByUser } from './scenes/shared/shared-logic'
 import { i18n } from './util/i18n'
@@ -61,6 +61,12 @@ bot.start(async (ctx: ContextMessageUpdate) => {
 
 bot.command('menu', async (ctx: ContextMessageUpdate) => {
     await ctx.scene.enter('main_scene');
+});
+
+bot.command('me', async (ctx: ContextMessageUpdate) => {
+    if (isAdmin(ctx)) {
+        await ctx.replyWithHTML(JSON.stringify(ctx.session))
+    }
 });
 
 bot.start((ctx) => ctx.reply('Welcome!'))
