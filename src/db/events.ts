@@ -8,7 +8,7 @@ export class TopEventsRepository {
     constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
-    public async findTopEventsInRange(category: EventCategory, interval: Moment[], limit: number = 3): Promise<Event[]> {
+    public async getTop(category: EventCategory, interval: Moment[], limit: number = 3): Promise<Event[]> {
         const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
         if (category === 'exhibitions') {
             adjustedIntervals[0].add(90, 'minutes')

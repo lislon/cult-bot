@@ -13,7 +13,6 @@ export function getNextWeekEndRange(): [Moment, Moment] {
     const weekendEnds = moment().tz('Europe/Moscow')
         .startOf('week')
         .add(8, 'd')
-        .subtract(2, 'hour')
 
     return [moment.max(now, weekendStarts), weekendEnds]
 }

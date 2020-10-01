@@ -4,7 +4,7 @@ import { db, dbCfg } from '../../../src/db'
 
 export async function expectResults(number: number, [from, to]: string[]) {
     const range = [mskMoment(from), mskMoment(to)]
-    const top = await db.repoTopEvents.findTopEventsInRange('theaters', range)
+    const top = await db.repoTopEvents.getTop('theaters', range)
     expect(top.length).toEqual(number)
 }
 
@@ -32,7 +32,7 @@ describe('Top events', () => {
         })])
 
         const range = [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-03 15:00')]
-        expectedTitlesStrict(['A'], await db.repoTopEvents.findTopEventsInRange('theaters', range))
+        expectedTitlesStrict(['A'], await db.repoTopEvents.getTop('theaters', range))
     })
 
     test('do not show exhibition before close 1.5 hours', async () => {
@@ -45,10 +45,10 @@ describe('Top events', () => {
 
 
         const uspeemRange = [mskMoment('2020-01-01 18:29'), mskMoment('2020-01-02 00:00')]
-        const uspeemResult = await db.repoTopEvents.findTopEventsInRange('exhibitions', uspeemRange)
+        const uspeemResult = await db.repoTopEvents.getTop('exhibitions', uspeemRange)
 
         const apazdunRange = [mskMoment('2020-01-01 18:30'), mskMoment('2020-01-02 00:00')]
-        const apazdunResult = await db.repoTopEvents.findTopEventsInRange('exhibitions', apazdunRange)
+        const apazdunResult = await db.repoTopEvents.getTop('exhibitions', apazdunRange)
 
         expect(uspeemResult.length).toEqual(1)
         expect(apazdunResult.length).toEqual(0)
@@ -74,7 +74,7 @@ describe('Top events', () => {
             })]
         )
         const range = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-01 23:59')]
-        const events = await db.repoTopEvents.findTopEventsInRange('theaters', range)
+        const events = await db.repoTopEvents.getTop('theaters', range)
         expect(events.map(e => e.title)).toEqual(['PRIMARY', 'AUX'])
     })
 
@@ -101,7 +101,7 @@ describe('Top events', () => {
             ]
         )
         const range = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-01 23:59')]
-        const events = await db.repoTopEvents.findTopEventsInRange('theaters', range, 2)
+        const events = await db.repoTopEvents.getTop('theaters', range, 2)
         expect(events.map(e => e.title)).toEqual(['2. BEST', '3. BETTER'])
     })
 
@@ -120,7 +120,7 @@ describe('Top events', () => {
             ]
         )
         const range = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-01 10:00')]
-        expectedTitlesStrict(['A'], await db.repoTopEvents.findTopEventsInRange('theaters', range))
+        expectedTitlesStrict(['A'], await db.repoTopEvents.getTop('theaters', range))
     })
 
 })
