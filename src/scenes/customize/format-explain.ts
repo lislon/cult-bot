@@ -106,3 +106,12 @@ export function formatExplainCennosti(ctx: ContextMessageUpdate, i18Msg: (id: st
     lines.push('')
     return lines
 }
+
+export function formatExplainFormat(ctx: ContextMessageUpdate, i18Msg: (id: string, tplData?: object,  byDefault?: string) => string): string[] {
+    const { format } = ctx.session.customize
+    const formatNice = format.map(o => i18Msg(`explain_filter.format_section.${o}`))
+    if (formatNice.length === 1) {
+        return []
+    }
+    return [i18Msg('explain_filter.format', { format: formatNice.join(', ') } ), '']
+}

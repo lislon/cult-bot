@@ -6,7 +6,7 @@ import { InlineKeyboardButton } from 'telegraf/typings/markup'
 import { getNextWeekEndRange, SessionEnforcer } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import plural from 'plural-ru'
-import { formatExplainCennosti, formatExplainOblasti, formatExplainTime } from './format-explain'
+import { formatExplainCennosti, formatExplainFormat, formatExplainOblasti, formatExplainTime } from './format-explain'
 import { i18n } from '../../util/i18n'
 import { mapUserInputToTimeIntervals } from './customize-utils'
 import { db } from '../../db'
@@ -250,6 +250,7 @@ async function resetFilter(ctx: ContextMessageUpdate) {
     ctx.session.customize.oblasti = []
     ctx.session.customize.cennosti = []
     ctx.session.customize.time = []
+    ctx.session.customize.format = []
 }
 
 async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
@@ -311,12 +312,18 @@ async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
     }
 }
 
+function resetBottomMessageWithNumberOfEventsFound(ctx: ContextMessageUpdate) {
+    ctx.session.customize.eventsCounterMsgText = undefined
+    ctx.session.customize.eventsCounterMsgId = undefined
+}
+
 function getExplainFilterBody(ctx: ContextMessageUpdate): string {
     const {i18Btn, i18Msg} = sceneHelper(ctx)
     let lines: string[] = [];
     lines = [...lines, ...formatExplainTime(ctx, i18Msg)]
     lines = [...lines, ...formatExplainOblasti(ctx, i18Msg)]
     lines = [...lines, ...formatExplainCennosti(ctx, i18Msg)]
+    lines = [...lines, ...formatExplainFormat(ctx, i18Msg)]
     return lines.join('\n')
 }
 
@@ -341,6 +348,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
 
             prepareSessionStateIfNeeded(ctx)
             resetOpenMenus(ctx)
+            resetBottomMessageWithNumberOfEventsFound(ctx)
 
             await ctx.replyWithHTML(i18Msg('select_oblasti'), Extra.markup((await getKeyboardOblasti(ctx))))
             await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
@@ -352,6 +360,8 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
 
             prepareSessionStateIfNeeded(ctx)
             resetOpenMenus(ctx)
+            resetBottomMessageWithNumberOfEventsFound(ctx)
+
             await ctx.replyWithHTML(i18Msg('select_priorities'), Extra.markup((await getKeyboardCennosti(ctx, ctx.session.customize))))
             await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
 
@@ -362,6 +372,8 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
 
             prepareSessionStateIfNeeded(ctx)
             resetOpenMenus(ctx)
+            resetBottomMessageWithNumberOfEventsFound(ctx)
+
             await ctx.replyWithHTML(i18Msg('select_time'), Extra.markup((await getKeyboardTime(ctx))))
             await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
 
@@ -372,6 +384,8 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
 
             prepareSessionStateIfNeeded(ctx)
             resetOpenMenus(ctx)
+            resetBottomMessageWithNumberOfEventsFound(ctx)
+
             await ctx.replyWithHTML(i18Msg('select_format'), Extra.markup((await getKeyboardFormat(ctx))))
             await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
 
