@@ -199,7 +199,7 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
 
 async function getKeyboardTime(ctx: ContextMessageUpdate) {
     const menu = new Menu(ctx, ctx.session.customize.time, ctx.session.customize.openedMenus, 'time_section')
-    const weekdays = getNextWeekEndRange().map(t => t.locale('ru').format('DD.MM'))
+    const weekdays = [0, 1].map(i => getNextWeekEndRange()[0].add(i, 'day').locale('ru').format('DD.MM'))
 
     function getIntervalsFromI18N(day: string) {
         return i18n.resourceKeys('ru')
@@ -602,14 +602,3 @@ export interface CustomizeSceneState {
     pagingOffset: number
     resultsFound: number
 }
-
-export type WeekDayTimeSlot = {
-    ['6']?: string[]
-    ['7']?: string[]
-}
-
-export interface CustomizeSceneTimeState {
-    weekdays: WeekDayTimeSlot
-}
-
-export type Slot = '12:00-13:00' | '13:00-14:00';

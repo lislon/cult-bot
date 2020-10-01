@@ -15,7 +15,8 @@ function joinTimeIntervals(time: string[], onlyWeekday: 'saturday' | 'sunday') {
       }
       return acc;
     }, [])
-    .map(([from, to]) => `${from}.00-${to}.00`);
+    .map(([from, to]) => [from, to === 0 ? 24 : to])
+    .map(([from, to]) => `${from}.00-${to}.00`)
 }
 
 export function formatExplainTime(

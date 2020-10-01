@@ -1,6 +1,6 @@
 import { Moment } from 'moment'
 
-export function mapUserInputToTimeIntervals(times: string[], [sat, sun]: Moment[]): Moment[][] {
+export function mapUserInputToTimeIntervals(times: string[], [sat, ]: Moment[]): Moment[][] {
     return (times)
         .map(t => t.split(/[-.]/))
         .map(([day, from, to]) => [
@@ -16,7 +16,7 @@ export function mapUserInputToTimeIntervals(times: string[], [sat, sun]: Moment[
             }
         })
         .map(([day, from, to]: [string, number, number]) => {
-            const baseDay = (day === 'saturday' ? sat : sun).clone().startOf('day')
+            const baseDay = sat.clone().add(day === 'saturday' ? 0 : 1, 'day').startOf('day')
             return [
                 baseDay.clone().add(from, 'hour'),
                 baseDay.clone().add(to, 'hour'),
