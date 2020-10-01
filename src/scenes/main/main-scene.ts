@@ -11,7 +11,6 @@ import TelegrafI18n from 'telegraf-i18n'
 import { i18n } from '../../util/i18n'
 
 export interface MainSceneState {
-    gcMessages: number[]
     messageId: number
 }
 
@@ -57,17 +56,10 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     if (ctx.session.mainScene === undefined) {
         console.log(`context doesn't exist. recreate`)
         ctx.session.mainScene = {
-            gcMessages: [],
             messageId: undefined
         }
     }
 }
-//
-// scene.hears('g', async (ctx: ContextMessageUpdate) => {
-//     await prepareSessionStateIfNeeded(ctx)
-//     ctx.session.mainScene.gcMessages.push(ctx.session.mainScene.gcMessages.length)
-//     await ctx.replyWithMarkdown('x ' + ctx.session.mainScene.gcMessages)
-// })
 
 scene.enter(async (ctx: ContextMessageUpdate) => {
     console.log('enter scene main_scene')
@@ -82,17 +74,6 @@ scene.leave(async (ctx: ContextMessageUpdate) => {
     console.log('exit scene main_scene')
  })
 
-async function cleanOldMessages(ctx: ContextMessageUpdate) {
-    // console.log(`old messages clean (${ctx.session.mainScene.gcMessages.length})`)
-    // for (const messageId of ctx.session.mainScene.gcMessages) {
-    //     await ctx.deleteMessage(messageId)
-    // }
-    // ctx.session.mainScene.gcMessages.length = 0
-    // if (ctx.session.mainScene.messageId !== undefined) {
-    //     await ctx.deleteMessage(ctx.session.mainScene.messageId)
-    //     ctx.session.mainScene.messageId = undefined
-    // }
-}
 
 function isWeekendsNow(range: [Moment, Moment]) {
     return filterByByRange([mskMoment()], range, 'in').length > 0
@@ -108,7 +89,6 @@ function intervalTemplateParams(range: [Moment, Moment]) {
 async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
     const {i18Btn, i18Msg} = sceneHelper(ctx)
     const {range, events} = await getTopEvents(cat)
-    // const gcMessages = ctx.session.mainScene.gcMessages
     const { msg, markupMainMenu} = content(ctx)
 
     // await cleanOldMessages(ctx)
@@ -168,7 +148,6 @@ scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpda
     // await sleep(2000)
     // ctx.replyWithMarkdown('BIG', markupMainMenu)
     // await sleep(2000)
-    await cleanOldMessages(ctx)
     await ctx.scene.enter('main_scene')
 });
 
@@ -177,7 +156,6 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
 
         bot.hears(i18n.t(`ru`, `scenes.main_scene.keyboard.${cat}`), async (ctx: ContextMessageUpdate) => {
             await prepareSessionStateIfNeeded(ctx)
-            ctx.session.mainScene.gcMessages.push(ctx.message.message_id)
             await showEvents(ctx, cat as EventCategory)
         });
 

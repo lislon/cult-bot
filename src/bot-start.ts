@@ -65,7 +65,7 @@ bot.command('menu', async (ctx: ContextMessageUpdate) => {
 
 bot.command('me', async (ctx: ContextMessageUpdate) => {
     if (isAdmin(ctx)) {
-        await ctx.replyWithHTML(JSON.stringify(ctx.session))
+        await ctx.replyWithHTML(JSON.stringify(ctx.session, undefined, 2))
     }
 });
 

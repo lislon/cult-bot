@@ -324,7 +324,7 @@ export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<st
     const {i18Btn, i18Msg} = sceneHelper(ctx)
     prepareSessionStateIfNeeded(ctx)
 
-    const body = getExplainFilterBody(ctx)
+    const body = getExplainFilterBody(ctx).trim()
 
     if (body !== '') {
         const count = await countFilteredEvents(ctx)

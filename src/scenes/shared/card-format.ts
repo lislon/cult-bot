@@ -3,34 +3,44 @@ import { Event } from '../../interfaces/app-interfaces'
 import { getOnlyHumanTimetable } from '../../dbsync/parseSheetRow'
 import { cleanTagLevel1 } from '../../util/tag-level1-encoder'
 
-function escapeWithUrls(text: string) {
-    return escapeHTML(text).replace(/\[(.+?)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+function addHtmlNiceUrls(text: string) {
+    return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
+}
+
+function escapeWithPrice(text: string) {
+    return text.replace(/\s*(руб|рублей|р)[.]?(\b|$)/g, ' ₽')
+}
+
+function formatUrl(text: string) {
+    const niceUrls = addHtmlNiceUrls(text)
+    if (niceUrls === text && text.match(/^https?:\/\//)) {
+        return `<a href="${text}">ссылка на сайт мероприятия</a>`
+    }
+    return niceUrls
 }
 
 export function cardFormat(row: Event) {
-
     let text = ``;
     text += `<b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>\n`
     text += '\n'
-    text += `<b>${escapeWithUrls(row.title)}</b>\n`
+    text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>\n`
     text += '\n'
-    text += `${escapeWithUrls(row.description)} \n`
+    text += `${addHtmlNiceUrls(escapeHTML(row.description))} \n`
     text += '\n'
-    text += `<b>Где:</b> ${escapeWithUrls(row.place)}\n`
+    text += `<b>Где:</b> ${addHtmlNiceUrls(escapeHTML(row.place))}\n`
     const map = row.geotag != '' ? ` <a href="${escapeHTML(row.geotag)}">(Я.Карта)</a>` : ``
-    text += `<b>Адрес:</b> ${escapeWithUrls(row.address)}${map}\n`
-    text += `<b>Время:</b> ${getOnlyHumanTimetable(row.timetable)}\n`
+    text += `<b>Адрес:</b> ${addHtmlNiceUrls(escapeHTML(row.address))}${map}\n`
+    text += `🗓 ${getOnlyHumanTimetable(row.timetable)}\n`
     if (row.duration != '') {
-        text += `<b>Длительность:</b> ${escapeHTML(row.duration)}\n`
+        text += `🕐 ${escapeHTML(row.duration)}\n`
     }
     if (row.price != '') {
-        text += `<b>Стоимость:</b> ${escapeWithUrls(row.price)}\n`
+        text += `💳 ${addHtmlNiceUrls(escapeHTML(escapeWithPrice(row.price)))}\n`
     }
     if (row.notes != '') {
-        text += `<b>Особенности:</b>  ${escapeWithUrls(row.notes)}\n`
+        text += `<b>Особенности:</b>  ${addHtmlNiceUrls(escapeHTML(row.notes))}\n`
     }
-    text += '\n'
-    text += `${escapeWithUrls(row.url)}\n`
+    text += `${formatUrl(escapeHTML(row.url))}\n`
     text += '\n'
     text += `${escapeHTML(row.tag_level_3.join(' '))}\n`
 
