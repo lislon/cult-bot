@@ -1,6 +1,6 @@
 import { mskMoment } from '../../../src/util/moment-msk'
 import { cleanDb, expectedTitlesStrict, getMockEvent, syncDatabase4Test } from './db-test-utils'
-import { db } from '../../../src/db'
+import { db, dbCfg } from '../../../src/db'
 
 export async function expectResults(number: number, [from, to]: string[]) {
     const range = [mskMoment(from), mskMoment(to)]
@@ -8,6 +8,7 @@ export async function expectResults(number: number, [from, to]: string[]) {
     expect(top.length).toEqual(number)
 }
 
+beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
 
 describe('Top events', () => {

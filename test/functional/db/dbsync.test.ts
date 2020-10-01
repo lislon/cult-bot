@@ -1,7 +1,8 @@
-import { db } from '../../../src/db'
+import { db, dbCfg } from '../../../src/db'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { cleanDb, getMockEvent, syncDatabase4Test } from './db-test-utils'
 
+beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
 
 describe('db sync test', () => {

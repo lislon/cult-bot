@@ -1,12 +1,13 @@
 import { mskMoment } from '../../../src/util/moment-msk'
 import { cleanDb, expectedTitles, getMockEvent, MockEvent, syncDatabase4Test } from './db-test-utils'
-import { db } from '../../../src/db'
+import { db, dbCfg } from '../../../src/db'
 
 
 const weekendRange = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-02 24:00')]
 const eventTime = [[mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]]
 const outOfIntervalEventTime = [[mskMoment('2020-02-01 12:00'), mskMoment('2020-02-03 15:00')]]
 
+beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
 
 describe('Filtering', () => {

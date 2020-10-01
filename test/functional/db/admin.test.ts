@@ -1,7 +1,8 @@
 import { expectedTitles, getMockEvent, syncDatabase4Test } from './db-test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
-import { db } from '../../../src/db'
+import { db, dbCfg } from '../../../src/db'
 
+beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
 
 describe('Admin', () => {
