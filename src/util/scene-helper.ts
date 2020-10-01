@@ -50,7 +50,7 @@ export function sleep(ms: number) {
 export function isDev(ctx: ContextMessageUpdate) {
     const devs = [
         '@lislon',
-        '@Kashmar85',
+        '@kashmar85',
     ]
     return devs.includes(`@${ctx.from.username}`);
 }
@@ -59,7 +59,7 @@ export function isAdmin(ctx: ContextMessageUpdate) {
     const admins = [
         '@lislon',
         '@RemboTrembo',
-        '@Kashmar85',
+        '@kashmar85',
     ]
     const adminIds = [
         781083907

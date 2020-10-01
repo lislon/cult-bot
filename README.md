@@ -79,3 +79,11 @@ heroku -a cult-hub-bot-dev scale web:0
 heroku -a cult-hub-bot-dev scale web:1
 
 ```
+### Backups
+
+https://devcenter.heroku.com/articles/heroku-postgres-backups#scheduling-backups
+
+```
+heroku pg:credentials:url -a <app name> DATABASE
+heroku pg:backups:schedule DATABASE_URL --at '02:00 Europe/Moscow' --app cult-hub-bot-dev
+```

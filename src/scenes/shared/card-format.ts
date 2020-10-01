@@ -29,7 +29,7 @@ export function cardFormat(row: Event) {
     text += '\n'
     text += `<b>Где:</b> ${addHtmlNiceUrls(escapeHTML(row.place))}\n`
     const map = row.geotag != '' ? ` <a href="${escapeHTML(row.geotag)}">(Я.Карта)</a>` : ``
-    text += `<b>Адрес:</b> ${addHtmlNiceUrls(escapeHTML(row.address))}${map}\n`
+    text += `📍 ${addHtmlNiceUrls(escapeHTML(row.address))}${map}\n`
     text += `🗓 ${getOnlyHumanTimetable(row.timetable)}\n`
     if (row.duration != '') {
         text += `🕐 ${escapeHTML(row.duration)}\n`
