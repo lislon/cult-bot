@@ -1,20 +1,10 @@
-import { cleanDb, expectedTitles, getMockEvent, syncDatabase4Test } from './db-test-utils'
+import { expectedTitles, getMockEvent, syncDatabase4Test } from './db-test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
-import { findAllEventsAdmin, findStats } from '../../../src/db/db-admin'
 import { db } from '../../../src/db'
 
 afterAll(db.$pool.end);
 
 describe('Admin', () => {
-
-    beforeEach(async () => {
-        await db.query('BEGIN')
-        await cleanDb()
-    })
-
-    afterEach(async () => {
-        await db.query('COMMIT')
-    })
 
     const eventTime = [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]
     const yearRange = [mskMoment('2020-01-01 00:00'), mskMoment('2021-01-02 00:00')]
@@ -26,7 +16,7 @@ describe('Admin', () => {
             ]
         )
 
-        expectedTitles(['A', 'B'], await findAllEventsAdmin('movies', yearRange, 10))
+        expectedTitles(['A', 'B'], await db.repoAdmin.findAllEventsAdmin('movies', yearRange, 10))
     })
 
     test('find stats', async () => {
@@ -35,7 +25,7 @@ describe('Admin', () => {
                 getMockEvent({title: 'B', eventTime, category: 'theaters', rating: 20})
             ]
         )
-        const actual = await findStats(yearRange)
+        const actual = await db.repoAdmin.findStats(yearRange)
         expect(actual).toEqual([
             {
                 'category': 'movies',

@@ -1,8 +1,8 @@
 import dbsync from './dbsync'
-import { pgp } from '../db'
+import { db, pgp } from '../db'
 
 (async function run() {
-    await dbsync()
+    await dbsync(db)
     pgp.end()
 })()
 

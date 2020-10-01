@@ -3,6 +3,7 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import dbsync from '../../dbsync/dbsync'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import moment = require('moment')
+import { db } from '../../db'
 
 export function getNextWeekEndRange(): [Moment, Moment] {
     const now = moment().tz('Europe/Moscow')
@@ -22,7 +23,7 @@ export async function syncrhonizeDbByUser(ctx: ContextMessageUpdate) {
         disable_web_page_preview: true
     })
     try {
-        const {updated, errors} = await dbsync()
+        const {updated, errors} = await dbsync(db)
         await ctx.replyWithHTML(ctx.i18n.t('sync.sync_success', {updated, errors}))
     } catch (e) {
         if (e instanceof WrongExcelColumnsError) {

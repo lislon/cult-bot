@@ -2,7 +2,6 @@ import { db } from '../../../src/db'
 import { MomentIntervals } from '../../../src/lib/timetable/intervals'
 import { Event, EventCategory, TagLevel2 } from '../../../src/interfaces/app-interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
-import { syncDatabase } from '../../../src/db/sync'
 
 
 export async function cleanDb() {
@@ -66,9 +65,10 @@ export function getMockEvent(
     return {
         primaryData: event,
         timetable: {
-            anytime: anytime
+            // anytime: anytime
         },
-        timeIntervals: eventTime
+        timeIntervals: eventTime,
+        is_anytime: anytime
     }
 }
 
@@ -83,7 +83,7 @@ export function expectedTitlesStrict(titles: string[], events: Event[]) {
 export async function syncDatabase4Test(events: EventToSave[]) {
     for (let i = 0; true; i++) {
         try {
-            return await syncDatabase(events)
+            return await db.repoSync.syncDatabase(events)
         } catch (e) {
 
             const repeatCodes = {

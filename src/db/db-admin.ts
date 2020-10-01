@@ -2,16 +2,21 @@ import { Event, EventCategory } from '../interfaces/app-interfaces'
 import { Moment } from 'moment'
 import { db } from '../db'
 import { mapToPgInterval } from './db-utils'
+import { IDatabase, IMain } from 'pg-promise'
 
 export class Stat {
     category: string
     count: string
 }
 
-export async function findStats(interval: Moment[]): Promise<Stat[]> {
-    const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
+export class AdminRepository {
+    constructor(private db: IDatabase<any>, private pgp: IMain) {
+    }
 
-    const finalQuery = `
+    async findStats(interval: Moment[]): Promise<Stat[]> {
+        const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
+
+        const finalQuery = `
         SELECT cb.category, COUNT(cb.id)
         FROM cb_events cb
         WHERE
@@ -23,16 +28,16 @@ export async function findStats(interval: Moment[]): Promise<Stat[]> {
         GROUP BY cb.category
         ORDER BY cb.category
     `
-    return await db.any(finalQuery,
-        {
-            interval: mapToPgInterval(adjustedIntervals),
-        }) as Stat[];
-}
+        return await db.any(finalQuery,
+            {
+                interval: mapToPgInterval(adjustedIntervals),
+            }) as Stat[];
+    }
 
-export async function findAllEventsAdmin(category: EventCategory, interval: Moment[], limit: number = 50): Promise<Event[]> {
-    const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
+    async findAllEventsAdmin(category: EventCategory, interval: Moment[], limit: number = 50): Promise<Event[]> {
+        const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
 
-    const finalQuery = `
+        const finalQuery = `
         SELECT cb.*
         FROM cb_events cb
         WHERE
@@ -45,10 +50,12 @@ export async function findAllEventsAdmin(category: EventCategory, interval: Mome
         ORDER BY cb.title
         LIMIT $(limit)
     `
-    return await db.any(finalQuery,
-        {
-            interval: mapToPgInterval(adjustedIntervals),
-            category,
-            limit
-        }) as Event[];
+        return await db.any(finalQuery,
+            {
+                interval: mapToPgInterval(adjustedIntervals),
+                category,
+                limit
+            }) as Event[];
+    }
 }
+

@@ -3,13 +3,13 @@ import { chidrensTags, ContextMessageUpdate, EventFormat, TagLevel2 } from '../.
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
-import { countEventsCustomFilter, findEventsCustomFilter } from '../../db/custom-filter'
 import { getNextWeekEndRange, SessionEnforcer } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import plural from 'plural-ru'
 import { formatExplainCennosti, formatExplainOblasti, formatExplainTime } from './format-explain'
 import { i18n } from '../../util/i18n'
 import { mapUserInputToTimeIntervals } from './customize-utils'
+import { db } from '../../db'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
@@ -25,7 +25,7 @@ function mapFormatToDbQuery(format: string[]) {
 
 async function countFilteredEvents(ctx: ContextMessageUpdate) {
     if (ctx.session.customize.resultsFound === undefined) {
-        ctx.session.customize.resultsFound = await countEventsCustomFilter({
+        ctx.session.customize.resultsFound = await db.repoCustomEvents.countEventsCustomFilter({
             timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange()),
             weekendRange: getNextWeekEndRange(),
             cennosti: ctx.session.customize.cennosti,
@@ -256,7 +256,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
     prepareSessionStateIfNeeded(ctx)
     const {i18Btn, i18Msg} = sceneHelper(ctx)
 
-    const events = await findEventsCustomFilter({
+    const events = await db.repoCustomEvents.findEventsCustomFilter({
         cennosti: ctx.session.customize.cennosti,
         oblasti: ctx.session.customize.oblasti,
         format: mapFormatToDbQuery(ctx.session.customize.format),

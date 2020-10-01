@@ -60,7 +60,6 @@ describe('parser', () => {
         ],
         ['с 1 января 2020 до 1 января 2020: в любое время',
             {
-                anytime: true,
                 'datesExact': [
                     {
                         'dateRange': [

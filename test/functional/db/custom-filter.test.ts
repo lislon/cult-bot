@@ -1,7 +1,6 @@
 import { mskMoment } from '../../../src/util/moment-msk'
 import { cleanDb, expectedTitles, getMockEvent, MockEvent, syncDatabase4Test } from './db-test-utils'
 import { db } from '../../../src/db'
-import { countEventsCustomFilter, findEventsCustomFilter } from '../../../src/db/custom-filter'
 
 
 const weekendRange = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-02 24:00')]
@@ -27,7 +26,7 @@ describe('Filtering', () => {
             getMockEvent({title: 'B', category: 'theaters', eventTime, tag_level_1: ['#A', '#B']}),
             getMockEvent({title: 'C', category: 'theaters', eventTime, tag_level_1: ['#A']})
         ])
-        expectedTitles(['A', 'B', 'C'], await findEventsCustomFilter({oblasti: ['theaters.#A', 'theaters.#B'], weekendRange}))
+        expectedTitles(['A', 'B', 'C'], await db.repoCustomEvents.findEventsCustomFilter({oblasti: ['theaters.#A', 'theaters.#B'], weekendRange}))
 
     }, 1000000)
 
@@ -38,7 +37,7 @@ describe('Filtering', () => {
             getMockEvent({title: 'C', category: 'theaters', eventTime, tag_level_1: ['#A']})
         ])
 
-        expectedTitles(['A', 'B', 'C'], await findEventsCustomFilter({oblasti: [], weekendRange}))
+        expectedTitles(['A', 'B', 'C'], await db.repoCustomEvents.findEventsCustomFilter({oblasti: [], weekendRange}))
     }, 1000000)
 
     test('search only by cennosti works', async () => {
@@ -48,7 +47,7 @@ describe('Filtering', () => {
             getMockEvent({title: 'C', category: 'concerts', eventTime, tag_level_2: ['#ЗОЖ']})
         ])
 
-         expectedTitles(['A', 'B'], await findEventsCustomFilter({cennosti: ['#ЗОЖ', '#комфорт'], weekendRange}))
+         expectedTitles(['A', 'B'], await db.repoCustomEvents.findEventsCustomFilter({cennosti: ['#ЗОЖ', '#комфорт'], weekendRange}))
     }, 1000000)
 
 
@@ -58,7 +57,7 @@ describe('Filtering', () => {
             getMockEvent({title: 'B', category: 'concerts', eventTime, tag_level_2: ['#ЗОЖ']})
         ])
 
-        expectedTitles(['A', 'B'], await findEventsCustomFilter({weekendRange}))
+        expectedTitles(['A', 'B'], await db.repoCustomEvents.findEventsCustomFilter({weekendRange}))
     }, 1000000)
 
     test('search filters out of interval', async () => {
@@ -67,7 +66,7 @@ describe('Filtering', () => {
             getMockEvent({title: 'B', eventTime})
         ])
 
-        expectedTitles(['B'], await findEventsCustomFilter({weekendRange}))
+        expectedTitles(['B'], await db.repoCustomEvents.findEventsCustomFilter({weekendRange}))
     }, 1000000)
 
     test('search only all except online', async () => {
@@ -76,9 +75,9 @@ describe('Filtering', () => {
             getMockEvent({title: 'B', eventTime, address: ''}),
         ])
 
-        expectedTitles(['B'], await findEventsCustomFilter({format: 'outdoor', weekendRange}))
-        expectedTitles(['A'], await findEventsCustomFilter({format: 'online', weekendRange}))
-        expectedTitles(['A', 'B'], await findEventsCustomFilter({weekendRange}))
+        expectedTitles(['B'], await db.repoCustomEvents.findEventsCustomFilter({format: 'outdoor', weekendRange}))
+        expectedTitles(['A'], await db.repoCustomEvents.findEventsCustomFilter({format: 'online', weekendRange}))
+        expectedTitles(['A', 'B'], await db.repoCustomEvents.findEventsCustomFilter({weekendRange}))
     }, 1000000)
 
     test('search by many intervals', async () => {
@@ -92,7 +91,7 @@ describe('Filtering', () => {
         ])
         const weekendAlreadyStartedRange = [mskMoment('2020-01-01 11:00'), mskMoment('2020-01-02 24:00')]
 
-        expectedTitles(['A12', 'A13'], await findEventsCustomFilter({weekendRange: weekendAlreadyStartedRange, timeIntervals: [
+        expectedTitles(['A12', 'A13'], await db.repoCustomEvents.findEventsCustomFilter({weekendRange: weekendAlreadyStartedRange, timeIntervals: [
                 [mskMoment('2020-01-01 10:00'), mskMoment('2020-01-01 11:00')],
                 [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-01 13:00')],
                 [mskMoment('2020-01-01 13:30'), mskMoment('2020-01-01 13:35')],
@@ -103,13 +102,9 @@ describe('Filtering', () => {
 
 describe('Логика с детьми', () => {
     beforeEach(async () => {
-        await db.query('BEGIN')
         await cleanDb()
     })
 
-    afterEach(async () => {
-        await db.query('COMMIT')
-    })
 
     beforeEach(async () => {
         await syncDatabase4Test([
@@ -122,19 +117,19 @@ describe('Логика с детьми', () => {
     })
 
     test('Если выбран 16+, то ищем два тега: 16+ и 12+', async () => {
-        await expectedTitles(['D16', 'D12'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми16+']}))
+        await expectedTitles(['D16', 'D12'], await db.repoCustomEvents.findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми16+']}))
     }, 1000000)
 
     test('Если выбран 12+, то ищем 12+ и 6+', async () => {
-        expectedTitles(['D12', 'D6'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми12+']}))
+        expectedTitles(['D12', 'D6'], await db.repoCustomEvents.findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми12+']}))
     }, 1000000)
 
     test('Если выбран 6+, то ищем 6+ и 0+', async () => {
-        expectedTitles(['D6', 'D0'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми6+']}))
+        expectedTitles(['D6', 'D0'], await db.repoCustomEvents.findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми6+']}))
     }, 1000000)
 
     test('Если выбран 0+, то ищем только 0+', async () => {
-        expectedTitles(['D0'], await findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми0+']}))
+        expectedTitles(['D0'], await db.repoCustomEvents.findEventsCustomFilter({weekendRange, cennosti: ['#сдетьми0+']}))
     }, 1000000)
 })
 
@@ -163,17 +158,17 @@ describe('Sorting & Paging', () => {
     })
 
     test('Sorting', async () => {
-        const events = await findEventsCustomFilter({weekendRange, limit: 100})
+        const events = await db.repoCustomEvents.findEventsCustomFilter({weekendRange, limit: 100})
         expect((events).map(t => t.title)).toEqual(goodOrder.map(t => t.title))
     }, 1000000)
 
     test('Paging', async () => {
-        const events = await findEventsCustomFilter({weekendRange, limit: 3, offset: 1})
+        const events = await db.repoCustomEvents.findEventsCustomFilter({weekendRange, limit: 3, offset: 1})
         expect((events).map(t => t.title)).toEqual(['B', 'C', 'D'])
     }, 1000000)
 
     test('Counting', async () => {
-        const count = await countEventsCustomFilter({weekendRange})
+        const count = await db.repoCustomEvents.countEventsCustomFilter({weekendRange})
         expect(count).toEqual(6)
     }, 1000000)
 })

@@ -1,3 +1,8 @@
+## Debug
+
+debug `npm dev` with `-r dotenv/config` node options. 
+
+
 ## Sync
 
 Envs:

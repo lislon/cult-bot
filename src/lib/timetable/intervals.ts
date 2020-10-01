@@ -159,6 +159,16 @@ export class IntervalGenerator {
     generate(timetable: Partial<EventTimetable>): MomentIntervals {
         let intervals: MomentIntervals = []
         if (timetable === undefined) return undefined
+
+        const restrictedRange: [moment.Moment, moment.Moment] = [
+            this.fromTime,
+            this.fromTime.clone().startOf('day').add(this.daysAhead, 'd')
+        ]
+
+        if (timetable.anytime) {
+            return restrictedRange
+        }
+
         // console.log(JSON.stringify(timetable, undefined, 2))
 
         const regularWeekTimes = this.flatIntervalsWeekdays(this.fromTime, timetable.weekTimes)
@@ -172,10 +182,7 @@ export class IntervalGenerator {
 
         intervals = this.flatIntervalsDatesExact(intervals, timetable.datesExact);
 
-        const restrictedRange: [moment.Moment, moment.Moment] = [
-            this.fromTime,
-            this.fromTime.clone().startOf('day').add(this.daysAhead, 'd')
-        ]
+
         intervals.sort((a: MomentOrInterval, b: MomentOrInterval) => {
             const am: Moment = Array.isArray(a) ? a[0] : a
             const bm: Moment = Array.isArray(b) ? b[0] : b

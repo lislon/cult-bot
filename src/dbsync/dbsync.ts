@@ -7,7 +7,7 @@ import {
     ExcelColumnName,
     ExcelRow,
     getOnlyBotTimetable,
-    processRow
+    processExcelRow
 } from './parseSheetRow'
 import { sheets_v4 } from 'googleapis'
 import { Moment } from 'moment'
@@ -15,8 +15,8 @@ import { parseTimetable } from '../lib/timetable/parser'
 import { predictIntervals } from '../lib/timetable/intervals'
 import { mskMoment } from '../util/moment-msk'
 import { EventToSave } from '../interfaces/db-interfaces'
-import { syncDatabase } from '../db/sync'
 import { WrongExcelColumnsError } from './WrongFormatException'
+import { BotDb } from '../db'
 import Schema$Request = sheets_v4.Schema$Request
 
 // our set of columns, to be created only once (statically), and then reused,
@@ -103,7 +103,7 @@ function debugTimetable(mapped: any, excelUpdater: ExcelUpdater, sheetId: number
     excelUpdater.annotateCell(sheetId, 'timetable', rowNo, text.join('\n'))
 }
 
-export default async function run(): Promise<{ updated: number, errors: number }> {
+export default async function run(db: BotDb): Promise<{ updated: number, errors: number }> {
     const result = {
         updated: 0,
         errors: 0
@@ -158,7 +158,7 @@ export default async function run(): Promise<{ updated: number, errors: number }
 
                 const keyValueRow = mapRowToColumnObject(row)
 
-                const mapped = processRow(keyValueRow, getSheetCategory(sheetNo))
+                const mapped = processExcelRow(keyValueRow, getSheetCategory(sheetNo))
 
                 rowNo = EXCEL_HEADER_SKIP_ROWS + rowNo;
 
@@ -169,6 +169,7 @@ export default async function run(): Promise<{ updated: number, errors: number }
                             primaryData: mapped.data,
                             timetable: mapped.timetable,
                             timeIntervals: predictIntervals(dateFrom, mapped.timetable, 14),
+                            is_anytime: mapped.data.timetable.includes('в любое время')
                         });
                         excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
 
@@ -204,7 +205,7 @@ export default async function run(): Promise<{ updated: number, errors: number }
             })
         })
 
-        await syncDatabase(rows)
+        await db.repoSync.syncDatabase(rows)
 
         console.log(`Insertion done. Rows inserted: ${result.updated}, Errors: ${result.errors}`);
         await excelUpdater.update();

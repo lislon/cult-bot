@@ -87,11 +87,7 @@ function prepareTimetable(data: Event): TimetableParseResult {
     if (data.timetable !== botTimetable) {
         console.log(` > bot convert: "${data.timetable}" -> "${botTimetable}"`)
     }
-    const timetableResult = parseTimetable(botTimetable)
-    if (timetableResult.status === false) {
-        console.log(' > parse: ' + data.timetable)
-    }
-    return timetableResult;
+    return parseTimetable(botTimetable);
 }
 
 function validateTag(tags: string[], errorCallback: (errors: string[]) => void) {
@@ -109,7 +105,7 @@ function isAddressInvalid(data: Event) {
     return data.address === ''
 }
 
-export function processRow(row: Partial<ExcelRow>, category: EventCategory): ExcelRowResult {
+export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory): ExcelRowResult {
 
     const notNull = (s: string) => s === undefined ? '' : s.trim();
     const notNullOrUnknown = (s: string) => s === undefined || s.match('/[?]+/') ? '' : s;

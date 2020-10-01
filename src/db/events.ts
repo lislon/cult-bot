@@ -1,17 +1,20 @@
 import { Moment } from 'moment'
-import { db } from '../db'
 import { Event, EventCategory } from '../interfaces/app-interfaces'
 import { TagCategory } from '../interfaces/db-interfaces'
 import { mapToPgInterval } from './db-utils'
+import { IDatabase, IMain } from 'pg-promise'
 
-
-export async function findTopEventsInRange(category: EventCategory, interval: Moment[], limit: number = 3): Promise<Event[]> {
-    const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
-    if (category === 'exhibitions') {
-        adjustedIntervals[0].add(90, 'minutes')
+export class TopEventsRepository {
+    constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
-    const primaryEvents = `
+    public async findTopEventsInRange(category: EventCategory, interval: Moment[], limit: number = 3): Promise<Event[]> {
+        const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
+        if (category === 'exhibitions') {
+            adjustedIntervals[0].add(90, 'minutes')
+        }
+
+        const primaryEvents = `
         SELECT cb.*
         FROM cb_events cb
         WHERE
@@ -27,7 +30,7 @@ export async function findTopEventsInRange(category: EventCategory, interval: Mo
         LIMIT $(limit)
     `
 
-    const secondaryEvents = `
+        const secondaryEvents = `
         select
             top30.*
         from
@@ -50,28 +53,30 @@ export async function findTopEventsInRange(category: EventCategory, interval: Mo
         limit $(limit)
     `
 
-    const finalQuery = `(${primaryEvents}) UNION ALL (${secondaryEvents}) LIMIT $(limit)`
+        const finalQuery = `(${primaryEvents}) UNION ALL (${secondaryEvents}) LIMIT $(limit)`
 
-    return await db.any(finalQuery,
-        {
-            interval: mapToPgInterval(adjustedIntervals),
-            category,
-            limit
-        }) as Event[];
+        return await this.db.any(finalQuery,
+            {
+                interval: mapToPgInterval(adjustedIntervals),
+                category,
+                limit
+            }) as Event[];
+    }
+
+    private async loadTags(cat: TagCategory) {
+        return await this.db.map('' +
+            ' SELECT t.name ' +
+            ' FROM cb_tags t' +
+            ' WHERE t.category = $1' +
+            ' ORDER BY t.name', [cat], (row) => row.name) as string[];
+    }
+
+    public async loadAllPriorities(): Promise<string[]> {
+        return await this.loadTags('tag_level_2')
+    }
+
+    public async loadAllOblasti(): Promise<string[]> {
+        return await this.loadTags('tag_level_1')
+    }
 }
 
-async function loadTags(cat: TagCategory) {
-    return await db.map('' +
-        ' SELECT t.name ' +
-        ' FROM cb_tags t' +
-        ' WHERE t.category = $1' +
-        ' ORDER BY t.name', [cat], (row) => row.name) as string[];
-}
-
-export async function loadAllPriorities(): Promise<string[]> {
-    return await loadTags('tag_level_2')
-}
-
-export async function loadAllOblasti(): Promise<string[]> {
-    return await loadTags('tag_level_1')
-}

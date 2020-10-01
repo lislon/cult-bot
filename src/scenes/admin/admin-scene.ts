@@ -3,9 +3,9 @@ import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interf
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { cardFormat } from '../shared/card-format'
-import { findAllEventsAdmin, findStats } from '../../db/db-admin'
 import { mskMoment } from '../../util/moment-msk'
 import { showBotVersion, syncrhonizeDbByUser } from '../shared/shared-logic'
+import { db } from '../../db'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
@@ -23,7 +23,7 @@ const menu = [
 const content = async (ctx: ContextMessageUpdate) => {
     const {i18Btn, i18Msg, i18SharedBtn} = sceneHelper(ctx)
 
-    const stats = await findStats(globalInterval)
+    const stats = await db.repoAdmin.findStats(globalInterval)
 
     const mainButtons = menu.map(row =>
         row.map(btnName => {
@@ -62,7 +62,7 @@ scene
 menu.flatMap(m => m).forEach(menuItem => {
     scene.action(actionName(menuItem), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
-        const events = await findAllEventsAdmin(menuItem as EventCategory, globalInterval)
+        const events = await db.repoAdmin.findAllEventsAdmin(menuItem as EventCategory, globalInterval)
         // let count = 0
         for (const event of events) {
             await ctx.replyWithHTML(cardFormat(event), {

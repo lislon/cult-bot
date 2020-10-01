@@ -7,6 +7,7 @@ export interface DbEvent {
     title: string
     place: string
     address: string
+    geotag: string
     timetable: string
     duration: string
     price: string
@@ -25,6 +26,7 @@ export interface EventToSave {
     primaryData: Event
     timetable: EventTimetable
     timeIntervals: MomentIntervals
+    is_anytime: boolean
 }
 
 export type TagCategory = 'tag_level_1' | 'tag_level_2' | 'tag_level_3'

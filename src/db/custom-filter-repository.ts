@@ -1,8 +1,7 @@
 import { chidrensTags, Event, EventFormat, TagLevel2 } from '../interfaces/app-interfaces'
-import { db } from '../db'
 import { Moment } from 'moment'
 import { mapToPgInterval } from './db-utils'
-
+import { IDatabase, IMain } from 'pg-promise'
 
 export interface CustomFilter {
     weekendRange: Moment[]
@@ -12,6 +11,42 @@ export interface CustomFilter {
     cennosti?: TagLevel2[]
     offset?: number
     limit?: number
+}
+export class CustomFilterRepository {
+    constructor(private db: IDatabase<any>, private pgp: IMain) {
+    }
+
+    public async findEventsCustomFilter(customFilter: CustomFilter): Promise<Event[]> {
+        const {queryBody, queryParams} = doQueryCore(customFilter)
+
+        const sql = `
+        SELECT cb.*
+            ${queryBody}
+        order by
+            cb.is_anytime ASC,
+            cb.rating DESC,
+            cb.title ASC
+        limit $(limit)
+        offset $(offset)
+    `
+        return await this.db.any(sql,
+            {
+                ...queryParams,
+                limit: customFilter.limit || 3,
+                offset: customFilter.offset || 0
+            }
+        ) as Event[];
+    }
+
+
+    public async countEventsCustomFilter(customFilter: CustomFilter): Promise<number> {
+        const {queryBody, queryParams} = doQueryCore(customFilter)
+
+        const sql = `SELECT COUNT(*) AS count ${queryBody}`
+        const numberPromise = await this.db.one(sql, queryParams)
+        return +(numberPromise['count'])
+    }
+
 }
 
 function childAlternativesLogic(cennosti: TagLevel2[]): TagLevel2[] {
@@ -76,33 +111,3 @@ function doQueryCore(customFilter: CustomFilter) {
     return {queryBody, queryParams}
 }
 
-export async function findEventsCustomFilter(customFilter: CustomFilter): Promise<Event[]> {
-    const {queryBody, queryParams} = doQueryCore(customFilter)
-
-    const sql = `
-        SELECT cb.*
-            ${queryBody}
-        order by
-            cb.is_anytime ASC,
-            cb.rating DESC,
-            cb.title ASC
-        limit $(limit)
-        offset $(offset)
-    `
-    return await db.any(sql,
-        {
-            ...queryParams,
-            limit: customFilter.limit || 3,
-            offset: customFilter.offset || 0
-        }
-    ) as Event[];
-}
-
-
-export async function countEventsCustomFilter(customFilter: CustomFilter): Promise<number> {
-    const {queryBody, queryParams} = doQueryCore(customFilter)
-
-    const sql = `SELECT COUNT(*) AS count ${queryBody}`
-    const numberPromise = await db.one(sql, queryParams)
-    return +(numberPromise['count'])
-}
