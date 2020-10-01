@@ -449,9 +449,9 @@ function timeOptionLogic(ctx: ContextMessageUpdate, selected: string) {
 
 function formatOptionLogic(ctx: ContextMessageUpdate, selected: string) {
     if (ctx.session.customize.format.includes(selected)) {
-        ctx.session.customize.format = ctx.session.customize.format.filter(s => s !== selected)
+        ctx.session.customize.format = []
     } else {
-        ctx.session.customize.format.push(selected)
+        ctx.session.customize.format = [selected]
     }
 }
 
