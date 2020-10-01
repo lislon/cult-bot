@@ -6,6 +6,7 @@ import RedisSession from 'telegraf-session-redis'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { mskMoment } from './util/moment-msk'
 import { i18n } from './util/i18n'
+import { isAdmin, isDev } from './util/scene-helper'
 
 config();
 
@@ -31,11 +32,15 @@ export default {
                 console.log(`Throttle limit ${throttlerName}: ${error} for user ${ctx.from.username}`)
             } else {
                 console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
-                await ctx.replyWithHTML(ctx.i18n.t('shared.something_went_wrong_dev', {
-                    error: error.toString().substr(0, 1000),
-                    time: mskMoment().toISOString(),
-                    session: JSON.stringify(ctx.session, undefined, 2)
-                }))
+                if (isDev(ctx)) {
+                    await ctx.replyWithHTML(ctx.i18n.t('shared.something_went_wrong_dev', {
+                        error: error.toString().substr(0, 1000),
+                        time: mskMoment().toISOString(),
+                        session: JSON.stringify(ctx.session, undefined, 2)
+                    }))
+                } else {
+                    await ctx.replyWithHTML(ctx.i18n.t('shared.something_went_wrong'))
+                }
             }
             // console.log(throttlerName, error)
         }

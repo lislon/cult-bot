@@ -47,6 +47,14 @@ export function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+export function isDev(ctx: ContextMessageUpdate) {
+    const devs = [
+        '@lislon',
+        '@Kashmar85',
+    ]
+    return devs.includes(`@${ctx.from.username}`);
+}
+
 export function isAdmin(ctx: ContextMessageUpdate) {
     const admins = [
         '@lislon',

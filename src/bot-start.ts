@@ -63,6 +63,10 @@ bot.command('menu', async (ctx: ContextMessageUpdate) => {
     await ctx.scene.enter('main_scene');
 });
 
+bot.command('error', async (ctx: ContextMessageUpdate) => {
+    throw new Error('This is test error from userId=' + ctx.from.id)
+});
+
 bot.command('me', async (ctx: ContextMessageUpdate) => {
     if (isAdmin(ctx)) {
         await ctx.replyWithHTML(JSON.stringify(ctx.session, undefined, 2))
