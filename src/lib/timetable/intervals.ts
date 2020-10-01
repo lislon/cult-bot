@@ -166,7 +166,7 @@ export class IntervalGenerator {
         ]
 
         if (timetable.anytime) {
-            return restrictedRange
+            return [restrictedRange]
         }
 
         // console.log(JSON.stringify(timetable, undefined, 2))

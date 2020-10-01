@@ -89,6 +89,15 @@ describe('filterByByRange', () => {
 describe('integration', () => {
     test.each([
         [
+            'в любое время',
+            [
+                [
+                    '2020-Jan-01 01:00',
+                    '2020-Jan-08 00:00'
+                ]
+            ]
+        ],
+        [
             'с 1 января 2020 до 2 января 2020: в любое время',
             [
                 [
@@ -204,7 +213,7 @@ describe('integration', () => {
     ])('%s', (text, expected: any) => {
         const timetable = parseTimetable(text)
         if (timetable.status === true) {
-            const intervals = predictIntervals(mskMoment('2020-01-01 01:00:00'), timetable.value)
+            const intervals = predictIntervals(mskMoment('2020-01-01 01:00:00'), timetable.value, 7)
 
             const formatIntervals = intervals.map(i =>
                 mapInterval(i, (ms) => ms.tz('Europe/Moscow').format('YYYY-MMM-DD HH:mm'))
