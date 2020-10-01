@@ -62,7 +62,8 @@ export function isAdmin(ctx: ContextMessageUpdate) {
         '@kashmar85',
     ]
     const adminIds = [
-        781083907
+        781083907, // Anna
+        1344589946 // Elena G
     ]
     return admins.includes(`@${ctx.from.username}`) || adminIds.includes(ctx.from.id);
 }
