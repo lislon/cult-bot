@@ -51,8 +51,12 @@ export function isAdmin(ctx: ContextMessageUpdate) {
     const admins = [
         '@lislon',
         '@RemboTrembo',
+        '@Kashmar85',
     ]
-    return admins.includes(`@${ctx.from.username}`) || true;
+    const adminIds = [
+        781083907
+    ]
+    return admins.includes(`@${ctx.from.username}`) || adminIds.includes(ctx.from.id);
 }
 export async function ifAdmin(ctx: ContextMessageUpdate, callback: () => Promise<any>) {
     if (isAdmin(ctx)) {
