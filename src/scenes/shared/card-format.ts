@@ -8,7 +8,7 @@ function addHtmlNiceUrls(text: string) {
 }
 
 function escapeWithPrice(text: string) {
-    return text.replace(/\s*(руб|рублей|р)[.]?(\b|$)/g, ' ₽')
+    return text.replace(/\s*(руб|рублей|р\.|руб\.)(\s|$)/g, ' ₽')
 }
 
 function formatUrl(text: string) {
