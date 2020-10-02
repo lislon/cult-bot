@@ -47,13 +47,13 @@ bot.start(async (ctx: ContextMessageUpdate) => {
     const name = ctx.message.from.first_name
     if (!quick) await sleep(500)
     await ctx.replyWithHTML(ctx.i18n.t('shared.welcome1', { name: name }))
-    if (!quick) await sleep(1800)
+    if (!quick) await sleep(1000)
     await ctx.replyWithHTML(ctx.i18n.t('shared.welcome2'), { disable_notification: true })
-    if (!quick) await sleep(4000)
+    if (!quick) await sleep(1000)
     await ctx.replyWithHTML(ctx.i18n.t('shared.welcome3'), { disable_notification: true })
-    if (!quick) await sleep(5000)
+    if (!quick) await sleep(1000)
     await ctx.replyWithHTML(ctx.i18n.t('shared.welcome4'), { disable_notification: true })
-    await sleep(2000)
+    await sleep(1000)
     await ctx.scene.enter('main_scene');
 });
 
