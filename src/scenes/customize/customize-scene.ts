@@ -155,7 +155,8 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
             ['#художественное'],
             ['#документальное'],
             ['#анимация'],
-            ['#короткийметр']
+            ['#короткийметр'],
+            ['#театрвкино']
         ])),
         ...(menu.dropDownButtons('menu_concerts', [
             ['#сольныйконцерт'],
@@ -166,6 +167,7 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
         ])),
         ...(menu.dropDownButtons('menu_exhibitions', [
             ['#постояннаяэкспозиция'],
+            ['#временнаявыставка'],
             ['#выставочныйпроект'],
             ['#персональнаявыставка'],
             ['#доммузей']
