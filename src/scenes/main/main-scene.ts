@@ -79,6 +79,13 @@ function isWeekendsNow(range: [Moment, Moment]) {
     return filterByByRange([mskMoment()], range, 'in').length > 0
 }
 
+function intervalTemplateNormalize(range: [Moment, Moment]): [Moment, Moment] {
+    return [
+        range[0],
+        range[1].isSame(range[1].clone().startOf('day')) ? range[1].clone().subtract(1, 'second') : range[1]
+    ]
+}
+
 function intervalTemplateParams(range: [Moment, Moment]) {
     return {
         from: range[0].locale('ru').format('DD.MM HH:mm'),
@@ -91,22 +98,24 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
     const {range, events} = await getTopEvents(cat)
     const { msg, markupMainMenu} = content(ctx)
 
+    const rangeN = intervalTemplateNormalize(range)
+
     // await cleanOldMessages(ctx)
     await sleep(400)
     if (events.length > 0) {
         const tplData = {
             cat: i18Msg(`keyboard.${cat}`)
         }
-        if (isWeekendsNow(range)) {
+        if (isWeekendsNow(rangeN)) {
             await ctx.replyWithHTML(i18Msg('let_me_show_this_weekend', tplData), {
                 reply_markup: markupMainMenu.reply_markup
             })
         } else {
             let humanDateRange = ''
-            if (range[0].month() === range[1].month()) {
-                humanDateRange = range[0].locale('ru').format('D') + '-' + range[1].locale('ru').format('D MMMM')
+            if (rangeN[0].month() === rangeN[1].month()) {
+                humanDateRange = rangeN[0].locale('ru').format('D') + '-' + rangeN[1].locale('ru').format('D MMMM')
             } else {
-                humanDateRange = range[0].locale('ru').format('D MMMM') + '-' + range[1].locale('ru').format('D MMMM')
+                humanDateRange = rangeN[0].locale('ru').format('D MMMM') + '-' + rangeN[1].locale('ru').format('D MMMM')
             }
 
             await ctx.replyWithHTML(i18Msg('let_me_show_next_weekend', {humanDateRange, ...tplData}))
