@@ -50,8 +50,8 @@ const Lang = P.createLanguage({
             }
         }),
     AnyTime: () => P
-        .alt(P.string('в любое время'), P.string('онлайн'))
-        .desc('Фраза "в любое время" или "онлайн"'),
+        .alt(P.string('в любое время'))
+        .desc('Фраза "в любое время"'),
     Date: (r) => P.seq(r.DayOfMonth, r._, r.Month, r._, r.Year)
         .map(([dayOfMonth, , month, , year]) => {
             return `${year}-${month}-${dayOfMonth}`;

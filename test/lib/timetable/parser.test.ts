@@ -76,11 +76,6 @@ describe('parser', () => {
                 ],
             }
         ],
-        ['онлайн',
-            {
-                anytime: true
-            }
-        ],
         ['ежедневно: 12:00',
             {
                 'weekTimes': [
