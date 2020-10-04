@@ -113,9 +113,9 @@ async function showEvents(ctx: ContextMessageUpdate, cat: EventCategory) {
         } else {
             let humanDateRange = ''
             if (rangeN[0].month() === rangeN[1].month()) {
-                humanDateRange = rangeN[0].locale('ru').format('D') + '-' + rangeN[1].locale('ru').format('D MMMM')
+                humanDateRange = rangeN[0].locale('ru').format('DD') + '-' + rangeN[1].locale('ru').format('DD MMMM')
             } else {
-                humanDateRange = rangeN[0].locale('ru').format('D MMMM') + '-' + rangeN[1].locale('ru').format('D MMMM')
+                humanDateRange = rangeN[0].locale('ru').format('DD MMMM') + '-' + rangeN[1].locale('ru').format('DD MMMM')
             }
 
             await ctx.replyWithHTML(i18Msg('let_me_show_next_weekend', {humanDateRange, ...tplData}))

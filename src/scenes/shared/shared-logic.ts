@@ -4,13 +4,14 @@ import dbsync from '../../dbsync/dbsync'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import moment = require('moment')
 import { db } from '../../db'
+import { mskMoment } from '../../util/moment-msk'
 
 export function getNextWeekEndRange(): [Moment, Moment] {
     const now = moment().tz('Europe/Moscow')
-    const weekendStarts = moment().tz('Europe/Moscow')
+    const weekendStarts = mskMoment()
         .startOf('week')
         .add(6, 'd')
-    const weekendEnds = moment().tz('Europe/Moscow')
+    const weekendEnds = mskMoment()
         .startOf('week')
         .add(8, 'd')
 
