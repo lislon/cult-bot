@@ -58,6 +58,10 @@ interface ExcelRowResult {
 }
 
 function preparePublish(data: Event, result: ExcelRowResult) {
+    if (isAnyFieldUnknown(data['place'], data['address'], data['geotag'], data['timetable'], data['duration'], data['price'])) {
+        return false
+    }
+
     if (data.publish && (data.publish.toLocaleLowerCase() === 'публиковать' || data.publish === 'TRUE')) {
         delete result.data.publish
         return true
@@ -105,10 +109,14 @@ function isAddressInvalid(data: Event) {
     return data.address === ''
 }
 
+function isAnyFieldUnknown(...fields: string[]) {
+    return fields.find(f => f.trim() === '???') !== undefined
+}
+
 export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory): ExcelRowResult {
 
     const notNull = (s: string) => s === undefined ? '' : s.trim();
-    const notNullOrUnknown = (s: string) => s === undefined || s.match('/[?]+/') ? '' : s;
+    const notNullOrUnknown = (s: string) => s === undefined ? '' : s;
     const forceDigit = (n: string) => n === undefined ? 0 : +n;
     const splitTags = (s: string) => s.split(/\s+|(?<=[^\s])(?=#)/)
 
