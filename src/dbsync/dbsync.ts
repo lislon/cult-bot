@@ -139,7 +139,7 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
             columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, numOfRows))
             // Print columns A and E, which correspond to indices 0 and 4.
 
-            const dateFrom = mskMoment().startOf('week')
+            const dateFrom = mskMoment().startOf('isoWeek')
 
             sheet.values.forEach((row: string[], rowNo: number) => {
 

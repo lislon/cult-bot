@@ -7,15 +7,10 @@ import { db } from '../../db'
 import { mskMoment } from '../../util/moment-msk'
 
 export function getNextWeekEndRange(): [Moment, Moment] {
-    const now = moment().tz('Europe/Moscow')
-    const weekendStarts = mskMoment()
-        .startOf('week')
-        .add(6, 'd')
-    const weekendEnds = mskMoment()
-        .startOf('week')
-        .add(8, 'd')
+    const weekendStarts = mskMoment().startOf('isoWeek').startOf('day').add(5, 'd')
+    const weekendEnds = mskMoment().startOf('isoWeek').startOf('day').add(7, 'd')
 
-    return [moment.max(now, weekendStarts), weekendEnds]
+    return [moment.max(mskMoment(), weekendStarts), weekendEnds]
 }
 
 export async function syncrhonizeDbByUser(ctx: ContextMessageUpdate) {

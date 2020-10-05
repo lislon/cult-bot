@@ -26,7 +26,7 @@ async function validateDb() {
         }
     }
 
-    const m = mskMoment().startOf('week').startOf('day').add(5, 'd')
+    const m = mskMoment().startOf('isoWeek').startOf('day').add(5, 'd')
 
     const stats = [];
 
@@ -60,7 +60,7 @@ async function validateDb() {
             m.add('1', 'day')
         }
         m.add('1', 'day')
-        m.startOf('week')
+        m.startOf('isoWeek')
         m.add(5, 'd')
     }
 
