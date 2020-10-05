@@ -28,7 +28,7 @@
     "moment": "^2.27.0",
     "moment-timezone": "^0.5.31",
     "parsimmon": "^1.16.0",
-    "pg": "^8.3.2",
+    "pg": "^8.4.0",
     "pg-monitor": "^1.4.1",
     "pg-promise": "^10.6.1",
     "plural-ru": "^2.0.2",
