@@ -20,6 +20,7 @@ export interface DbEvent {
     rating: number
     reviewer: string
     is_anytime: boolean
+    order_rnd: number
 }
 
 export interface EventToSave {
@@ -27,6 +28,7 @@ export interface EventToSave {
     timetable: EventTimetable
     timeIntervals: MomentIntervals
     is_anytime: boolean
+    order_rnd?: number
 }
 
 export type TagCategory = 'tag_level_1' | 'tag_level_2' | 'tag_level_3'

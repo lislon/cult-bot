@@ -27,12 +27,11 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoCustomEvents = new CustomFilterRepository(dbEx, pgp)
         dbEx.repoTopEvents = new TopEventsRepository(dbEx, pgp)
         dbEx.repoAdmin = new AdminRepository(dbEx, pgp);
-    }
+    },
 
-    // query(e) {
-    //     console.log(e.query);
-    //     //console.log(`${process.pid}: ${e.query}`);
-    // }
+    query(e) {
+        console.log(e.query);
+    }
 
 };
 

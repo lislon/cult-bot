@@ -28,6 +28,7 @@ export interface MockEvent {
     tag_level_2: TagLevel2[]
     rating: number
     anytime: boolean
+    order_rnd?: number
 }
 
 export function getMockEvent(
@@ -39,7 +40,8 @@ export function getMockEvent(
         tag_level_1 = [],
         tag_level_2 = [],
         rating = 5,
-        anytime = false
+        anytime = false,
+        order_rnd = undefined
     }: Partial<MockEvent> = {}
 ): EventToSave {
     const event: Event = {
@@ -60,7 +62,7 @@ export function getMockEvent(
         tag_level_3: [],
         rating: rating,
         reviewer: '',
-        geotag: ''
+        geotag: '',
     }
     return {
         primaryData: event,
@@ -68,7 +70,8 @@ export function getMockEvent(
             // anytime: anytime
         },
         timeIntervals: eventTime,
-        is_anytime: anytime
+        is_anytime: anytime,
+        order_rnd: order_rnd
     }
 }
 

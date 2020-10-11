@@ -3,9 +3,10 @@ import { I18n } from 'telegraf-i18n'
 import { TimetableSceneState } from '../scenes/timetable/timetable-scene'
 import { CustomizeSceneState } from '../scenes/customize/customize-scene'
 import { TimeIntervalSceneState } from '../scenes/time-interval/time-interval-scene'
-import { MainSceneState } from '../scenes/main/main-scene'
 import { AdminSceneState } from '../scenes/admin/admin-scene'
 import * as tt from 'telegraf/typings/telegram-types'
+import { PacksSceneState } from '../scenes/packs/packs-scene'
+import { PagingState } from '../scenes/shared/paging'
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
 export const allCategories: EventCategory[] = ['theaters', 'exhibitions', 'movies', 'events', 'walks', 'concerts']
@@ -27,11 +28,12 @@ export type EventFormat = 'online' | 'outdoor' | undefined
 export interface ContextMessageUpdate extends SceneContextMessageUpdate {
     i18n: I18n
     session: {
-        mainScene: MainSceneState
+        packsScene: PacksSceneState
         customize: CustomizeSceneState
         timetable: TimetableSceneState
         timeInterval: TimeIntervalSceneState
         adminScene: AdminSceneState
+        paging: PagingState
         language: 'en' | 'ru'
         sceneStack: string[]
         user: tt.User

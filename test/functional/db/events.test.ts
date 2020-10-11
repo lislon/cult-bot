@@ -13,12 +13,7 @@ afterAll(db.$pool.end);
 
 describe('Top events', () => {
     beforeEach(async () => {
-        await db.query('BEGIN')
         await cleanDb()
-    })
-
-    afterEach(async () => {
-        await db.query('COMMIT')
     })
 
     test('single event', async () => {
@@ -103,6 +98,38 @@ describe('Top events', () => {
         const range = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-01 23:59')]
         const events = await db.repoTopEvents.getTop('theaters', range, 2)
         expect(events.map(e => e.title)).toEqual(['2. BEST', '3. BETTER'])
+    })
+
+    test('paging is work', async () => {
+        const eventTime = [
+            [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-01 20:00')]
+        ]
+        await syncDatabase4Test([
+                getMockEvent({
+                    title: 'A - timed',
+                    eventTime
+                }),
+                getMockEvent({
+                    title: 'B - timed',
+                    eventTime
+                }),
+                getMockEvent({
+                    title: 'C - online',
+                    anytime: true,
+                    eventTime,
+                    order_rnd: 1
+                }),
+                getMockEvent({
+                    title: 'D - online',
+                    anytime: true,
+                    eventTime,
+                    order_rnd: 2
+                })
+            ]
+        )
+        const range = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-01 23:59')]
+        const events = await db.repoTopEvents.getTop('theaters', range, 2, 1)
+        expect(events.map(e => e.title)).toEqual(['B - timed', 'C - online'])
     })
 
     test('even with is_anytime = true we should intersect invervals', async () => {

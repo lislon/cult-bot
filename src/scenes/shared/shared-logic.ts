@@ -2,9 +2,9 @@ import { Moment } from 'moment'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import dbsync from '../../dbsync/dbsync'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
-import moment = require('moment')
 import { db } from '../../db'
 import { mskMoment } from '../../util/moment-msk'
+import moment = require('moment')
 
 export function getNextWeekEndRange(): [Moment, Moment] {
     const weekendStarts = mskMoment().startOf('isoWeek').startOf('day').add(5, 'd')
@@ -54,3 +54,5 @@ export async function showBotVersion(ctx: ContextMessageUpdate) {
     ]
     await ctx.replyWithHTML(info.map(row => `<b>${row[0]}</b>: ${row[1]}`).join('\n'))
 }
+
+export const limitEventsToPage = 3

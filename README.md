@@ -67,6 +67,11 @@ heroku run npm run db:down
 heroku run npm run db:up
 ``` 
 
+Create new migraton:
+```
+db-migrate create <name-of-migration>
+```
+
 ### Tests:
 
 1. Run `cd .jest && composer up -v`

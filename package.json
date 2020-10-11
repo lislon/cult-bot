@@ -15,7 +15,8 @@
     "db:up": "db-migrate up",
     "db:down": "db-migrate down",
     "db:up-test": "cross-env DATABASE_URL=postgres://cult-test:cult-test@localhost:5434/cult-test db-migrate up",
-    "db:down-test": "cross-env DATABASE_URL=postgres://cult-test:cult-test@localhost:5434/cult-test db-migrate down"
+    "db:down-test": "cross-env DATABASE_URL=postgres://cult-test:cult-test@localhost:5434/cult-test db-migrate down",
+    "cron:shuffle-events": "node dist/cron/run-shuffle"
   },
   "dependencies": {
     "@types/parsimmon": "^1.10.2",

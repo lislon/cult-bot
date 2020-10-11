@@ -2,6 +2,10 @@ import { DbEvent, EventToSave } from '../interfaces/db-interfaces'
 import { encodeTagLevel1 } from '../util/tag-level1-encoder'
 import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise';
 
+function generateRandomOrder() {
+    return Math.ceil(Math.random() * 1000000)
+}
+
 export class EventsSyncRepository {
     readonly dbColIntervals: ColumnSet
     readonly dbColEvents: ColumnSet
@@ -26,7 +30,9 @@ export class EventsSyncRepository {
             'tag_level_3',
             'rating',
             'reviewer',
-            'is_anytime']
+            'is_anytime',
+            'order_rnd'
+        ]
         this.dbColEvents = new pgp.helpers.ColumnSet(strings
             , {table: 'cb_events'});
     }
@@ -59,7 +65,8 @@ export class EventsSyncRepository {
 
         return {
             ...event.primaryData,
-            is_anytime: event.is_anytime
+            is_anytime: event.is_anytime,
+            order_rnd: event.order_rnd !== undefined ? event.order_rnd : generateRandomOrder()
         };
     }
 

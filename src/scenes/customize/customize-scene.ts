@@ -3,17 +3,17 @@ import { chidrensTags, ContextMessageUpdate, EventFormat, TagLevel2 } from '../.
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
-import { getNextWeekEndRange, SessionEnforcer } from '../shared/shared-logic'
+import { getNextWeekEndRange, limitEventsToPage, SessionEnforcer } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import plural from 'plural-ru'
 import { formatExplainCennosti, formatExplainFormat, formatExplainOblasti, formatExplainTime } from './format-explain'
 import { i18n } from '../../util/i18n'
 import { mapUserInputToTimeIntervals } from './customize-utils'
 import { db } from '../../db'
+import { Paging } from '../shared/paging'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
-const limitToPage = 3
 const {backButton, sceneHelper, actionName, i18nModuleBtnName, revertActionName} = i18nSceneHelper(scene)
 
 function mapFormatToDbQuery(format: string[]) {
@@ -265,8 +265,8 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
         format: mapFormatToDbQuery(ctx.session.customize.format),
         timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange()),
         weekendRange: getNextWeekEndRange(),
-        limit: limitToPage,
-        offset: ctx.session.customize.pagingOffset
+        limit: limitEventsToPage,
+        offset: ctx.session.paging.pagingOffset
     })
 
     const totalCount = await countFilteredEvents(ctx)
@@ -278,7 +278,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
         ])
         await ctx.replyWithHTML(cardFormat(event), {
             disable_web_page_preview: true,
-            reply_markup: (++count == events.length && ctx.session.customize.pagingOffset + count != totalCount ? nextBtn : undefined)
+            reply_markup: (++count == events.length && ctx.session.paging.pagingOffset + count != totalCount ? nextBtn : undefined)
         })
         await sleep(200)
     }
@@ -481,21 +481,12 @@ scene
         console.log('leave customize-scene')
         ctx.session.customize = undefined
     })
-    .action(/.+/, (ctx: ContextMessageUpdate, next) => {
-        if (ctx.match[0] !== actionName('show_more')) {
-            resetPaging(ctx)
-        }
-        return next()
-    })
-    .hears(/.+/, (ctx: ContextMessageUpdate, next) => {
-        resetPaging(ctx)
-        return next()
-    })
-    .action(actionName('show_more'), async (ctx: ContextMessageUpdate) => {
-        ctx.session.customize.pagingOffset += limitToPage;
-        await ctx.editMessageReplyMarkup()
-        await showNextPortionOfResults(ctx)
-    })
+    .use(Paging.pagingMiddleware(actionName('show_more'),
+        async (ctx: ContextMessageUpdate) => {
+            Paging.increment(ctx, limitEventsToPage)
+            await ctx.editMessageReplyMarkup()
+            await showNextPortionOfResults(ctx)
+        }))
     .action(actionName('show_filtered_events'), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
         await showNextPortionOfResults(ctx)
@@ -554,17 +545,18 @@ scene
 
 function resetPaging(ctx: ContextMessageUpdate) {
     prepareSessionStateIfNeeded(ctx)
-    ctx.session.customize.pagingOffset = 0;
+    Paging.reset(ctx)
     ctx.session.customize.resultsFound = undefined;
 }
 
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
+    Paging.prepareSession(ctx)
+
     const {
         openedMenus,
         cennosti,
         time,
         resultsFound,
-        pagingOffset,
         eventsCounterMsgId,
         eventsCounterMsgText,
         oblasti,
@@ -579,7 +571,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         format: SessionEnforcer.array(format),
         eventsCounterMsgText,
         resultsFound: SessionEnforcer.number(resultsFound),
-        pagingOffset: SessionEnforcer.number(pagingOffset),
+
         eventsCounterMsgId: SessionEnforcer.number(eventsCounterMsgId),
     }
 }
@@ -601,6 +593,5 @@ export interface CustomizeSceneState {
     format: string[]
     eventsCounterMsgId?: number
     eventsCounterMsgText: string
-    pagingOffset: number
     resultsFound: number
 }

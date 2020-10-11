@@ -4,6 +4,7 @@ import rp from 'request-promise';
 import { match } from 'telegraf-i18n';
 import { mainRegisterActions, mainScene } from './scenes/main/main-scene'
 import { adminRegisterActions, adminScene } from './scenes/admin/admin-scene'
+import { packsRegisterActions, packsScene } from './scenes/packs/packs-scene'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { db } from './db';
 import middlewares from './middleware-utils'
@@ -31,10 +32,11 @@ bot.use(middlewares.logger)
 bot.use(middlewares.session);
 bot.use(stage.middleware());
 
-stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene)
+stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene, packsScene)
 mainRegisterActions(bot, i18n)
 customizeRegisterActions(bot, i18n)
 adminRegisterActions(bot, i18n)
+packsRegisterActions(bot, i18n)
 
 // bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
 //     console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)

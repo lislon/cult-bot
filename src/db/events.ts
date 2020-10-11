@@ -8,7 +8,7 @@ export class TopEventsRepository {
     constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
-    public async getTop(category: EventCategory, interval: Moment[], limit: number = 3): Promise<Event[]> {
+    public async getTop(category: EventCategory, interval: Moment[], limit: number = 3, offset: number = 0): Promise<Event[]> {
         const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
         if (category === 'exhibitions') {
             adjustedIntervals[0].add(90, 'minutes')
@@ -26,8 +26,7 @@ export class TopEventsRepository {
             )
             AND cb.category = $(category)
             AND cb.is_anytime = false
-        ORDER BY cb.rating DESC, random()
-        LIMIT $(limit)
+        ORDER BY cb.rating DESC, cb.order_rnd
     `
 
         const secondaryEvents = `
@@ -48,18 +47,17 @@ export class TopEventsRepository {
             order by
                 cb.rating desc
             limit 30 ) as top30
-        order by
-            random()
-        limit $(limit)
+        order by top30.order_rnd
     `
 
-        const finalQuery = `(${primaryEvents}) UNION ALL (${secondaryEvents}) LIMIT $(limit)`
+        const finalQuery = `(${primaryEvents}) UNION ALL (${secondaryEvents}) limit $(limit) offset $(offset)`
 
         return await this.db.any(finalQuery,
             {
                 interval: mapToPgInterval(adjustedIntervals),
                 category,
-                limit
+                limit,
+                offset
             }) as Event[];
     }
 
