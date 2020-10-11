@@ -107,11 +107,13 @@ describe('Top events', () => {
         await syncDatabase4Test([
                 getMockEvent({
                     title: 'A - timed',
-                    eventTime
+                    eventTime,
+                    order_rnd: 1
                 }),
                 getMockEvent({
                     title: 'B - timed',
-                    eventTime
+                    eventTime,
+                    order_rnd: 2
                 }),
                 getMockEvent({
                     title: 'C - online',

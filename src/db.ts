@@ -29,9 +29,9 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoAdmin = new AdminRepository(dbEx, pgp);
     },
 
-    query(e) {
-        console.log(e.query);
-    }
+    // query(e) {
+    //     console.log(e.query);
+    // }
 
 };
 
