@@ -7,6 +7,7 @@ import { AdminSceneState } from '../scenes/admin/admin-scene'
 import * as tt from 'telegraf/typings/telegram-types'
 import { PacksSceneState } from '../scenes/packs/packs-scene'
 import { PagingState } from '../scenes/shared/paging'
+import { SearchSceneState } from '../scenes/search/search-scene'
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
 export const allCategories: EventCategory[] = ['theaters', 'exhibitions', 'movies', 'events', 'walks', 'concerts']
@@ -29,6 +30,7 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
     i18n: I18n
     session: {
         packsScene: PacksSceneState
+        search: SearchSceneState
         customize: CustomizeSceneState
         timetable: TimetableSceneState
         timeInterval: TimeIntervalSceneState

@@ -40,6 +40,9 @@ export function i18nSceneHelper(scene: BaseScene<ContextMessageUpdate>) {
         i18nModuleBtnName: (id: string) => {
             return i18n.t(`ru`, `scenes.${scene.id}.keyboard.${id}`)
         },
+        i18nSharedBtnName: (id: string) => {
+            return i18n.t(`ru`, `shared.keyboard.${id}`)
+        },
     }
 }
 

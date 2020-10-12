@@ -8,6 +8,7 @@ import { CustomFilterRepository } from './db/custom-filter-repository'
 import { EventsSyncRepository } from './db/sync-repository'
 import { TopEventsRepository } from './db/events'
 import { AdminRepository } from './db/db-admin'
+import { SearchRepository } from './db/search'
 
 config();
 
@@ -16,6 +17,7 @@ export interface IExtensions {
     repoCustomEvents: CustomFilterRepository
     repoTopEvents: TopEventsRepository
     repoAdmin: AdminRepository
+    repoSearch: SearchRepository
 }
 
 export type BotDb = IDatabase<IExtensions> & IExtensions;
@@ -26,7 +28,8 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoSync = new EventsSyncRepository(dbEx, pgp);
         dbEx.repoCustomEvents = new CustomFilterRepository(dbEx, pgp)
         dbEx.repoTopEvents = new TopEventsRepository(dbEx, pgp)
-        dbEx.repoAdmin = new AdminRepository(dbEx, pgp);
+        dbEx.repoAdmin = new AdminRepository(dbEx, pgp)
+        dbEx.repoSearch = new SearchRepository(dbEx, pgp)
     },
 
     // query(e) {

@@ -11,6 +11,7 @@ import middlewares from './middleware-utils'
 import { customizeRegisterActions, customizeScene } from './scenes/customize/customize-scene'
 import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
+import { searchRegisterActions, searchScene } from './scenes/search/search-scene'
 import { ifAdmin, isAdmin, sleep } from './util/scene-helper'
 import 'source-map-support/register'
 import { getGoogleSpreadSheetURL, showBotVersion, syncrhonizeDbByUser } from './scenes/shared/shared-logic'
@@ -32,11 +33,12 @@ bot.use(middlewares.logger)
 bot.use(middlewares.session);
 bot.use(stage.middleware());
 
-stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene, packsScene)
+stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene, packsScene, searchScene)
 mainRegisterActions(bot, i18n)
 customizeRegisterActions(bot, i18n)
 adminRegisterActions(bot, i18n)
 packsRegisterActions(bot, i18n)
+searchRegisterActions(bot, i18n)
 
 // bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
 //     console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)

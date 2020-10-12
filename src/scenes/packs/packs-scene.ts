@@ -1,6 +1,6 @@
 import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
 import { allCategories, ContextMessageUpdate, Event, EventCategory } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, ifAdmin, isAdmin, sleep } from '../../util/scene-helper'
+import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { getTopEvents } from './retrieve-logic'
 import { cardFormat } from '../shared/card-format'
 import * as events from 'events'
@@ -10,9 +10,7 @@ import { Moment } from 'moment'
 import TelegrafI18n from 'telegraf-i18n'
 import { i18n } from '../../util/i18n'
 import { Paging } from '../shared/paging'
-import { getNextWeekEndRange, limitEventsToPage } from '../shared/shared-logic'
-import { db } from '../../db'
-import { mapUserInputToTimeIntervals } from '../customize/customize-utils'
+import { limitEventsToPage } from '../shared/shared-logic'
 
 export interface PacksSceneState {
     isWatchingEvents: boolean,
@@ -21,7 +19,7 @@ export interface PacksSceneState {
 
 const scene = new BaseScene<ContextMessageUpdate>('packs_scene');
 
-const {backButton, sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
+const { sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
 
 const backMarkup = (ctx: ContextMessageUpdate) => {
     const {i18SharedBtn} = sceneHelper(ctx)

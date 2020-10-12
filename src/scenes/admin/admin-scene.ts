@@ -9,9 +9,9 @@ import { db } from '../../db'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
-const {backButton, sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
+const { sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
 
-const globalInterval = [mskMoment(), mskMoment('2025-01-01')]
+const globalInterval = [mskMoment('2000-01-01'), mskMoment('2025-01-01')]
 
 const menu = [
     ['theaters', 'exhibitions'],
