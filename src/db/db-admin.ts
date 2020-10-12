@@ -34,7 +34,7 @@ export class AdminRepository {
             }) as Stat[];
     }
 
-    async findAllEventsAdmin(category: EventCategory, interval: Moment[], limit: number = 50): Promise<Event[]> {
+    async findAllEventsAdmin(category: EventCategory, interval: Moment[], limit: number, offset: number = 0): Promise<Event[]> {
         const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
 
         const finalQuery = `
@@ -48,13 +48,14 @@ export class AdminRepository {
                  )
             AND cb.category = $(category)
         ORDER BY cb.title
-        LIMIT $(limit)
+        LIMIT $(limit) OFFSET $(offset)
     `
         return await db.any(finalQuery,
             {
                 interval: mapToPgInterval(adjustedIntervals),
                 category,
-                limit
+                limit,
+                offset
             }) as Event[];
     }
 }
