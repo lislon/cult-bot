@@ -57,7 +57,14 @@ heroku pg:backup -a <app name>
 heroku releases:rollback -a <app name> 
 ```
 
-### Db migrtaions
+### Cron setup
+```
+heroku addons:create scheduler:standard -a cult-hub-bot-dev
+heroku addons:open scheduler -a cult-hub-bot-dev
+```
+ - Add cron job `npm run cron:shuffle-events` `everyday` at `03:00 UTC`. This job will rotate random events order in cb_events to allow consistent paging.
+
+### Db migrations
 
 `db-migrate` uses `DATABASE_URL` env for migrations.
 
