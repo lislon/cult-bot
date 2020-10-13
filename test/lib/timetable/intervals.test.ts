@@ -1,78 +1,78 @@
-import { filterByByRange, mapInterval, MomentIntervals, predictIntervals } from '../../../src/lib/timetable/intervals'
+import { filterByRange, mapInterval, MomentIntervals, predictIntervals } from '../../../src/lib/timetable/intervals'
 import { parseTimetable } from '../../../src/lib/timetable/parser'
-import 'moment-timezone/index'
-import { mskMoment } from '../../../src/util/moment-msk'
-import { Moment } from 'moment'
+import { date, interval } from './test-utils'
+import { format } from 'date-fns'
 
-function format(e: Moment) {
-    return e.tz('Europe/Moscow').format('YYYY-MM-DD HH:mm')
+
+function format2(e: Date) {
+    return format(e, 'yyyy-MM-dd HH:mm')
 }
 
 function formatIntervals(actual: MomentIntervals) {
-    return actual.map(e => Array.isArray(e) ? [format(e[0]), format(e[1])] : format(e))
+    return actual.map(e => Array.isArray(e) ? [format2(e[0]), format2(e[1])] : format2(e))
 }
 
-describe('filterByByRange', () => {
+describe('filterByRange', () => {
     test.each([
         {
-            line: [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-01 16:00')],
-            restrict: [mskMoment('2020-01-01 10:00'), mskMoment('2020-01-01 20:00')],
+            event: [date('2020-01-01 15:00'), date('2020-01-01 16:00')],
+            restrict: interval('[2020-01-01 10:00, 2020-01-01 20:00)'),
             restrictType: 'in',
-            expected: [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-01 16:00')]
+            expected: [date('2020-01-01 15:00'), date('2020-01-01 16:00')]
         },
         {
-            line: [mskMoment('2020-01-01'), mskMoment('2020-01-03')],
-            restrict: [mskMoment('2020-01-01'), mskMoment('2020-01-03')],
+            event: [date('2020-01-01'), date('2020-01-03')],
+            restrict: interval('[2020-01-01, 2020-01-03)'),
             restrictType: 'in',
-            expected: [mskMoment('2020-01-01')],
+            expected: [date('2020-01-01')],
         },
         {
-            line: [[mskMoment('2020-01-01'), mskMoment('2020-01-03')]],
-            restrict: [mskMoment('2020-01-01'), mskMoment('2020-01-02')],
+            event: [[date('2020-01-01'), date('2020-01-03')]],
+            restrict: interval('[2020-01-01, 2020-01-02)'),
             restrictType: 'in',
-            expected: [[mskMoment('2020-01-01'), mskMoment('2020-01-02')]],
+            expected: [[date('2020-01-01'), date('2020-01-02')]],
         },
         {
-            line: [[mskMoment('2020-01-03'), mskMoment('2020-01-08')]],
-            restrict: [mskMoment('2020-01-02'), mskMoment('2020-01-06')],
+            event: [[date('2020-01-03'), date('2020-01-08')]],
+            restrict: interval('[2020-01-02, 2020-01-06)'),
             restrictType: 'in',
-            expected: [[mskMoment('2020-01-03'), mskMoment('2020-01-06')]],
+            expected: [[date('2020-01-03'), date('2020-01-06')]],
         },
         {
-            line: [[mskMoment('2020-01-01'), mskMoment('2020-01-05')]],
-            restrict: [mskMoment('2020-01-02'), mskMoment('2020-01-03')],
+            event: [[date('2020-01-01'), date('2020-01-05')]],
+            restrict: interval('[2020-01-02, 2020-01-03)'),
             restrictType: 'out',
             expected: [
-                [mskMoment('2020-01-01'), mskMoment('2020-01-02')],
-                [mskMoment('2020-01-03'), mskMoment('2020-01-05')]
+                [date('2020-01-01'), date('2020-01-02')],
+                [date('2020-01-03'), date('2020-01-05')]
             ],
         },
         {
-            line: [[mskMoment('2020-01-01'), mskMoment('2020-01-05')]],
-            restrict: [mskMoment('2020-01-02'), mskMoment('2020-01-08')],
+            event: [[date('2020-01-01'), date('2020-01-05')]],
+            restrict: interval('[2020-01-02, 2020-01-08)'),
             restrictType: 'out',
-            expected: [[mskMoment('2020-01-01'), mskMoment('2020-01-02')]],
+            expected: [[date('2020-01-01'), date('2020-01-02')]],
         },
         {
-            line: [[mskMoment('2020-01-02'), mskMoment('2020-01-10')]],
-            restrict: [mskMoment('2020-01-02'), mskMoment('2020-01-08')],
+            event: [[date('2020-01-02'), date('2020-01-10')]],
+            restrict: interval('[2020-01-02, 2020-01-08)'),
             restrictType: 'out',
-            expected: [[mskMoment('2020-01-08'), mskMoment('2020-01-10')]],
+            expected: [[date('2020-01-08'), date('2020-01-10')]],
         },
         {
-            line: [mskMoment('2020-01-08'), mskMoment('2020-01-10')],
-            restrict: [mskMoment('2020-01-02'), mskMoment('2020-01-08')],
+            event: [date('2020-01-08'), date('2020-01-10')],
+            restrict: interval('[2020-01-02, 2020-01-08)'),
             restrictType: 'out',
-            expected: [mskMoment('2020-01-08'), mskMoment('2020-01-10')],
+            expected: [date('2020-01-08'), date('2020-01-10')],
         },
         {
-            line: [[mskMoment('2020-01-04 11:00'), mskMoment('2020-01-04 22:00')]],
-            restrict: [mskMoment('2020-01-07'), mskMoment('2020-01-08')],
+            event: [[date('2020-01-04 11:00'), date('2020-01-04 22:00')]],
+            restrict: interval('[2020-01-07, 2020-01-08)'),
             restrictType: 'out',
-            expected: [[mskMoment('2020-01-04 11:00'), mskMoment('2020-01-04 22:00')]],
+            expected: [[date('2020-01-04 11:00'), date('2020-01-04 22:00')]],
         },
     ])('%s', (c: any) => {
-        const actual = filterByByRange(c.line, c.restrict, c.restrictType)
+        const actual = filterByRange(c.event, c.restrict, c.restrictType)
 
         expect(formatIntervals(actual)).toStrictEqual(formatIntervals(c.expected))
     });
@@ -208,15 +208,13 @@ describe('integration', () => {
                 ]
             ]
         ]
-        //
-        // mskMoment().isoWeekday(1);
     ])('%s', (text, expected: any) => {
         const timetable = parseTimetable(text)
         if (timetable.status === true) {
-            const intervals = predictIntervals(mskMoment('2020-01-01 01:00:00'), timetable.value, 7)
+            const intervals = predictIntervals(date('2020-01-01 01:00'), timetable.value, 7)
 
             const formatIntervals = intervals.map(i =>
-                mapInterval(i, (ms) => ms.tz('Europe/Moscow').format('YYYY-MMM-DD HH:mm'))
+                mapInterval(i, (ms) => format(ms, 'yyyy-MMM-dd HH:mm'))
             )
 
             expect(formatIntervals).toStrictEqual(expected)

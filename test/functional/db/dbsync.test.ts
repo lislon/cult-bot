@@ -1,6 +1,7 @@
 import { db, dbCfg } from '../../../src/db'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { cleanDb, getMockEvent, syncDatabase4Test } from './db-test-utils'
+import { date } from '../../lib/timetable/test-utils'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
@@ -8,24 +9,31 @@ afterAll(db.$pool.end);
 describe('db sync test', () => {
 
     beforeEach(async () => {
-        await db.query('BEGIN')
         await cleanDb()
     })
 
-    afterEach(async () => {
-        await db.query('COMMIT')
-    })
 
     test('sync should save intervals', async () => {
             await syncDatabase4Test([getMockEvent({
                 eventTime: [
-                    [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-01 18:00')],
-                    mskMoment('2020-01-02 15:00')
+                    [date('2020-01-01 12:00'), date('2020-01-01 18:00')],
+                    date('2020-01-02 15:00')
                 ]
             })
             ])
-            const row = await db.one('select count(1) AS count from cb_events_entrance_times')
-            expect(+row.count).toEqual(2)
+
+            const rows = await db.many(`
+                SELECT
+                    (lower(cbe.entrance) at time zone 'MSK' || '') as lower,
+                    (upper(cbe.entrance) at time zone 'MSK' || '') as upper
+                FROM cb_events cb
+                LEFT JOIN cb_events_entrance_times cbe on (cbe.event_id = cb.id)
+                ORDER BY lower(cbe.entrance) ASC
+                `)
+            expect(rows).toEqual([
+                { lower: '2020-01-01 12:00:00', upper: '2020-01-01 18:00:00' },
+                { lower: '2020-01-02 15:00:00', upper: '2020-01-02 15:00:00' }
+            ])
         }, 100000
     )
 

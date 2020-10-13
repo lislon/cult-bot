@@ -1,11 +1,11 @@
-import { mskMoment } from '../../../src/util/moment-msk'
 import { cleanDb, expectedTitles, getMockEvent, MockEvent, syncDatabase4Test } from './db-test-utils'
 import { db, dbCfg } from '../../../src/db'
+import { date, interval } from '../../lib/timetable/test-utils'
 
 
-const weekendRange = [mskMoment('2020-01-01 00:00'), mskMoment('2020-01-02 24:00')]
-const eventTime = [[mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]]
-const outOfIntervalEventTime = [[mskMoment('2020-02-01 12:00'), mskMoment('2020-02-03 15:00')]]
+const weekendRange = interval('[2020-01-01 00:00, 2020-01-03 00:00)')
+const eventTime = [[date('2020-01-01 12:00'), date('2020-01-03 15:00')]]
+const outOfIntervalEventTime = [[date('2020-02-01 12:00'), date('2020-02-03 15:00')]]
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
@@ -83,30 +83,25 @@ describe('Filtering', () => {
 
     test('search by many intervals', async () => {
         await syncDatabase4Test([
-            getMockEvent({title: 'A10', eventTime: [[mskMoment('2020-01-01 10:00'), mskMoment('2020-01-01 11:00')]]}),
-            getMockEvent({title: 'A11', eventTime: [[mskMoment('2020-01-01 11:00'), mskMoment('2020-01-01 12:00')]]}),
-            getMockEvent({title: 'A12', eventTime: [[mskMoment('2020-01-01 12:00'), mskMoment('2020-01-01 13:00')]]}),
-            getMockEvent({title: 'A13', eventTime: [[mskMoment('2020-01-01 13:00'), mskMoment('2020-01-01 14:00')]]}),
-            getMockEvent({title: 'A14', eventTime: [[mskMoment('2020-01-01 14:00'), mskMoment('2020-01-01 15:00')]]}),
-            getMockEvent({title: 'B10', eventTime: [[mskMoment('2020-01-03 10:00'), mskMoment('2020-01-03 15:00')]]})
+            getMockEvent({title: 'A10', eventTime: [[date('2020-01-01 10:00'), date('2020-01-01 11:00')]]}),
+            getMockEvent({title: 'A11', eventTime: [[date('2020-01-01 11:00'), date('2020-01-01 12:00')]]}),
+            getMockEvent({title: 'A12', eventTime: [[date('2020-01-01 12:00'), date('2020-01-01 13:00')]]}),
+            getMockEvent({title: 'A13', eventTime: [[date('2020-01-01 13:00'), date('2020-01-01 14:00')]]}),
+            getMockEvent({title: 'A14', eventTime: [[date('2020-01-01 14:00'), date('2020-01-01 15:00')]]}),
+            getMockEvent({title: 'B10', eventTime: [[date('2020-01-03 10:00'), date('2020-01-03 15:00')]]})
         ])
-        const weekendAlreadyStartedRange = [mskMoment('2020-01-01 11:00'), mskMoment('2020-01-02 24:00')]
+        const weekendAlreadyStartedRange = interval('[2020-01-01 11:00, 2020-01-03 00:00)')
 
         expectedTitles(['A12', 'A13'], await db.repoCustomEvents.findEventsCustomFilter({weekendRange: weekendAlreadyStartedRange, timeIntervals: [
-                [mskMoment('2020-01-01 10:00'), mskMoment('2020-01-01 11:00')],
-                [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-01 13:00')],
-                [mskMoment('2020-01-01 13:30'), mskMoment('2020-01-01 13:35')],
+                interval('[2020-01-01 10:00, 2020-01-01 11:00)'),
+                interval('[2020-01-01 12:00, 2020-01-01 13:00)'),
+                interval('[2020-01-01 13:30, 2020-01-01 13:35)'),
             ]}))
     }, 1000000)
 });
 
 
 describe('Логика с детьми', () => {
-    beforeEach(async () => {
-        await cleanDb()
-    })
-
-
     beforeEach(async () => {
         await syncDatabase4Test([
             getMockEvent({title: 'D0', eventTime, tag_level_2: ['#сдетьми0+']}),
@@ -135,14 +130,6 @@ describe('Логика с детьми', () => {
 })
 
 describe('Sorting & Paging', () => {
-    beforeEach(async () => {
-        await db.query('BEGIN')
-        await cleanDb()
-    })
-
-    afterEach(async () => {
-        await db.query('COMMIT')
-    })
 
     const goodOrder: Partial<MockEvent>[] = [
         {title: 'A', eventTime, rating: 10},

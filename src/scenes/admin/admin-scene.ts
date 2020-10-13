@@ -1,30 +1,30 @@
 import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, sleep } from '../../util/scene-helper'
+import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { cardFormat } from '../shared/card-format'
 import { mskMoment } from '../../util/moment-msk'
-import { limitEventsToPage, showBotVersion, syncrhonizeDbByUser } from '../shared/shared-logic'
+import { limitEventsToPage, ruFormat, showBotVersion, syncrhonizeDbByUser } from '../shared/shared-logic'
 import { db } from '../../db'
 import { Paging } from '../shared/paging'
+import { isValid, parse } from 'date-fns'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
 export interface AdminSceneState {
-    cat: EventCategory
+    cat: EventCategory,
+    overrideDate?: string
 }
 
 const { sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
 
-const globalInterval = [mskMoment('2000-01-01'), mskMoment('2025-01-01')]
+const globalInterval = { start: new Date(2000, 1, 1), end: new Date(3000, 1, 1) }
 
 const menu = [
     ['theaters', 'exhibitions'],
     ['movies', 'events'],
     ['walks', 'concerts']
 ]
-
-
 
 const content = async (ctx: ContextMessageUpdate) => {
     const {i18Btn, i18Msg, i18SharedBtn} = sceneHelper(ctx)
@@ -115,7 +115,8 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     Paging.prepareSession(ctx)
     if (ctx.session.adminScene === undefined) {
         ctx.session.adminScene = {
-            cat: undefined
+            cat: undefined,
+            overrideDate: undefined
         }
     }
 }
@@ -123,6 +124,27 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
     bot.command('admin', (async (ctx: ContextMessageUpdate) => {
         await ctx.scene.enter('admin_scene');
+    }))
+
+    bot.command('time', (async (ctx: ContextMessageUpdate) => {
+        if (isAdmin(ctx)) {
+            await prepareSessionStateIfNeeded(ctx)
+            const dateStr = ctx.message.text.replace(/^\/time[\s]*/, '')
+            if (dateStr === undefined || dateStr === 'now') {
+                ctx.session.adminScene.overrideDate = undefined
+                await ctx.replyWithHTML('Переопределние даты сброшено')
+            } else if (dateStr === '') {
+                await ctx.replyWithHTML(`Текущее время: ${ctx.session.adminScene.overrideDate}`)
+            } else {
+                const parsed = parse(dateStr, 'yyyy-MM-dd HH:mm', new Date())
+                if (isValid(parsed)) {
+                    ctx.session.adminScene.overrideDate = parsed.toISOString()
+                    await ctx.replyWithHTML('Притворяемся, что сейчас: ' + parsed.toString() + ' Чтобы сбросить выполните /time now')
+                } else {
+                    await ctx.replyWithHTML('Сорян, Не поняла команду. Пример: /time 2021-05-12 12:00')
+                }
+            }
+        }
     }))
 }
 

@@ -1,6 +1,8 @@
-import { Moment } from 'moment'
+import { addDays, addHours, startOfDay } from 'date-fns/fp'
+import { MyInterval } from '../../interfaces/app-interfaces'
 
-export function mapUserInputToTimeIntervals(times: string[], [sat, ]: Moment[]): Moment[][] {
+
+export function mapUserInputToTimeIntervals(times: string[], weekendInterval: Interval): MyInterval[] {
     return (times)
         .map(t => t.split(/[-.]/))
         .map(([day, from, to]) => [
@@ -16,10 +18,10 @@ export function mapUserInputToTimeIntervals(times: string[], [sat, ]: Moment[]):
             }
         })
         .map(([day, from, to]: [string, number, number]) => {
-            const baseDay = sat.clone().add(day === 'saturday' ? 0 : 1, 'day').startOf('day')
-            return [
-                baseDay.clone().add(from, 'hour'),
-                baseDay.clone().add(to, 'hour'),
-            ]
-        });
+                const baseDay = startOfDay(addDays(day === 'saturday' ? 0 : 1)(weekendInterval.start))
+                return {
+                    start: addHours(from)(baseDay),
+                    end: addHours(to)(baseDay)
+                }
+            });
 }

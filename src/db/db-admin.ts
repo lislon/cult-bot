@@ -1,5 +1,4 @@
-import { Event, EventCategory } from '../interfaces/app-interfaces'
-import { Moment } from 'moment'
+import { Event, EventCategory, MyInterval } from '../interfaces/app-interfaces'
 import { db } from '../db'
 import { mapToPgInterval } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
@@ -13,9 +12,7 @@ export class AdminRepository {
     constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
-    async findStats(interval: Moment[]): Promise<Stat[]> {
-        const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
-
+    async findStats(interval: MyInterval): Promise<Stat[]> {
         const finalQuery = `
         SELECT cb.category, COUNT(cb.id)
         FROM cb_events cb
@@ -30,13 +27,11 @@ export class AdminRepository {
     `
         return await db.any(finalQuery,
             {
-                interval: mapToPgInterval(adjustedIntervals),
+                interval: mapToPgInterval(interval),
             }) as Stat[];
     }
 
-    async findAllEventsAdmin(category: EventCategory, interval: Moment[], limit: number, offset: number = 0): Promise<Event[]> {
-        const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
-
+    async findAllEventsAdmin(category: EventCategory, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<Event[]> {
         const finalQuery = `
         SELECT cb.*
         FROM cb_events cb
@@ -52,7 +47,7 @@ export class AdminRepository {
     `
         return await db.any(finalQuery,
             {
-                interval: mapToPgInterval(adjustedIntervals),
+                interval: mapToPgInterval(interval),
                 category,
                 limit,
                 offset

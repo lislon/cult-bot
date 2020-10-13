@@ -10,13 +10,13 @@ import {
     processExcelRow
 } from './parseSheetRow'
 import { sheets_v4 } from 'googleapis'
-import { Moment } from 'moment'
 import { parseTimetable } from '../lib/timetable/parser'
 import { predictIntervals } from '../lib/timetable/intervals'
-import { mskMoment } from '../util/moment-msk'
 import { EventToSave } from '../interfaces/db-interfaces'
 import { WrongExcelColumnsError } from './WrongFormatException'
 import { BotDb } from '../db'
+import { differenceInCalendarDays, format, startOfISOWeek } from 'date-fns'
+import { subWeeks } from 'date-fns/fp'
 import Schema$Request = sheets_v4.Schema$Request
 
 // our set of columns, to be created only once (statically), and then reused,
@@ -72,30 +72,31 @@ function mapRowToColumnObject(row: string[]) {
 }
 
 function debugTimetable(mapped: any, excelUpdater: ExcelUpdater, sheetId: number, rowNo: number) {
-    const fromTime = mskMoment().locale('ru')
+    const fromTime = new Date()
     const timetableParseResult = parseTimetable(getOnlyBotTimetable(mapped.data.timetable))
     if (timetableParseResult.status !== true) {
         throw new Error('wtf')
     }
-    const intervals = predictIntervals(fromTime, timetableParseResult.value)
+    const intervals = predictIntervals(fromTime, timetableParseResult.value, 14)
 
-    const text = [`События после ${fromTime.format('MM.DD HH:mm')}: `, '-----------']
+    // TODO: TZ
+    const text = [`События после ${format(fromTime, 'MM.dd HH:mm')}: `, '-----------']
     if (intervals.length === 0) {
         text.push(' - Нет событий');
     } else {
         intervals.forEach((interval) => {
-            function format(m: Moment, format = 'MM.DD HH:mm') {
-                return m.locale('ru').format(format)
+            function format2(m: Date, formatS = 'MM.dd HH:mm') {
+                return format(m, formatS)
             }
 
             if (Array.isArray(interval)) {
-                if (interval[0].dayOfYear() == interval[1].dayOfYear()) {
-                    text.push(`  ${format(interval[0], 'dd, MM.DD HH:mm')} - ${format(interval[1], 'HH:mm')}`);
+                if (differenceInCalendarDays(interval[0], interval[1]) === 0) {
+                    text.push(`  ${format2(interval[0], 'dd, MM.dd HH:mm')} - ${format2(interval[1], 'HH:mm')}`);
                 } else {
-                    text.push(`  ${format(interval[0])} - ${format(interval[1])}`);
+                    text.push(`  ${format2(interval[0])} - ${format2(interval[1])}`);
                 }
             } else {
-                text.push(`  ${format(interval)} `);
+                text.push(`  ${format2(interval)} `);
             }
         })
     }
@@ -139,7 +140,10 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
             columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, numOfRows))
             // Print columns A and E, which correspond to indices 0 and 4.
 
-            const dateFrom = mskMoment().startOf('isoWeek')
+            // TODO: Timzezone
+            const WEEKS_AGO = 2
+            const WEEKS_AHEAD = 4
+            const dateFrom = subWeeks(WEEKS_AGO)(startOfISOWeek(new Date()))
 
             sheet.values.forEach((row: string[], rowNo: number) => {
 
@@ -168,7 +172,7 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
                         rows.push({
                             primaryData: mapped.data,
                             timetable: mapped.timetable,
-                            timeIntervals: predictIntervals(dateFrom, mapped.timetable, 14),
+                            timeIntervals: predictIntervals(dateFrom, mapped.timetable, (WEEKS_AGO + WEEKS_AHEAD) * 7),
                             is_anytime: mapped.data.timetable.includes('в любое время')
                         });
                         excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')

@@ -10,6 +10,7 @@ import { formatExplainCennosti, formatExplainFormat, formatExplainOblasti, forma
 import { i18n } from '../../util/i18n'
 import { mapUserInputToTimeIntervals } from './customize-utils'
 import { db } from '../../db'
+import { addDays, format } from 'date-fns/fp'
 import { Paging } from '../shared/paging'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
@@ -26,8 +27,8 @@ function mapFormatToDbQuery(format: string[]) {
 async function countFilteredEvents(ctx: ContextMessageUpdate) {
     if (ctx.session.customize.resultsFound === undefined) {
         ctx.session.customize.resultsFound = await db.repoCustomEvents.countEventsCustomFilter({
-            timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange()),
-            weekendRange: getNextWeekEndRange(),
+            timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange(ctx.now())),
+            weekendRange: getNextWeekEndRange(ctx.now()),
             cennosti: ctx.session.customize.cennosti,
             oblasti: ctx.session.customize.oblasti,
             format: mapFormatToDbQuery(ctx.session.customize.format)
@@ -201,7 +202,9 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
 
 async function getKeyboardTime(ctx: ContextMessageUpdate) {
     const menu = new Menu(ctx, ctx.session.customize.time, ctx.session.customize.openedMenus, 'time_section')
-    const weekdays = [0, 1].map(i => getNextWeekEndRange()[0].add(i, 'day').locale('ru').format('DD.MM'))
+    const weekdays = [0, 1]
+        .map(i => addDays(i)(getNextWeekEndRange(ctx.now()).start))
+        .map(d => format('dd.MM', d))
 
     function getIntervalsFromI18N(day: string) {
         return i18n.resourceKeys('ru')
@@ -263,8 +266,8 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
         cennosti: ctx.session.customize.cennosti,
         oblasti: ctx.session.customize.oblasti,
         format: mapFormatToDbQuery(ctx.session.customize.format),
-        timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange()),
-        weekendRange: getNextWeekEndRange(),
+        timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange(ctx.now())),
+        weekendRange: getNextWeekEndRange(ctx.now()),
         limit: limitEventsToPage,
         offset: ctx.session.paging.pagingOffset
     })

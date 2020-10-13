@@ -1,5 +1,8 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces';
-import { getNextWeekEndRange } from '../shared/shared-logic';
+import { getNextWeekEndRange, ruFormat } from '../shared/shared-logic';
+import { addDays, startOfDay } from 'date-fns/fp'
+import flow from 'lodash/fp/flow'
+import { format } from 'date-fns'
 
 function joinTimeIntervals(time: string[], onlyWeekday: 'saturday' | 'sunday') {
   return time
@@ -28,10 +31,10 @@ export function formatExplainTime(
     return [];
   }
   const lines = [];
-  const [saturdayTime] = getNextWeekEndRange();
+  const saturdayTime = getNextWeekEndRange(ctx.now()).start;
   const weekdays = [joinTimeIntervals(time, 'saturday'), joinTimeIntervals(time, 'sunday')];
   const moments = [0, 1].map((i) =>
-    saturdayTime.clone().startOf('day').add(i, 'days').locale('ru')
+    flow(startOfDay, addDays(i))(saturdayTime)
   );
 
   if (
@@ -45,8 +48,8 @@ export function formatExplainTime(
       lines.push(
         ' - ' +
           i18Msg('explain_filter.time_line', {
-            weekday: moments[i].format('dd').toUpperCase(),
-            date: moments[i].format('DD.MM'),
+            weekday: ruFormat(moments[i], 'dd').toUpperCase(),
+            date: ruFormat(moments[i], 'dd.MM'),
             timeIntervals: weekdays[i].join(', '),
           })
       );
@@ -58,15 +61,15 @@ export function formatExplainTime(
           i18Msg('explain_filter.time') +
             ' ' +
             i18Msg('explain_filter.time_line', {
-              weekday: moments[i].format('dd').toUpperCase(),
-              date: moments[i].format('DD.MM'),
+              weekday: ruFormat(moments[i], 'eeeeee').toUpperCase(),
+              date: ruFormat(moments[i], 'dd.MM'),
               timeIntervals: weekdays[i].join(', '),
             })
         );
       }
     }
   } else {
-    const [from, to] = moments.map((t) => t.format('DD.MM'));
+    const [from, to] = moments.map((t) => ruFormat(t, 'dd.MM'));
     lines.push(
       `${i18Msg('explain_filter.time')} сб (${from}) - вс (${to}): ${weekdays[0].join(', ')}`
     );

@@ -1,11 +1,11 @@
-import { chidrensTags, Event, EventFormat, TagLevel2 } from '../interfaces/app-interfaces'
-import { Moment } from 'moment'
+import { chidrensTags, Event, EventFormat, MyInterval, TagLevel2 } from '../interfaces/app-interfaces'
 import { mapToPgInterval } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
 
+
 export interface CustomFilter {
-    weekendRange: Moment[]
-    timeIntervals?: Moment[][]
+    weekendRange: MyInterval
+    timeIntervals?: MyInterval[]
     format?: EventFormat
     oblasti?: string[]
     cennosti?: TagLevel2[]

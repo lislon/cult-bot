@@ -9,6 +9,7 @@ import { PacksSceneState } from '../scenes/packs/packs-scene'
 import { PagingState } from '../scenes/shared/paging'
 import { SearchSceneState } from '../scenes/search/search-scene'
 
+
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
 export const allCategories: EventCategory[] = ['theaters', 'exhibitions', 'movies', 'events', 'walks', 'concerts']
 
@@ -40,7 +41,9 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         sceneStack: string[]
         user: tt.User
     }
-    webhookReply: boolean;
+    webhookReply: boolean
+    now(): Date
+    isNowOverridden(): boolean
 }
 
 export interface Event {
@@ -62,4 +65,9 @@ export interface Event {
     tag_level_3: string[]
     rating: number
     reviewer: string
+}
+
+export type MyInterval = {
+    start: Date
+    end: Date
 }

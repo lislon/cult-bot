@@ -1,6 +1,5 @@
 import { IDatabase, IMain } from 'pg-promise'
-import { Event, EventCategory } from '../interfaces/app-interfaces'
-import { Moment } from 'moment'
+import { Event, MyInterval } from '../interfaces/app-interfaces'
 import { mapToPgInterval } from './db-utils'
 import { limitEventsToPage } from '../scenes/shared/shared-logic'
 
@@ -11,7 +10,7 @@ export interface PagingRequest {
 
 export interface SearchRequest extends PagingRequest {
     query: string
-    interval: Moment[]
+    interval: MyInterval
 }
 
 export class SearchRepository {

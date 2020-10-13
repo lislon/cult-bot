@@ -1,16 +1,15 @@
 import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
-import { allCategories, ContextMessageUpdate, Event, EventCategory } from '../../interfaces/app-interfaces'
+import { allCategories, ContextMessageUpdate, Event, EventCategory, MyInterval } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { getTopEvents } from './retrieve-logic'
 import { cardFormat } from '../shared/card-format'
 import * as events from 'events'
-import { filterByByRange } from '../../lib/timetable/intervals'
-import { mskMoment } from '../../util/moment-msk'
-import { Moment } from 'moment'
 import TelegrafI18n from 'telegraf-i18n'
 import { i18n } from '../../util/i18n'
 import { Paging } from '../shared/paging'
-import { limitEventsToPage } from '../shared/shared-logic'
+import { limitEventsToPage, ruFormat } from '../shared/shared-logic'
+import { subSeconds } from 'date-fns/fp'
+import { isSameMonth, isWeekend, startOfDay } from 'date-fns'
 
 export interface PacksSceneState {
     isWatchingEvents: boolean,
@@ -80,33 +79,33 @@ scene
     .use(Paging.pagingMiddleware(actionName('show_more'),
         async (ctx: ContextMessageUpdate) => {
             Paging.increment(ctx, limitEventsToPage)
-            const {events} = await getTopEvents(ctx.session.packsScene.cat, ctx.session.paging.pagingOffset)
+            const {events} = await getTopEvents(ctx.session.packsScene.cat, ctx.now(), ctx.session.paging.pagingOffset)
             await showNextPortionOfResults(ctx, events)
             await ctx.editMessageReplyMarkup()
         }))
 
 
-function isWeekendsNow(range: [Moment, Moment]) {
-    return filterByByRange([mskMoment()], range, 'in').length > 0
-}
-
-function intervalTemplateNormalize(range: [Moment, Moment]): [Moment, Moment] {
-    return [
-        range[0],
-        range[1].isSame(range[1].clone().startOf('day')) ? range[1].clone().subtract(1, 'second') : range[1]
-    ]
-}
-
-function intervalTemplateParams(range: [Moment, Moment]) {
+function intervalTemplateNormalize(range: MyInterval): MyInterval {
     return {
-        from: range[0].locale('ru').format('DD.MM HH:mm'),
-        to: range[1].locale('ru').subtract('1', 'second').format('DD.MM HH:mm')
+        start: range.start,
+        end: startOfDay(range.end).getTime() === range.end.getTime() ? subSeconds(1)(range.end) : range.end
+    }
+}
+
+function intervalTemplateParams(range: MyInterval) {
+    return {
+        from: ruFormat(range.start, 'dd.MM HH:mm'),
+        to: ruFormat(subSeconds(1)(range.end), 'dd.MM HH:mm')
     }
 }
 
 async function showEventsFirstTime(ctx: ContextMessageUpdate) {
-    const {range, events} = await getTopEvents(ctx.session.packsScene.cat, ctx.session.paging.pagingOffset)
+    const {range, events} = await getTopEvents(ctx.session.packsScene.cat, ctx.now(), ctx.session.paging.pagingOffset)
     const {i18Btn, i18Msg} = sceneHelper(ctx)
+
+    if (ctx.isNowOverridden()) {
+        await ctx.replyWithHTML('Текущая дата заменена на ' + ctx.now().toString())
+    }
 
     const rangeN = intervalTemplateNormalize(range)
 
@@ -114,16 +113,16 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
         const tplData = {
             cat: i18Msg(`keyboard.${ctx.session.packsScene.cat}`)
         }
-        if (isWeekendsNow(rangeN)) {
+        if (isWeekend(ctx.now())) {
             await ctx.replyWithHTML(i18Msg('let_me_show_this_weekend', tplData), {
                 reply_markup: backMarkup(ctx)
             })
         } else {
             let humanDateRange = ''
-            if (rangeN[0].month() === rangeN[1].month()) {
-                humanDateRange = rangeN[0].locale('ru').format('DD') + '-' + rangeN[1].locale('ru').format('DD MMMM')
+            if (isSameMonth(rangeN.start, range.end)) {
+                humanDateRange = ruFormat(rangeN.start, 'dd') + '-' + ruFormat(rangeN.end, 'dd MMMM')
             } else {
-                humanDateRange = rangeN[0].locale('ru').format('DD MMMM') + '-' + rangeN[1].locale('ru').format('DD MMMM')
+                humanDateRange = ruFormat(rangeN.start, 'dd MMMM') + '-' + ruFormat(rangeN.start, 'dd MMMM')
             }
 
             await ctx.replyWithHTML(i18Msg('let_me_show_next_weekend', {humanDateRange, ...tplData}), { reply_markup: backMarkup(ctx) })

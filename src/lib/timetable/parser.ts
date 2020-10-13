@@ -2,14 +2,14 @@ import * as P from 'parsimmon'
 import { Result, Success } from 'parsimmon'
 import { DateExact, EventTimetable } from './intervals';
 import { cleanText } from './timetable-utils'
-import { mskMoment } from '../../util/moment-msk'
+import { isValid, parse, parseISO } from 'date-fns'
 
 
 type FromToPair = { from: string, to: string }
 const Lang = P.createLanguage({
     DayOfMonth: () => P.regexp(/[0-9]{1,2}/).map(s => s.padStart(2, '0')).desc('День месяца'),
     Year: () => P.regexp(/20[0-9]{2}/)
-        .fallback(mskMoment().year())
+        .fallback(new Date().getFullYear())
         .desc('Год')
     ,
     Month: () => P.regexp(/[а-я]+/)
@@ -151,7 +151,7 @@ function arrayfie(): (result: any[]) => any[] {
 
 
 function validaDate(p: string, errors: string[]) {
-    if (!mskMoment(p).isValid()) {
+    if (!isValid(parseISO(p))) {
         errors.push(`Дата "${p}" не может существовать`)
     }
 }

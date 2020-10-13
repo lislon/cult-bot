@@ -78,12 +78,12 @@ export class EventsSyncRepository {
                 if (Array.isArray(ti)) {
                     return {
                         event_id: eventId,
-                        entrance: `[${ti.map(i => i.toISOString(true)).join(',')})`
+                        entrance: `[${ti.map(i => i.toISOString()).join(',')})`
                     }
                 } else {
                     return {
                         event_id: eventId,
-                        entrance: `[${ti.toISOString(true)}, ${ti.toISOString(true)}]`,
+                        entrance: `[${ti.toISOString()}, ${ti.toISOString()}]`,
                     }
                 }
             })

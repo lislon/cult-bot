@@ -1,13 +1,12 @@
 import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
-import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, ifAdmin, isAdmin, sleep } from '../../util/scene-helper'
+import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
+import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { db } from '../../db'
 import { limitEventsToPage } from '../shared/shared-logic'
 import { mskMoment } from '../../util/moment-msk'
 import { cardFormat } from '../shared/card-format'
 import { Paging } from '../shared/paging'
-import { getTopEvents } from '../packs/retrieve-logic'
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene');
 
@@ -44,7 +43,7 @@ async function showSearchResults(ctx: ContextMessageUpdate) {
         query: ctx.session.search.request,
         limit: limitEventsToPage,
         offset: ctx.session.paging.pagingOffset,
-        interval: [mskMoment(), mskMoment('2025-01-01')]
+        interval: { start: new Date(), end:  new Date(3000, 1, 1)}
     })
 
     console.log(`Search: '${ctx.session.search.request}' offset=${ctx.session.paging.pagingOffset} found=${events.length}`)

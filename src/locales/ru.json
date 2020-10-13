@@ -113,7 +113,7 @@
       },
 
       "keyboard": {
-        "go_back_to_customize": "◀ К фильтрам",
+        "go_back_to_customize": "◀ Назад",
         "go_back_to_main": "🔙 В Главное меню",
         "show_personalized_events": "📜 Показать события",
         "reset_filter": "✖️Обнулить фильтр",

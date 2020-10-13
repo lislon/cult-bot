@@ -8,17 +8,6 @@ export async function cleanDb() {
     await db.none('DELETE FROM cb_events')
 }
 
-export function initializeDbTests() {
-    // beforeAll(async (done) => {
-    //     expect(dbCfg.connectionString).toContain('test')
-    //     console.log('before all')
-    //     await db.result('SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE READ WRITE')
-    //     done()
-    // })
-
-
-}
-
 export interface MockEvent {
     title: string,
     eventTime: MomentIntervals

@@ -1,14 +1,14 @@
 import { expectedTitles, getMockEvent, syncDatabase4Test } from './db-test-utils'
-import { mskMoment } from '../../../src/util/moment-msk'
 import { db, dbCfg } from '../../../src/db'
+import { date, interval } from '../../lib/timetable/test-utils'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
 
 describe('Admin', () => {
 
-    const eventTime = [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]
-    const yearRange = [mskMoment('2020-01-01 00:00'), mskMoment('2021-01-02 00:00')]
+    const eventTime = [date('2020-01-01 12:00'), date('2020-01-03 15:00')]
+    const yearRange = interval('[2020-01-01 00:00, 2021-01-02 00:00)')
 
     test('find all by cat', async () => {
         await syncDatabase4Test([

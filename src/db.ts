@@ -32,9 +32,11 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoSearch = new SearchRepository(dbEx, pgp)
     },
 
-    // query(e) {
-    //     console.log(e.query);
-    // }
+    query(e) {
+        if (process.env.DEBUG !== undefined) {
+            console.log(e.query);
+        }
+    }
 
 };
 

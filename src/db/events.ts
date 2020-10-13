@@ -1,17 +1,20 @@
-import { Moment } from 'moment'
-import { Event, EventCategory } from '../interfaces/app-interfaces'
+import { Event, EventCategory, MyInterval } from '../interfaces/app-interfaces'
 import { TagCategory } from '../interfaces/db-interfaces'
 import { mapToPgInterval } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
+import { addMinutes } from 'date-fns'
 
 export class TopEventsRepository {
     constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
-    public async getTop(category: EventCategory, interval: Moment[], limit: number = 3, offset: number = 0): Promise<Event[]> {
-        const adjustedIntervals = [interval[0].clone(), interval[1].clone()]
+    public async getTop(category: EventCategory, interval: MyInterval, limit: number = 3, offset: number = 0): Promise<Event[]> {
+        let adjustedIntervals = Object.create(interval)
         if (category === 'exhibitions') {
-            adjustedIntervals[0].add(90, 'minutes')
+            adjustedIntervals = {
+                start: addMinutes(interval.start, 90),
+                end: interval.end
+            }
         }
 
         const primaryEvents = `

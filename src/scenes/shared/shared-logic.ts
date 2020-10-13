@@ -1,16 +1,32 @@
-import { Moment } from 'moment'
-import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
 import dbsync from '../../dbsync/dbsync'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import { db } from '../../db'
-import { mskMoment } from '../../util/moment-msk'
-import moment = require('moment')
+import { addDays, max, parseISO, startOfDay, startOfISOWeek } from 'date-fns/fp'
+import { format, formatDistanceToNow, Locale } from 'date-fns'
+import flow from 'lodash/fp/flow'
+import { ru } from 'date-fns/locale'
 
-export function getNextWeekEndRange(): [Moment, Moment] {
-    const weekendStarts = mskMoment().startOf('isoWeek').startOf('day').add(5, 'd')
-    const weekendEnds = mskMoment().startOf('isoWeek').startOf('day').add(7, 'd')
+export function getNextWeekEndRange(now: Date): MyInterval {
+    return {
+        start: max([now, (flow(startOfISOWeek, startOfDay, addDays(5))(now))]),
+        end: flow(startOfISOWeek, startOfDay, addDays(7))(now)
+    }
+}
 
-    return [moment.max(mskMoment(), weekendStarts), weekendEnds]
+const ruDateFormat: {
+    locale?: Locale
+    weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6
+    firstWeekContainsDate?: number
+    useAdditionalWeekYearTokens?: boolean
+    useAdditionalDayOfYearTokens?: boolean
+} = {
+        locale: ru,
+        weekStartsOn: 1
+    }
+
+export function ruFormat(date: Date | number, pattern: string) {
+    return format(date, pattern, ruDateFormat)
 }
 
 export async function syncrhonizeDbByUser(ctx: ContextMessageUpdate) {
@@ -50,7 +66,7 @@ export async function showBotVersion(ctx: ContextMessageUpdate) {
     const info = [
         ['Release', process.env.HEROKU_RELEASE_VERSION || 'localhost'],
         ['Commit', process.env.HEROKU_SLUG_COMMIT || 'localhost'],
-        ['Date', `${process.env.HEROKU_RELEASE_CREATED_AT} (${moment(process.env.HEROKU_RELEASE_CREATED_AT).fromNow()})`],
+        ['Date', `${process.env.HEROKU_RELEASE_CREATED_AT} (${formatDistanceToNow(parseISO(process.env.HEROKU_RELEASE_CREATED_AT))})`],
     ]
     await ctx.replyWithHTML(info.map(row => `<b>${row[0]}</b>: ${row[1]}`).join('\n'))
 }
