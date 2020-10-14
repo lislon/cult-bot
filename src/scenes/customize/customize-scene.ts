@@ -505,6 +505,7 @@ scene
     })
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
         cennostiOptionLogic(ctx, ctx.match[1])
+        resetPaging(ctx)
         const {i18Msg} = sceneHelper(ctx)
         await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
         await ctx.answerCbQuery(i18Msg('popup_selected',
@@ -513,6 +514,7 @@ scene
     })
     .action(/customize_scene[.]o_(.+)/, async (ctx: ContextMessageUpdate) => {
         oblastiOptionLogic(ctx, ctx.match[1])
+        resetPaging(ctx)
         // await ctx.answerCbQuery()
         const {i18Msg} = sceneHelper(ctx)
         await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx))
@@ -522,6 +524,7 @@ scene
     })
     .action(/customize_scene[.]t_(.+)/, async (ctx: ContextMessageUpdate) => {
         timeOptionLogic(ctx, ctx.match[1])
+        resetPaging(ctx)
 
         const {i18Msg} = sceneHelper(ctx)
 
@@ -532,6 +535,7 @@ scene
     })
     .action(/customize_scene[.]f_(.+)/, async (ctx: ContextMessageUpdate) => {
         formatOptionLogic(ctx, ctx.match[1])
+        resetPaging(ctx)
 
         const {i18Msg} = sceneHelper(ctx)
 
