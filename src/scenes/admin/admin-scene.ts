@@ -73,6 +73,7 @@ scene
     })
 
 async function showNextResults(ctx: ContextMessageUpdate) {
+    await prepareSessionStateIfNeeded(ctx)
     const stats = await db.repoAdmin.findStats(globalInterval)
     const total = stats.find(r => r.category === ctx.session.adminScene.cat).count
 
