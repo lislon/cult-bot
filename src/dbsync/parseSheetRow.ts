@@ -1,6 +1,7 @@
 import { Event, EventCategory } from '../interfaces/app-interfaces'
 import { parseTimetable, TimetableParseResult } from '../lib/timetable/parser'
 import { EventTimetable } from '../lib/timetable/intervals'
+import { fieldIsQuestionMarkOrEmpty } from '../util/filed-utils'
 
 export const EXCEL_COLUMN_NAMES = [
     'no',
@@ -58,7 +59,7 @@ interface ExcelRowResult {
 }
 
 function preparePublish(data: Event, result: ExcelRowResult) {
-    if (isAnyFieldUnknown(data['place'], data['address'], data['geotag'], data['timetable'], data['duration'], data['price'])) {
+    if (fieldIsQuestionMarkOrEmpty(data.timetable)) {
         return false
     }
 
@@ -82,7 +83,7 @@ export function getOnlyBotTimetable(timetable: string): string {
 }
 
 export function getOnlyHumanTimetable(timetable: string) {
-    return  timetable.replace(/{(?:бот|bot):([^}]+)}/, '').trim()
+    return timetable.replace(/{(?:бот|bot):([^}]+)}/, '').trim()
 }
 
 function prepareTimetable(data: Event): TimetableParseResult {
