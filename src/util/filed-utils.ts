@@ -1,3 +1,4 @@
 export function fieldIsQuestionMarkOrEmpty(str: string) {
-    return str.trim() === '???'
+    const trim = str.trim()
+    return trim === '???' || trim === ''
 }
