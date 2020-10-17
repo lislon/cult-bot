@@ -12,7 +12,7 @@ export class TopEventsRepository {
         let adjustedIntervals = Object.create(interval)
         if (category === 'exhibitions') {
             adjustedIntervals = {
-                start: addMinutes(interval.start, 90),
+                start: addMinutes(interval.start, 60),
                 end: interval.end
             }
         }
