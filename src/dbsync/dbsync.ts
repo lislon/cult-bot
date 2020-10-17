@@ -15,8 +15,7 @@ import { predictIntervals } from '../lib/timetable/intervals'
 import { EventToSave } from '../interfaces/db-interfaces'
 import { WrongExcelColumnsError } from './WrongFormatException'
 import { BotDb } from '../db'
-import { differenceInCalendarDays, format, startOfISOWeek } from 'date-fns'
-import { subWeeks } from 'date-fns/fp'
+import { differenceInCalendarDays, format } from 'date-fns'
 import Schema$Request = sheets_v4.Schema$Request
 
 // our set of columns, to be created only once (statically), and then reused,
@@ -91,7 +90,7 @@ function debugTimetable(mapped: any, excelUpdater: ExcelUpdater, sheetId: number
 
             if (Array.isArray(interval)) {
                 if (differenceInCalendarDays(interval[0], interval[1]) === 0) {
-                    text.push(`  ${format2(interval[0], 'dd, MM.dd HH:mm')} - ${format2(interval[1], 'HH:mm')}`);
+                    text.push(`  ${format2(interval[0], 'MM.dd HH:mm')} - ${format2(interval[1], 'HH:mm')}`);
                 } else {
                     text.push(`  ${format2(interval[0])} - ${format2(interval[1])}`);
                 }
@@ -140,11 +139,6 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
             columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, numOfRows))
             // Print columns A and E, which correspond to indices 0 and 4.
 
-            // TODO: Timzezone
-            const WEEKS_AGO = 2
-            const WEEKS_AHEAD = 4
-            const dateFrom = subWeeks(WEEKS_AGO)(startOfISOWeek(new Date()))
-
             sheet.values.forEach((row: string[], rowNo: number) => {
 
                 if (rowNo == 0) {
@@ -162,7 +156,7 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
 
                 const keyValueRow = mapRowToColumnObject(row)
 
-                const mapped = processExcelRow(keyValueRow, getSheetCategory(sheetNo))
+                const mapped = processExcelRow(keyValueRow, getSheetCategory(sheetNo), new Date())
 
                 rowNo = EXCEL_HEADER_SKIP_ROWS + rowNo;
 
@@ -172,7 +166,7 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
                         rows.push({
                             primaryData: mapped.data,
                             timetable: mapped.timetable,
-                            timeIntervals: predictIntervals(dateFrom, mapped.timetable, (WEEKS_AGO + WEEKS_AHEAD) * 7),
+                            timeIntervals: mapped.timeIntervals,
                             is_anytime: mapped.data.timetable.includes('в любое время')
                         });
                         excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
