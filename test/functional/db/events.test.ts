@@ -32,7 +32,7 @@ describe('Top events', () => {
         expectedTitlesStrict(['A'], await db.repoTopEvents.getTop('theaters', range))
     })
 
-    test('do not show exhibition before close 1.5 hours', async () => {
+    test('do not show exhibition when less then 1 hours before close', async () => {
         await syncDatabase4Test([getMockEvent({
             eventTime: [
                 [date('2020-01-01 15:00'), date('2020-01-01 20:00')]
@@ -41,10 +41,10 @@ describe('Top events', () => {
         })])
 
 
-        const uspeemRange = interval('[2020-01-01 18:29,2020-01-02 00:00)')
+        const uspeemRange = interval('[2020-01-01 18:59,2020-01-02 00:00)')
         const uspeemResult = await db.repoTopEvents.getTop('exhibitions', uspeemRange)
 
-        const apazdunRange = interval('[2020-01-01 18:30,2020-01-02 00:00)')
+        const apazdunRange = interval('[2020-01-01 19:00,2020-01-02 00:00)')
         const apazdunResult = await db.repoTopEvents.getTop('exhibitions', apazdunRange)
 
         expect(uspeemResult.length).toEqual(1)
