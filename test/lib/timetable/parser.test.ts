@@ -213,7 +213,36 @@ describe('parser', () => {
                         ]
                     }
                 ],
-            }]
+            }],
+        ['17 октября: 10:10 - 19:40\n' +
+        '18 октября: 10:00 - 19:40',
+            {
+                'datesExact': [
+                    {
+                        'dateRange': [
+                            '2020-10-17'
+                        ],
+                        'times': [
+                            [
+                                '10:10',
+                                '19:40'
+                            ]
+                        ]
+                    },
+                    {
+                        'dateRange': [
+                            '2020-10-18'
+                        ],
+                        'times': [
+                            [
+                                '10:00',
+                                '19:40'
+                            ]
+                        ]
+                    }
+                ]
+            }
+        ]
     ])('%s', (text: string, expected: any) => {
         if (expected) {
             expected.dateRangesTimetable = expected.dateRangesTimetable || []

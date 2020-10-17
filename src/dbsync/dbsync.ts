@@ -182,7 +182,7 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
                     } else {
                         result.errors++;
                         // rows.push(mapped.data);
-                        if (mapped.errors.timetable && !mapped.data.timetable.includes('?')) {
+                        if (mapped.errors.timetable && !mapped.data.timetable.includes('???')) {
                             excelUpdater.annotateCell(sheetId, 'timetable', rowNo, mapped.errors.timetable.join('\n'))
                             excelUpdater.colorCell(sheetId, 'timetable', rowNo, 'red')
                         } else {

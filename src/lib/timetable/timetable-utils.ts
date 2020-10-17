@@ -4,8 +4,8 @@ export function cleanText(text: string) {
     return text.toLowerCase()
         .replace(englishC, russianC)
         .replace('[—‑]', '-')
-        .replace(/\s+/g, ' ')
-        .replace(/[;\n\s]$/, '')
+        .replace(/[ ]+/g, ' ')
+        .replace(/[;\s]$/g, '')
         .trim()
         ;
 }

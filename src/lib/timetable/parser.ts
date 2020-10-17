@@ -119,10 +119,6 @@ const timetableLang = P.createLanguage({
         .map(([dateRange, , , times]) => {
             return {exactDate: {dateRange, times}}
         }),
-    // ExactDatesTimes: (r) => P.sepBy1(r.ExactDateTimes, P.seq(r._, r[';'], r._))
-    //     .map((exactDates) => {
-    //         return {exactDates};
-    //     }),
     WeekDateTimetable: (r) => P.seq(r.WeekDays, r[':'], r._, r.TimesOrTimeRanges)
         .map(([weekdays, , , times]) => {
             return {weekdays, times}
@@ -131,7 +127,7 @@ const timetableLang = P.createLanguage({
         .map((weekTimes) => {
             return {weekTimes};
         }),
-    DateRangeTimetable: (r) => P.seq(r.DateRange, r[':'], r._, r.WeekDatesTimetable)
+    DateRangeTimetable: (r) => P.seq(r.DateRange, r[':'], P.seq(r._, r.NewLine.atMost(1), r._), r.WeekDatesTimetable)
         .map(([dateRange, , , {weekTimes}]) => {
             return {dateRangesTimetable: {dateRange, weekTimes}}
         }),
@@ -139,10 +135,6 @@ const timetableLang = P.createLanguage({
         .map(([dateRange, , , times]) => {
             return {dateRange, times}
         }),
-    // DateRangeTimetables: (r) => P.sepBy1(r.DateRangeTimetable, r.Divider)
-    //     .map(([dateRangesTimetable]) => {
-    //         return {dateRangesTimetable}
-    //     }),
     DateRangeTimetablesOrExactDatesOrWeekDateTimetable: (r) =>
         P.alt(r.DateRangeTimetable,
             r.ExactDateTimes,
@@ -160,7 +152,7 @@ const timetableLang = P.createLanguage({
     From: () => P.string('с').desc('диапазон через дефис "с xxx до xxx"'),
     To: () => P.string('до').desc('фраза "до"'),
     ToDate: () => P.alt(P.string('до'), P.string('по')),
-    _: () => P.optWhitespace,
+    _: () => P.regex(/[^\S\r\n]*/).desc('пробелы'),
 })
 
 
