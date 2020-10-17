@@ -1,5 +1,5 @@
 import { escapeHTML } from '../../util/string-utils'
-import { Event } from '../../interfaces/app-interfaces'
+import { Event, EventCategory } from '../../interfaces/app-interfaces'
 import { getOnlyHumanTimetable } from '../../dbsync/parseSheetRow'
 import { cleanTagLevel1 } from '../../util/tag-level1-encoder'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/filed-utils'
@@ -20,6 +20,21 @@ function formatUrl(text: string) {
     return niceUrls
 }
 
+function formatTimetable(event: Event) {
+    const humanTimetable = getOnlyHumanTimetable(event.timetable);
+
+    if (event.category === 'movies') {
+        const lines = humanTimetable.split(/[\n\r]+/)
+        return lines
+            .map(l => l.trim())
+            .map(l => l.replace(/:[^(]*[(](http.+?)[)]/, ': <a href="$1">расписание</a>'))
+            .map(l => `🗓 ${l}\n`)
+            .join('')
+    }
+    return `🗓 ${humanTimetable}\n`
+}
+
+
 export function cardFormat(row: Event) {
     let text = ``;
     text += `<b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>\n`
@@ -36,7 +51,7 @@ export function cardFormat(row: Event) {
     if (!fieldIsQuestionMarkOrEmpty(row.address)) {
         text += `📍 ${addHtmlNiceUrls(escapeHTML(row.address))}${map}\n`
     }
-    text += `🗓 ${getOnlyHumanTimetable(row.timetable)}\n`
+    text += formatTimetable(row)
     if (!fieldIsQuestionMarkOrEmpty(row.duration)) {
         text += `🕐 ${escapeHTML(row.duration)}\n`
     }
