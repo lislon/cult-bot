@@ -22,3 +22,4 @@ debug.log
 yarn.lock
 dump
 dist.zip
+/report.*.json

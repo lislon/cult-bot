@@ -15,7 +15,7 @@ import { MyInterval } from '../../interfaces/app-interfaces'
 import flow from 'lodash/fp/flow'
 
 type DayTime = string | [string, string]
-type DateRange = [string, string]
+export type DateRange = [string, string]
 export type DateOrDateRange = [string] | [string, string]
 
 
@@ -157,7 +157,8 @@ export function mapInterval<T, U>(m: T|T[], mapper: (v: T) => U): U|U[] {
 }
 
 export function predictIntervals(startTime: Date, timetable: Partial<EventTimetable>, daysAhead: number) {
-    return new IntervalGenerator(startTime, daysAhead).generate(timetable)
+    const gen = new IntervalGenerator(startTime, daysAhead)
+    return gen.generate(timetable)
 }
 
 export class IntervalGenerator {
@@ -188,8 +189,8 @@ export class IntervalGenerator {
             .reduce((ints, dr) => filterByRange(ints, intervalToToMoment(dr.dateRange), 'out'), regularWeekTimes)
 
 
-        intervals.push.apply(intervals, filteredRegularWeekTimes);
-        intervals.push.apply(intervals, this.flatIntervalsDateRangeTimetable(timetable.dateRangesTimetable));
+        intervals = [...intervals, ...filteredRegularWeekTimes]
+        intervals = this.flatIntervalsDateRangeTimetable(intervals, timetable.dateRangesTimetable)
 
         intervals = this.flatIntervalsDatesExact(intervals, timetable.datesExact);
 
@@ -238,26 +239,26 @@ export class IntervalGenerator {
         return intervals
     }
 
-    private flatIntervalsDateRangeTimetable(rangeTimetables: DateRangeTimetable[]): MomentIntervals {
-        const intervals: MomentIntervals = []
-
+    private flatIntervalsDateRangeTimetable(intervals: MomentIntervals, rangeTimetables: DateRangeTimetable[]): MomentIntervals {
         const dateStr = format('yyyy-MM-dd', this.fromTime)
 
         for (const {dateRange, times, weekTimes} of (rangeTimetables || [])) {
             const subRange = subDateRange(dateRange, dateStr, this.daysAhead)
 
+            // clear old timetable in that interval
+            intervals = filterByRange(intervals, subRange, 'out')
+
             if (subRange === undefined) continue
             const weekIntervals = this.flatIntervalsWeekdays(subRange.start, weekTimes)
-            intervals.push.apply(intervals, filterByRange(weekIntervals, subRange, 'in'));
-
-            intervals.push.apply(intervals, this.intervalsFromTime(subRange.start, subRange.end, times));
+            intervals = [...intervals, ...filterByRange(weekIntervals, subRange, 'in')]
+            intervals = [...intervals, ...this.intervalsFromTime(subRange.start, subRange.end, times)]
         }
         return intervals
     }
 
     private intervalsFromTime(start: Date, end: Date, times: DayTime[]) {
         const timeIntervals: MomentIntervals = []
-        for (let i = 0; i < this.daysAhead && start < end; i++) {
+        for (let i = 0; i < this.daysAhead && addDays(i)(start) < end; i++) {
             timeIntervals.push.apply(timeIntervals, (times || []).map(t => {
                 return mapInterval(t, st => flow(addDays(i), addHourAndMin(st))(start))
             }));

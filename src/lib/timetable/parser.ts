@@ -1,15 +1,33 @@
 import * as P from 'parsimmon'
 import { Result, Success } from 'parsimmon'
-import { DateExact, EventTimetable } from './intervals';
+import { DateExact, DateRange, EventTimetable, mapInterval, WeekTime } from './intervals'
 import { cleanText } from './timetable-utils'
-import { isValid, parse, parseISO } from 'date-fns'
+import { addYears, format, isValid, parseISO, setYear } from 'date-fns'
+import cloneDeep from 'lodash/cloneDeep'
 
 
 type FromToPair = { from: string, to: string }
-const Lang = P.createLanguage({
+export const YEAR_UNKNOWN_VALUE = 9999
+
+export type RawParseResultV = {
+    dateRange?: DateRange
+    weekTimes?: WeekTime[]
+    dateRangesTimetable?: {
+        dateRange: DateRange
+        weekTimes: WeekTime[]
+    }
+    exactDate?: DateExact
+    anytime?: true
+}
+
+interface RawParseResult {
+    [Symbol.iterator](): Iterator<RawParseResultV>;
+}
+
+const timetableLang = P.createLanguage({
     DayOfMonth: () => P.regexp(/[0-9]{1,2}/).map(s => s.padStart(2, '0')).desc('День месяца'),
     Year: () => P.regexp(/20[0-9]{2}/)
-        .fallback(new Date().getFullYear())
+        .fallback(YEAR_UNKNOWN_VALUE)
         .desc('Год')
     ,
     Month: () => P.regexp(/[а-я]+/)
@@ -99,12 +117,12 @@ const Lang = P.createLanguage({
     ),
     ExactDateTimes: (r) => P.seq(r.DateOrDateRange, r[':'], r._, r.TimesOrTimeRanges)
         .map(([dateRange, , , times]) => {
-            return {dateRange, times}
+            return {exactDate: {dateRange, times}}
         }),
-    ExactDatesTimes: (r) => P.sepBy1(r.ExactDateTimes, P.seq(r._, r[';'], r._))
-        .map((exactDates) => {
-            return {exactDates};
-        }),
+    // ExactDatesTimes: (r) => P.sepBy1(r.ExactDateTimes, P.seq(r._, r[';'], r._))
+    //     .map((exactDates) => {
+    //         return {exactDates};
+    //     }),
     WeekDateTimetable: (r) => P.seq(r.WeekDays, r[':'], r._, r.TimesOrTimeRanges)
         .map(([weekdays, , , times]) => {
             return {weekdays, times}
@@ -114,26 +132,27 @@ const Lang = P.createLanguage({
             return {weekTimes};
         }),
     DateRangeTimetable: (r) => P.seq(r.DateRange, r[':'], r._, r.WeekDatesTimetable)
-        .map(([dateRange, , , weekDates]) => {
-            return {dateRange, weekDates}
+        .map(([dateRange, , , {weekTimes}]) => {
+            return {dateRangesTimetable: {dateRange, weekTimes}}
         }),
     DateRangeTimes: (r) => P.seq(r.DateRange, r[':'], r._, r.TimesOrTimeRanges)
         .map(([dateRange, , , times]) => {
             return {dateRange, times}
         }),
-    DateRangeTimetables: (r) => P.sepBy1(r.DateRangeTimetable, P.seq(r._, r.Divider, r._))
-        .map(([dateRangesTimetable]) => {
-            return {dateRangesTimetable}
-        }),
+    // DateRangeTimetables: (r) => P.sepBy1(r.DateRangeTimetable, r.Divider)
+    //     .map(([dateRangesTimetable]) => {
+    //         return {dateRangesTimetable}
+    //     }),
     DateRangeTimetablesOrExactDatesOrWeekDateTimetable: (r) =>
-        r.DateRangeTimetables
-            .or(r.ExactDatesTimes)
-            .or(r.DateRangeTimes)
-            .or(r.WeekDatesTimetable),
+        P.alt(r.DateRangeTimetable,
+            r.ExactDateTimes,
+            r.DateRangeTimes,
+            r.WeekDatesTimetable),
     Everything: (r) => P.alt(
         r.AnyTime.result([{anytime: true}]),
-        P.sepBy1(r.DateRangeTimetablesOrExactDatesOrWeekDateTimetable, P.seq(r._, r.Divider, r._))),
-    Divider: (r) => P.alt(r[';'], P.newline),
+        P.sepBy1(r.DateRangeTimetablesOrExactDatesOrWeekDateTimetable, r.Divider)),
+    Divider: (r) => P.seq(r._, P.alt(r[';'], r.NewLine), r._),
+    NewLine: (r) => P.regex(/[\n\r]+/).desc('новая строка'),
     [';']: () => P.string(';').desc('точка с запятой'),
     [',']: () => P.string(',').desc('запятая'),
     ['-']: () => P.string('-').desc('диапазон через дефис'),
@@ -142,7 +161,7 @@ const Lang = P.createLanguage({
     To: () => P.string('до').desc('фраза "до"'),
     ToDate: () => P.alt(P.string('до'), P.string('по')),
     _: () => P.optWhitespace,
-});
+})
 
 
 function arrayfie(): (result: any[]) => any[] {
@@ -150,30 +169,34 @@ function arrayfie(): (result: any[]) => any[] {
 }
 
 
-function validaDate(p: string, errors: string[]) {
-    if (!isValid(parseISO(p))) {
+function validateAndFixDate(p: string, errors: string[], now: Date): string {
+    const date = parseISO(p)
+    if (!isValid(date)) {
         errors.push(`Дата "${p}" не может существовать`)
+        return p;
     }
+    if (date.getFullYear() === YEAR_UNKNOWN_VALUE) {
+        const newDate = setYear(date, now.getFullYear())
+        return format((newDate < now ? addYears(newDate, 1) : newDate), 'yyyy-MM-dd')
+    }
+    return p;
 }
 
-function validateDates(parse: Success<any>, dateValidation: string[]) {
-    for (const p of parse.value) {
+function fixupDatesDates(parse: Success<RawParseResult>, dateValidation: string[], now: Date): Success<RawParseResult> {
+    const fixed = cloneDeep(parse)
+
+    const validationAndFixation = (d: string) => validateAndFixDate(d, dateValidation, now)
+
+    for (const p of fixed.value) {
         if (p.dateRange !== undefined) {
-            p.dateRange.forEach((d: string) => {
-                validaDate(d, dateValidation)
-            })
+            p.dateRange = mapInterval(p.dateRange, validationAndFixation) as any
         } else if (p.dateRangesTimetable !== undefined) {
-            p.dateRangesTimetable.dateRange.forEach((d: string) => {
-                validaDate(d, dateValidation)
-            })
-        } else if (p.exactDates) {
-            p.exactDates.forEach((d: DateExact) => {
-                d.dateRange.forEach(dd => {
-                    validaDate(dd, dateValidation)
-                })
-            })
+            p.dateRangesTimetable.dateRange = mapInterval(p.dateRangesTimetable.dateRange, validationAndFixation) as any
+        } else if (p.exactDate) {
+            p.exactDate.dateRange = mapInterval(p.exactDate.dateRange, validationAndFixation) as any
         }
     }
+    return fixed;
 }
 
 export type TimetableParseResult = {
@@ -184,15 +207,16 @@ export type TimetableParseResult = {
     errors: string[]
 }
 
-export function parseTimetable(text: string): TimetableParseResult {
+
+export function parseTimetable(text: string, now: Date): TimetableParseResult {
     const input = cleanText(text)
-    const parse: Result<any> = Lang.Everything.parse(input);
+    let parseRes: Result<RawParseResult> = timetableLang.Everything.parse(input);
+    // const fixYear = (date: string) => parse(date, 'yyyy-MM-dd')
 
-
-    if (parse.status === true) {
+    if (parseRes.status === true) {
 
         const dateValidation: string[] = []
-        validateDates(parse, dateValidation)
+        parseRes = fixupDatesDates(parseRes, dateValidation, now)
         if (dateValidation.length > 0) {
             return {status: false, errors: dateValidation}
         }
@@ -203,39 +227,39 @@ export function parseTimetable(text: string): TimetableParseResult {
             weekTimes: [],
             anytime: false
         }
-        for (const p of parse.value) {
+        for (const p of parseRes.value) {
             if (p.dateRange !== undefined) {
                 result.dateRangesTimetable.push(p)
             } else if (p.weekTimes !== undefined) {
-                result.weekTimes.push.apply(result.weekTimes, p.weekTimes)
+                result.weekTimes = [...result.weekTimes, ...p.weekTimes]
             } else if (p.dateRangesTimetable !== undefined) {
                 result.dateRangesTimetable.push({
                     dateRange: p.dateRangesTimetable.dateRange,
-                    weekTimes: p.dateRangesTimetable.weekDates && p.dateRangesTimetable.weekDates.weekTimes,
+                    weekTimes: p.dateRangesTimetable.weekTimes,
                 })
-            } else if (p.exactDates) {
-                result.datesExact.push.apply(result.datesExact, p.exactDates)
+            } else if (p.exactDate) {
+                result.datesExact.push(p.exactDate)
             } else if (p.anytime) {
                 result.anytime = true;
             }
         }
-        return {status: parse.status, value: result}
+        return {status: parseRes.status, value: result}
     } else {
         const errors: string[] = []
         if (input.length === 0) {
             errors.push(`Пустая строка`)
-        } else if (parse.index.offset === input.length) {
+        } else if (parseRes.index.offset === input.length) {
             errors.push(`После строки "${input}" я ожидала получить, например, следующее:`)
-            parse.expected.forEach(e => errors.push(` - ${e}`))
+            parseRes.expected.forEach(e => errors.push(` - ${e}`))
             errors.push(`Но в строке больше ничего нет`)
-        } else if (parse.index.offset === 0) {
+        } else if (parseRes.index.offset === 0) {
             errors.push(`Не смогла понять что это: "${input}". Я ожидала одно из:`)
-            parse.expected.forEach(e => errors.push(` - ${e}`))
+            parseRes.expected.forEach(e => errors.push(` - ${e}`))
         } else {
-            errors.push(`После строки "${input.substr(0, parse.index.offset)}" я ожидала:`)
-            parse.expected.forEach(e => errors.push(` - ${e}`))
-            errors.push(`И текст "${input.substr(parse.index.offset)}" не подходит к вышеперечисленному`)
+            errors.push(`После строки "${input.substr(0, parseRes.index.offset)}" я ожидала:`)
+            parseRes.expected.forEach(e => errors.push(` - ${e}`))
+            errors.push(`И текст "${input.substr(parseRes.index.offset)}" не подходит к вышеперечисленному`)
         }
-        return {status: parse.status, errors: errors}
+        return {status: parseRes.status, errors: errors}
     }
 }

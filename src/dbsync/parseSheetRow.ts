@@ -73,7 +73,7 @@ function preparePublish(data: Event, result: ExcelRowResult) {
 
 export function getOnlyBotTimetable(timetable: string): string {
     let botTimetable = timetable
-        .replace(/[(].+?[)]/, '')
+        .replace(/[(].+?[)]/g, '')
 
     const matches = botTimetable.match(/{(?:бот|bot):([^}]+)}/)
     if (matches) {
@@ -92,7 +92,7 @@ function prepareTimetable(data: Event): TimetableParseResult {
     if (data.timetable !== botTimetable) {
         console.log(` > bot convert: "${data.timetable}" -> "${botTimetable}"`)
     }
-    return parseTimetable(botTimetable);
+    return parseTimetable(botTimetable, new Date());
 }
 
 function validateTag(tags: string[], errorCallback: (errors: string[]) => void) {

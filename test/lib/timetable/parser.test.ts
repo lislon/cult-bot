@@ -1,4 +1,6 @@
 import { parseTimetable } from '../../../src/lib/timetable/parser'
+import { date } from './test-utils'
+import { fail } from 'parsimmon'
 
 describe('parser', () => {
     test.each([
@@ -74,6 +76,29 @@ describe('parser', () => {
                         ]
                     }
                 ],
+            }
+        ],
+        ['1 января: 10:10;2 января: 10:00',
+            {
+                'datesExact': [
+                    {
+                        'dateRange': [
+                            '2020-01-01'
+                        ],
+                        'times': [
+                            '10:10'
+                        ]
+                    },
+                    {
+                        'dateRange': [
+                            '2020-01-02'
+                        ],
+                        'times': [
+                            '10:00'
+                        ]
+                    }
+                ],
+                'weekTimes': []
             }
         ],
         ['ежедневно: 12:00',
@@ -157,7 +182,7 @@ describe('parser', () => {
                 ]
             },
         ],
-        ['31 ноября 2020: с 12 до 18', undefined],
+        ['31 ноября 2020: с 12 до 18', ['Дата "2020-11-31" не может существовать']],
         ['вс-пн: с 12 до 18',
             {
                 'weekTimes': [
@@ -176,6 +201,19 @@ describe('parser', () => {
                 ]
             }
         ],
+        ['1 января 2020: 01:01;',
+            {
+                'datesExact': [
+                    {
+                        'dateRange': [
+                            '2020-01-01',
+                        ],
+                        'times': [
+                            '01:01'
+                        ]
+                    }
+                ],
+            }]
     ])('%s', (text: string, expected: any) => {
         if (expected) {
             expected.dateRangesTimetable = expected.dateRangesTimetable || []
@@ -183,11 +221,21 @@ describe('parser', () => {
             expected.datesExact = expected.datesExact || []
             expected.weekTimes = expected.weekTimes || []
         }
-        const actual = parseTimetable(text)
+        const actual = parseTimetable(text, date('2020-01-01'))
         if (actual.status === true) {
             expect(actual.value).toStrictEqual(expected)
         } else {
-            expect(undefined).toStrictEqual(expected)
+            // JSON.stringify to avoid bug: 'Received: serializes to the same string'
+            expect(JSON.stringify(actual.errors)).toStrictEqual(JSON.stringify(expected))
         }
     });
+
+    test('year rollolver', () => {
+        const actual = parseTimetable('1 января: 12:00', date('2020-01-02'))
+        if (actual.status === true) {
+            expect(actual.value.datesExact).toStrictEqual([{'dateRange': ['2021-01-01'], 'times': ['12:00']}])
+        } else {
+            fail('Not success')
+        }
+    })
 });

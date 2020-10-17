@@ -73,7 +73,7 @@ function mapRowToColumnObject(row: string[]) {
 
 function debugTimetable(mapped: any, excelUpdater: ExcelUpdater, sheetId: number, rowNo: number) {
     const fromTime = new Date()
-    const timetableParseResult = parseTimetable(getOnlyBotTimetable(mapped.data.timetable))
+    const timetableParseResult = parseTimetable(getOnlyBotTimetable(mapped.data.timetable), fromTime)
     if (timetableParseResult.status !== true) {
         throw new Error('wtf')
     }
