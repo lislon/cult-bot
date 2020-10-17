@@ -1,5 +1,5 @@
 import { chidrensTags, Event, EventFormat, MyInterval, TagLevel2 } from '../interfaces/app-interfaces'
-import { mapToPgInterval } from './db-utils'
+import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
 
 
@@ -20,8 +20,7 @@ export class CustomFilterRepository {
         const {queryBody, queryParams} = doQueryCore(customFilter)
 
         const sql = `
-        SELECT cb.*
-            ${queryBody}
+        SELECT cb.* ${queryBody}
         order by
             cb.is_anytime ASC,
             cb.rating DESC,
@@ -74,7 +73,7 @@ function doQueryCore(customFilter: CustomFilter) {
                 SELECT *
                 FROM cb_events_entrance_times cbet
                 where cbet.event_id = cb.id
-                    AND ($(weekendRange) && cbet.entrance)
+                    AND ${rangeHalfOpenIntersect('$(weekendRange)::tstzrange', 'cbet.entrance')}
                     AND
                     (
                         $(timeIntervals)::tstzrange[] = '{}'
@@ -82,7 +81,7 @@ function doQueryCore(customFilter: CustomFilter) {
                         (
                                select *
                                from unnest($(timeIntervals)::tstzrange[]) range
-                               where range && cbet.entrance
+                               where ${rangeHalfOpenIntersect('range', 'cbet.entrance')}
                         )
                     )
             )

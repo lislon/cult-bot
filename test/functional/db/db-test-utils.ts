@@ -65,7 +65,7 @@ export function getMockEvent(
 }
 
 export function expectedTitles(titles: string[], events: Event[]) {
-    expect(events.map(t => t.title)).toEqual(expect.arrayContaining(titles))
+    expect(events.map(t => t.title).sort()).toEqual(titles.sort())
 }
 
 export function expectedTitlesStrict(titles: string[], events: Event[]) {

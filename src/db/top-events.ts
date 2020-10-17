@@ -1,6 +1,6 @@
 import { Event, EventCategory, MyInterval } from '../interfaces/app-interfaces'
 import { TagCategory } from '../interfaces/db-interfaces'
-import { mapToPgInterval } from './db-utils'
+import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
 import { addMinutes } from 'date-fns'
 
@@ -25,7 +25,7 @@ export class TopEventsRepository {
             (
                 select id
                 FROM cb_events_entrance_times cbet
-                where $(interval) && cbet.entrance AND cbet.event_id = cb.id
+                where ${rangeHalfOpenIntersect('$(interval)::tstzrange', 'cbet.entrance')} AND cbet.event_id = cb.id
             )
             AND cb.category = $(category)
             AND cb.is_anytime = false
@@ -43,7 +43,7 @@ export class TopEventsRepository {
                 (
                     select id
                     FROM cb_events_entrance_times cbet
-                    where $(interval) && cbet.entrance AND cbet.event_id = cb.id
+                    where ${rangeHalfOpenIntersect('$(interval)::tstzrange', 'cbet.entrance')} AND cbet.event_id = cb.id
                 )
                 and cb.category =  $(category)
                 and cb.is_anytime = true

@@ -13,12 +13,7 @@ afterAll(db.$pool.end);
 describe('Filtering', () => {
 
     beforeEach(async () => {
-        await db.query('BEGIN')
         await cleanDb()
-    })
-
-    afterEach(async () => {
-        await db.query('COMMIT')
     })
 
     test('search only by oblasti works', async () => {

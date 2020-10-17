@@ -72,7 +72,7 @@ describe('Top events', () => {
         )
         const range = interval('2020-01-01 00:00,2020-01-01 23:59)')
         const events = await db.repoTopEvents.getTop('theaters', range)
-        expect(events.map(e => e.title)).toEqual(['PRIMARY', 'AUX'])
+        expectedTitlesStrict(['PRIMARY', 'AUX'], events)
     })
 
     test('sorting is done by rating', async () => {
@@ -99,7 +99,7 @@ describe('Top events', () => {
         )
         const range = interval('[2020-01-01 00:00, 2020-01-01 23:59)')
         const events = await db.repoTopEvents.getTop('theaters', range, 2)
-        expect(events.map(e => e.title)).toEqual(['2. BEST', '3. BETTER'])
+        expectedTitlesStrict(['2. BEST', '3. BETTER'], events)
     })
 
     test('paging is work', async () => {
@@ -133,10 +133,10 @@ describe('Top events', () => {
         )
         const range = interval('[2020-01-01 00:00, 2020-01-01 23:59)')
         const events = await db.repoTopEvents.getTop('theaters', range, 2, 1)
-        expect(events.map(e => e.title)).toEqual(['B - timed', 'C - online'])
+        expectedTitlesStrict(['B - timed', 'C - online'], events)
     })
 
-    test('even with is_anytime = true we should intersect invervals', async () => {
+    test('even with is_anytime = true we should intersect intervals', async () => {
         await syncDatabase4Test([
                 getMockEvent({
                     title: 'A',
@@ -159,12 +159,7 @@ describe('Top events', () => {
 
 describe('Search intervals - SINGLE_INTERVAL [restriction]', () => {
     beforeEach(async () => {
-        await db.query('BEGIN')
         await cleanDb()
-    })
-
-    afterEach(async () => {
-        await db.query('COMMIT')
     })
 
     beforeEach(async () => {
@@ -196,12 +191,7 @@ describe('Search intervals - SINGLE_INTERVAL [restriction]', () => {
 
 describe('Search intervals -  (range). [restriction]', () => {
     beforeEach(async () => {
-        await db.query('BEGIN')
         await cleanDb()
-    })
-
-    afterEach(async () => {
-        await db.query('COMMIT')
     })
 
     beforeEach(async () => {
@@ -232,7 +222,7 @@ describe('Search intervals -  (range). [restriction]', () => {
     })
 
     test('[ ( ] )', async () => {
-        await expectResults(1, [
+        await expectResults(0, [
             '2020-01-01 00:00',
             '2020-01-01 12:00'])
     })

@@ -6,7 +6,7 @@ import { IDatabase, IInitOptions, IMain } from 'pg-promise'
 import { IConnectionParameters } from 'pg-promise/typescript/pg-subset'
 import { CustomFilterRepository } from './db/custom-filter-repository'
 import { EventsSyncRepository } from './db/sync-repository'
-import { TopEventsRepository } from './db/events'
+import { TopEventsRepository } from './db/top-events'
 import { AdminRepository } from './db/db-admin'
 import { SearchRepository } from './db/search'
 
