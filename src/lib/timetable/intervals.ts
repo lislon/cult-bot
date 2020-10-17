@@ -1,4 +1,4 @@
-import { parseISO } from 'date-fns'
+import { formatISO, parseISO } from 'date-fns'
 import {
     addDays,
     addHours,
@@ -159,6 +159,29 @@ export function mapInterval<T, U>(m: T|T[], mapper: (v: T) => U): U|U[] {
 export function predictIntervals(startTime: Date, timetable: Partial<EventTimetable>, daysAhead: number) {
     const gen = new IntervalGenerator(startTime, daysAhead)
     return gen.generate(timetable)
+}
+
+ export function validateIntervals(intervals: MomentOrInterval[]): string[] {
+    const errors = [];
+    let last: Date = undefined
+
+    for (const i of intervals) {
+        if (Array.isArray(i)) {
+            if (i[0] >= i[1]) {
+                errors.push(`Неверный порядок дат. ${formatISO(i[0])} следует после ${formatISO(i[1])}`)
+            }
+            if (last !== undefined && last >= i[0]) {
+                errors.push(`Неверный порядок дат. Повторяющиеся или интервалы в неверном порядке: ${formatISO(i[0])} должен быть перед ${formatISO(last)}`)
+            }
+            last = i[1]
+        } else {
+            if (last !== undefined && last >= i) {
+                errors.push(`Неверный порядок дат. Повторяющиеся или интервалы в неверном порядке. ${formatISO(i)} должен быть перед ${formatISO(last)}`)
+            }
+            last = i
+        }
+    }
+    return errors
 }
 
 export class IntervalGenerator {

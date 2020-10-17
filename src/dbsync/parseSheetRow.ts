@@ -1,7 +1,9 @@
 import { Event, EventCategory } from '../interfaces/app-interfaces'
 import { parseTimetable, TimetableParseResult } from '../lib/timetable/parser'
-import { EventTimetable } from '../lib/timetable/intervals'
+import { EventTimetable, MomentOrInterval, predictIntervals, validateIntervals } from '../lib/timetable/intervals'
 import { fieldIsQuestionMarkOrEmpty } from '../util/filed-utils'
+import { subWeeks } from 'date-fns/fp'
+import { startOfISOWeek } from 'date-fns'
 
 export const EXCEL_COLUMN_NAMES = [
     'no',
@@ -55,6 +57,7 @@ interface ExcelRowResult {
         invalidTagLevel3?: string[]
     }
     timetable?: EventTimetable,
+    timeIntervals: MomentOrInterval[]
     data: Event
 }
 
@@ -102,19 +105,15 @@ function validateTag(tags: string[], errorCallback: (errors: string[]) => void) 
     }
 }
 
-function isAddressInvalid(data: Event) {
+function isAddressValid(data: Event) {
     if (data.address.toLowerCase() === 'онлайн' && data.address.toLowerCase() !== data.address) {
         return false
     }
 
-    return data.address === ''
+    return true
 }
 
-function isAnyFieldUnknown(...fields: string[]) {
-    return fields.find(f => f.trim() === '???') !== undefined
-}
-
-export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory): ExcelRowResult {
+export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory, now: Date): ExcelRowResult {
 
     const notNull = (s: string) => s === undefined ? '' : s.trim();
     const notNullOrUnknown = (s: string) => s === undefined ? '' : s;
@@ -151,26 +150,32 @@ export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory)
             invalidTagLevel2: [],
             invalidTagLevel3: [],
         },
+        timeIntervals: [],
         data
     }
 
     const timetable = prepareTimetable(data)
     if (timetable.status === true) {
+
+        // TODO: Timzezone
+        const WEEKS_AGO = 2
+        const WEEKS_AHEAD = 4
+        const dateFrom = subWeeks(WEEKS_AGO)(startOfISOWeek(now))
+
+        result.timeIntervals = predictIntervals(dateFrom, timetable.value, (WEEKS_AGO + WEEKS_AHEAD) * 7)
         result.timetable = timetable.value
+        const errors = validateIntervals(result.timeIntervals)
+        if (errors.length > 0) {
+            result.errors.timetable = errors
+            result.valid = false
+        }
     } else {
         result.errors.timetable = timetable.errors
         result.valid = false
     }
     result.publish = preparePublish(data, result)
 
-    if (data.place === '') {
-        result.errors.emptyRows.push('place');
-    }
-    if (data.address === '') {
-        result.errors.emptyRows.push('address');
-    }
-
-    if (isAddressInvalid(data)) {
+    if (!isAddressValid(data)) {
         result.errors.emptyRows.push('address');
     }
 

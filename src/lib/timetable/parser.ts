@@ -174,7 +174,7 @@ function validateAndFixDate(p: string, errors: string[], now: Date): string {
     return p;
 }
 
-function fixupDatesDates(parse: Success<RawParseResult>, dateValidation: string[], now: Date): Success<RawParseResult> {
+function fillUnkownYearsAndValidate(parse: Success<RawParseResult>, dateValidation: string[], now: Date): Success<RawParseResult> {
     const fixed = cloneDeep(parse)
 
     const validationAndFixation = (d: string) => validateAndFixDate(d, dateValidation, now)
@@ -208,7 +208,7 @@ export function parseTimetable(text: string, now: Date): TimetableParseResult {
     if (parseRes.status === true) {
 
         const dateValidation: string[] = []
-        parseRes = fixupDatesDates(parseRes, dateValidation, now)
+        parseRes = fillUnkownYearsAndValidate(parseRes, dateValidation, now)
         if (dateValidation.length > 0) {
             return {status: false, errors: dateValidation}
         }
