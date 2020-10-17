@@ -168,14 +168,14 @@ export function predictIntervals(startTime: Date, timetable: Partial<EventTimeta
     for (const i of intervals) {
         if (Array.isArray(i)) {
             if (i[0] >= i[1]) {
-                errors.push(`Неверный порядок дат. ${formatISO(i[0])} следует после ${formatISO(i[1])}`)
+                errors.push(`Неверный порядок дат. ${formatISO(i[0])}  должен быть перед ${formatISO(i[1])}`)
             }
-            if (last !== undefined && last >= i[0]) {
+            if (last !== undefined && last > i[0]) {
                 errors.push(`Неверный порядок дат. Повторяющиеся или интервалы в неверном порядке: ${formatISO(i[0])} должен быть перед ${formatISO(last)}`)
             }
             last = i[1]
         } else {
-            if (last !== undefined && last >= i) {
+            if (last !== undefined && last > i) {
                 errors.push(`Неверный порядок дат. Повторяющиеся или интервалы в неверном порядке. ${formatISO(i)} должен быть перед ${formatISO(last)}`)
             }
             last = i
