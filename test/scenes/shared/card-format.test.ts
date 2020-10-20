@@ -18,7 +18,7 @@ const defaultEvent: Event = {
     notes: 'notes',
     price: '100 руб',
     duration: '2 часа',
-    category: '',
+    category: undefined,
     address: '',
     tag_level_1: ['#level1'],
     tag_level_2: ['#level2'],
@@ -47,7 +47,7 @@ describe('test card format', () => {
         expect(prepare(card)).toEqual(prepare(expected))
     })
 
-    test('Show cinima links', async () => {
+    test('Show cinema links', async () => {
         const event: Event = {
             ...defaultEvent,
             category: 'movies',
@@ -58,6 +58,17 @@ describe('test card format', () => {
         }
         const card = cardFormat(event)
         const expected = (await readCard('show-cinema-links.html')).toString()
+        expect(prepare(card)).toEqual(prepare(expected))
+    })
+
+    test('Show where icon', async () => {
+        const event: Event = {
+            ...defaultEvent,
+            category: 'theaters',
+            place: 'Театр кота'
+        }
+        const card = cardFormat(event)
+        const expected = (await readCard('show-icon-theatre.html')).toString()
         expect(prepare(card)).toEqual(prepare(expected))
     })
 })

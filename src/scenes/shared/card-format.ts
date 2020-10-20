@@ -1,8 +1,9 @@
 import { escapeHTML } from '../../util/string-utils'
-import { Event, EventCategory } from '../../interfaces/app-interfaces'
+import { Event } from '../../interfaces/app-interfaces'
 import { getOnlyHumanTimetable } from '../../dbsync/parseSheetRow'
 import { cleanTagLevel1 } from '../../util/tag-level1-encoder'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/filed-utils'
+import { i18n } from '../../util/i18n'
 
 function addHtmlNiceUrls(text: string) {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
@@ -34,6 +35,9 @@ function formatTimetable(event: Event) {
     return `🗓 ${humanTimetable}\n`
 }
 
+function getWhereEmoji(row: Event) {
+    return i18n.t(`ru`, `shared.category_icons.${row.category}`)
+}
 
 export function cardFormat(row: Event) {
     let text = ``;
@@ -45,7 +49,7 @@ export function cardFormat(row: Event) {
     text += '\n'
 
     if (!fieldIsQuestionMarkOrEmpty(row.place)) {
-        text += `<b>Где:</b> ${addHtmlNiceUrls(escapeHTML(row.place))}\n`
+        text += `${getWhereEmoji(row)} ${addHtmlNiceUrls(escapeHTML(row.place))}\n`
     }
     const map = row.geotag != '' ? ` <a href="${escapeHTML(row.geotag)}">(Я.Карта)</a>` : ``
     if (!fieldIsQuestionMarkOrEmpty(row.address)) {

@@ -47,7 +47,7 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
 }
 
 export interface Event {
-    category: string
+    category: EventCategory
     publish: string
     subcategory: string
     title: string
