@@ -122,7 +122,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
             if (isSameMonth(rangeN.start, range.end)) {
                 humanDateRange = ruFormat(rangeN.start, 'dd') + '-' + ruFormat(rangeN.end, 'dd MMMM')
             } else {
-                humanDateRange = ruFormat(rangeN.start, 'dd MMMM') + '-' + ruFormat(rangeN.start, 'dd MMMM')
+                humanDateRange = ruFormat(rangeN.start, 'dd MMMM') + '-' + ruFormat(rangeN.end, 'dd MMMM')
             }
 
             await ctx.replyWithHTML(i18Msg('let_me_show_next_weekend', {humanDateRange, ...tplData}), { reply_markup: backMarkup(ctx) })
