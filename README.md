@@ -2,6 +2,15 @@
 
 debug `npm dev` with `-r dotenv/config` node options. 
 
+## Testing
+
+1. Copy `.env.example` to  `.env` and verify you can connect to test database by this URL:
+    ```
+    TEST_DATABASE_URL=postgres://cult-test:cult-test@localhost:5434/cult-test
+    ```
+2. Run migrations for test DB `npm run db:up-test`
+3. Run tests `npm run test`
+
 
 ## Sync
 

@@ -25,4 +25,21 @@ describe('Search', () => {
         }))
     })
 
+    test('search will show only nearest weekends', async () => {
+        const eventSat = [mskMoment('2020-01-04 00:00')]
+        const eventSun = [mskMoment('2020-01-05 23:00')]
+        const eventNextSat = [mskMoment('2020-01-11 12:00')]
+
+        await syncDatabase4Test([
+                getMockEvent({title: 'event sat', eventTime: eventSat, category: 'movies', rating: 5}),
+                getMockEvent({title: 'event sun', eventTime: eventSun, category: 'movies', rating: 5}),
+                getMockEvent({title: 'event next sat', eventTime: eventNextSat, category: 'movies', rating: 15})
+            ]
+        )
+        expectedTitles(['event sat', 'event sun'], await db.repoSearch.search({
+            query: 'event',
+            interval: interval('[2020-01-04 00:00, 2020-01-06 00:00)')
+        }))
+    })
+
 })

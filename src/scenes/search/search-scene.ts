@@ -3,8 +3,7 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { db } from '../../db'
-import { limitEventsToPage } from '../shared/shared-logic'
-import { mskMoment } from '../../util/moment-msk'
+import { getNextWeekEndRange, limitEventsToPage } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import { Paging } from '../shared/paging'
 
@@ -39,11 +38,13 @@ const content = (ctx: ContextMessageUpdate) => {
 }
 
 async function showSearchResults(ctx: ContextMessageUpdate) {
+    const range = getNextWeekEndRange(ctx.now())
+
     const events = await db.repoSearch.search({
         query: ctx.session.search.request,
         limit: limitEventsToPage,
         offset: ctx.session.paging.pagingOffset,
-        interval: { start: new Date(), end:  new Date(3000, 1, 1)}
+        interval: range
     })
 
     console.log(`Search: '${ctx.session.search.request}' offset=${ctx.session.paging.pagingOffset} found=${events.length}`)
