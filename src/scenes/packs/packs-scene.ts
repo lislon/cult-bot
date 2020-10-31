@@ -9,7 +9,7 @@ import { i18n } from '../../util/i18n'
 import { Paging } from '../shared/paging'
 import { limitEventsToPage, ruFormat } from '../shared/shared-logic'
 import { subSeconds } from 'date-fns/fp'
-import { isSameMonth, isWeekend, startOfDay } from 'date-fns'
+import { getISODay, getISOWeek, isSameMonth, isWeekend, startOfDay } from 'date-fns'
 
 export interface PacksSceneState {
     isWatchingEvents: boolean,
@@ -113,20 +113,26 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
         const tplData = {
             cat: i18Msg(`keyboard.${ctx.session.packsScene.cat}`)
         }
-        if (isWeekend(ctx.now())) {
-            await ctx.replyWithHTML(i18Msg('let_me_show_this_weekend', tplData), {
-                reply_markup: backMarkup(ctx)
-            })
-        } else {
-            let humanDateRange = ''
-            if (isSameMonth(rangeN.start, range.end)) {
-                humanDateRange = ruFormat(rangeN.start, 'dd') + '-' + ruFormat(rangeN.end, 'dd MMMM')
-            } else {
-                humanDateRange = ruFormat(rangeN.start, 'dd MMMM') + '-' + ruFormat(rangeN.end, 'dd MMMM')
-            }
 
-            await ctx.replyWithHTML(i18Msg('let_me_show_next_weekend', {humanDateRange, ...tplData}), { reply_markup: backMarkup(ctx) })
+        let humanDateRange = ''
+        if (isSameMonth(rangeN.start, range.end)) {
+            humanDateRange = ruFormat(rangeN.start, 'dd') + '-' + ruFormat(rangeN.end, 'dd MMMM')
+        } else {
+            humanDateRange = ruFormat(rangeN.start, 'dd MMMM') + '-' + ruFormat(rangeN.end, 'dd MMMM')
         }
+
+        let templateName
+
+        if (getISODay(ctx.now()) === 6) {
+            templateName = 'let_me_show_this_weekend_sat';
+        } else if (getISODay(ctx.now()) === 7) {
+            templateName = 'let_me_show_this_weekend_sun';
+        } else {
+            templateName = 'let_me_show_next_weekend';
+        }
+
+        await ctx.replyWithHTML(i18Msg(templateName, {humanDateRange, ...tplData}),
+            { reply_markup: backMarkup(ctx) })
 
         await sleep(500)
         await showNextPortionOfResults(ctx, events)
