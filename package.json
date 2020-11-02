@@ -2,6 +2,7 @@
   "name": "bot",
   "version": "0.0.0",
   "private": true,
+  "license": "unlicensed",
   "esm": true,
   "mode": "auto",
   "scripts": {

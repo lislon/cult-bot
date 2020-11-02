@@ -27,7 +27,7 @@ export function i18nSceneHelper(scene: BaseScene<ContextMessageUpdate>) {
                 i18SharedBtn: (id: string, tplData: object = undefined) =>
                     ctx.i18n.t(`shared.keyboard.${id}`, tplData),
                 // scenes.<scene id>.<id>
-                i18Msg: (id: string, tplData: object = undefined, byDefault: string = undefined) => {
+                i18Msg: (id: string, tplData: object = undefined, byDefault: string|null = undefined) => {
                     const resourceKey = `scenes.${scene.id}.${id}`
                     if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
                         return ctx.i18n.t(resourceKey, tplData)

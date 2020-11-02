@@ -66,8 +66,10 @@ export async function showBotVersion(ctx: ContextMessageUpdate) {
     const info = [
         ['Release', process.env.HEROKU_RELEASE_VERSION || 'localhost'],
         ['Commit', process.env.HEROKU_SLUG_COMMIT || 'localhost'],
-        ['Date', `${process.env.HEROKU_RELEASE_CREATED_AT} (${formatDistanceToNow(parseISO(process.env.HEROKU_RELEASE_CREATED_AT))})`],
     ]
+    if (process.env.HEROKU_RELEASE_CREATED_AT) {
+        info.push(['Date', `${process.env.HEROKU_RELEASE_CREATED_AT} (${formatDistanceToNow(parseISO(process.env.HEROKU_RELEASE_CREATED_AT))})`])
+    }
     await ctx.replyWithHTML(info.map(row => `<b>${row[0]}</b>: ${row[1]}`).join('\n'))
 }
 

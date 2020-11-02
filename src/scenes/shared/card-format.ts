@@ -39,9 +39,14 @@ function getWhereEmoji(row: Event) {
     return i18n.t(`ru`, `shared.category_icons.${row.category}`)
 }
 
-export function cardFormat(row: Event) {
+export interface CardOptions {
+    showAdminInfo: boolean
+}
+
+export function cardFormat(row: Event, options: CardOptions = { showAdminInfo: false }) {
     let text = ``;
-    text += `<b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>\n`
+    text += `<b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>`
+    text += '\n'
     text += '\n'
     text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>\n`
     text += '\n'
@@ -70,6 +75,9 @@ export function cardFormat(row: Event) {
     }
     text += '\n'
     text += `${escapeHTML(row.tag_level_3.join(' '))}\n`
+    if (options.showAdminInfo) {
+        text += `<i>${row.reviewer}, оценка ${row.rating}</i>\n`
+    }
 
     return text;
 }

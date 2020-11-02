@@ -3,16 +3,18 @@ import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interf
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { cardFormat } from '../shared/card-format'
-import { mskMoment } from '../../util/moment-msk'
-import { limitEventsToPage, ruFormat, showBotVersion, syncrhonizeDbByUser } from '../shared/shared-logic'
+import { getNextWeekEndRange, showBotVersion, syncrhonizeDbByUser } from '../shared/shared-logic'
 import { db } from '../../db'
 import { Paging } from '../shared/paging'
 import { isValid, parse } from 'date-fns'
+import { CallbackButton } from 'telegraf/typings/markup'
+import { StatByReviewer } from '../../db/db-admin'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
 export interface AdminSceneState {
-    cat: EventCategory,
+    cat?: EventCategory,
+    reviewer?: string,
     overrideDate?: string
 }
 
@@ -20,32 +22,55 @@ const { sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
 
 const globalInterval = { start: new Date(2000, 1, 1), end: new Date(3000, 1, 1) }
 
-const menu = [
+const menuCats = [
     ['theaters', 'exhibitions'],
     ['movies', 'events'],
     ['walks', 'concerts']
 ]
 
+function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessageUpdate) {
+    const {i18Btn, i18Msg} = sceneHelper(ctx)
+
+    const btn = []
+    let thisRow: CallbackButton[] = []
+    statsByReviewer.forEach(({reviewer, count}) => {
+        const icon = i18Msg(`admin_icons.${reviewer}`, undefined, '') || i18Msg('admin_icons.default');
+        thisRow.push(Markup.callbackButton(i18Btn('byReviewer', {count, icon, reviewer}), actionName(`r_${reviewer}`)))
+        if (thisRow.length == 2) {
+            btn.push(thisRow)
+            thisRow = []
+        }
+    })
+    if (thisRow.length > 2) {
+        btn.push(thisRow)
+    }
+    return btn
+}
+
 const content = async (ctx: ContextMessageUpdate) => {
     const {i18Btn, i18Msg, i18SharedBtn} = sceneHelper(ctx)
 
-    const stats = await db.repoAdmin.findStats(globalInterval)
+    const statsByName = await db.repoAdmin.findStatsByCat(globalInterval)
 
-    const mainButtons = menu.map(row =>
+    let adminButtons = menuCats.map(row =>
         row.map(btnName => {
-            const count = stats.find(r => r.category === btnName)
+            const count = statsByName.find(r => r.category === btnName)
             return Markup.callbackButton(i18Btn(btnName, { count: count === undefined ? 0 : count.count }), actionName(btnName));
         })
     );
-    mainButtons.push([
+
+    const statsByReviewer = await db.repoAdmin.findStatsByReviewer(getNextWeekEndRange(ctx.now()))
+    adminButtons = [...adminButtons, ...addReviewersMenu(statsByReviewer, ctx)]
+
+    adminButtons.push([
         Markup.callbackButton(i18Btn('sync'), actionName('sync')),
         Markup.callbackButton(i18Btn('version'), actionName('version')),
     ])
-    mainButtons.push([Markup.callbackButton(i18SharedBtn('back'), actionName('back'))])
+    adminButtons.push([Markup.callbackButton(i18SharedBtn('back'), actionName('back'))])
 
     return {
         msg: i18Msg('welcome'),
-        markup: Extra.HTML().markup(Markup.inlineKeyboard(mainButtons))
+        markup: Extra.HTML().markup(Markup.inlineKeyboard(adminButtons))
     }
 }
 
@@ -71,15 +96,43 @@ scene
         await ctx.answerCbQuery()
         await showBotVersion(ctx)
     })
+    .action(new RegExp(`${actionName('r_')}(.+)`), async (ctx: ContextMessageUpdate) => {
+        // db.repoAdmin.findAllEventsByReviewer(ctx.match[1], getNextWeekEndRange(ctx.now()), )
+        await ctx.answerCbQuery()
+        await startNewPaging(ctx)
+        ctx.session.adminScene.reviewer = ctx.match[1]
+        await showNextResults(ctx)
+    })
+
+menuCats.flatMap(m => m).forEach(menuItem => {
+    scene.action(actionName(menuItem), async (ctx: ContextMessageUpdate) => {
+        await ctx.answerCbQuery()
+        await startNewPaging(ctx)
+        ctx.session.adminScene.cat = menuItem as EventCategory
+        await showNextResults(ctx)
+    })
+})
+
+async function getSearchedEvents(ctx: ContextMessageUpdate) {
+    if (ctx.session.adminScene.cat !== undefined) {
+        const stats = await db.repoAdmin.findStatsByCat(globalInterval)
+        const total = stats.find(r => r.category === ctx.session.adminScene.cat).count
+        const events = await db.repoAdmin.findAllEventsByCat(ctx.session.adminScene.cat, globalInterval, limitInAdmin, ctx.session.paging.pagingOffset)
+        return {total, events}
+    } else {
+        const nextWeekEndRange = getNextWeekEndRange(ctx.now())
+        const stats = await db.repoAdmin.findStatsByReviewer(nextWeekEndRange)
+        const total = stats.find(r => r.reviewer === ctx.session.adminScene.reviewer).count
+        const events = await db.repoAdmin.findAllEventsByReviewer(ctx.session.adminScene.reviewer, nextWeekEndRange, limitInAdmin, ctx.session.paging.pagingOffset)
+        return {total, events}
+    }
+}
 
 async function showNextResults(ctx: ContextMessageUpdate) {
     await prepareSessionStateIfNeeded(ctx)
-    const stats = await db.repoAdmin.findStats(globalInterval)
-    const total = stats.find(r => r.category === ctx.session.adminScene.cat).count
+    const {total, events} = await getSearchedEvents(ctx)
 
     const {i18Btn, i18Msg} = sceneHelper(ctx)
-
-    const events = await db.repoAdmin.findAllEventsAdmin(ctx.session.adminScene.cat, globalInterval, limitInAdmin, ctx.session.paging.pagingOffset)
 
     const nextBtn = Markup.inlineKeyboard([
         Markup.callbackButton(i18Btn('show_more', {
@@ -90,7 +143,7 @@ async function showNextResults(ctx: ContextMessageUpdate) {
 
     let count = 0
     for (const event of events) {
-        await ctx.replyWithHTML(cardFormat(event), {
+        await ctx.replyWithHTML(cardFormat(event, { showAdminInfo: true }), {
             disable_web_page_preview: true,
             reply_markup: (++count == events.length && events.length === limitInAdmin ? nextBtn : undefined)
         })
@@ -98,16 +151,13 @@ async function showNextResults(ctx: ContextMessageUpdate) {
     }
 }
 
-menu.flatMap(m => m).forEach(menuItem => {
-    scene.action(actionName(menuItem), async (ctx: ContextMessageUpdate) => {
-        await ctx.answerCbQuery()
-        await prepareSessionStateIfNeeded(ctx)
-        ctx.session.adminScene.cat = menuItem as EventCategory
-        Paging.reset(ctx)
-        await showNextResults(ctx)
-    })
-})
 
+async function startNewPaging(ctx: ContextMessageUpdate) {
+    await prepareSessionStateIfNeeded(ctx)
+    ctx.session.adminScene.cat = undefined
+    ctx.session.adminScene.reviewer = undefined
+    Paging.reset(ctx)
+}
 
 async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     if (!ctx.scene.current) {
@@ -117,6 +167,7 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     if (ctx.session.adminScene === undefined) {
         ctx.session.adminScene = {
             cat: undefined,
+            reviewer: undefined,
             overrideDate: undefined
         }
     }

@@ -1,4 +1,4 @@
-import { expectedTitles, getMockEvent, syncDatabase4Test } from './db-test-utils'
+import { expectedTitles, expectedTitlesStrict, getMockEvent, syncDatabase4Test } from './db-test-utils'
 import { db, dbCfg } from '../../../src/db'
 import { date, interval } from '../../lib/timetable/test-utils'
 
@@ -17,16 +17,16 @@ describe('Admin', () => {
             ]
         )
 
-        expectedTitles(['A', 'B'], await db.repoAdmin.findAllEventsAdmin('movies', yearRange, 10))
+        expectedTitles(['A', 'B'], await db.repoAdmin.findAllEventsByCat('movies', yearRange, 10))
     })
 
-    test('find stats', async () => {
+    test('find stats by cat', async () => {
         await syncDatabase4Test([
                 getMockEvent({title: 'A', eventTime, category: 'movies', rating: 5}),
                 getMockEvent({title: 'B', eventTime, category: 'theaters', rating: 20})
             ]
         )
-        const actual = await db.repoAdmin.findStats(yearRange)
+        const actual = await db.repoAdmin.findStatsByCat(yearRange)
         expect(actual).toEqual([
             {
                 'category': 'movies',
@@ -37,5 +37,37 @@ describe('Admin', () => {
                 'count': '1'
             }
         ])
+    })
+
+    test('find stats by reviewer', async () => {
+        await syncDatabase4Test([
+                getMockEvent({title: 'A', eventTime: [date('2020-01-01 12:00')], reviewer: 'Лена'}),
+                getMockEvent({title: 'B', eventTime: [date('2020-05-01 12:00')], reviewer: 'Лена'}),
+                getMockEvent({title: 'C', eventTime: [date('2020-01-01 12:00')], reviewer: 'Аня'})
+            ]
+        )
+        const actual = await db.repoAdmin.findStatsByReviewer(interval('[2020-01-01 00:00, 2020-01-02 00:00)'))
+        expect(actual).toEqual([
+            {
+                'reviewer': 'Аня',
+                'count': '1'
+            },
+            {
+                'reviewer': 'Лена',
+                'count': '1'
+            }
+        ])
+    })
+
+    test('find events reviewer', async () => {
+        await syncDatabase4Test([
+                getMockEvent({title: 'A', eventTime: [date('2020-01-01 12:00')], reviewer: 'Лена'}),
+                getMockEvent({title: 'B', eventTime: [date('2020-05-01 12:00')], reviewer: 'Лена'}),
+                getMockEvent({title: 'C', eventTime: [date('2020-01-01 12:00')], reviewer: 'Аня', rating: 20, anytime: true}),
+                getMockEvent({title: 'D', eventTime: [date('2020-01-01 12:00')], reviewer: 'Аня', rating: 1}),
+            ]
+        )
+        const actual = await db.repoAdmin.findAllEventsByReviewer('Аня', interval('[2020-01-01 00:00, 2020-01-02 00:00)'))
+        expectedTitlesStrict(['D', 'C'], actual)
     })
 })
