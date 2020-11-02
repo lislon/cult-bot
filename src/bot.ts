@@ -1,12 +1,9 @@
 import Telegraf, { Stage } from 'telegraf'
-import logger from './util/logger';
-import rp from 'request-promise';
 import { match } from 'telegraf-i18n';
 import { mainRegisterActions, mainScene } from './scenes/main/main-scene'
 import { adminRegisterActions, adminScene } from './scenes/admin/admin-scene'
 import { packsRegisterActions, packsScene } from './scenes/packs/packs-scene'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
-import { db } from './db';
 import middlewares from './middleware-utils'
 import { customizeRegisterActions, customizeScene } from './scenes/customize/customize-scene'
 import { timeTableScene } from './scenes/timetable/timetable-scene'
@@ -14,15 +11,14 @@ import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
 import { searchRegisterActions, searchScene } from './scenes/search/search-scene'
 import { ifAdmin, isAdmin, sleep } from './util/scene-helper'
 import 'source-map-support/register'
-import { getGoogleSpreadSheetURL, showBotVersion, syncrhonizeDbByUser } from './scenes/shared/shared-logic'
+import { showBotVersion, syncrhonizeDbByUser } from './scenes/shared/shared-logic'
 import { i18n } from './util/i18n'
 
 console.log(`starting bot...`);
-db.any('select 1 + 1')
 
 const quick = process.env.NODE_ENV === 'development';
 
-const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
+export const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
 const stage = new Stage([], {
     default: 'main_scene'
 })
@@ -129,60 +125,6 @@ bot.hears(/.+/, (ctx, next) => {
     console.debug(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [text=${ctx.message.text}]`)
     return next()
 })
-
-process.env.NODE_ENV === 'production' ? startProdMode(bot) : startDevMode(bot);
-
-function printDiagnostic() {
-    logger.debug(undefined, `google docs db: ${getGoogleSpreadSheetURL()}` );
-}
-
-function startDevMode(bot: Telegraf<ContextMessageUpdate>) {
-    logger.debug(undefined, 'Starting a bot in development mode');
-    printDiagnostic()
-
-    rp(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook`).then(() => {
-        console.log(`Bot started`)
-        bot.startPolling()
-    });
-}
-
-async function startProdMode(bot: Telegraf<ContextMessageUpdate>) {
-    logger.debug(undefined, 'Starting a bot in production mode');
-    // If webhook not working, check fucking motherfucking UFW that probably blocks a port...
-    printDiagnostic()
-    // const tlsOptions = {
-    //     key: fs.readFileSync(process.env.PATH_TO_KEY),
-    //     cert: fs.readFileSync(process.env.PATH_TO_CERT)
-    // };
-
-    if (!process.env.HEROKU_APP_NAME) {
-        console.log('process.env.HEROKU_APP_NAME must be defined to run in PROD')
-        process.exit(1)
-    }
-    if (!process.env.WEBHOOK_PORT) {
-        console.log('process.env.WEBHOOK_PORT must be defined to run in PROD')
-        process.exit(1)
-    }
-    const success = await bot.telegram.setWebhook(
-        `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:${process.env.WEBHOOK_PORT}/${process.env.TELEGRAM_TOKEN}`
-    )
-    if (success) {
-        console.log(`hook is set. (To delete: https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook ) Starting app at ${process.env.PORT}`)
-    } else {
-        console.error(`hook was not set!`)
-        const webhookStatus = await bot.telegram.getWebhookInfo();
-        console.log('Webhook status', webhookStatus);
-        process.exit(2)
-    }
-
-    await bot.startWebhook(`/${process.env.TELEGRAM_TOKEN}`, undefined, +process.env.PORT);
-
-    const webhookStatus = await bot.telegram.getWebhookInfo();
-
-
-    console.log('Webhook status', webhookStatus);
-    // checkUnreleasedMovies();
-}
 
 
 // bot.command('pyramid', (ctx) => {
