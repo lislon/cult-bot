@@ -30,7 +30,7 @@
     "googleapis": "^60.0.1",
     "lodash": "^4.17.20",
     "parsimmon": "^1.16.0",
-    "pg": "^8.3.2",
+    "pg": "^8.4.2",
     "pg-monitor": "^1.4.1",
     "pg-promise": "^10.6.1",
     "plural-ru": "^2.0.2",
