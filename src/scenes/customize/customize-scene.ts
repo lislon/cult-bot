@@ -15,7 +15,7 @@ import { Paging } from '../shared/paging'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
-const {backButton, sceneHelper, actionName, i18nModuleBtnName, revertActionName} = i18nSceneHelper(scene)
+const {backButton, sceneHelper, actionName, i18nModuleBtnName, revertActionName, scanKeys} = i18nSceneHelper(scene)
 
 function mapFormatToDbQuery(format: string[]) {
     if (format === undefined || format.length !== 1) {
@@ -151,51 +151,30 @@ async function getKeyboardCennosti(ctx: ContextMessageUpdate, state: CustomizeSc
 async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
     const menu = new Menu(ctx, ctx.session.customize.oblasti, ctx.session.customize.openedMenus, 'oblasti_section')
 
+    const getSectionFromI18n = (section: string): [string][] => {
+        return scanKeys(`keyboard.oblasti_section.${section}`).map(t => [t.replace(/^[^#]+/, '')])
+    }
+
     const buttons = [
-        ...(menu.dropDownButtons('menu_movies', [
-            ['#художественное'],
-            ['#документальное'],
-            ['#анимация'],
-            ['#короткийметр'],
-            ['#театрвкино']
-        ])),
-        ...(menu.dropDownButtons('menu_concerts', [
-            ['#сольныйконцерт'],
-            ['#сборныйконцерт'],
-            ['#камерныйконцерт'],
-            ['#классическийконцерт'],
-            ['#творческийвечер']
-        ])),
-        ...(menu.dropDownButtons('menu_exhibitions', [
-            ['#постояннаяэкспозиция'],
-            ['#временнаявыставка'],
-            ['#выставочныйпроект'],
-            ['#персональнаявыставка'],
-            ['#доммузей']
-        ])),
-        ...(menu.dropDownButtons('menu_theaters', [
-            ['#драматическийтеатр'],
-            ['#эксперимент'],
-            ['#опера'],
-            ['#танец'],
-            ['#мюзикл'],
-            ['#аудиоспектакль'],
-            ['#кукольныйтеатр'],
-        ])),
-        ...(menu.dropDownButtons('menu_events', [
-            ['#лекция'],
-            ['#встречасперсоной'],
-            ['#мастеркласс'],
-            ['#курс'],
-            ['#подкаст']
-        ])),
-        ...(menu.dropDownButtons('menu_walks', [
-            ['#активныйотдых'],
-            ['#городсгидом'],
-            ['#загородсгидом'],
-            ['#аудиоэкскурсия'],
-            ['#знакомствоспространством'],
-        ]))
+        ...(menu.dropDownButtons('menu_movies',
+            getSectionFromI18n(`movies`)
+        )),
+        ...(menu.dropDownButtons('menu_concerts',
+            getSectionFromI18n(`concerts`)
+        )),
+        ...(menu.dropDownButtons('menu_exhibitions',
+            getSectionFromI18n(`exhibitions`)
+        )),
+        ...(menu.dropDownButtons('menu_theaters',
+            getSectionFromI18n(`theaters`)
+        )),
+        ...(menu.dropDownButtons('menu_events',
+            getSectionFromI18n(`events`)
+        )),
+        ...(menu.dropDownButtons('menu_walks',
+            getSectionFromI18n('walks')
+
+        ))
     ]
     return Markup.inlineKeyboard(buttons)
 }
