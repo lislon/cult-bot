@@ -7,9 +7,9 @@ import * as events from 'events'
 import TelegrafI18n from 'telegraf-i18n'
 import { i18n } from '../../util/i18n'
 import { Paging } from '../shared/paging'
-import { limitEventsToPage, ruFormat } from '../shared/shared-logic'
+import { limitEventsToPage, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { subSeconds } from 'date-fns/fp'
-import { getISODay, getISOWeek, isSameMonth, isWeekend, startOfDay } from 'date-fns'
+import { getISODay, isSameMonth, startOfDay } from 'date-fns'
 
 export interface PacksSceneState {
     isWatchingEvents: boolean,
@@ -103,9 +103,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
     const {range, events} = await getTopEvents(ctx.session.packsScene.cat, ctx.now(), ctx.session.paging.pagingOffset)
     const {i18Btn, i18Msg} = sceneHelper(ctx)
 
-    if (ctx.isNowOverridden()) {
-        await ctx.replyWithHTML('Текущая дата заменена на ' + ctx.now().toString())
-    }
+    await warnAdminIfDateIsOverriden(ctx)
 
     const rangeN = intervalTemplateNormalize(range)
 

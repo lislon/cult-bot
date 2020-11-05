@@ -3,12 +3,19 @@ import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interf
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { cardFormat } from '../shared/card-format'
-import { getNextWeekEndRange, showBotVersion, syncrhonizeDbByUser } from '../shared/shared-logic'
+import {
+    getNextWeekEndRange,
+    ruFormat,
+    showBotVersion,
+    syncrhonizeDbByUser,
+    warnAdminIfDateIsOverriden
+} from '../shared/shared-logic'
 import { db } from '../../db'
 import { Paging } from '../shared/paging'
-import { isValid, parse } from 'date-fns'
+import { isValid, parse, parseISO } from 'date-fns'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { StatByReviewer } from '../../db/db-admin'
+import { addMonths } from 'date-fns/fp'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
@@ -157,6 +164,7 @@ async function startNewPaging(ctx: ContextMessageUpdate) {
     ctx.session.adminScene.cat = undefined
     ctx.session.adminScene.reviewer = undefined
     Paging.reset(ctx)
+    await warnAdminIfDateIsOverriden(ctx)
 }
 
 async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
@@ -180,20 +188,35 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
 
     bot.command('time', (async (ctx: ContextMessageUpdate) => {
         if (isAdmin(ctx)) {
+            const {i18Msg} = sceneHelper(ctx)
+            const HUMAN_OVERRIDE_FORMAT = 'dd MMMM yyyy HH:mm, iiii'
+
             await prepareSessionStateIfNeeded(ctx)
             const dateStr = ctx.message.text.replace(/^\/time[\s]*/, '')
             if (dateStr === undefined || dateStr === 'now') {
                 ctx.session.adminScene.overrideDate = undefined
-                await ctx.replyWithHTML('Переопределние даты сброшено')
+                await ctx.replyWithHTML(i18Msg('time_override.reset'))
             } else if (dateStr === '') {
-                await ctx.replyWithHTML(`Текущее время: ${ctx.session.adminScene.overrideDate}`)
+                await ctx.replyWithHTML(i18Msg('time_override.status',
+                    { time: ruFormat(parseISO(ctx.session.adminScene.overrideDate), HUMAN_OVERRIDE_FORMAT) }))
             } else {
-                const parsed = parse(dateStr, 'yyyy-MM-dd HH:mm', new Date())
-                if (isValid(parsed)) {
-                    ctx.session.adminScene.overrideDate = parsed.toISOString()
-                    await ctx.replyWithHTML('Притворяемся, что сейчас: ' + parsed.toString() + ' Чтобы сбросить выполните /time now')
+                const now = new Date()
+                let parsed = parse(dateStr, 'yyyy-MM-dd HH:mm', now)
+
+                if (!isValid(parsed) && dateStr.match(/^\d{1,2}$/)) {
+                    parsed = new Date(now.getFullYear(), now.getMonth(), +dateStr)
+                    if (now.getDay() > +dateStr) {
+                        parsed = addMonths(1)(parsed)
+                    }
                 } else {
-                    await ctx.replyWithHTML('Сорян, Не поняла команду. Пример: /time 2021-05-12 12:00')
+                    parsed = undefined
+                    await ctx.replyWithHTML(i18Msg('time_override.invalid'))
+                }
+                if (parsed !== undefined) {
+                    ctx.session.adminScene.overrideDate = parsed.toISOString()
+                    await ctx.replyWithHTML(i18Msg('time_override.changed', { time: ruFormat(parsed, HUMAN_OVERRIDE_FORMAT) }))
+                } else {
+                    await ctx.replyWithHTML(i18Msg('time_override.invalid'))
                 }
             }
         }

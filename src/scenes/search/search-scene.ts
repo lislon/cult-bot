@@ -3,7 +3,7 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { db } from '../../db'
-import { getNextWeekEndRange, limitEventsToPage } from '../shared/shared-logic'
+import { getNextWeekEndRange, limitEventsToPage, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import { Paging } from '../shared/paging'
 
@@ -101,6 +101,7 @@ scene
     .hears(/.+/, async (ctx: ContextMessageUpdate) => {
         Paging.reset(ctx)
         ctx.session.search.request = ctx.match[0]
+        await warnAdminIfDateIsOverriden(ctx)
         await showSearchResults(ctx)
     })
 

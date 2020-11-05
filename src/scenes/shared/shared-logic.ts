@@ -6,6 +6,7 @@ import { addDays, max, parseISO, startOfDay, startOfISOWeek } from 'date-fns/fp'
 import { format, formatDistanceToNow, Locale } from 'date-fns'
 import flow from 'lodash/fp/flow'
 import { ru } from 'date-fns/locale'
+import { i18n } from '../../util/i18n'
 
 export function getNextWeekEndRange(now: Date): MyInterval {
     return {
@@ -74,3 +75,10 @@ export async function showBotVersion(ctx: ContextMessageUpdate) {
 }
 
 export const limitEventsToPage = 3
+
+export async function warnAdminIfDateIsOverriden(ctx: ContextMessageUpdate) {
+    if (ctx.isNowOverridden()) {
+        const msg = i18n.t(`ru`, `shared.date_override_warning`, {time: ruFormat(ctx.now(), 'dd MMMM yyyy HH:mm, iiii')})
+        await ctx.replyWithHTML(msg)
+    }
+}

@@ -3,7 +3,12 @@ import { chidrensTags, ContextMessageUpdate, EventFormat, TagLevel2 } from '../.
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import TelegrafI18n from 'telegraf-i18n'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
-import { getNextWeekEndRange, limitEventsToPage, SessionEnforcer } from '../shared/shared-logic'
+import {
+    getNextWeekEndRange,
+    limitEventsToPage,
+    SessionEnforcer,
+    warnAdminIfDateIsOverriden
+} from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import plural from 'plural-ru'
 import { formatExplainCennosti, formatExplainFormat, formatExplainOblasti, formatExplainTime } from './format-explain'
@@ -376,6 +381,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             await putOrRefreshCounterMessage(ctx)
         })
         .hears(i18nModuleBtnName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
+            await warnAdminIfDateIsOverriden(ctx)
             await showNextPortionOfResults(ctx)
         })
         .hears(i18nModuleBtnName('reset_filter'), async (ctx: ContextMessageUpdate) => {
