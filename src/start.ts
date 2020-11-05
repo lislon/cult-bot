@@ -12,9 +12,7 @@ class BotStart {
     static PATH = 'tlg'
 
     public static expressMiddleware(bot: Telegraf<ContextMessageUpdate>) {
-        process.env.NODE_ENV === 'production' ? BotStart.startProdMode(bot) : BotStart.startDevMode(bot);
-
-        return bot.webhookCallback(`/${process.env.TELEGRAM_TOKEN}`)
+        return bot.webhookCallback(`/${BotStart.PATH}`)
     }
 
     private static printDiagnostic() {
@@ -30,7 +28,7 @@ class BotStart {
         });
     }
 
-    private static async startProdMode(bot: Telegraf<ContextMessageUpdate>) {
+    public static async startProdMode(bot: Telegraf<ContextMessageUpdate>) {
         logger.debug(undefined, 'Starting a bot in production mode');
         // If webhook not working, check fucking motherfucking UFW that probably blocks a port...
         BotStart.printDiagnostic()
@@ -43,19 +41,18 @@ class BotStart {
             console.log('process.env.WEBHOOK_PORT must be defined to run in PROD')
             process.exit(1)
         }
+        const hookUrl = `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:${process.env.WEBHOOK_PORT}/${BotStart.PATH}`
         const success = await bot.telegram.setWebhook(
-            `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:${process.env.WEBHOOK_PORT}/${BotStart.PATH}`
+            hookUrl
         )
         if (success) {
-            console.log(`hook is set. (To delete: https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook ) Starting app at ${process.env.PORT}`)
+            console.log(`hook ${hookUrl} is set. (To delete: https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook ) Starting app at ${process.env.PORT}`)
         } else {
             console.error(`hook was not set!`)
             const webhookStatus = await bot.telegram.getWebhookInfo();
             console.log('Webhook status', webhookStatus);
             process.exit(2)
         }
-
-        await bot.startWebhook(`/${BotStart.PATH}`, undefined, +process.env.PORT);
 
         const webhookStatus = await bot.telegram.getWebhookInfo();
 
@@ -64,14 +61,14 @@ class BotStart {
 }
 
 if (process.env.BOT_DISABLED === undefined) {
-    if (process.env.NODE_ENV === 'production') {
-        app.use(BotStart.expressMiddleware(bot))
-    } else {
+    if (process.env.NODE_ENV === 'development') {
         BotStart.startDevMode(bot)
     }
 } else {
     console.log('Bot is disabled by BOT_DISABLED')
 }
+
+app.use(BotStart.expressMiddleware(bot))
 
 app.use('/api', (request: Request, response: Response) => {
     response.send('hi')
@@ -84,5 +81,9 @@ function logErrors (err: any, req: any, res: any, next: any) {
 }
 
 app.listen(process.env.PORT, () => {
+    if (process.env.BOT_DISABLED === undefined && process.env.NODE_ENV === 'production') {
+        BotStart.startProdMode(bot)
+    }
+
     console.log(`Bot started on port ${process.env.PORT}!`)
 })
