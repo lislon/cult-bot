@@ -24,15 +24,12 @@ function formatUrl(text: string) {
 function formatTimetable(event: Event) {
     const humanTimetable = getOnlyHumanTimetable(event.timetable);
 
-    if (event.category === 'movies') {
-        const lines = humanTimetable.split(/[\n\r]+/)
-        return lines
-            .map(l => l.trim())
-            .map(l => l.replace(/:[^(]*[(](http.+?)[)]/, ': <a href="$1">расписание</a>'))
-            .map(l => `🗓 ${l}\n`)
-            .join('')
-    }
-    return `🗓 ${humanTimetable}\n`
+    const lines = humanTimetable.split(/[\n\r]+/)
+    return lines
+        .map(l => l.trim())
+        .map(l => l.replace(/:[^(]*[(](http.+?)[)]/, ': <a href="$1">расписание</a>'))
+        .map(l => `🗓 ${l}\n`)
+        .join('')
 }
 
 function getWhereEmoji(row: Event) {

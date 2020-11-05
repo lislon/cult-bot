@@ -38,7 +38,7 @@ const prepare = (str: string) => {
 
 describe('test card format', () => {
 
-    test('Show base ca', async () => {
+    test('Show base card', async () => {
         const event: Event = {
             ...defaultEvent,
         }
@@ -47,7 +47,7 @@ describe('test card format', () => {
         expect(prepare(card)).toEqual(prepare(expected))
     })
 
-    test('Show cinema links', async () => {
+    test('Show nice icon if two line timetable', async () => {
         const event: Event = {
             ...defaultEvent,
             category: 'movies',
@@ -57,7 +57,18 @@ describe('test card format', () => {
             `,
         }
         const card = cardFormat(event)
-        const expected = (await readCard('show-cinema-links.html')).toString()
+        const expected = (await readCard('show-timetable-prefix-cinema.html')).toString()
+        expect(prepare(card)).toEqual(prepare(expected))
+    })
+
+    test('Show date icon when complex timetable in events', async () => {
+        const event: Event = {
+            ...defaultEvent,
+            category: 'events',
+            timetable: `пн: 12:00\nвт: 12:00`,
+        }
+        const card = cardFormat(event)
+        const expected = (await readCard('show-timetable-prefix-event.html')).toString()
         expect(prepare(card)).toEqual(prepare(expected))
     })
 
