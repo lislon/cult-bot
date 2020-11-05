@@ -26,7 +26,6 @@ class BotStart {
         BotStart.printDiagnostic()
 
         rp(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook`).then(() => {
-            console.log(`Bot started`)
             bot.startPolling()
         });
     }
@@ -70,6 +69,8 @@ if (process.env.BOT_DISABLED === undefined) {
     } else {
         BotStart.startDevMode(bot)
     }
+} else {
+    console.log('Bot is disabled by BOT_DISABLED')
 }
 
 app.use('/api', (request: Request, response: Response) => {

@@ -41,7 +41,7 @@ function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessage
             thisRow = []
         }
     })
-    if (thisRow.length > 2) {
+    if (thisRow.length > 0) {
         btn.push(thisRow)
     }
     return btn

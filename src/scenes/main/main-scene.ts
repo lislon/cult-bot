@@ -23,6 +23,15 @@ const content = (ctx: ContextMessageUpdate) => {
             return Markup.button(i18Btn(btnName));
         })
     );
+
+    mainButtons.push([Markup.button('Фестиваль DanceOpen')])
+    mainButtons.push([Markup.button('Неделя Италии')])
+    mainButtons.push([Markup.button('Театр лучшее для всей семьи')])
+    mainButtons.push([Markup.button('Нетривиальный пушкин')])
+    mainButtons.push([Markup.button('тривиальный пушкин')])
+    mainButtons.push([Markup.button('Неделя Франции')])
+    mainButtons.push([Markup.button('Неделя Марины')])
+
     return {
         msg: i18Msg('select_anything'),
         markupMainMenu: Extra.HTML(true).markup(Markup.keyboard(mainButtons).resize())

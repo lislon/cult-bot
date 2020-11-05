@@ -20,7 +20,6 @@ import Schema$Request = sheets_v4.Schema$Request
 
 // our set of columns, to be created only once (statically), and then reused,
 // to let it cache up its formatting templates for high performance:
-const spreadsheetId = process.env.GOOGLE_DOCS_ID;
 
 function getColumnIndex(column: ExcelColumnName) {
     return EXCEL_COLUMN_NAMES.indexOf(column) + 1
@@ -53,6 +52,7 @@ class ExcelUpdater {
 
 
     async update() {
+        const spreadsheetId = process.env.GOOGLE_DOCS_ID;
         await this.excel.spreadsheets.batchUpdate({
             spreadsheetId,
             requestBody: {requests: this.requests}
@@ -116,6 +116,7 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
 
         console.log(`Loading from excel [${ranges}]...`)
 
+        const spreadsheetId = process.env.GOOGLE_DOCS_ID;
         const [sheetsMetaData, sheetsData] = await Promise.all([
             excel.spreadsheets.get({ spreadsheetId, ranges }),
             excel.spreadsheets.values.batchGet({ spreadsheetId, ranges })
