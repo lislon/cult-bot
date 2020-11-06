@@ -208,7 +208,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
                     if (now.getDay() > +dateStr) {
                         parsed = addMonths(1)(parsed)
                     }
-                } else {
+                } else if (!isValid(parsed)) {
                     parsed = undefined
                     await ctx.replyWithHTML(i18Msg('time_override.invalid'))
                 }
