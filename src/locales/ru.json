@@ -46,7 +46,7 @@
         "theaters": "🎭  Театры (${count})",
         "exhibitions": "👀  Выставки (${count})",
         "movies": "🎥  Кино (${count})",
-        "events": "💡️ Мероприятия  (${count})",
+        "events": "💡️ (${count}) Мероприятия  ",
         "walks": "🏃 Прогулки (${count})",
         "concerts": "🎼  Концерты (${count})",
         "byReviewer": " ${icon} ${reviewer} (${count})",
