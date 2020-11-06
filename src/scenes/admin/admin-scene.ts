@@ -27,8 +27,6 @@ export interface AdminSceneState {
 
 const { sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
 
-const globalInterval = { start: new Date(2000, 1, 1), end: new Date(3000, 1, 1) }
-
 const menuCats = [
     ['theaters', 'exhibitions'],
     ['movies', 'events'],
@@ -56,8 +54,9 @@ function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessage
 
 const content = async (ctx: ContextMessageUpdate) => {
     const {i18Btn, i18Msg, i18SharedBtn} = sceneHelper(ctx)
+    const dateRanges = getNextWeekEndRange(ctx.now())
 
-    const statsByName = await db.repoAdmin.findStatsByCat(globalInterval)
+    const statsByName = await db.repoAdmin.findStatsByCat(dateRanges)
 
     let adminButtons = menuCats.map(row =>
         row.map(btnName => {
@@ -66,7 +65,8 @@ const content = async (ctx: ContextMessageUpdate) => {
         })
     );
 
-    const statsByReviewer = await db.repoAdmin.findStatsByReviewer(getNextWeekEndRange(ctx.now()))
+
+    const statsByReviewer = await db.repoAdmin.findStatsByReviewer(dateRanges)
     adminButtons = [...adminButtons, ...addReviewersMenu(statsByReviewer, ctx)]
 
     adminButtons.push([
@@ -121,13 +121,13 @@ menuCats.flatMap(m => m).forEach(menuItem => {
 })
 
 async function getSearchedEvents(ctx: ContextMessageUpdate) {
+    const nextWeekEndRange = getNextWeekEndRange(ctx.now())
     if (ctx.session.adminScene.cat !== undefined) {
-        const stats = await db.repoAdmin.findStatsByCat(globalInterval)
+        const stats = await db.repoAdmin.findStatsByCat(nextWeekEndRange)
         const total = stats.find(r => r.category === ctx.session.adminScene.cat).count
-        const events = await db.repoAdmin.findAllEventsByCat(ctx.session.adminScene.cat, globalInterval, limitInAdmin, ctx.session.paging.pagingOffset)
+        const events = await db.repoAdmin.findAllEventsByCat(ctx.session.adminScene.cat, nextWeekEndRange, limitInAdmin, ctx.session.paging.pagingOffset)
         return {total, events}
     } else {
-        const nextWeekEndRange = getNextWeekEndRange(ctx.now())
         const stats = await db.repoAdmin.findStatsByReviewer(nextWeekEndRange)
         const total = stats.find(r => r.reviewer === ctx.session.adminScene.reviewer).count
         const events = await db.repoAdmin.findAllEventsByReviewer(ctx.session.adminScene.reviewer, nextWeekEndRange, limitInAdmin, ctx.session.paging.pagingOffset)
