@@ -7,10 +7,10 @@ export function i18nSceneHelper(scene: BaseScene<ContextMessageUpdate>) {
     const backAction = scene.id + 'button.back'
 
     const pushEnterScene = async (ctx: ContextMessageUpdate, nextSceneId: string) => {
-            if (ctx.session.sceneStack === undefined) {
-            ctx.session.sceneStack = []
-        }
-        ctx.session.sceneStack.push(scene.id)
+        //     if (ctx.session.sceneStack === undefined) {
+        //     ctx.session.sceneStack = []
+        // }
+        // ctx.session.sceneStack.push(scene.id)
         await ctx.scene.enter(nextSceneId)
     }
 
@@ -67,6 +67,7 @@ export function isAdmin(ctx: ContextMessageUpdate) {
         '@lislon',
         '@RemboTrembo',
         '@kashmar85',
+        '@evdokimovamari'
     ]
     const adminIds = [
         781083907, // Anna
