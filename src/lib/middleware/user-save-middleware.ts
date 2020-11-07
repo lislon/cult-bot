@@ -8,11 +8,11 @@ export const userSaveMiddleware = async (ctx: ContextMessageUpdate, next: any) =
     if (ctx.session.id === undefined) {
         await db.tx(async (dbTx: ITask<IExtensions> & IExtensions) => {
             const user = await dbTx.userRepo.findUserByTid(ctx.from.id)
-            if (user !== undefined) {
+            if (user !== null) {
                 ctx.session.id = user.id
                 ctx.session.uaUuid = user.ua_uuid;
             } else {
-                const id = await dbTx.userRepo.insertUser({
+                const userId = await dbTx.userRepo.insertUser({
                     tid: ctx.message.from.id,
                     username: ctx.message.from.username,
                     first_name: ctx.message.from.first_name,
@@ -20,7 +20,7 @@ export const userSaveMiddleware = async (ctx: ContextMessageUpdate, next: any) =
                     language_code: ctx.message.from.language_code,
                     ua_uuid: ctx.session.uaUuid
                 })
-                ctx.session.id = id;
+                ctx.session.id = userId;
             }
         })
     }

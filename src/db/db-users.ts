@@ -33,7 +33,7 @@ export class UserRepository {
         );
     }
 
-    public async findUserByTid(tid: number): Promise<UserDb> {
+    public async findUserByTid(tid: number): Promise<UserDb|null> {
         return this.db.oneOrNone('SELECT id, ua_uuid FROM cb_users WHERE tid = $1', tid)
     }
 
