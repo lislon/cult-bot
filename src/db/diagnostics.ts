@@ -1,10 +1,11 @@
 import { IInitOptions } from 'pg-promise'
 import pgMonitor from 'pg-monitor'
+import { botConfig } from '../util/bot-config'
 
 export class Diagnostics {
     // Monitor initialization function;
     static init<Ext = {}>(options: IInitOptions<Ext>) {
-        if (process.env.NODE_ENV === 'development') {
+        if (botConfig.NODE_ENV === 'development') {
             // In a DEV environment, we attach to all supported events:
             pgMonitor.attach(options);
         } else {

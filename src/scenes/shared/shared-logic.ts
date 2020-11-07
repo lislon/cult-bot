@@ -7,6 +7,7 @@ import { format, formatDistanceToNow, Locale } from 'date-fns'
 import flow from 'lodash/fp/flow'
 import { ru } from 'date-fns/locale'
 import { i18n } from '../../util/i18n'
+import { botConfig } from '../../util/bot-config'
 
 export function getNextWeekEndRange(now: Date): MyInterval {
     return {
@@ -47,7 +48,7 @@ export async function syncrhonizeDbByUser(ctx: ContextMessageUpdate) {
 }
 
 export function getGoogleSpreadSheetURL() {
-    return `https://docs.google.com/spreadsheets/d/${process.env.GOOGLE_DOCS_ID}`
+    return `https://docs.google.com/spreadsheets/d/${botConfig.GOOGLE_DOCS_ID}`
 }
 
 export class SessionEnforcer {
@@ -65,11 +66,11 @@ export class SessionEnforcer {
 }
 export async function showBotVersion(ctx: ContextMessageUpdate) {
     const info = [
-        ['Release', process.env.HEROKU_RELEASE_VERSION || 'localhost'],
-        ['Commit', process.env.HEROKU_SLUG_COMMIT || 'localhost'],
+        ['Release', botConfig.HEROKU_RELEASE_VERSION || 'localhost'],
+        ['Commit', botConfig.HEROKU_SLUG_COMMIT || 'localhost'],
     ]
-    if (process.env.HEROKU_RELEASE_CREATED_AT) {
-        info.push(['Date', `${process.env.HEROKU_RELEASE_CREATED_AT} (${formatDistanceToNow(parseISO(process.env.HEROKU_RELEASE_CREATED_AT))})`])
+    if (botConfig.HEROKU_RELEASE_CREATED_AT) {
+        info.push(['Date', `${botConfig.HEROKU_RELEASE_CREATED_AT} (${formatDistanceToNow(parseISO(botConfig.HEROKU_RELEASE_CREATED_AT))})`])
     }
     await ctx.replyWithHTML(info.map(row => `<b>${row[0]}</b>: ${row[1]}`).join('\n'))
 }

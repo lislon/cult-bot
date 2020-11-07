@@ -1,16 +1,14 @@
-import pg_promise from 'pg-promise'
-import { config } from 'dotenv'
+import pg_promise, { IDatabase, IInitOptions, IMain } from 'pg-promise'
 import * as pg from 'pg-promise/typescript/pg-subset'
-import { Diagnostics } from './db/diagnostics'
-import { IDatabase, IInitOptions, IMain } from 'pg-promise'
 import { IConnectionParameters } from 'pg-promise/typescript/pg-subset'
+import { Diagnostics } from './db/diagnostics'
 import { CustomFilterRepository } from './db/custom-filter-repository'
 import { EventsSyncRepository } from './db/sync-repository'
 import { TopEventsRepository } from './db/top-events'
 import { AdminRepository } from './db/db-admin'
 import { SearchRepository } from './db/search'
-
-config();
+import { UserRepository } from './db/db-users'
+import { botConfig } from './util/bot-config'
 
 export interface IExtensions {
     repoSync: EventsSyncRepository,
@@ -18,6 +16,7 @@ export interface IExtensions {
     repoTopEvents: TopEventsRepository
     repoAdmin: AdminRepository
     repoSearch: SearchRepository
+    userRepo: UserRepository
 }
 
 export type BotDb = IDatabase<IExtensions> & IExtensions;
@@ -30,10 +29,11 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoTopEvents = new TopEventsRepository(dbEx, pgp)
         dbEx.repoAdmin = new AdminRepository(dbEx, pgp)
         dbEx.repoSearch = new SearchRepository(dbEx, pgp)
+        dbEx.userRepo = new UserRepository(dbEx, pgp)
     },
 
     query(e) {
-        if (process.env.DEBUG !== undefined) {
+        if (botConfig.DEBUG !== undefined) {
             console.log(e.query);
         }
     }
@@ -53,9 +53,9 @@ const pgp: IMain = pg_promise(initOptions)
 Diagnostics.init(initOptions)
 
 const dbCfg: IConnectionParameters<pg.IClient> & {} = {
-    connectionString: process.env.DATABASE_URL,
+    connectionString: botConfig.DATABASE_URL,
     max: +20,
-    ssl: process.env.HEROKU_APP_ID === undefined ? undefined : { rejectUnauthorized: false },
+    ssl: botConfig.HEROKU_APP_ID === undefined ? undefined : { rejectUnauthorized: false },
 }
 
 const db: BotDb = pgp(dbCfg); // database instance;

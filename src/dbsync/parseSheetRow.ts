@@ -91,10 +91,6 @@ export function getOnlyHumanTimetable(timetable: string) {
 
 function prepareTimetable(data: Event): TimetableParseResult {
     const botTimetable = getOnlyBotTimetable(data.timetable)
-
-    if (data.timetable !== botTimetable) {
-        console.log(` > bot convert: "${data.timetable}" -> "${botTimetable}"`)
-    }
     return parseTimetable(botTimetable, new Date());
 }
 

@@ -65,16 +65,13 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
-        console.log('enter scene pack_scene')
         const { msg, markupMainMenu} = content(ctx)
         await prepareSessionStateIfNeeded(ctx)
         Paging.reset(ctx)
         ctx.session.packsScene.isWatchingEvents = false
 
         await ctx.replyWithMarkdown(msg, markupMainMenu)
-    })
-    .leave(async (ctx: ContextMessageUpdate) => {
-        console.log('exit scene pack_scene')
+        ctx.ua.pv({ dp: '/top/', dt: 'Подборки' })
     })
     .use(Paging.pagingMiddleware(actionName('show_more'),
         async (ctx: ContextMessageUpdate) => {
@@ -139,6 +136,8 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
             Extra.HTML(true).markup(backMarkup(ctx))
         )
     }
+
+    ctx.ua.pv({ dp: `/top/${ctx.session.packsScene.cat}`, dt: `Подборки (${ctx.session.packsScene.cat})` })
 }
 async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event[]) {
     const {i18Btn, i18Msg} = sceneHelper(ctx)
@@ -174,7 +173,6 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event
 }
 
 scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
-    console.log('pack-scene-back')
     await prepareSessionStateIfNeeded(ctx)
     if (ctx.session.packsScene.isWatchingEvents) {
         await ctx.scene.enter('packs_scene')

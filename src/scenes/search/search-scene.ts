@@ -72,7 +72,10 @@ async function showSearchResults(ctx: ContextMessageUpdate) {
             await ctx.reply(i18Msg('no_results'))
         }
     }
-
+    ctx.ua.pv({
+        dp: `/search/${ctx.session.search.request}/`,
+        dt: `Поиск по '${ctx.session.search.request}' ${events.length > 0 ? ' есть результаты' : 'ничего не найдено'}`
+    })
 }
 
 scene
@@ -85,6 +88,7 @@ scene
         const {msg, markupMainMenu} = content(ctx)
 
         await ctx.replyWithMarkdown(msg, markupMainMenu)
+        ctx.ua.pv({dp: `/search/`, dt: `Поиск`})
     })
     .leave(async (ctx: ContextMessageUpdate) => {
         console.log('exit scene search_scene')

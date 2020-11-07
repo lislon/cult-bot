@@ -1,5 +1,5 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { limitEventsToPage, SessionEnforcer } from './shared-logic'
+import { SessionEnforcer } from './shared-logic'
 import { Composer, Middleware } from 'telegraf'
 
 export interface PagingState {
@@ -20,6 +20,9 @@ export class Paging {
 
     static increment(ctx: ContextMessageUpdate, amount: number) {
         ctx.session.paging.pagingOffset += amount;
+    }
+    static pageNo(ctx: ContextMessageUpdate, amount: number): number {
+        return ctx.session.paging.pagingOffset / amount
     }
 
     static pagingMiddleware(showMoreActionName: string, onNextAction: Middleware<ContextMessageUpdate>) {

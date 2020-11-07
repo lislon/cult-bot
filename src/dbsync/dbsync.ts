@@ -16,6 +16,7 @@ import { EventToSave } from '../interfaces/db-interfaces'
 import { WrongExcelColumnsError } from './WrongFormatException'
 import { BotDb } from '../db'
 import { differenceInCalendarDays, format } from 'date-fns'
+import { botConfig } from '../util/bot-config'
 import Schema$Request = sheets_v4.Schema$Request
 
 // our set of columns, to be created only once (statically), and then reused,
@@ -52,7 +53,7 @@ class ExcelUpdater {
 
 
     async update() {
-        const spreadsheetId = process.env.GOOGLE_DOCS_ID;
+        const spreadsheetId = botConfig.GOOGLE_DOCS_ID;
         await this.excel.spreadsheets.batchUpdate({
             spreadsheetId,
             requestBody: {requests: this.requests}
@@ -116,7 +117,7 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
 
         console.log(`Loading from excel [${ranges}]...`)
 
-        const spreadsheetId = process.env.GOOGLE_DOCS_ID;
+        const spreadsheetId = botConfig.GOOGLE_DOCS_ID;
         const [sheetsMetaData, sheetsData] = await Promise.all([
             excel.spreadsheets.get({ spreadsheetId, ranges }),
             excel.spreadsheets.values.batchGet({ spreadsheetId, ranges })

@@ -178,7 +178,6 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
         )),
         ...(menu.dropDownButtons('menu_walks',
             getSectionFromI18n('walks')
-
         ))
     ]
     return Markup.inlineKeyboard(buttons)
@@ -199,10 +198,10 @@ async function getKeyboardTime(ctx: ContextMessageUpdate) {
     const buttons = [
         ...(menu.dropDownButtons('menu_saturday', [
             ...getIntervalsFromI18N('saturday')
-        ], { date: weekdays[0] })),
+        ], {date: weekdays[0]})),
         ...(menu.dropDownButtons('menu_sunday', [
             ...getIntervalsFromI18N('sunday')
-        ], { date: weekdays[1] })),
+        ], {date: weekdays[1]})),
     ]
     return Markup.inlineKeyboard(buttons)
 }
@@ -271,8 +270,18 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
     }
 
     if (events.length === 0) {
-
         await ctx.replyWithHTML(i18Msg('nothing_found', {body: getExplainFilterBody(ctx)}))
+    }
+
+    if (ctx.session.paging.pagingOffset === 0) {
+        ctx.ua.pv({dp: `/customize/results/`, dt: `Подобрать под себя / ${totalCount} результатов`})
+
+        const searchByTags = [
+            ...ctx.session.customize.cennosti,
+            ...ctx.session.customize.oblasti,
+            ...ctx.session.customize.format,
+            ...ctx.session.customize.time]
+        searchByTags.forEach(tag => ctx.ua.e('customize', 'search_tag', tag))
     }
 }
 
@@ -284,7 +293,7 @@ async function generateAmountSelectedPlural(ctx: ContextMessageUpdate, i18Msg: (
 async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
     const {i18Msg} = sceneHelper(ctx)
 
-    const msg = i18Msg('select_counter', { eventPlural: await generateAmountSelectedPlural(ctx, i18Msg) })
+    const msg = i18Msg('select_counter', {eventPlural: await generateAmountSelectedPlural(ctx, i18Msg)})
 
     if (ctx.session.customize.eventsCounterMsgText !== msg) {
         if (ctx.session.customize.eventsCounterMsgId === undefined) {
@@ -316,7 +325,7 @@ function getExplainFilterBody(ctx: ContextMessageUpdate): string {
     return lines.join('\n')
 }
 
-export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<string|undefined> {
+export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<string | undefined> {
     const {i18Btn, i18Msg} = sceneHelper(ctx)
     prepareSessionStateIfNeeded(ctx)
 
@@ -325,7 +334,7 @@ export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<st
     if (body !== '') {
         const count = await countFilteredEvents(ctx)
         const eventPlural = plural(count, i18Msg('plural.event.one'), i18Msg('plural.event.two'), i18Msg('plural.event.many'))
-        return i18Msg('explain_filter.layout', { body, eventPlural })
+        return i18Msg('explain_filter.layout', {body, eventPlural})
     }
     return undefined
 }
@@ -343,6 +352,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
 
             await putOrRefreshCounterMessage(ctx)
+            ctx.ua.pv({dp: `/customize/oblasti/`, dt: `Подобрать под себя / Области`})
         })
         .hears(i18nModuleBtnName('priorities'), async (ctx: ContextMessageUpdate) => {
             const {i18Btn, i18Msg} = sceneHelper(ctx)
@@ -355,6 +365,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
 
             await putOrRefreshCounterMessage(ctx)
+            ctx.ua.pv({dp: `/customize/priorities/`, dt: `Подобрать под себя / Приоритеты`})
         })
         .hears(i18nModuleBtnName('time'), async (ctx: ContextMessageUpdate) => {
             const {i18Btn, i18Msg} = sceneHelper(ctx)
@@ -367,6 +378,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
 
             await putOrRefreshCounterMessage(ctx)
+            ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под себя / Время`})
         })
         .hears(i18nModuleBtnName('format'), async (ctx: ContextMessageUpdate) => {
             const {i18Btn, i18Msg} = sceneHelper(ctx)
@@ -379,6 +391,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
 
             await putOrRefreshCounterMessage(ctx)
+            ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под себя / Формат`})
         })
         .hears(i18nModuleBtnName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
             await warnAdminIfDateIsOverriden(ctx)
@@ -403,7 +416,7 @@ async function goBackToCustomize(ctx: ContextMessageUpdate) {
     const explainMsg = await getMsgExplainFilter(ctx)
     const msg = explainMsg !== undefined ? explainMsg : i18Msg('welcome')
 
-    const { markup} = await content(ctx)
+    const {markup} = await content(ctx)
     await ctx.replyWithMarkdown(msg, markup)
 }
 
@@ -457,16 +470,15 @@ function checkOrUncheckMenu(ctx: ContextMessageUpdate) {
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
-        console.log('enter customize-scene')
-
         prepareSessionStateIfNeeded(ctx)
 
         const {i18Msg} = sceneHelper(ctx)
-        const { markup} = await content(ctx)
+        const {markup} = await content(ctx)
         await ctx.replyWithMarkdown(i18Msg('welcome'), markup)
+
+        ctx.ua.pv({dp: `/customize/`, dt: `Подобрать под себя`})
     })
     .leave((ctx: ContextMessageUpdate) => {
-        console.log('leave customize-scene')
         ctx.session.customize = undefined
     })
     .use(Paging.pagingMiddleware(actionName('show_more'),
@@ -497,7 +509,7 @@ scene
         const {i18Msg} = sceneHelper(ctx)
         await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
         await ctx.answerCbQuery(i18Msg('popup_selected',
-            { eventPlural:  await generateAmountSelectedPlural(ctx, i18Msg) }))
+            {eventPlural: await generateAmountSelectedPlural(ctx, i18Msg)}))
         await putOrRefreshCounterMessage(ctx)
     })
     .action(/customize_scene[.]o_(.+)/, async (ctx: ContextMessageUpdate) => {
@@ -507,7 +519,7 @@ scene
         const {i18Msg} = sceneHelper(ctx)
         await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx))
         await ctx.answerCbQuery(i18Msg('popup_selected',
-            { eventPlural:  await generateAmountSelectedPlural(ctx, i18Msg) }))
+            {eventPlural: await generateAmountSelectedPlural(ctx, i18Msg)}))
         await putOrRefreshCounterMessage(ctx)
     })
     .action(/customize_scene[.]t_(.+)/, async (ctx: ContextMessageUpdate) => {
@@ -518,7 +530,7 @@ scene
 
         await ctx.editMessageReplyMarkup(await getKeyboardTime(ctx))
         await ctx.answerCbQuery(i18Msg('popup_selected',
-            { eventPlural:  await generateAmountSelectedPlural(ctx, i18Msg) }))
+            {eventPlural: await generateAmountSelectedPlural(ctx, i18Msg)}))
         await putOrRefreshCounterMessage(ctx)
     })
     .action(/customize_scene[.]f_(.+)/, async (ctx: ContextMessageUpdate) => {
@@ -529,7 +541,7 @@ scene
 
         await ctx.editMessageReplyMarkup(await getKeyboardFormat(ctx))
         await ctx.answerCbQuery(i18Msg('popup_selected',
-            { eventPlural:  await generateAmountSelectedPlural(ctx, i18Msg) }))
+            {eventPlural: await generateAmountSelectedPlural(ctx, i18Msg)}))
         await putOrRefreshCounterMessage(ctx)
     })
 ;

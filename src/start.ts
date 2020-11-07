@@ -5,6 +5,7 @@ import { getGoogleSpreadSheetURL } from './scenes/shared/shared-logic'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import rp from 'request-promise'
 import express, { Request, Response } from 'express'
+import { botConfig } from './util/bot-config'
 
 const app = express()
 
@@ -23,7 +24,7 @@ class BotStart {
         logger.debug(undefined, 'Starting a bot in development mode');
         BotStart.printDiagnostic()
 
-        rp(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook`).then(() => {
+        rp(`https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook`).then(() => {
             bot.startPolling()
         });
     }
@@ -33,20 +34,20 @@ class BotStart {
         // If webhook not working, check fucking motherfucking UFW that probably blocks a port...
         BotStart.printDiagnostic()
 
-        if (!process.env.HEROKU_APP_NAME) {
+        if (!botConfig.HEROKU_APP_NAME) {
             console.log('process.env.HEROKU_APP_NAME must be defined to run in PROD')
             process.exit(1)
         }
-        if (!process.env.WEBHOOK_PORT) {
+        if (!botConfig.WEBHOOK_PORT) {
             console.log('process.env.WEBHOOK_PORT must be defined to run in PROD')
             process.exit(1)
         }
-        const hookUrl = `https://${process.env.HEROKU_APP_NAME}.herokuapp.com:${process.env.WEBHOOK_PORT}/${BotStart.PATH}`
+        const hookUrl = `https://${botConfig.HEROKU_APP_NAME}.herokuapp.com:${botConfig.WEBHOOK_PORT}/${BotStart.PATH}`
         const success = await bot.telegram.setWebhook(
             hookUrl
         )
         if (success) {
-            console.log(`hook ${hookUrl} is set. (To delete: https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/deleteWebhook ) Starting app at ${process.env.PORT}`)
+            console.log(`hook ${hookUrl} is set. (To delete: https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook ) Starting app at ${botConfig.PORT}`)
         } else {
             console.error(`hook was not set!`)
             const webhookStatus = await bot.telegram.getWebhookInfo();
@@ -60,8 +61,8 @@ class BotStart {
     }
 }
 
-if (process.env.BOT_DISABLED === undefined) {
-    if (process.env.NODE_ENV === 'development') {
+if (botConfig.BOT_DISABLED === false) {
+    if (botConfig.NODE_ENV === 'development') {
         BotStart.startDevMode(bot)
     }
 } else {
@@ -80,10 +81,10 @@ function logErrors (err: any, req: any, res: any, next: any) {
     next(err)
 }
 
-app.listen(process.env.PORT, () => {
-    if (process.env.BOT_DISABLED === undefined && process.env.NODE_ENV === 'production') {
+app.listen(botConfig.PORT, () => {
+    if (botConfig.BOT_DISABLED === undefined && botConfig.NODE_ENV === 'production') {
         BotStart.startProdMode(bot)
     }
 
-    console.log(`Bot started on port ${process.env.PORT}!`)
+    console.log(`Bot started on port ${botConfig.PORT}!`)
 })

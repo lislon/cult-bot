@@ -31,14 +31,15 @@ const content = (ctx: ContextMessageUpdate) => {
 }
 
 scene.enter(async (ctx: ContextMessageUpdate) => {
-    console.log('enter scene main_scene')
     const {msg, markupMainMenu} = content(ctx)
 
     await ctx.replyWithMarkdown(msg, markupMainMenu)
+
+    ctx.ua.pv({ dp: '/', dt: 'Главное меню' })
 })
 
 scene.leave(async (ctx: ContextMessageUpdate) => {
-    console.log('exit scene main_scene')
+
 })
 
 function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {

@@ -1,6 +1,7 @@
 import util from 'util';
 import winston, { format } from 'winston';
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
+import { botConfig } from './bot-config'
 
 /**
  * Adds user id and nickname if found. Also formats message to display complex objects
@@ -26,14 +27,14 @@ const logFormat = printf(info => {
 const logger = winston.createLogger({
     transports: [
         new winston.transports.Console({
-            level: process.env.NODE_ENV === 'production' ? 'debug' : 'debugM'
+            level: botConfig.NODE_ENV === 'production' ? 'debug' : 'debugM'
         }),
         new winston.transports.File({filename: 'debug.log', level: 'debug'})
     ],
     format: combine(timestamp(), format.splat(), format.simple(), logFormat)
 });
 
-if (process.env.NODE_ENV !== 'production') {
+if (botConfig.NODE_ENV !== 'production') {
     logger.debug('Logging initialized at debug level');
 }
 

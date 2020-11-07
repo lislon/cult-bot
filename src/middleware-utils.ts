@@ -1,23 +1,22 @@
 import updateLogger from 'telegraf-update-logger'
 import session from 'telegraf/session';
 import telegrafThrottler from 'telegraf-throttler';
-import { config } from 'dotenv'
 import RedisSession from 'telegraf-session-redis'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { i18n } from './util/i18n'
 import { isDev } from './util/scene-helper'
 import { parseISO } from 'date-fns'
-
-
-config();
+import { userSaveMiddleware } from './lib/middleware/user-save-middleware'
+import { botConfig } from './util/bot-config'
+import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
 
 let sessionMechanism
-if (process.env.REDIS_URL !== undefined) {
+if (botConfig.REDIS_URL !== undefined) {
     sessionMechanism = new RedisSession({
         store: {
             host: undefined,
             port: undefined,
-            url: process.env.REDIS_URL
+            url: botConfig.REDIS_URL
         }
     })
 } else {
@@ -61,6 +60,8 @@ export default {
         }
     }),
     logger: updateLogger({colors: true}),
-    session: sessionMechanism
+    session: sessionMechanism,
+    userSaveMiddleware,
+    analyticsMiddleware
 }
 

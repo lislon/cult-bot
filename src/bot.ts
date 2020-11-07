@@ -13,21 +13,26 @@ import { ifAdmin, isAdmin, sleep } from './util/scene-helper'
 import 'source-map-support/register'
 import { showBotVersion, syncrhonizeDbByUser } from './scenes/shared/shared-logic'
 import { i18n } from './util/i18n'
+import { performanceMiddleware } from './lib/middleware/performance-middleware'
+import { botConfig } from './util/bot-config'
 
 console.log(`starting bot...`);
 
-const quick = process.env.NODE_ENV === 'development';
+const quick = botConfig.NODE_ENV === 'development';
 
-export const bot: Telegraf<ContextMessageUpdate> = new Telegraf(process.env.TELEGRAM_TOKEN)
+export const bot: Telegraf<ContextMessageUpdate> = new Telegraf(botConfig.TELEGRAM_TOKEN)
 const stage = new Stage([], {
     default: 'main_scene'
 })
 
+bot.use(performanceMiddleware('total'));
 bot.use(middlewares.i18n);
 bot.use(middlewares.telegrafThrottler)
 bot.use(middlewares.logger)
 bot.use(middlewares.session);
+bot.use(middlewares.userSaveMiddleware);
 bot.use(middlewares.dateTime);
+bot.use(middlewares.analyticsMiddleware);
 bot.use(stage.middleware());
 
 stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene, packsScene, searchScene)
@@ -42,9 +47,18 @@ searchRegisterActions(bot, i18n)
 //     await ctx.reply(ctx.i18n.t('shared.something_went_wrong_dev', { error: error.toString().substr(0, 1000) }))
 // })
 
-bot.start(async (ctx: ContextMessageUpdate) => {
-    console.log(`bot.start userId=${ctx.from.id} first_name=${ctx.from.first_name} last_name=${ctx.from.last_name} username=${ctx.from.username}`)
+bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }) => {
+    console.log([
+        `/start`,
+        `id=${ctx.from.id}`,
+        `first_name=${ctx.from.first_name}`,
+        `last_name=${ctx.from.last_name}`,
+        `username=${ctx.from.username}`,
+        `startPayload=${ctx.startPayload}`,
+        `ua_uuid=${ctx.session.uaUuid}`].join(' '))
 
+    // cn Campaign Name
+    // cs
     const name = ctx.message.from.first_name
     if (!quick) await sleep(500)
     await ctx.replyWithHTML(ctx.i18n.t('shared.welcome1', { name: name }))
@@ -110,7 +124,6 @@ bot.action(/.+/, async (ctx, next) => {
     await ctx.answerCbQuery()
     await ctx.scene.enter('main_scene');
 })
-
 
 
 bot.command('version', async (ctx) => {

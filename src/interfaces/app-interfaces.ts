@@ -8,6 +8,8 @@ import * as tt from 'telegraf/typings/telegram-types'
 import { PacksSceneState } from '../scenes/packs/packs-scene'
 import { PagingState } from '../scenes/shared/paging'
 import { SearchSceneState } from '../scenes/search/search-scene'
+import { Visitor } from 'universal-analytics'
+import { PerformanceContext } from '../lib/middleware/performance-middleware'
 
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
@@ -37,11 +39,14 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         timeInterval: TimeIntervalSceneState
         adminScene: AdminSceneState
         paging: PagingState
+        id: number
+        uaUuid: string
         language: 'en' | 'ru'
-        sceneStack: string[]
         user: tt.User
     }
     webhookReply: boolean
+    ua: Visitor
+    perf: PerformanceContext
     now(): Date
     isNowOverridden(): boolean
 }
