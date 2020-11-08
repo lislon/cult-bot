@@ -75,6 +75,10 @@ app.use('/api', (request: Request, response: Response) => {
     response.send('hi')
 })
 
+app.use('/me', (request: Request, response: Response) => {
+    response.send(JSON.stringify(request.headers))
+})
+
 app.use(logErrors)
 function logErrors (err: any, req: any, res: any, next: any) {
     console.error(err.stack)
