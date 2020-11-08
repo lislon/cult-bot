@@ -17,6 +17,7 @@ import { mapUserInputToTimeIntervals } from './customize-utils'
 import { db } from '../../db'
 import { addDays, format } from 'date-fns/fp'
 import { Paging } from '../shared/paging'
+import { getISODay, startOfISOWeek } from 'date-fns'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
@@ -186,7 +187,7 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
 async function getKeyboardTime(ctx: ContextMessageUpdate) {
     const menu = new Menu(ctx, ctx.session.customize.time, ctx.session.customize.openedMenus, 'time_section')
     const weekdays = [0, 1]
-        .map(i => addDays(i)(getNextWeekEndRange(ctx.now()).start))
+        .map(i => addDays(i)(getNextWeekEndRange(startOfISOWeek(ctx.now())).start))
         .map(d => format('dd.MM', d))
 
     function getIntervalsFromI18N(day: string) {
@@ -195,20 +196,28 @@ async function getKeyboardTime(ctx: ContextMessageUpdate) {
             .map(key => [key.replace(/^.+[.](?=[^.]+$)/, '')])
     }
 
-    const buttons = [
-        ...(menu.dropDownButtons('menu_saturday', [
-            ...getIntervalsFromI18N('saturday')
-        ], {date: weekdays[0]})),
-        ...(menu.dropDownButtons('menu_sunday', [
-            ...getIntervalsFromI18N('sunday')
-        ], {date: weekdays[1]})),
-    ]
+    const sat = menu.dropDownButtons('menu_saturday', [
+        ...getIntervalsFromI18N('saturday')
+    ], {date: weekdays[0]})
+
+    const sun = menu.dropDownButtons('menu_sunday', [
+        ...getIntervalsFromI18N('sunday')
+    ], {date: weekdays[1]})
+
+    let buttons: InlineKeyboardButton[][] = []
+    if (getISODay(ctx.now()) <= 6) {
+        buttons = [...buttons, ...sat]
+    }
+    if (getISODay(ctx.now()) <= 7) {
+        buttons = [...buttons, ...sun]
+    }
+
     return Markup.inlineKeyboard(buttons)
 }
 
 async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
     const {i18Btn} = sceneHelper(ctx)
-    const markupKeyabord = Markup.keyboard([
+    return Markup.keyboard([
         [
             Markup.button(i18Btn('reset_filter')),
             Markup.button(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}))
@@ -216,7 +225,6 @@ async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
         [Markup.button(i18Btn('go_back_to_customize'))],
         [Markup.button(i18Btn('go_back_to_main'))]
     ]).resize()
-    return markupKeyabord
 }
 
 async function getKeyboardFormat(ctx: ContextMessageUpdate) {
