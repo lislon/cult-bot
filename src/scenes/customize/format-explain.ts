@@ -2,8 +2,13 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces';
 import { ruFormat } from '../shared/shared-logic';
 import { addDays, startOfDay, startOfISOWeek } from 'date-fns/fp'
 import flow from 'lodash/fp/flow'
+import { getISODay } from 'date-fns'
 
 function joinTimeIntervals(time: string[], onlyWeekday: 'saturday' | 'sunday') {
+  function formatTime(from: number) {
+    return ('0' + from).slice(-2) + '.00'
+  }
+
   return time
     .sort()
     .map((t) => t.split(/[-.]/))
@@ -18,7 +23,7 @@ function joinTimeIntervals(time: string[], onlyWeekday: 'saturday' | 'sunday') {
       return acc;
     }, [])
     .map(([from, to]) => [from, to === 0 ? 24 : to])
-    .map(([from, to]) => `${from}.00-${to}.00`)
+    .map(([from, to]) => `${(formatTime(from))}-${formatTime(to)}`)
 }
 
 const DATE_FORMAT = 'dd.MM'
@@ -34,10 +39,17 @@ export function formatExplainTime(
   }
   const lines = [];
   const startOfWeekends = flow(startOfISOWeek, startOfDay, addDays(5))(ctx.now())
-  const weekdays = [joinTimeIntervals(time, 'saturday'), joinTimeIntervals(time, 'sunday')];
+  const satSlots = filterPastIntervals(time, getISODay(ctx.now()) === 6 ? ctx.now() : undefined)
+  const sunSlots = filterPastIntervals(time, getISODay(ctx.now()) === 7 ? ctx.now() : undefined)
+
+  const weekdays = [joinTimeIntervals(satSlots, 'saturday'), joinTimeIntervals(sunSlots, 'sunday')];
   const moments = [0, 1].map((i) =>
     flow(startOfDay, addDays(i))(startOfWeekends)
   );
+
+  if (getISODay(ctx.now()) === 7) {
+    weekdays[0] = []
+  }
 
   if (
     weekdays[0].length > 0 &&
@@ -150,4 +162,18 @@ export function formatExplainFormat(
     return [];
   }
   return [i18Msg('explain_filter.format', { format: formatNice.join(', ') }), ''];
+}
+
+export function filterPastIntervals(intervals: string[], now: Date | undefined) {
+  if (now === undefined) {
+    return intervals
+  }
+  const nowHour = ruFormat(now, 'HH:mm')
+  const filtered = intervals
+      .filter(i => {
+        const endTime = i.split('-')[1]
+        return (endTime === '00:00' || endTime > nowHour)
+      })
+
+  return filtered;
 }

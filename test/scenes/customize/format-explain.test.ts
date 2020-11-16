@@ -66,15 +66,28 @@ describe('convert_to_intervals', () => {
         test('two days complex', () => {
             const actual = formatExplainTimeEx('2020-01-01 12:00', [
                 'saturday.12:00-14:00',
-                'sunday.12:00-14:00',
+                'sunday.06:00-08:00',
                 'sunday.18:00-20:00'
             ])
             expect(actual).toEqual([
                 '🕒 <b>Время</b>: ',
                 ' - СБ (04.01): 12.00-14.00',
-                ' - ВС (05.01): 12.00-14.00, 18.00-20.00',
+                ' - ВС (05.01): 06.00-08.00, 18.00-20.00',
                 ''
             ])
         })
+
+        test('hide past time', () => {
+            const actual = formatExplainTimeEx('2020-01-01 12:00', [
+                'sunday.06:00-08:00',
+                'sunday.18:00-20:00'
+            ])
+            expect(actual).toEqual([
+                '🕒 <b>Время</b>: ',
+                ' - ВС (05.01): 06.00-08.00, 18.00-20.00',
+                ''
+            ])
+        })
+
     })
 })
