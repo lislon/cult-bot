@@ -78,13 +78,12 @@ describe('convert_to_intervals', () => {
         })
 
         test('hide past time', () => {
-            const actual = formatExplainTimeEx('2020-01-01 12:00', [
+            const actual = formatExplainTimeEx('2020-01-05 12:00', [
                 'sunday.06:00-08:00',
                 'sunday.18:00-20:00'
             ])
             expect(actual).toEqual([
-                '🕒 <b>Время</b>: ',
-                ' - ВС (05.01): 06.00-08.00, 18.00-20.00',
+                '🕒 <b>Время</b>:  ВС (05.01): 18.00-20.00',
                 ''
             ])
         })
