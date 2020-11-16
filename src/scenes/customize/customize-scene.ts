@@ -306,15 +306,11 @@ async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
     if (ctx.session.customize.eventsCounterMsgText !== msg) {
         if (ctx.session.customize.eventsCounterMsgId === undefined) {
             const counterMsg = await ctx.replyWithHTML(msg)
-            // console.log(' > putOrRefreshCounterMessage fresh msg: ', counterMsg.message_id)
             ctx.session.customize.eventsCounterMsgId = counterMsg.message_id
         } else {
-            // console.log(' > putOrRefreshCounterMessage update old msg: ', ctx.session.customize.eventsCounterMsgId)
             await ctx.telegram.editMessageText(ctx.chat.id, ctx.session.customize.eventsCounterMsgId, undefined, msg, {parse_mode: 'HTML'})
         }
         ctx.session.customize.eventsCounterMsgText = msg
-    } else {
-        // console.log(' > putOrRefreshCounterMessage: ', 'message is same')
     }
 }
 

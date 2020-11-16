@@ -1,7 +1,6 @@
 import { addDays, addHours, startOfDay } from 'date-fns/fp'
 import { MyInterval } from '../../interfaces/app-interfaces'
 
-
 export function mapUserInputToTimeIntervals(times: string[], weekendInterval: Interval): MyInterval[] {
     return (times)
         .map(t => t.split(/[-.]/))

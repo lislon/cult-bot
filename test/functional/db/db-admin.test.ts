@@ -3,7 +3,7 @@ import { db, dbCfg } from '../../../src/db'
 import { date, interval } from '../../lib/timetable/test-utils'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
-afterAll(db.$pool.end);
+afterAll(db.$pool.end)
 
 describe('Admin', () => {
 

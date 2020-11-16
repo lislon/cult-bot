@@ -10,7 +10,6 @@ function shouldCountStatForUser(ctx: ContextMessageUpdate) {
 }
 
 export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) => {
-
     if (ctx.session.uaUuid === undefined) {
         ctx.session.uaUuid = generateUuid()
     }
@@ -34,7 +33,7 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
     }
 
     try {
-        await next()
+        return await next()
     } catch (e) {
         if (ctx.ua !== undefined) {
             ctx.ua.exception(e.message, false)

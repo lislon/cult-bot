@@ -1,4 +1,4 @@
-import { config } from 'dotenv'
+type Envs = 'development' | 'production' | 'test'
 
 export class BotConfig {
     public readonly DATABASE_URL: string
@@ -16,13 +16,11 @@ export class BotConfig {
     public readonly TELEGRAM_TOKEN: string
     public readonly WEBHOOK_PORT: number
     public readonly REDIS_URL: string
-    public readonly NODE_ENV: 'development' | 'production'
+    public readonly NODE_ENV: Envs
     public readonly DEBUG: string|undefined
     public readonly BOT_DISABLED: boolean
 
     constructor() {
-        config()
-
         this.DATABASE_URL = process.env.DATABASE_URL
         this.GOOGLE_ANALYTICS_ID = process.env.GOOGLE_ANALYTICS_ID
         this.GOOGLE_ANALYTICS_COUNT_ADMINS = !!process.env.GOOGLE_ANALYTICS_COUNT_ADMINS || false
@@ -38,7 +36,7 @@ export class BotConfig {
         this.TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN
         this.WEBHOOK_PORT = +process.env.WEBHOOK_PORT
         this.REDIS_URL = process.env.REDIS_URL
-        this.NODE_ENV = process.env.NODE_ENV === 'production' ? 'production' : 'development'
+        this.NODE_ENV = process.env.NODE_ENV === undefined ? 'development' : process.env.NODE_ENV as Envs
         this.DEBUG = process.env.DEBUG
         this.BOT_DISABLED = !!process.env.BOT_DISABLED
     }

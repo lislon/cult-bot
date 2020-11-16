@@ -11,7 +11,7 @@ import { botConfig } from './util/bot-config'
 import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
 
 let sessionMechanism
-if (botConfig.REDIS_URL !== undefined) {
+if (botConfig.REDIS_URL !== undefined && botConfig.NODE_ENV !== 'test') {
     sessionMechanism = new RedisSession({
         store: {
             host: undefined,
@@ -33,7 +33,17 @@ const dateTimeMiddleware = async (ctx: ContextMessageUpdate, next: any) => {
         }
     }
 
-    await next()
+    return await next()
+}
+
+
+function logMiddleware(str: string) {
+    return (ctx: ContextMessageUpdate, next: any) => {
+        console.log(`before ${str}  (uauuId=${ctx.session?.uaUuid})`)
+        return Promise.resolve(next()).then(() => {
+            console.log(`after ${str} (uauuId=${ctx.session?.uaUuid})`)
+        })
+    }
 }
 
 export default {
@@ -61,6 +71,7 @@ export default {
     }),
     logger: updateLogger({colors: true}),
     session: sessionMechanism,
+    logMiddleware: logMiddleware,
     userSaveMiddleware,
     analyticsMiddleware
 }

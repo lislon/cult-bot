@@ -1,8 +1,7 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces';
-import { getNextWeekEndRange, ruFormat } from '../shared/shared-logic';
-import { addDays, startOfDay } from 'date-fns/fp'
+import { ruFormat } from '../shared/shared-logic';
+import { addDays, startOfDay, startOfISOWeek } from 'date-fns/fp'
 import flow from 'lodash/fp/flow'
-import { format } from 'date-fns'
 
 function joinTimeIntervals(time: string[], onlyWeekday: 'saturday' | 'sunday') {
   return time
@@ -22,6 +21,9 @@ function joinTimeIntervals(time: string[], onlyWeekday: 'saturday' | 'sunday') {
     .map(([from, to]) => `${from}.00-${to}.00`)
 }
 
+const DATE_FORMAT = 'dd.MM'
+const WEEKDAY_NAME_FORMAT = 'eeeeee'
+
 export function formatExplainTime(
   ctx: ContextMessageUpdate,
   i18Msg: (id: string, tplData?: object, byDefault?: string) => string
@@ -31,10 +33,10 @@ export function formatExplainTime(
     return [];
   }
   const lines = [];
-  const saturdayTime = getNextWeekEndRange(ctx.now()).start;
+  const startOfWeekends = flow(startOfISOWeek, startOfDay, addDays(5))(ctx.now())
   const weekdays = [joinTimeIntervals(time, 'saturday'), joinTimeIntervals(time, 'sunday')];
   const moments = [0, 1].map((i) =>
-    flow(startOfDay, addDays(i))(saturdayTime)
+    flow(startOfDay, addDays(i))(startOfWeekends)
   );
 
   if (
@@ -48,8 +50,8 @@ export function formatExplainTime(
       lines.push(
         ' - ' +
           i18Msg('explain_filter.time_line', {
-            weekday: ruFormat(moments[i], 'dd').toUpperCase(),
-            date: ruFormat(moments[i], 'dd.MM'),
+            weekday: ruFormat(moments[i], WEEKDAY_NAME_FORMAT).toUpperCase(),
+            date: ruFormat(moments[i], DATE_FORMAT),
             timeIntervals: weekdays[i].join(', '),
           })
       );
@@ -61,17 +63,17 @@ export function formatExplainTime(
           i18Msg('explain_filter.time') +
             ' ' +
             i18Msg('explain_filter.time_line', {
-              weekday: ruFormat(moments[i], 'eeeeee').toUpperCase(),
-              date: ruFormat(moments[i], 'dd.MM'),
+              weekday: ruFormat(moments[i], WEEKDAY_NAME_FORMAT).toUpperCase(),
+              date: ruFormat(moments[i], DATE_FORMAT),
               timeIntervals: weekdays[i].join(', '),
             })
         );
       }
     }
   } else {
-    const [from, to] = moments.map((t) => ruFormat(t, 'dd.MM'));
+    const [from, to] = moments.map((t) => ruFormat(t, DATE_FORMAT))
     lines.push(
-      `${i18Msg('explain_filter.time')} сб (${from}) - вс (${to}): ${weekdays[0].join(', ')}`
+      `${i18Msg('explain_filter.time')} СБ (${from}) - ВС (${to}): ${weekdays[0].join(', ')}`
     );
   }
   lines.push('');

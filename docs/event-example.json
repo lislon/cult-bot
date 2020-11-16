@@ -1,0 +1,121 @@
+ {
+     "update_id": 9298956,
+     "callback_query": {
+         "id": "391848100765332287",
+         "from": {
+             "id": 91234245,
+             "is_bot": false,
+             "first_name": "Igor",
+             "username": "lislon",
+             "language_code": "ru"
+         },
+         "message": {
+             "message_id": 9016,
+             "from": {
+                 "id": 1294938975,
+                 "is_bot": true,
+                 "first_name": "Гули-Гули",
+                 "username": "Gde_Poguliat_Bot"
+             },
+             "chat": {
+                 "id": 91234245,
+                 "first_name": "Igor",
+                 "username": "lislon",
+                 "type": "private"
+             },
+             "date": 1605451443,
+             "edit_date": 1605452743,
+             "text": "Укажите области",
+             "reply_markup": {
+                 "inline_keyboard": [
+                     [
+                         {
+                             "text": "➕ Кино ",
+                             "callback_data": "customize_scene.o_menu_movies"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "➕ Концерты ",
+                             "callback_data": "customize_scene.o_menu_concerts"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "➕ Выставки ",
+                             "callback_data": "customize_scene.o_menu_exhibitions"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "➖ Театр ",
+                             "callback_data": "customize_scene.o_menu_theaters"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "Драматический театр ",
+                             "callback_data": "customize_scene.o_theaters.#dramaticeskiIteatr"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "Эксперимент ",
+                             "callback_data": "customize_scene.o_theaters.#Eksperiment"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "Опера ",
+                             "callback_data": "customize_scene.o_theaters.#opera"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "Танец ",
+                             "callback_data": "customize_scene.o_theaters.#taneC"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "Мюзикл ",
+                             "callback_data": "customize_scene.o_theaters.#mUzikl"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "Аудиоспектакль ",
+                             "callback_data": "customize_scene.o_theaters.#audiospektaklP"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "Кукольный театр ",
+                             "callback_data": "customize_scene.o_theaters.#kukolPnyIteatr"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "Клоунада ",
+                             "callback_data": "customize_scene.o_theaters.#klounada"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "➕ Мероприятия ",
+                             "callback_data": "customize_scene.o_menu_events"
+                         }
+                     ],
+                     [
+                         {
+                             "text": "➕ Прогулка ",
+                             "callback_data": "customize_scene.o_menu_walks"
+                         }
+                     ]
+                 ]
+             }
+         },
+         "chat_instance": "5333478909970282750",
+         "data": "customize_scene.o_theaters.#klounada"
+     }
+ }
