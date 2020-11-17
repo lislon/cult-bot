@@ -1,4 +1,4 @@
-import { cardFormat } from '../../../src/scenes/shared/card-format'
+import { cardFormat, escapeWithPrice } from '../../../src/scenes/shared/card-format'
 import { Event } from '../../../src/interfaces/app-interfaces'
 import path from 'path'
 
@@ -81,5 +81,14 @@ describe('test card format', () => {
         const card = cardFormat(event)
         const expected = (await readCard('show-icon-theatre.html')).toString()
         expect(prepare(card)).toEqual(prepare(expected))
+    })
+})
+
+describe('rouble formatting', () => {
+    test.each([
+        ['350 руб, билет на два дня 500 руб', '350 ₽, билет на два дня 500 ₽'],
+        ['350 руб', '350 ₽'],
+    ])('%s', (old: string, expected: string) => {
+        expect(escapeWithPrice(old)).toEqual(expected)
     })
 })

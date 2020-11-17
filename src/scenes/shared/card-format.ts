@@ -9,8 +9,8 @@ function addHtmlNiceUrls(text: string) {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
 }
 
-function escapeWithPrice(text: string) {
-    return text.replace(/\s*(руб|рублей|р\.|руб\.)(\s|$)/g, ' ₽')
+export function escapeWithPrice(text: string) {
+    return text.replace(/\s*(руб|рублей|р\.|руб\.)(\s|$|,)/g, ' ₽$2')
 }
 
 function formatUrl(text: string) {
