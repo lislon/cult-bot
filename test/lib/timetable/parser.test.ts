@@ -242,6 +242,24 @@ describe('parser', () => {
                     }
                 ]
             }
+        ],
+        ['16 июля — 01 декабря 2020: 12:00-20:00',
+            {
+                'dateRangesTimetable': [
+                    {
+                        'dateRange': [
+                            '2020-07-16',
+                            '2020-12-01'
+                        ],
+                        'times': [
+                            [
+                                '12:00',
+                                '20:00'
+                            ]
+                        ]
+                    }
+                ],
+            }
         ]
     ])('%s', (text: string, expected: any) => {
         if (expected) {
