@@ -12,10 +12,10 @@ const content = (ctx: ContextMessageUpdate) => {
     const {i18Btn, i18Msg} = sceneHelper(ctx)
 
     const menu = [
-        ['packs'],
         ['customize'],
+        ['packs'],
         ['search'],
-        ...[(isAdmin(ctx) ? ['admin'] : [])]
+        ...[(isAdmin(ctx) ? ['admin', 'feedback'] : ['feedback'])]
     ]
 
     const mainButtons = menu.map(row =>
@@ -52,6 +52,9 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
         .hears(i18nModuleBtnName('customize'), async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('customize_scene')
+        })
+        .hears(i18nModuleBtnName('feedback'), async (ctx: ContextMessageUpdate) => {
+            await ctx.scene.enter('feedback_scene')
         })
         .hears(i18nModuleBtnName('admin'), async (ctx: ContextMessageUpdate) => {
             await ifAdmin(ctx, () => ctx.scene.enter('admin_scene'))
