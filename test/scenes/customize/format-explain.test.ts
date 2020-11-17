@@ -47,7 +47,7 @@ describe('convert_to_intervals', () => {
         test('single day', () => {
             const actual = formatExplainTimeEx('2020-01-01 12:00', ['sunday.12:00-14:00'])
             expect(actual).toEqual([
-                '🕒 <b>Время</b>:  ВС (05.01): 12.00-14.00',
+                '#️⃣ <b>Время</b>:  ВС (05.01): 12.00-14.00',
                 ''
             ])
         })
@@ -58,7 +58,7 @@ describe('convert_to_intervals', () => {
                 'sunday.12:00-14:00'
             ])
             expect(actual).toEqual([
-                '🕒 <b>Время</b>:  СБ (04.01) - ВС (05.01): 12.00-14.00',
+                '#️⃣ <b>Время</b>:  СБ (04.01) - ВС (05.01): 12.00-14.00',
                 ''
             ])
         })
@@ -70,7 +70,7 @@ describe('convert_to_intervals', () => {
                 'sunday.18:00-20:00'
             ])
             expect(actual).toEqual([
-                '🕒 <b>Время</b>: ',
+                '#️⃣ <b>Время</b>: ',
                 ' - СБ (04.01): 12.00-14.00',
                 ' - ВС (05.01): 06.00-08.00, 18.00-20.00',
                 ''
@@ -83,7 +83,7 @@ describe('convert_to_intervals', () => {
                 'sunday.18:00-20:00'
             ])
             expect(actual).toEqual([
-                '🕒 <b>Время</b>:  ВС (05.01): 18.00-20.00',
+                '#️⃣ <b>Время</b>:  ВС (05.01): 18.00-20.00',
                 ''
             ])
         })
