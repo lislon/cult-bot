@@ -22,7 +22,7 @@ Feature: Customize time
   Scenario:  I want select to events by time on friday
     Given now is 2020-01-03 12:00
     When I enter 'customize' scene
-    When I click markup [🕒 Время]
+    When I click markup [#️⃣ Время]
     Then Bot responds 'Здесь можно настроить временные интервалы, в которых искать события' with inline buttons:
       """
       [➕ Суббота (04.01) ]
@@ -32,7 +32,7 @@ Feature: Customize time
   Scenario: I want select to events by time on sunday
     Given now is 2020-01-05 00:00
     When I enter 'customize' scene
-    When I click markup [🕒 Время]
+    When I click markup [#️⃣ Время]
     Then Bot responds 'Здесь можно настроить временные интервалы, в которых искать события' with inline buttons:
       """
       [➕ Воскресенье (05.01) ]
@@ -82,7 +82,7 @@ Feature: Customize time
   Scenario: I don't want to see buttons with time in past
     Given now is 2020-01-05 21:50
     When I enter 'customize' scene
-    * I click markup [🕒 Время]
+    * I click markup [#️⃣ Время]
     * I click inline [➕ Воскресенье (05.01)]
     Then Bot edits inline buttons:
       """
