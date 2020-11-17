@@ -177,7 +177,7 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
         ...(menu.dropDownButtons('menu_exhibitions',
             getSectionFromI18n(`exhibitions`)
         )),
-        ...(menu.dropDownButtons('menu_museums,
+        ...(menu.dropDownButtons('menu_museums',
             getSectionFromI18n(`museums`)
         )),
         ...(menu.dropDownButtons('menu_theaters',
