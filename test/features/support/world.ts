@@ -7,6 +7,8 @@ import { i18n } from '../../../src/util/i18n'
 import { BotReply, TelegramMockServer } from '../lib/TelegramMockServer'
 import session from 'telegraf/session'
 
+const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
+
 
 class CustomWorld {
 
@@ -33,14 +35,19 @@ class CustomWorld {
     }
 
     async clickMarkup(buttonText: string) {
-        await this.server.sendMessage(this.compose(customizeScene.middleware()), buttonText)
+        const { message, buttons } = this.server.getListOfMarkupButtonsFromLastMsg()
+        const foundButton = buttons.find(btn => noImg(btn.text) === noImg(buttonText))
+        if (foundButton === undefined) {
+            throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: '${buttons.map(b => `'${b.text}'`).join(', ')}'`)
+        }
+        await this.server.sendMessage(this.compose(customizeScene.middleware()), foundButton.text)
     }
 
     async clickInline(buttonText: string) {
         const { message, buttons } = this.server.getListOfInlineButtonsFromLastMsg()
-        const callbackData = buttons.find(btn => btn.text.trim() === buttonText)?.callback_data
+        const callbackData = buttons.find(btn => noImg(btn.text) === noImg(buttonText))?.callback_data
         if (callbackData === undefined) {
-            throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: '${buttons.map(b => b.text).join(', ')}'`)
+            throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: '${buttons.map(b => `'${b.text}'`).join(', ')}'`)
         }
 
         await this.server.clickInline(this.compose(customizeScene.middleware()), callbackData, message)

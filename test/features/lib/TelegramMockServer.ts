@@ -1,7 +1,7 @@
 import { Context, Telegram } from 'telegraf'
 import * as tt from 'telegraf/typings/telegram-types'
 import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
-import { InlineKeyboardButton, InlineKeyboardMarkup, Message } from 'telegram-typings'
+import { InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, Message } from 'telegram-typings'
 import { MiddlewareFn } from 'telegraf/typings/composer'
 import { MarkupHelper } from './MarkupHelper'
 
@@ -99,6 +99,18 @@ export class TelegramMockServer {
                 return {
                     message: this.replies[i].message,
                     buttons: MarkupHelper.listInlineButtons(this.replies[i].extra.reply_markup)
+                }
+            }
+        }
+        return { message: undefined, buttons: [] }
+    }
+
+    getListOfMarkupButtonsFromLastMsg(): { message: MessageWithInlineMarkup, buttons: KeyboardButton[] } {
+        for (let i = this.replies.length - 1; i >= 0; i--) {
+            if (MarkupHelper.isMarkupKeyboard(this.replies[i].extra?.reply_markup)) {
+                return {
+                    message: this.replies[i].message,
+                    buttons: MarkupHelper.listMarkupButtons(this.replies[i].extra.reply_markup)
                 }
             }
         }

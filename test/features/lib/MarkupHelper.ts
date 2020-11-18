@@ -49,6 +49,14 @@ export class MarkupHelper {
         }
         return []
     }
+
+    public static listMarkupButtons(replyMarkup: AnyTypeOfKeyboard): KeyboardButton[] {
+        if (MarkupHelper.isMarkupKeyboard(replyMarkup)) {
+            return replyMarkup.keyboard.flatMap(line => line)
+        }
+        return []
+    }
+
     public static isMarkupKeyboard(arg: AnyTypeOfKeyboard): arg is ReplyKeyboardMarkup {
         return Array.isArray((arg as any)?.keyboard);
     }

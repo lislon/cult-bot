@@ -37,6 +37,9 @@ Then(/^Bot responds '(.+)'$/, function (expected: string) {
 
 Then(/^Bot responds:$/, function (expected: string) {
     const nextReply = this.getNextMsg() as BotReply
+    if (nextReply === undefined) {
+        expect('').toEqual('No new messages from bot, but expected')
+    }
     expect(nextReply.text).toEqual(expected)
 });
 

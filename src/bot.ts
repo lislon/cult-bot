@@ -119,9 +119,13 @@ i18n.resourceKeys('ru')
 //     await ctx.scene.enter('main_scene');
 // })
 
-bot.action(/.+/, async (ctx, next) => {
+bot
+    .action(/.+/, async (ctx, next) => {
     console.log('Аварийный выход');
     await ctx.answerCbQuery()
+    await ctx.scene.enter('main_scene');
+})
+.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
     await ctx.scene.enter('main_scene');
 })
 

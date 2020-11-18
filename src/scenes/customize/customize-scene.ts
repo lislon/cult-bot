@@ -27,7 +27,7 @@ import { getISODay, startOfISOWeek } from 'date-fns'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
-const {backButton, sceneHelper, actionName, i18nModuleBtnName, revertActionName, scanKeys} = i18nSceneHelper(scene)
+const {backButton, sceneHelper, actionName, i18nModuleBtnName, revertActionName, scanKeys, i18nSharedBtnName} = i18nSceneHelper(scene)
 
 function mapFormatToDbQuery(format: string[]) {
     if (format === undefined || format.length !== 1) {
@@ -233,13 +233,13 @@ async function getKeyboardTime(ctx: ContextMessageUpdate) {
 }
 
 async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
-    const {i18Btn} = sceneHelper(ctx)
+    const {i18Btn, i18SharedBtn} = sceneHelper(ctx)
     return Markup.keyboard([
         [
             Markup.button(i18Btn('reset_filter')),
             Markup.button(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}))
         ],
-        [Markup.button(i18Btn('go_back_to_customize'))],
+        [Markup.button(i18SharedBtn('back'))],
         [Markup.button(i18Btn('go_back_to_main'))]
     ]).resize()
 }
@@ -360,59 +360,54 @@ export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<st
     return undefined
 }
 
+async function withSubdialog(ctx: ContextMessageUpdate, callback: () => Promise<void>) {
+    const {i18Btn, i18Msg} = sceneHelper(ctx)
+
+    ctx.session.customize.currentStage = 'sub_dialog'
+    prepareSessionStateIfNeeded(ctx)
+    resetOpenMenus(ctx)
+    resetBottomMessageWithNumberOfEventsFound(ctx)
+
+    await callback()
+    await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
+
+    await putOrRefreshCounterMessage(ctx)
+}
+
 function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
     bot
         .hears(i18nModuleBtnName('oblasti'), async (ctx: ContextMessageUpdate) => {
-            const {i18Btn, i18Msg} = sceneHelper(ctx)
 
-            prepareSessionStateIfNeeded(ctx)
-            resetOpenMenus(ctx)
-            resetBottomMessageWithNumberOfEventsFound(ctx)
+            await withSubdialog(ctx, async () => {
+                const {i18Msg} = sceneHelper(ctx)
+                await ctx.replyWithHTML(i18Msg('select_oblasti'), Extra.markup((await getKeyboardOblasti(ctx))))
+                ctx.ua.pv({dp: `/customize/oblasti/`, dt: `Подобрать под себя / Области`})
+            })
 
-            await ctx.replyWithHTML(i18Msg('select_oblasti'), Extra.markup((await getKeyboardOblasti(ctx))))
-            await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
-
-            await putOrRefreshCounterMessage(ctx)
-            ctx.ua.pv({dp: `/customize/oblasti/`, dt: `Подобрать под себя / Области`})
         })
         .hears(i18nModuleBtnName('priorities'), async (ctx: ContextMessageUpdate) => {
-            const {i18Btn, i18Msg} = sceneHelper(ctx)
 
-            prepareSessionStateIfNeeded(ctx)
-            resetOpenMenus(ctx)
-            resetBottomMessageWithNumberOfEventsFound(ctx)
+            await withSubdialog(ctx, async () => {
+                const {i18Msg} = sceneHelper(ctx)
+                await ctx.replyWithHTML(i18Msg('select_priorities'), Extra.markup((await getKeyboardCennosti(ctx, ctx.session.customize))))
+                ctx.ua.pv({dp: `/customize/priorities/`, dt: `Подобрать под себя / Приоритеты`})
+            })
 
-            await ctx.replyWithHTML(i18Msg('select_priorities'), Extra.markup((await getKeyboardCennosti(ctx, ctx.session.customize))))
-            await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
-
-            await putOrRefreshCounterMessage(ctx)
-            ctx.ua.pv({dp: `/customize/priorities/`, dt: `Подобрать под себя / Приоритеты`})
         })
         .hears(i18nModuleBtnName('time'), async (ctx: ContextMessageUpdate) => {
-            const {i18Btn, i18Msg} = sceneHelper(ctx)
+            await withSubdialog(ctx, async () => {
+                const {i18Msg} = sceneHelper(ctx)
+                await ctx.replyWithHTML(i18Msg('select_time'), Extra.markup((await getKeyboardTime(ctx))))
+                ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под себя / Время`})
+            })
 
-            prepareSessionStateIfNeeded(ctx)
-            resetOpenMenus(ctx)
-            resetBottomMessageWithNumberOfEventsFound(ctx)
-
-            await ctx.replyWithHTML(i18Msg('select_time'), Extra.markup((await getKeyboardTime(ctx))))
-            await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
-
-            await putOrRefreshCounterMessage(ctx)
-            ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под себя / Время`})
         })
         .hears(i18nModuleBtnName('format'), async (ctx: ContextMessageUpdate) => {
-            const {i18Btn, i18Msg} = sceneHelper(ctx)
-
-            prepareSessionStateIfNeeded(ctx)
-            resetOpenMenus(ctx)
-            resetBottomMessageWithNumberOfEventsFound(ctx)
-
-            await ctx.replyWithHTML(i18Msg('select_format'), Extra.markup((await getKeyboardFormat(ctx))))
-            await ctx.replyWithHTML(i18Msg('select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
-
-            await putOrRefreshCounterMessage(ctx)
-            ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под себя / Формат`})
+            await withSubdialog(ctx, async () => {
+                const {i18Msg} = sceneHelper(ctx)
+                await ctx.replyWithHTML(i18Msg('select_format'), Extra.markup((await getKeyboardFormat(ctx))))
+                ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под себя / Формат`})
+            })
         })
         .hears(i18nModuleBtnName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
             await warnAdminIfDateIsOverriden(ctx)
@@ -423,12 +418,17 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
             await goBackToCustomize(ctx)
             await putOrRefreshCounterMessage(ctx)
         })
-        .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {
-            await goBackToCustomize(ctx)
+        .hears(i18nModuleBtnName('go_back_to_main'), async (ctx: ContextMessageUpdate) => {
+            await ctx.scene.enter('main_scene')
         })
-    ;
-
-
+        .hears(i18nSharedBtnName('back'), async (ctx: ContextMessageUpdate) => {
+            prepareSessionStateIfNeeded(ctx)
+            if (ctx.session.customize.currentStage === 'root_dialog') {
+                await ctx.scene.enter('main_scene')
+            } else {
+                await goBackToCustomize(ctx)
+            }
+        })
 }
 
 async function goBackToCustomize(ctx: ContextMessageUpdate) {
@@ -436,6 +436,7 @@ async function goBackToCustomize(ctx: ContextMessageUpdate) {
     const {i18Msg} = sceneHelper(ctx)
     const explainMsg = await getMsgExplainFilter(ctx)
     const msg = explainMsg !== undefined ? explainMsg : i18Msg('welcome')
+    ctx.session.customize.currentStage = 'root_dialog'
 
     const {markup} = await content(ctx)
     await ctx.replyWithMarkdown(msg, markup)
@@ -585,7 +586,8 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         eventsCounterMsgId,
         eventsCounterMsgText,
         oblasti,
-        format
+        format,
+        currentStage
     } = ctx.session.customize || {}
 
     ctx.session.customize = {
@@ -595,6 +597,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         time: SessionEnforcer.array(time),
         format: SessionEnforcer.array(format),
         eventsCounterMsgText,
+        currentStage: currentStage || 'root_dialog',
         resultsFound: SessionEnforcer.number(resultsFound),
 
         eventsCounterMsgId: SessionEnforcer.number(eventsCounterMsgId),
@@ -619,4 +622,5 @@ export interface CustomizeSceneState {
     eventsCounterMsgId?: number
     eventsCounterMsgText: string
     resultsFound: number
+    currentStage: 'root_dialog'|'sub_dialog'
 }

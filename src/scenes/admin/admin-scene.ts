@@ -76,7 +76,10 @@ const content = async (ctx: ContextMessageUpdate) => {
     adminButtons.push([Markup.callbackButton(i18SharedBtn('back'), actionName('back'))])
 
     return {
-        msg: i18Msg('welcome'),
+        msg: i18Msg('welcome', {
+            start: ruFormat(dateRanges.start, 'dd.MM'),
+            end: ruFormat(dateRanges.end, 'dd.MM')
+        }),
         markup: Extra.HTML().markup(Markup.inlineKeyboard(adminButtons))
     }
 }
