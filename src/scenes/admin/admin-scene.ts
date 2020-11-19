@@ -34,13 +34,11 @@ const menuCats = [
 ]
 
 function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessageUpdate) {
-    const {i18Btn, i18Msg} = sceneHelper(ctx)
-
     const btn = []
     let thisRow: CallbackButton[] = []
     statsByReviewer.forEach(({reviewer, count}) => {
-        const icon = i18Msg(`admin_icons.${reviewer}`, undefined, '') || i18Msg('admin_icons.default');
-        thisRow.push(Markup.callbackButton(i18Btn('byReviewer', {count, icon, reviewer}), actionName(`r_${reviewer}`)))
+        const icon = ctx.i18Msg(`admin_icons.${reviewer}`, undefined, '') || ctx.i18Msg('admin_icons.default')
+        thisRow.push(Markup.callbackButton(ctx.i18Btn('byReviewer', {count, icon, reviewer}), actionName(`r_${reviewer}`)))
         if (thisRow.length == 2) {
             btn.push(thisRow)
             thisRow = []
@@ -53,7 +51,6 @@ function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessage
 }
 
 const content = async (ctx: ContextMessageUpdate) => {
-    const {i18Btn, i18Msg, i18SharedBtn} = sceneHelper(ctx)
     const dateRanges = getNextWeekEndRange(ctx.now())
 
     const statsByName = await db.repoAdmin.findStatsByCat(dateRanges)
@@ -61,7 +58,7 @@ const content = async (ctx: ContextMessageUpdate) => {
     let adminButtons = menuCats.map(row =>
         row.map(btnName => {
             const count = statsByName.find(r => r.category === btnName)
-            return Markup.callbackButton(i18Btn(btnName, {count: count === undefined ? 0 : count.count}), actionName(btnName));
+            return Markup.callbackButton(ctx.i18Btn(btnName, {count: count === undefined ? 0 : count.count}), actionName(btnName));
         })
     );
 
@@ -70,13 +67,13 @@ const content = async (ctx: ContextMessageUpdate) => {
     adminButtons = [...adminButtons, ...addReviewersMenu(statsByReviewer, ctx)]
 
     adminButtons.push([
-        Markup.callbackButton(i18Btn('sync'), actionName('sync')),
-        Markup.callbackButton(i18Btn('version'), actionName('version')),
+        Markup.callbackButton(ctx.i18Btn('sync'), actionName('sync')),
+        Markup.callbackButton(ctx.i18Btn('version'), actionName('version')),
     ])
-    adminButtons.push([Markup.callbackButton(i18SharedBtn('back'), actionName('back'))])
+    adminButtons.push([Markup.callbackButton(ctx.i18SharedBtn('back'), actionName('back'))])
 
     return {
-        msg: i18Msg('welcome', {
+        msg: ctx.i18Msg('welcome', {
             start: ruFormat(dateRanges.start, 'dd.MM'),
             end: ruFormat(dateRanges.end, 'dd.MM')
         }),
@@ -142,10 +139,8 @@ async function showNextResults(ctx: ContextMessageUpdate) {
     await prepareSessionStateIfNeeded(ctx)
     const {total, events} = await getSearchedEvents(ctx)
 
-    const {i18Btn, i18Msg} = sceneHelper(ctx)
-
     const nextBtn = Markup.inlineKeyboard([
-        Markup.callbackButton(i18Btn('show_more', {
+        Markup.callbackButton(ctx.i18Btn('show_more', {
             page: Math.ceil(ctx.session.paging.pagingOffset / limitInAdmin) + 1,
             total: Math.ceil(+total / limitInAdmin)
         }), actionName('show_more'))
@@ -186,22 +181,29 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
 function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
-        .command('admin', (async (ctx: ContextMessageUpdate) => {
+        .command('admin', async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('admin_scene');
-        }))
-        .command('time', (async (ctx: ContextMessageUpdate) => {
+        })
+        .command('time_now', async (ctx: ContextMessageUpdate) => {
+            ctx.session.adminScene.overrideDate = undefined
+            await ctx.replyWithHTML(ctx.i18Msg('time_override.reset'))
+        })
+        .command('time', async (ctx: ContextMessageUpdate) => {
             if (isAdmin(ctx)) {
-                const {i18Msg} = sceneHelper(ctx)
                 const HUMAN_OVERRIDE_FORMAT = 'dd MMMM yyyy HH:mm, iiii'
 
                 await prepareSessionStateIfNeeded(ctx)
                 const dateStr = ctx.message.text.replace(/^\/time[\s]*/, '')
                 if (dateStr === undefined || dateStr === 'now') {
                     ctx.session.adminScene.overrideDate = undefined
-                    await ctx.replyWithHTML(i18Msg('time_override.reset'))
+                    await ctx.replyWithHTML(ctx.i18Msg('time_override.reset'))
                 } else if (dateStr === '') {
-                    await ctx.replyWithHTML(i18Msg('time_override.status',
-                        {time: ruFormat(parseISO(ctx.session.adminScene.overrideDate), HUMAN_OVERRIDE_FORMAT)}))
+                    await ctx.replyWithHTML(ctx.i18Msg('time_override.status',
+                        {time: ruFormat(
+                                (ctx.session.adminScene.overrideDate
+                                ? parseISO(ctx.session.adminScene.overrideDate)
+                                : new Date())
+                                , HUMAN_OVERRIDE_FORMAT)}))
                 } else {
                     const now = new Date()
                     let parsed = parse(dateStr, 'yyyy-MM-dd HH:mm', now)
@@ -213,17 +215,16 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
                         }
                     } else if (!isValid(parsed)) {
                         parsed = undefined
-                        await ctx.replyWithHTML(i18Msg('time_override.invalid'))
                     }
                     if (parsed !== undefined) {
                         ctx.session.adminScene.overrideDate = parsed.toISOString()
-                        await ctx.replyWithHTML(i18Msg('time_override.changed', {time: ruFormat(parsed, HUMAN_OVERRIDE_FORMAT)}))
+                        await ctx.replyWithHTML(ctx.i18Msg('time_override.changed', {time: ruFormat(parsed, HUMAN_OVERRIDE_FORMAT)}))
                     } else {
-                        await ctx.replyWithHTML(i18Msg('time_override.invalid'))
+                        await ctx.replyWithHTML(ctx.i18Msg('time_override.invalid'))
                     }
                 }
             }
-        }))
+        })
 }
 
 export const adminScene = {
