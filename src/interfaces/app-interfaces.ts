@@ -49,6 +49,10 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
     perf: PerformanceContext
     now(): Date
     isNowOverridden(): boolean
+
+    i18Btn(id: string, tplData?: object): string
+    i18SharedBtn(id: string, tplData?: object): string
+    i18Msg(id: string, tplData?: object, byDefault?: string|null): string
 }
 
 export interface Event {

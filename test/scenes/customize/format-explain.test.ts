@@ -6,7 +6,7 @@ import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { parseISO } from 'date-fns'
 
 function formatExplainTimeEx(now: string, time: string[]): string[] {
-    const ctx: Pick<ContextMessageUpdate, 'i18n' | 'now' | 'session'> = {
+    const ctx: Pick<ContextMessageUpdate, 'i18n' | 'now' | 'session' | 'i18Msg'> = {
         i18n: i18n,
         now(): Date {
             return parseISO(now)
@@ -16,17 +16,18 @@ function formatExplainTimeEx(now: string, time: string[]): string[] {
                 time: time,
             }
         } as any
-    }
-    return formatExplainTime(ctx as ContextMessageUpdate, i18MsgForTest)
-}
+    }  as ContextMessageUpdate
 
-function i18MsgForTest(id: string, tplData: object = undefined, byDefault: string | null = undefined) {
-    const resourceKey = `scenes.customize_scene.${id}`
-    if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
-        return i18n.t('ru', resourceKey, tplData)
-    } else {
-        return byDefault
+    ctx.i18Msg = function (id: string, tplData: object = undefined, byDefault: string | null = undefined) {
+        const resourceKey = `scenes.customize_scene.${id}`
+        if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
+            return i18n.t('ru', resourceKey, tplData)
+        } else {
+            return byDefault
+        }
     }
+
+    return formatExplainTime(ctx as ContextMessageUpdate)
 }
 
 describe('convert_to_intervals', () => {

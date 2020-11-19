@@ -1,15 +1,15 @@
-import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
+import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { allCategories, ContextMessageUpdate, Event, EventCategory, MyInterval } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { getTopEvents } from './retrieve-logic'
 import { cardFormat } from '../shared/card-format'
 import * as events from 'events'
-import TelegrafI18n from 'telegraf-i18n'
 import { i18n } from '../../util/i18n'
 import { Paging } from '../shared/paging'
 import { limitEventsToPage, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { subSeconds } from 'date-fns/fp'
 import { getISODay, isSameMonth, startOfDay } from 'date-fns'
+import { SceneRegister } from '../../middleware-utils'
 
 export interface PacksSceneState {
     isWatchingEvents: boolean,
@@ -181,7 +181,7 @@ scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpda
     }
 });
 
-function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
+function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
     for (const cat of allCategories) {
         bot.hears(i18nModuleBtnName(cat), async (ctx: ContextMessageUpdate) => {
             await prepareSessionStateIfNeeded(ctx)
@@ -192,7 +192,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
     }
 }
 
-export {
-    scene as packsScene,
-    registerActions as packsRegisterActions
-}
+export const packsScene = {
+    scene,
+    globalActionsFn
+} as SceneRegister

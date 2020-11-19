@@ -29,10 +29,7 @@ function joinTimeIntervals(time: string[], onlyWeekday: 'saturday' | 'sunday') {
 const DATE_FORMAT = 'dd.MM'
 const WEEKDAY_NAME_FORMAT = 'eeeeee'
 
-export function formatExplainTime(
-  ctx: ContextMessageUpdate,
-  i18Msg: (id: string, tplData?: object, byDefault?: string) => string
-): string[] {
+export function formatExplainTime(ctx: ContextMessageUpdate): string[] {
   const { time } = ctx.session.customize;
   if (time.length === 0) {
     return [];
@@ -56,12 +53,12 @@ export function formatExplainTime(
     weekdays[1].length > 0 &&
     JSON.stringify(weekdays[0]) !== JSON.stringify(weekdays[1])
   ) {
-    lines.push(i18Msg('explain_filter.time'));
+    lines.push(ctx.i18Msg('explain_filter.time'));
 
     for (let i = 0; i < 2; i++) {
       lines.push(
         ' - ' +
-          i18Msg('explain_filter.time_line', {
+          ctx.i18Msg('explain_filter.time_line', {
             weekday: ruFormat(moments[i], WEEKDAY_NAME_FORMAT).toUpperCase(),
             date: ruFormat(moments[i], DATE_FORMAT),
             timeIntervals: weekdays[i].join(', '),
@@ -72,9 +69,9 @@ export function formatExplainTime(
     for (let i = 0; i < 2; i++) {
       if (weekdays[i].length > 0) {
         lines.push(
-          i18Msg('explain_filter.time') +
+            ctx.i18Msg('explain_filter.time') +
             ' ' +
-            i18Msg('explain_filter.time_line', {
+            ctx.i18Msg('explain_filter.time_line', {
               weekday: ruFormat(moments[i], WEEKDAY_NAME_FORMAT).toUpperCase(),
               date: ruFormat(moments[i], DATE_FORMAT),
               timeIntervals: weekdays[i].join(', '),
@@ -85,7 +82,7 @@ export function formatExplainTime(
   } else {
     const [from, to] = moments.map((t) => ruFormat(t, DATE_FORMAT))
     lines.push(
-      `${i18Msg('explain_filter.time')} СБ (${from}) - ВС (${to}): ${weekdays[0].join(', ')}`
+      `${ctx.i18Msg('explain_filter.time')} СБ (${from}) - ВС (${to}): ${weekdays[0].join(', ')}`
     );
   }
   lines.push('');
@@ -94,13 +91,10 @@ export function formatExplainTime(
 
 const MAX_LINE_LEN = 40;
 
-export function formatExplainOblasti(
-  ctx: ContextMessageUpdate,
-  i18Msg: (id: string, tplData?: object, byDefault?: string) => string
-): string[] {
+export function formatExplainOblasti(ctx: ContextMessageUpdate): string[] {
   const { oblasti } = ctx.session.customize;
   const oblastiNice = oblasti.map((o) =>
-    i18Msg(`explain_filter.oblasti_section.${o}`, {}, i18Msg(`keyboard.oblasti_section.${o}`))
+      ctx.i18Msg(`explain_filter.oblasti_section.${o}`, {}, ctx.i18Msg(`keyboard.oblasti_section.${o}`))
   );
   if (oblastiNice.length === 0) {
     return [];
@@ -108,9 +102,9 @@ export function formatExplainOblasti(
   let lines: string[] = [];
 
   if (oblastiNice.join(', ').length <= MAX_LINE_LEN) {
-    lines.push(i18Msg('explain_filter.oblasti') + ' ' + oblastiNice.join(', '));
+    lines.push(ctx.i18Msg('explain_filter.oblasti') + ' ' + oblastiNice.join(', '));
   } else {
-    lines.push(i18Msg('explain_filter.oblasti'));
+    lines.push(ctx.i18Msg('explain_filter.oblasti'));
 
     lines = [
       ...lines,
@@ -123,13 +117,10 @@ export function formatExplainOblasti(
   return lines;
 }
 
-export function formatExplainCennosti(
-  ctx: ContextMessageUpdate,
-  i18Msg: (id: string, tplData?: object, byDefault?: string) => string
-): string[] {
+export function formatExplainCennosti(ctx: ContextMessageUpdate): string[] {
   const { cennosti } = ctx.session.customize;
   const cennostiNice = cennosti.map((o) =>
-    i18Msg(`explain_filter.cennosti_section.${o}`, {}, i18Msg(`keyboard.cennosti_section.${o}`))
+      ctx.i18Msg(`explain_filter.cennosti_section.${o}`, {}, ctx.i18Msg(`keyboard.cennosti_section.${o}`))
   );
   if (cennostiNice.length === 0) {
     return [];
@@ -137,9 +128,9 @@ export function formatExplainCennosti(
   let lines: string[] = [];
 
   if (cennostiNice.join(', ').length <= MAX_LINE_LEN) {
-    lines.push(i18Msg('explain_filter.cennosti') + ' ' + cennostiNice.join(', '));
+    lines.push(ctx.i18Msg('explain_filter.cennosti') + ' ' + cennostiNice.join(', '));
   } else {
-    lines.push(i18Msg('explain_filter.cennosti'));
+    lines.push(ctx.i18Msg('explain_filter.cennosti'));
 
     lines = [
       ...lines,
@@ -152,16 +143,13 @@ export function formatExplainCennosti(
   return lines;
 }
 
-export function formatExplainFormat(
-  ctx: ContextMessageUpdate,
-  i18Msg: (id: string, tplData?: object, byDefault?: string) => string
-): string[] {
+export function formatExplainFormat(ctx: ContextMessageUpdate): string[] {
   const { format } = ctx.session.customize;
-  const formatNice = format.map((o) => i18Msg(`explain_filter.format_section.${o}`));
+  const formatNice = format.map((o) => ctx.i18Msg(`explain_filter.format_section.${o}`));
   if (formatNice.length !== 1) {
     return [];
   }
-  return [i18Msg('explain_filter.format', { format: formatNice.join(', ') }), ''];
+  return [ctx.i18Msg('explain_filter.format', { format: formatNice.join(', ') }), ''];
 }
 
 export function filterPastIntervals(intervals: string[], now: Date | undefined) {

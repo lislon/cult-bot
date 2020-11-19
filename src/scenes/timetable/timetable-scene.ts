@@ -2,15 +2,16 @@ import { BaseScene, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { i18nSceneHelper } from '../../util/scene-helper'
+import { SceneRegister } from '../../middleware-utils'
 
 const scene = new BaseScene<ContextMessageUpdate>('timetable');
 
-const { backButton, sceneHelper, actionName, pushEnterScene } = i18nSceneHelper(scene)
+const {backButton, sceneHelper, actionName, pushEnterScene} = i18nSceneHelper(scene)
 
 const content = (ctx: ContextMessageUpdate) => {
     const [week6, week7] = ctx.session.timetable.weekSlots
 
-    const { i18Btn, i18Msg } = sceneHelper(ctx)
+    const {i18Btn, i18Msg} = sceneHelper(ctx)
 
 
     function formatInterval(slots: string[]) {
@@ -51,7 +52,7 @@ const content = (ctx: ContextMessageUpdate) => {
 
     const rows: CallbackButton[][] = [
         [
-            Markup.callbackButton(i18Btn( 'week6'), actionName('interval_0')),
+            Markup.callbackButton(i18Btn('week6'), actionName('interval_0')),
         ],
         [
             Markup.callbackButton(i18Btn('week7'), actionName('interval_1')),
@@ -68,43 +69,45 @@ const content = (ctx: ContextMessageUpdate) => {
     }
 }
 
-scene.enter(async (ctx: ContextMessageUpdate) => {
-    if (ctx.session.timetable === undefined) {
-        ctx.session.timetable = {
-            weekSlots: [
-                ['15:00-16:00', '16:00-17:00'],
-                []
-            ],
+scene
+    .enter(async (ctx: ContextMessageUpdate) => {
+        if (ctx.session.timetable === undefined) {
+            ctx.session.timetable = {
+                weekSlots: [
+                    ['15:00-16:00', '16:00-17:00'],
+                    []
+                ],
+            }
         }
-    }
 
-    const {msg, markup} = content(ctx)
-    ctx.session.timetable.messageId = (await ctx.replyWithMarkdown(msg, markup)).message_id
-})
+        const {msg, markup} = content(ctx)
+        ctx.session.timetable.messageId = (await ctx.replyWithMarkdown(msg, markup)).message_id
+    })
+    .action(/timetable.interval_(\d)/, async (ctx: ContextMessageUpdate) => {
+        const {i18Msg} = sceneHelper(ctx)
 
-
-scene.action(/timetable.interval_(\d)/, async (ctx: ContextMessageUpdate) => {
-
-    const { i18Msg } = sceneHelper(ctx)
-
-    const interval = +ctx.match[1]
-    if (interval === 0) {
-        ctx.session.timeInterval = {
-            weekday: i18Msg('week6'),
-            intervals: ctx.session.timetable.weekSlots[0]
+        const interval = +ctx.match[1]
+        if (interval === 0) {
+            ctx.session.timeInterval = {
+                weekday: i18Msg('week6'),
+                intervals: ctx.session.timetable.weekSlots[0]
+            }
+        } else {
+            ctx.session.timeInterval = {
+                weekday: i18Msg('week7'),
+                intervals: ctx.session.timetable.weekSlots[1]
+            }
         }
-    } else {
-        ctx.session.timeInterval = {
-            weekday: i18Msg('week7'),
-            intervals: ctx.session.timetable.weekSlots[1]
-        }
-    }
-    await pushEnterScene(ctx, 'time_interval')
-})
-
-export { scene as timeTableScene }
+        await pushEnterScene(ctx, 'time_interval')
+    })
 
 export interface TimetableSceneState {
     weekSlots: string[][]
     messageId?: number
 }
+
+export const timeTableScene = {
+    scene,
+    globalActionsFn: () => {
+    }
+} as SceneRegister

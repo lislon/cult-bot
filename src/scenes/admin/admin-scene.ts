@@ -1,7 +1,6 @@
-import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
+import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
-import TelegrafI18n from 'telegraf-i18n'
 import { cardFormat } from '../shared/card-format'
 import {
     getNextWeekEndRange,
@@ -16,6 +15,7 @@ import { isValid, parse, parseISO } from 'date-fns'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { StatByReviewer } from '../../db/db-admin'
 import { addMonths } from 'date-fns/fp'
+import { SceneRegister } from '../../middleware-utils'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
@@ -25,7 +25,7 @@ export interface AdminSceneState {
     overrideDate?: string
 }
 
-const { sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
+const {sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
 
 const menuCats = [
     ['theaters', 'exhibitions'],
@@ -61,7 +61,7 @@ const content = async (ctx: ContextMessageUpdate) => {
     let adminButtons = menuCats.map(row =>
         row.map(btnName => {
             const count = statsByName.find(r => r.category === btnName)
-            return Markup.callbackButton(i18Btn(btnName, { count: count === undefined ? 0 : count.count }), actionName(btnName));
+            return Markup.callbackButton(i18Btn(btnName, {count: count === undefined ? 0 : count.count}), actionName(btnName));
         })
     );
 
@@ -153,7 +153,7 @@ async function showNextResults(ctx: ContextMessageUpdate) {
 
     let count = 0
     for (const event of events) {
-        await ctx.replyWithHTML(cardFormat(event, { showAdminInfo: true }), {
+        await ctx.replyWithHTML(cardFormat(event, {showAdminInfo: true}), {
             disable_web_page_preview: true,
             reply_markup: (++count == events.length && events.length === limitInAdmin ? nextBtn : undefined)
         })
@@ -184,49 +184,49 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     }
 }
 
-function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
-    bot.command('admin', (async (ctx: ContextMessageUpdate) => {
-        await ctx.scene.enter('admin_scene');
-    }))
+function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
+    bot
+        .command('admin', (async (ctx: ContextMessageUpdate) => {
+            await ctx.scene.enter('admin_scene');
+        }))
+        .command('time', (async (ctx: ContextMessageUpdate) => {
+            if (isAdmin(ctx)) {
+                const {i18Msg} = sceneHelper(ctx)
+                const HUMAN_OVERRIDE_FORMAT = 'dd MMMM yyyy HH:mm, iiii'
 
-    bot.command('time', (async (ctx: ContextMessageUpdate) => {
-        if (isAdmin(ctx)) {
-            const {i18Msg} = sceneHelper(ctx)
-            const HUMAN_OVERRIDE_FORMAT = 'dd MMMM yyyy HH:mm, iiii'
-
-            await prepareSessionStateIfNeeded(ctx)
-            const dateStr = ctx.message.text.replace(/^\/time[\s]*/, '')
-            if (dateStr === undefined || dateStr === 'now') {
-                ctx.session.adminScene.overrideDate = undefined
-                await ctx.replyWithHTML(i18Msg('time_override.reset'))
-            } else if (dateStr === '') {
-                await ctx.replyWithHTML(i18Msg('time_override.status',
-                    { time: ruFormat(parseISO(ctx.session.adminScene.overrideDate), HUMAN_OVERRIDE_FORMAT) }))
-            } else {
-                const now = new Date()
-                let parsed = parse(dateStr, 'yyyy-MM-dd HH:mm', now)
-
-                if (!isValid(parsed) && dateStr.match(/^\d{1,2}$/)) {
-                    parsed = new Date(now.getFullYear(), now.getMonth(), +dateStr)
-                    if (now.getDay() > +dateStr) {
-                        parsed = addMonths(1)(parsed)
-                    }
-                } else if (!isValid(parsed)) {
-                    parsed = undefined
-                    await ctx.replyWithHTML(i18Msg('time_override.invalid'))
-                }
-                if (parsed !== undefined) {
-                    ctx.session.adminScene.overrideDate = parsed.toISOString()
-                    await ctx.replyWithHTML(i18Msg('time_override.changed', { time: ruFormat(parsed, HUMAN_OVERRIDE_FORMAT) }))
+                await prepareSessionStateIfNeeded(ctx)
+                const dateStr = ctx.message.text.replace(/^\/time[\s]*/, '')
+                if (dateStr === undefined || dateStr === 'now') {
+                    ctx.session.adminScene.overrideDate = undefined
+                    await ctx.replyWithHTML(i18Msg('time_override.reset'))
+                } else if (dateStr === '') {
+                    await ctx.replyWithHTML(i18Msg('time_override.status',
+                        {time: ruFormat(parseISO(ctx.session.adminScene.overrideDate), HUMAN_OVERRIDE_FORMAT)}))
                 } else {
-                    await ctx.replyWithHTML(i18Msg('time_override.invalid'))
+                    const now = new Date()
+                    let parsed = parse(dateStr, 'yyyy-MM-dd HH:mm', now)
+
+                    if (!isValid(parsed) && dateStr.match(/^\d{1,2}$/)) {
+                        parsed = new Date(now.getFullYear(), now.getMonth(), +dateStr)
+                        if (now.getDay() > +dateStr) {
+                            parsed = addMonths(1)(parsed)
+                        }
+                    } else if (!isValid(parsed)) {
+                        parsed = undefined
+                        await ctx.replyWithHTML(i18Msg('time_override.invalid'))
+                    }
+                    if (parsed !== undefined) {
+                        ctx.session.adminScene.overrideDate = parsed.toISOString()
+                        await ctx.replyWithHTML(i18Msg('time_override.changed', {time: ruFormat(parsed, HUMAN_OVERRIDE_FORMAT)}))
+                    } else {
+                        await ctx.replyWithHTML(i18Msg('time_override.invalid'))
+                    }
                 }
             }
-        }
-    }))
+        }))
 }
 
-export {
-    scene as adminScene,
-    registerActions as adminRegisterActions
-}
+export const adminScene = {
+    scene,
+    globalActionsFn
+} as SceneRegister

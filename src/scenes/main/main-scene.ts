@@ -1,7 +1,7 @@
-import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
+import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, ifAdmin, isAdmin } from '../../util/scene-helper'
-import TelegrafI18n from 'telegraf-i18n'
+import { SceneRegister } from '../../middleware-utils'
 
 const scene = new BaseScene<ContextMessageUpdate>('main_scene');
 
@@ -42,7 +42,7 @@ scene.leave(async (ctx: ContextMessageUpdate) => {
 
 })
 
-function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
+function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
         .hears(i18nModuleBtnName('packs'), async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('packs_scene')
@@ -58,7 +58,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
         });
 }
 
-export {
-    scene as mainScene,
-    registerActions as mainRegisterActions
-}
+export const mainScene = {
+    scene,
+    globalActionsFn
+} as SceneRegister

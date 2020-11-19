@@ -1,11 +1,11 @@
-import Telegraf, { BaseScene, Extra, Markup } from 'telegraf'
+import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
-import TelegrafI18n from 'telegraf-i18n'
 import { db } from '../../db'
 import { getNextWeekEndRange, limitEventsToPage, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import { Paging } from '../shared/paging'
+import { SceneRegister } from '../../middleware-utils'
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene');
 
@@ -109,7 +109,7 @@ scene
         await showSearchResults(ctx)
     })
 
-function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n) {
+function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
     // bot
     //     .hears(i18nModuleBtnName('packs'), async (ctx: ContextMessageUpdate) => {
     //         await ctx.scene.enter('packs_scene')
@@ -125,7 +125,7 @@ function registerActions(bot: Telegraf<ContextMessageUpdate>, i18n: TelegrafI18n
     //     });
 }
 
-export {
-    scene as searchScene,
-    registerActions as searchRegisterActions
-}
+export const searchScene = {
+    scene,
+    globalActionsFn
+} as SceneRegister

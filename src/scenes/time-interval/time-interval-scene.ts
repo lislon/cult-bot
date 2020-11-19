@@ -1,6 +1,7 @@
 import { BaseScene, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
+import { SceneRegister } from '../../middleware-utils'
 
 const scene = new BaseScene<ContextMessageUpdate>('time_interval');
 
@@ -98,4 +99,7 @@ scene.action(/time_interval[.]slot_(\d+|all_day)/, async (ctx: ContextMessageUpd
     await ctx.editMessageText(msg, markup.inReplyTo(ctx.session.timetable.messageId))
 })
 
-export { scene as timeIntervalScene }
+export const timeIntervalScene = {
+    scene,
+    globalActionsFn: function () { }
+} as SceneRegister

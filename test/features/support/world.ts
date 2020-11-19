@@ -1,11 +1,11 @@
 import { setWorldConstructor } from '@cucumber/cucumber'
-import { Composer, Middleware, Telegraf } from 'telegraf'
-import middlewares from '../../../src/middleware-utils'
+import { Composer, Middleware, Stage, Telegraf } from 'telegraf'
+import middlewares, { myRegisterScene } from '../../../src/middleware-utils'
 import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
-import { customizeRegisterActions, customizeScene } from '../../../src/scenes/customize/customize-scene'
-import { i18n } from '../../../src/util/i18n'
+import { customizeScene } from '../../../src/scenes/customize/customize-scene'
 import { BotReply, TelegramMockServer } from '../lib/TelegramMockServer'
 import session from 'telegraf/session'
+import { i18nMiddleware } from '../../../src/lib/middleware/i18n-middleware'
 
 const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
 
@@ -13,25 +13,42 @@ const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').
 class CustomWorld {
 
     private bot = new Telegraf<ContextMessageUpdate>('')
+
     private server = new TelegramMockServer()
 
     constructor() {
+        const stage = new Stage([], {
+            default: 'customize'
+        })
+
         this.bot.use(
-            middlewares.i18n,
+            i18nMiddleware,
             session(),
             // middlewares.logMiddleware('pre_session'),
             middlewares.analyticsMiddleware,
             middlewares.dateTime,
+            stage.middleware()
         )
-        customizeRegisterActions(this.bot, i18n)
+
+        myRegisterScene(this.bot, stage, [ customizeScene ])
+        //
+        //
+        // const X = (name: string) => async (ctx: any, next: any) => {
+        //     console.log('before ' + name)
+        //     await next()
+        //     console.log('after ' + name)
+        // }
+        //
+        // this.bot.use(X('A'))
+        // const subBot = i18nWrapSceneContext(this.bot, 'X1')
+        // subBot.use(X('B'))
+        // this.bot.use(X('C'))
+        //
+        //
     }
 
     async enterScene(scene: string) {
-        if (scene === 'customize') {
-            await this.server.sendInitialUpdate(this.compose(customizeScene.enterMiddleware()))
-        } else {
-            throw new Error(`Scene ${scene} is not implemented`)
-        }
+        await this.server.sendInitialUpdate2(this.bot.middleware(), scene)
     }
 
     async clickMarkup(buttonText: string) {
@@ -40,7 +57,8 @@ class CustomWorld {
         if (foundButton === undefined) {
             throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: '${buttons.map(b => `'${b.text}'`).join(', ')}'`)
         }
-        await this.server.sendMessage(this.compose(customizeScene.middleware()), foundButton.text)
+
+        await this.server.sendMessage(this.bot.middleware(), foundButton.text)
     }
 
     async clickInline(buttonText: string) {
@@ -50,7 +68,7 @@ class CustomWorld {
             throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: '${buttons.map(b => `'${b.text}'`).join(', ')}'`)
         }
 
-        await this.server.clickInline(this.compose(customizeScene.middleware()), callbackData, message)
+        await this.server.clickInline(this.bot.middleware(), callbackData, message)
     }
 
    async setNow(now: Date) {

@@ -74,6 +74,12 @@ export class TelegramMockServer {
         await middleware(update, undefined)
     }
 
+    async sendInitialUpdate2(middleware: MiddlewareFn<ContextMessageUpdate>, sceneId: string) {
+        const update = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage()}))
+        await middleware(update, async () => await update.scene.enter(sceneId))
+    }
+
+
     async sendMessage(middleware: MiddlewareFn<ContextMessageUpdate>, text: string) {
         const update = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage(text)}))
         await middleware(update, undefined)

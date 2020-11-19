@@ -3,12 +3,14 @@ import session from 'telegraf/session';
 import telegrafThrottler from 'telegraf-throttler';
 import RedisSession from 'telegraf-session-redis'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
-import { i18n } from './util/i18n'
 import { isDev } from './util/scene-helper'
 import { parseISO } from 'date-fns'
 import { userSaveMiddleware } from './lib/middleware/user-save-middleware'
 import { botConfig } from './util/bot-config'
 import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
+import { i18nMiddleware, i18nWrapSceneContext } from './lib/middleware/i18n-middleware'
+import Telegraf, { Composer, Stage } from 'telegraf'
+import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
 
 let sessionMechanism
 if (botConfig.REDIS_URL !== undefined && botConfig.NODE_ENV !== 'test') {
@@ -47,7 +49,7 @@ function logMiddleware(str: string) {
 }
 
 export default {
-    i18n: i18n.middleware(),
+    i18n: i18nMiddleware,
     dateTime: dateTimeMiddleware,
     telegrafThrottler: telegrafThrottler({
         onThrottlerError: async (ctx: ContextMessageUpdate, next, throttlerName, error) => {
@@ -76,3 +78,21 @@ export default {
     analyticsMiddleware
 }
 
+export type SceneGlobalActionsFn = (bot: Composer<ContextMessageUpdate>) => void
+
+export interface SceneRegister {
+    scene: Scene<ContextMessageUpdate>
+    globalActionsFn: SceneGlobalActionsFn
+}
+
+export const myRegisterScene = (bot: Telegraf<ContextMessageUpdate>,
+                                stage: Stage<SceneContextMessageUpdate>,
+                                scenesReg: SceneRegister[]) => {
+    scenesReg.map(scene => {
+        stage.register(scene.scene)
+        // all middlewares registered inside scene.globalActionsFn will have correct ctx.i18nScene
+        // This is needed for ctx.i18nMsg functions
+        bot.use(i18nWrapSceneContext(scene.scene.id, scene.globalActionsFn))
+    })
+    return stage
+}

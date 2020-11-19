@@ -15,7 +15,7 @@ function drainEvents() {
     }
 }
 
-When(/^I enter '(.+)' scene$/, async function (scene: string) {
+When(/^I enter '(.+)'$/, async function (scene: string) {
     drainEvents.call(this)
     await this.enterScene(scene)
 });

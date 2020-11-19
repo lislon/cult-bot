@@ -1,20 +1,20 @@
 import Telegraf, { Stage } from 'telegraf'
 import { match } from 'telegraf-i18n';
-import { mainRegisterActions, mainScene } from './scenes/main/main-scene'
-import { adminRegisterActions, adminScene } from './scenes/admin/admin-scene'
-import { packsRegisterActions, packsScene } from './scenes/packs/packs-scene'
+import { mainScene } from './scenes/main/main-scene'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
-import middlewares from './middleware-utils'
-import { customizeRegisterActions, customizeScene } from './scenes/customize/customize-scene'
+import middlewares, { myRegisterScene } from './middleware-utils'
 import { timeTableScene } from './scenes/timetable/timetable-scene'
 import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
-import { searchRegisterActions, searchScene } from './scenes/search/search-scene'
 import { ifAdmin, isAdmin, sleep } from './util/scene-helper'
 import 'source-map-support/register'
 import { showBotVersion, syncrhonizeDbByUser } from './scenes/shared/shared-logic'
 import { i18n } from './util/i18n'
 import { performanceMiddleware } from './lib/middleware/performance-middleware'
 import { botConfig } from './util/bot-config'
+import { customizeScene } from './scenes/customize/customize-scene'
+import { adminScene } from './scenes/admin/admin-scene'
+import { searchScene } from './scenes/search/search-scene'
+import { packsScene } from './scenes/packs/packs-scene'
 
 console.log(`starting bot...`);
 
@@ -35,12 +35,8 @@ bot.use(middlewares.dateTime);
 bot.use(middlewares.analyticsMiddleware);
 bot.use(stage.middleware());
 
-stage.register(mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene, packsScene, searchScene)
-mainRegisterActions(bot, i18n)
-customizeRegisterActions(bot, i18n)
-adminRegisterActions(bot, i18n)
-packsRegisterActions(bot, i18n)
-searchRegisterActions(bot, i18n)
+
+myRegisterScene(bot, stage, [mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene, packsScene, searchScene])
 
 // bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
 //     console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
@@ -61,17 +57,16 @@ bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }) => {
     // cs
     const name = ctx.message.from.first_name
     if (!quick) await sleep(500)
-    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome1', { name: name }))
+    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome1', {name: name}))
     if (!quick) await sleep(1000)
-    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome2'), { disable_notification: true })
+    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome2'), {disable_notification: true})
     if (!quick) await sleep(1000)
-    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome3'), { disable_notification: true })
+    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome3'), {disable_notification: true})
     if (!quick) await sleep(1000)
-    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome4'), { disable_notification: true })
+    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome4'), {disable_notification: true})
     await sleep(1000)
     await ctx.scene.enter('main_scene');
 });
-
 
 
 bot.command('menu', async (ctx: ContextMessageUpdate) => {
@@ -103,7 +98,6 @@ i18n.resourceKeys('ru')
     })
 
 
-
 // bot.command('back', async (ctx) => {
 //     console.log('bot.command(\'back\',')
 //     await ctx.scene.enter('main_scene');
@@ -121,13 +115,13 @@ i18n.resourceKeys('ru')
 
 bot
     .action(/.+/, async (ctx, next) => {
-    console.log('Аварийный выход');
-    await ctx.answerCbQuery()
-    await ctx.scene.enter('main_scene');
-})
-.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
-    await ctx.scene.enter('main_scene');
-})
+        console.log('Аварийный выход');
+        await ctx.answerCbQuery()
+        await ctx.scene.enter('main_scene');
+    })
+    .hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
+        await ctx.scene.enter('main_scene');
+    })
 
 
 bot.command('version', async (ctx) => {
