@@ -29,9 +29,6 @@ const backMarkup = (ctx: ContextMessageUpdate) => {
 }
 
 const content = (ctx: ContextMessageUpdate) => {
-
-    const {i18Btn, i18Msg} = sceneHelper(ctx)
-
     const menu = [
         ['theaters', 'exhibitions'],
         ['movies', 'events'],
@@ -41,11 +38,11 @@ const content = (ctx: ContextMessageUpdate) => {
 
     const mainButtons = menu.map(row =>
         row.map(btnName => {
-            return Markup.button(i18Btn(btnName));
+            return Markup.button(ctx.i18Btn(btnName));
         })
     );
     return {
-        msg: i18Msg('select_category'),
+        msg: ctx.i18Msg('select_category'),
         markupMainMenu: Extra.HTML(true).markup(Markup.keyboard(mainButtons).resize())
     }
 }
@@ -98,7 +95,6 @@ function intervalTemplateParams(range: MyInterval) {
 
 async function showEventsFirstTime(ctx: ContextMessageUpdate) {
     const {range, events} = await getTopEvents(ctx.session.packsScene.cat, ctx.now(), ctx.session.paging.pagingOffset)
-    const {i18Btn, i18Msg} = sceneHelper(ctx)
 
     await warnAdminIfDateIsOverriden(ctx)
 
@@ -106,7 +102,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
 
     if (events.length > 0) {
         const tplData = {
-            cat: i18Msg(`keyboard.${ctx.session.packsScene.cat}`)
+            cat: ctx.i18Msg(`keyboard.${ctx.session.packsScene.cat}`)
         }
 
         let humanDateRange = ''
@@ -126,13 +122,13 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
             templateName = 'let_me_show_next_weekend';
         }
 
-        await ctx.replyWithHTML(i18Msg(templateName, {humanDateRange, ...tplData}),
+        await ctx.replyWithHTML(ctx.i18Msg(templateName, {humanDateRange, ...tplData}),
             { reply_markup: backMarkup(ctx) })
 
         await sleep(500)
         await showNextPortionOfResults(ctx, events)
     } else {
-        await ctx.reply(i18Msg('nothing_found_in_interval', intervalTemplateParams(range)),
+        await ctx.reply(ctx.i18Msg('nothing_found_in_interval', intervalTemplateParams(range)),
             Extra.HTML(true).markup(backMarkup(ctx))
         )
     }
@@ -140,10 +136,8 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
     ctx.ua.pv({ dp: `/top/${ctx.session.packsScene.cat}`, dt: `Подборки (${ctx.session.packsScene.cat})` })
 }
 async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event[]) {
-    const {i18Btn, i18Msg} = sceneHelper(ctx)
-
     const nextBtn = Markup.inlineKeyboard([
-        Markup.callbackButton(i18Btn('show_more'), actionName('show_more'))
+        Markup.callbackButton(ctx.i18Btn('show_more'), actionName('show_more'))
     ])
 
     const fireRating = 18
@@ -159,14 +153,14 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event
 
 
         if (sortedByRating.length > 0 && sortedByRating[0] === event) {
-            await ctx.replyWithHTML(i18Msg('its_fire'));
+            await ctx.replyWithHTML(ctx.i18Msg('its_fire'));
         }
 
         await sleep(300)
     }
 
     if (events.length === 0) {
-        await ctx.reply(i18Msg('no_more_events'))
+        await ctx.reply(ctx.i18Msg('no_more_events'))
     }
 
     console.log(`${events.length} events returned for cat=${ctx.session.packsScene.cat}. offset=${ctx.session.paging.pagingOffset}`)
