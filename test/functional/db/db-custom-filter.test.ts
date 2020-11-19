@@ -1,9 +1,9 @@
 import { cleanDb, expectedTitles, getMockEvent, MockEvent, syncDatabase4Test } from './db-test-utils'
 import { db, dbCfg } from '../../../src/db'
-import { date, interval } from '../../lib/timetable/test-utils'
+import { date, mkInterval } from '../../lib/timetable/test-utils'
 
 
-const weekendRange = interval('[2020-01-01 00:00, 2020-01-03 00:00)')
+const weekendRange = mkInterval('[2020-01-01 00:00, 2020-01-03 00:00)')
 const eventTime = [[date('2020-01-01 12:00'), date('2020-01-03 15:00')]]
 const outOfIntervalEventTime = [[date('2020-02-01 12:00'), date('2020-02-03 15:00')]]
 
@@ -85,12 +85,12 @@ describe('Filtering', () => {
             getMockEvent({title: 'A14', eventTime: [[date('2020-01-01 14:00'), date('2020-01-01 15:00')]]}),
             getMockEvent({title: 'B10', eventTime: [[date('2020-01-03 10:00'), date('2020-01-03 15:00')]]})
         ])
-        const weekendAlreadyStartedRange = interval('[2020-01-01 11:00, 2020-01-03 00:00)')
+        const weekendAlreadyStartedRange = mkInterval('[2020-01-01 11:00, 2020-01-03 00:00)')
 
         expectedTitles(['A12', 'A13'], await db.repoCustomEvents.findEventsCustomFilter({weekendRange: weekendAlreadyStartedRange, timeIntervals: [
-                interval('[2020-01-01 10:00, 2020-01-01 11:00)'),
-                interval('[2020-01-01 12:00, 2020-01-01 13:00)'),
-                interval('[2020-01-01 13:30, 2020-01-01 13:35)'),
+                mkInterval('[2020-01-01 10:00, 2020-01-01 11:00)'),
+                mkInterval('[2020-01-01 12:00, 2020-01-01 13:00)'),
+                mkInterval('[2020-01-01 13:30, 2020-01-01 13:35)'),
             ]}))
     }, 1000000)
 });

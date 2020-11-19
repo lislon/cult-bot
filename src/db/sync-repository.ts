@@ -1,5 +1,5 @@
 import { DbEvent, EventToSave } from '../interfaces/db-interfaces'
-import { encodeTagLevel1 } from '../util/tag-level1-encoder'
+import { encodeTagsLevel1 } from '../util/tag-level1-encoder'
 import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise';
 
 function generateRandomOrder() {
@@ -61,7 +61,7 @@ export class EventsSyncRepository {
     private static mapToDb(event: EventToSave): DbEvent {
         delete event.primaryData.publish
 
-        event.primaryData.tag_level_1 = encodeTagLevel1(event.primaryData);
+        event.primaryData.tag_level_1 = encodeTagsLevel1(event.primaryData.category, event.primaryData.tag_level_1);
 
         return {
             ...event.primaryData,

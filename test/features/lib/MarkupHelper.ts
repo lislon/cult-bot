@@ -8,7 +8,7 @@ import {
 } from 'telegram-typings'
 import { BotReply } from './TelegramMockServer'
 
-type AnyTypeOfKeyboard = InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
+export type AnyTypeOfKeyboard = InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 
 export class MarkupHelper {
     static getKeyboardType(reply: BotReply): 'markup' | 'inline' | undefined {

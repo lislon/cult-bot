@@ -11,6 +11,9 @@ debug `npm dev` with `-r dotenv/config` node options.
 2. Run migrations for test DB `npm run db:up-test`
 3. Run tests `npm run test`
 
+#### Run only cucumber
+
+ Run tests `npm run test-cucumber`
 
 ## Sync
 

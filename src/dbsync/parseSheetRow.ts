@@ -1,9 +1,8 @@
 import { Event, EventCategory } from '../interfaces/app-interfaces'
-import { parseTimetable, TimetableParseResult } from '../lib/timetable/parser'
-import { EventTimetable, MomentOrInterval, predictIntervals, validateIntervals } from '../lib/timetable/intervals'
+import { EventTimetable, MomentOrInterval } from '../lib/timetable/intervals'
 import { fieldIsQuestionMarkOrEmpty } from '../util/filed-utils'
-import { subWeeks } from 'date-fns/fp'
-import { startOfISOWeek } from 'date-fns'
+import { parseAndPredictTimetable } from '../lib/timetable/timetable-utils'
+import { i18n } from '../util/i18n'
 
 export const EXCEL_COLUMN_NAMES = [
     'no',
@@ -74,24 +73,23 @@ function preparePublish(data: Event, result: ExcelRowResult) {
     }
 }
 
-export function getOnlyBotTimetable(timetable: string): string {
-    let botTimetable = timetable
-        .replace(/[(].+?[)]/g, '')
-
-    const matches = botTimetable.match(/{(?:бот|bot):([^}]+)}/)
-    if (matches) {
-        botTimetable = matches[1]
-    }
-    return botTimetable
-}
-
 export function getOnlyHumanTimetable(timetable: string) {
     return timetable.replace(/{(?:бот|bot):([^}]+)}/, '').trim()
 }
 
-function prepareTimetable(data: Event): TimetableParseResult {
-    const botTimetable = getOnlyBotTimetable(data.timetable)
-    return parseTimetable(botTimetable, new Date());
+function validateTagLevel1(event: Event, errorCallback: (errors: string[]) => void) {
+    if (event.category === 'exhibitions') {
+
+        const requiredTags = i18n.resourceKeys('ru')
+            .filter((id: string) => id.match(/^scenes[.]packs_scene[.]exhibitions_tags[.]/))
+            .map(id => i18n.t(`ru`, id))
+
+        if (event.tag_level_1.find(value => requiredTags.includes(value)) === undefined) {
+            errorCallback([
+                `Для выставок обязательно должен быть один из тегов:\n ${requiredTags.join('\n')}`
+            ])
+        }
+    }
 }
 
 function validateTag(tags: string[], errorCallback: (errors: string[]) => void) {
@@ -149,35 +147,25 @@ export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory,
         timeIntervals: [],
         data
     }
+    const predictTimetableResult = parseAndPredictTimetable(data.timetable, now)
 
-    const timetable = prepareTimetable(data)
-    if (timetable.status === true) {
-
-        // TODO: Timzezone
-        const WEEKS_AGO = 2
-        const WEEKS_AHEAD = 4
-        const dateFrom = subWeeks(WEEKS_AGO)(startOfISOWeek(now))
-
-        result.timeIntervals = predictIntervals(dateFrom, timetable.value, (WEEKS_AGO + WEEKS_AHEAD) * 7)
-        result.timetable = timetable.value
-        const errors = validateIntervals(result.timeIntervals)
-        if (errors.length > 0) {
-            result.errors.timetable = errors
-            result.valid = false
-        }
-    } else {
-        result.errors.timetable = timetable.errors
+    result.timeIntervals = predictTimetableResult.timeIntervals
+    result.timetable = predictTimetableResult.timetable
+    if (predictTimetableResult.errors.length > 0) {
         result.valid = false
+        result.errors.timetable = predictTimetableResult.errors
     }
+
     result.publish = preparePublish(data, result)
 
     if (!isAddressValid(data)) {
         result.errors.emptyRows.push('address');
     }
 
-    validateTag(data.tag_level_1, (errors) => result.errors.invalidTagLevel1 = errors)
-    validateTag(data.tag_level_2, (errors) => result.errors.invalidTagLevel2 = errors)
-    validateTag(data.tag_level_3, (errors) => result.errors.invalidTagLevel3 = errors)
+    validateTag(data.tag_level_1, (errors) => result.errors.invalidTagLevel1 = [...result.errors.invalidTagLevel1, ...errors])
+    validateTag(data.tag_level_2, (errors) => result.errors.invalidTagLevel2 = [...result.errors.invalidTagLevel2, ...errors])
+    validateTag(data.tag_level_3, (errors) => result.errors.invalidTagLevel3 = [...result.errors.invalidTagLevel3, ...errors])
+    validateTagLevel1(data, (errors) => result.errors.invalidTagLevel1 = [...result.errors.invalidTagLevel1, ...errors])
 
 
     result.valid = result.valid && result.errors.emptyRows.length == 0

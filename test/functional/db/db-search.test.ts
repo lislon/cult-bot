@@ -1,7 +1,7 @@
 import { expectedTitles, getMockEvent, syncDatabase4Test } from './db-test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { db, dbCfg } from '../../../src/db'
-import { interval } from '../../lib/timetable/test-utils'
+import { mkInterval } from '../../lib/timetable/test-utils'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
@@ -9,7 +9,7 @@ afterAll(db.$pool.end);
 describe('Search', () => {
 
     const eventTime = [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]
-    const yearRange = interval('[2020-01-01 00:00, 2021-01-02 00:00)')
+    const yearRange = mkInterval('[2020-01-01 00:00, 2021-01-02 00:00)')
 
     test('search by title works', async () => {
         await syncDatabase4Test([
@@ -38,7 +38,7 @@ describe('Search', () => {
         )
         expectedTitles(['event sat', 'event sun'], await db.repoSearch.search({
             query: 'event',
-            interval: interval('[2020-01-04 00:00, 2020-01-06 00:00)')
+            interval: mkInterval('[2020-01-04 00:00, 2020-01-06 00:00)')
         }))
     })
 

@@ -43,7 +43,7 @@
                      [
                          {
                              "text": "➕ Выставки ",
-                             "callback_data": "customize_scene.o_menu_exhibitions"
+                             "callback_data": "customize_scene.o_menu_exhibitions_temp"
                          }
                      ],
                      [

@@ -6,7 +6,6 @@ import {
     EXCEL_HEADER_SKIP_ROWS,
     ExcelColumnName,
     ExcelRow,
-    getOnlyBotTimetable,
     processExcelRow
 } from './parseSheetRow'
 import { sheets_v4 } from 'googleapis'
@@ -17,6 +16,7 @@ import { WrongExcelColumnsError } from './WrongFormatException'
 import { BotDb } from '../db'
 import { differenceInCalendarDays, format } from 'date-fns'
 import { botConfig } from '../util/bot-config'
+import { getOnlyBotTimetable } from '../lib/timetable/timetable-utils'
 import Schema$Request = sheets_v4.Schema$Request
 
 // our set of columns, to be created only once (statically), and then reused,
@@ -190,7 +190,10 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
                         }
 
                         if (mapped.errors.invalidTagLevel1.length > 0) {
+                            excelUpdater.annotateCell(sheetId, 'tag_level_1', rowNo, mapped.errors.invalidTagLevel1.join('\n'))
                             excelUpdater.colorCell(sheetId, 'tag_level_1', rowNo, 'red')
+                        } else {
+                            excelUpdater.annotateCell(sheetId, 'tag_level_1', rowNo, '')
                         }
                         if (mapped.errors.invalidTagLevel2.length > 0) {
                             excelUpdater.colorCell(sheetId, 'tag_level_2', rowNo, 'red')

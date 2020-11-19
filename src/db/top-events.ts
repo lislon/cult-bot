@@ -4,16 +4,24 @@ import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
 import { addMinutes } from 'date-fns'
 
+export interface TopEventsQuery {
+    category: EventCategory
+    interval: MyInterval
+    oblasti?: string[]
+    limit?: number
+    offset?: number
+}
+
 export class TopEventsRepository {
     constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
-    public async getTop(category: EventCategory, interval: MyInterval, limit: number = 3, offset: number = 0): Promise<Event[]> {
-        let adjustedIntervals = Object.create(interval)
-        if (category === 'exhibitions') {
+    public async getTop(query: TopEventsQuery): Promise<Event[]> {
+        let adjustedIntervals = Object.create(query.interval)
+        if (query.category === 'exhibitions') {
             adjustedIntervals = {
-                start: addMinutes(interval.start, 60),
-                end: interval.end
+                start: addMinutes(query.interval.start, 60),
+                end: query.interval.end
             }
         }
 
@@ -28,6 +36,7 @@ export class TopEventsRepository {
                 where ${rangeHalfOpenIntersect('$(interval)::tstzrange', 'cbet.entrance')} AND cbet.event_id = cb.id
             )
             AND cb.category = $(category)
+            AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
             AND cb.is_anytime = false
         ORDER BY cb.rating DESC, cb.order_rnd
     `
@@ -46,6 +55,7 @@ export class TopEventsRepository {
                     where ${rangeHalfOpenIntersect('$(interval)::tstzrange', 'cbet.entrance')} AND cbet.event_id = cb.id
                 )
                 and cb.category =  $(category)
+                AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
                 and cb.is_anytime = true
             order by
                 cb.rating desc
@@ -58,9 +68,10 @@ export class TopEventsRepository {
         return await this.db.any(finalQuery,
             {
                 interval: mapToPgInterval(adjustedIntervals),
-                category,
-                limit,
-                offset
+                category: query.category,
+                oblasti: query.oblasti || [],
+                limit: query.limit || 3,
+                offset: query.offset || 0
             }) as Event[];
     }
 

@@ -1,6 +1,6 @@
 import { filterByRange, mapInterval, MomentIntervals, predictIntervals } from '../../../src/lib/timetable/intervals'
 import { parseTimetable } from '../../../src/lib/timetable/parser'
-import { date, interval } from './test-utils'
+import { date, mkInterval } from './test-utils'
 import { format } from 'date-fns'
 
 
@@ -16,31 +16,31 @@ describe('filterByRange', () => {
     test.each([
         {
             event: [date('2020-01-01 15:00'), date('2020-01-01 16:00')],
-            restrict: interval('[2020-01-01 10:00, 2020-01-01 20:00)'),
+            restrict: mkInterval('[2020-01-01 10:00, 2020-01-01 20:00)'),
             restrictType: 'in',
             expected: [date('2020-01-01 15:00'), date('2020-01-01 16:00')]
         },
         {
             event: [date('2020-01-01'), date('2020-01-03')],
-            restrict: interval('[2020-01-01, 2020-01-03)'),
+            restrict: mkInterval('[2020-01-01, 2020-01-03)'),
             restrictType: 'in',
             expected: [date('2020-01-01')],
         },
         {
             event: [[date('2020-01-01'), date('2020-01-03')]],
-            restrict: interval('[2020-01-01, 2020-01-02)'),
+            restrict: mkInterval('[2020-01-01, 2020-01-02)'),
             restrictType: 'in',
             expected: [[date('2020-01-01'), date('2020-01-02')]],
         },
         {
             event: [[date('2020-01-03'), date('2020-01-08')]],
-            restrict: interval('[2020-01-02, 2020-01-06)'),
+            restrict: mkInterval('[2020-01-02, 2020-01-06)'),
             restrictType: 'in',
             expected: [[date('2020-01-03'), date('2020-01-06')]],
         },
         {
             event: [[date('2020-01-01'), date('2020-01-05')]],
-            restrict: interval('[2020-01-02, 2020-01-03)'),
+            restrict: mkInterval('[2020-01-02, 2020-01-03)'),
             restrictType: 'out',
             expected: [
                 [date('2020-01-01'), date('2020-01-02')],
@@ -49,25 +49,25 @@ describe('filterByRange', () => {
         },
         {
             event: [[date('2020-01-01'), date('2020-01-05')]],
-            restrict: interval('[2020-01-02, 2020-01-08)'),
+            restrict: mkInterval('[2020-01-02, 2020-01-08)'),
             restrictType: 'out',
             expected: [[date('2020-01-01'), date('2020-01-02')]],
         },
         {
             event: [[date('2020-01-02'), date('2020-01-10')]],
-            restrict: interval('[2020-01-02, 2020-01-08)'),
+            restrict: mkInterval('[2020-01-02, 2020-01-08)'),
             restrictType: 'out',
             expected: [[date('2020-01-08'), date('2020-01-10')]],
         },
         {
             event: [date('2020-01-08'), date('2020-01-10')],
-            restrict: interval('[2020-01-02, 2020-01-08)'),
+            restrict: mkInterval('[2020-01-02, 2020-01-08)'),
             restrictType: 'out',
             expected: [date('2020-01-08'), date('2020-01-10')],
         },
         {
             event: [[date('2020-01-04 11:00'), date('2020-01-04 22:00')]],
-            restrict: interval('[2020-01-07, 2020-01-08)'),
+            restrict: mkInterval('[2020-01-07, 2020-01-08)'),
             restrictType: 'out',
             expected: [[date('2020-01-04 11:00'), date('2020-01-04 22:00')]],
         },

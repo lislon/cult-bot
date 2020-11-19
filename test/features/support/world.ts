@@ -6,19 +6,23 @@ import { customizeScene } from '../../../src/scenes/customize/customize-scene'
 import { BotReply, TelegramMockServer } from '../lib/TelegramMockServer'
 import session from 'telegraf/session'
 import { i18nMiddleware } from '../../../src/lib/middleware/i18n-middleware'
+import { packsScene } from '../../../src/scenes/packs/packs-scene'
 
 const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
 
 
+function isUselessMessage(next: IteratorYieldResult<BotReply> | IteratorReturnResult<any>) {
+    return next?.value?.text && next.value.text.indexOf('Дата переопределена') !== -1
+}
+
 class CustomWorld {
 
     private bot = new Telegraf<ContextMessageUpdate>('')
-
+    private now: Date = new Date()
     private server = new TelegramMockServer()
 
     constructor() {
         const stage = new Stage([], {
-            default: 'customize'
         })
 
         this.bot.use(
@@ -30,21 +34,7 @@ class CustomWorld {
             stage.middleware()
         )
 
-        myRegisterScene(this.bot, stage, [ customizeScene ])
-        //
-        //
-        // const X = (name: string) => async (ctx: any, next: any) => {
-        //     console.log('before ' + name)
-        //     await next()
-        //     console.log('after ' + name)
-        // }
-        //
-        // this.bot.use(X('A'))
-        // const subBot = i18nWrapSceneContext(this.bot, 'X1')
-        // subBot.use(X('B'))
-        // this.bot.use(X('C'))
-        //
-        //
+        myRegisterScene(this.bot, stage, [ customizeScene, packsScene ])
     }
 
     async enterScene(scene: string) {
@@ -72,6 +62,7 @@ class CustomWorld {
     }
 
    async setNow(now: Date) {
+        this.now = now
         const setDate = async (ctx: ContextMessageUpdate, next: any) => {
             ctx.session.adminScene = {
                 overrideDate: now.toISOString()
@@ -84,6 +75,9 @@ class CustomWorld {
 
     getNextMsg(): BotReply {
         const next = this.server.replyIterator().next()
+        if (isUselessMessage(next)) {
+            return this.getNextMsg()
+        }
         return next.value
     }
 

@@ -1,42 +1,67 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
-import { allCategories, ContextMessageUpdate, Event, EventCategory, MyInterval } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, Event, EventCategory, MyInterval } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
-import { getTopEvents } from './retrieve-logic'
 import { cardFormat } from '../shared/card-format'
 import * as events from 'events'
 import { i18n } from '../../util/i18n'
 import { Paging } from '../shared/paging'
-import { limitEventsToPage, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { getNextWeekEndRange, limitEventsToPage, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { subSeconds } from 'date-fns/fp'
 import { getISODay, isSameMonth, startOfDay } from 'date-fns'
 import { SceneRegister } from '../../middleware-utils'
+import { db } from '../../db'
+import { encodeTagsLevel1 } from '../../util/tag-level1-encoder'
+
+type SubMenuVariants = 'exhibitions_temp' | 'exhibitions_perm'
 
 export interface PacksSceneState {
     isWatchingEvents: boolean,
+    isInSubMenu: boolean,
     cat: EventCategory
+    submenuSelected: SubMenuVariants
 }
 
 const scene = new BaseScene<ContextMessageUpdate>('packs_scene');
-
 const { sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
+
+
+function getOblasti(ctx: ContextMessageUpdate) {
+    if (ctx.session.packsScene.submenuSelected !== undefined) {
+        return encodeTagsLevel1('exhibitions', [ctx.i18Msg(`exhibitions_tags.${ctx.session.packsScene.submenuSelected}`)])
+    }
+    return []
+}
+
+//     cat: EventCategory, fromDate: Date, offset: number = 0
+async function getTopEvents(ctx: ContextMessageUpdate): Promise<{range: MyInterval, events: Event[]}> {
+    const range = getNextWeekEndRange(ctx.now())
+    const events = await db.repoTopEvents.getTop({
+        category: ctx.session.packsScene.cat,
+        interval: range,
+        oblasti: getOblasti(ctx),
+        limit: limitEventsToPage,
+        offset: ctx.session.paging.pagingOffset })
+    return {range, events}
+}
+
 
 const backMarkup = (ctx: ContextMessageUpdate) => {
     const {i18SharedBtn} = sceneHelper(ctx)
 
     const btn = Markup.button(i18SharedBtn('back'))
-    // return Extra.HTML(true).markup(Markup.keyboard([btn]).resize().oneTime())
+
     return Markup.keyboard([btn]).resize()
 }
 
 const content = (ctx: ContextMessageUpdate) => {
-    const menu = [
+    const topLevelMenu = [
         ['theaters', 'exhibitions'],
         ['movies', 'events'],
         ['walks', 'concerts'],
         ['back'],
     ]
 
-    const mainButtons = menu.map(row =>
+    const mainButtons = topLevelMenu.map(row =>
         row.map(btnName => {
             return Markup.button(ctx.i18Btn(btnName));
         })
@@ -52,11 +77,19 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         await ctx.scene.enter('packs_scene', undefined, true)
     }
     Paging.prepareSession(ctx)
-    if (ctx.session.packsScene === undefined) {
-        ctx.session.packsScene = {
-            isWatchingEvents: false,
-            cat: undefined
-        }
+
+    const {
+        isWatchingEvents,
+        isInSubMenu,
+        cat,
+        submenuSelected,
+    } = ctx.session.packsScene || {}
+
+    ctx.session.packsScene = {
+        isWatchingEvents: isWatchingEvents || false,
+        isInSubMenu: isInSubMenu || false,
+        cat: cat,
+        submenuSelected,
     }
 }
 
@@ -66,6 +99,7 @@ scene
         await prepareSessionStateIfNeeded(ctx)
         Paging.reset(ctx)
         ctx.session.packsScene.isWatchingEvents = false
+        ctx.session.packsScene.isInSubMenu = false
 
         await ctx.replyWithMarkdown(msg, markupMainMenu)
         ctx.ua.pv({ dp: '/top/', dt: 'Подборки' })
@@ -73,7 +107,7 @@ scene
     .use(Paging.pagingMiddleware(actionName('show_more'),
         async (ctx: ContextMessageUpdate) => {
             Paging.increment(ctx, limitEventsToPage)
-            const {events} = await getTopEvents(ctx.session.packsScene.cat, ctx.now(), ctx.session.paging.pagingOffset)
+            const {events} = await getTopEvents(ctx)
             await showNextPortionOfResults(ctx, events)
             await ctx.editMessageReplyMarkup()
         }))
@@ -93,8 +127,25 @@ function intervalTemplateParams(range: MyInterval) {
     }
 }
 
+async function showExhibitionsSubMenu(ctx: ContextMessageUpdate) {
+    const subMenu = [
+        ['exhibitions_temp', 'exhibitions_perm'],
+        ['back'],
+    ]
+
+    const buttons = subMenu.map(row =>
+        row.map(btnName => {
+            return Markup.button(ctx.i18Btn(btnName));
+        })
+    )
+
+    await ctx.reply(ctx.i18Msg('select_category'),
+        Extra.HTML().markup(Markup.keyboard(buttons).resize())
+    )
+}
+
 async function showEventsFirstTime(ctx: ContextMessageUpdate) {
-    const {range, events} = await getTopEvents(ctx.session.packsScene.cat, ctx.now(), ctx.session.paging.pagingOffset)
+    const {range, events} = await getTopEvents(ctx)
 
     await warnAdminIfDateIsOverriden(ctx)
 
@@ -102,7 +153,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
 
     if (events.length > 0) {
         const tplData = {
-            cat: ctx.i18Msg(`keyboard.${ctx.session.packsScene.cat}`)
+            cat: ctx.i18Msg(`keyboard.${ctx.session.packsScene.submenuSelected ? ctx.session.packsScene.submenuSelected : ctx.session.packsScene.cat}`)
         }
 
         let humanDateRange = ''
@@ -168,7 +219,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event
 
 scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
     await prepareSessionStateIfNeeded(ctx)
-    if (ctx.session.packsScene.isWatchingEvents) {
+    if (ctx.session.packsScene.isWatchingEvents || ctx.session.packsScene.isInSubMenu) {
         await ctx.scene.enter('packs_scene')
     } else {
         await ctx.scene.enter('main_scene')
@@ -176,14 +227,28 @@ scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpda
 });
 
 function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
-    for (const cat of allCategories) {
+
+    for (const cat of ['theaters', 'movies', 'events', 'walks', 'concerts', 'exhibitions_temp', 'exhibitions_perm']) {
         bot.hears(i18nModuleBtnName(cat), async (ctx: ContextMessageUpdate) => {
             await prepareSessionStateIfNeeded(ctx)
-            ctx.session.packsScene.cat = cat as EventCategory;
+            if (cat === 'exhibitions_temp' || cat === 'exhibitions_perm') {
+                ctx.session.packsScene.cat = 'exhibitions';
+                ctx.session.packsScene.submenuSelected = cat
+            } else {
+                ctx.session.packsScene.cat = cat as EventCategory;
+            }
             ctx.session.packsScene.isWatchingEvents = true
+            ctx.session.packsScene.isInSubMenu = false
             await showEventsFirstTime(ctx)
         });
     }
+    bot.hears(i18nModuleBtnName('exhibitions'), async (ctx: ContextMessageUpdate) => {
+        await prepareSessionStateIfNeeded(ctx)
+
+        ctx.session.packsScene.isInSubMenu = true
+        ctx.session.packsScene.cat = 'exhibitions';
+        await showExhibitionsSubMenu(ctx)
+    });
 }
 
 export const packsScene = {

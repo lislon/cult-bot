@@ -8,7 +8,7 @@ export function date(s: string) {
     return parse(s, 'yyyy-MM-dd HH:mm', new Date())
 }
 
-export function interval(s: string) {
+export function mkInterval(s: string) {
     const [from, to] = s.replace(/[()\[\]]/g, '').split(/\s*,\s*/)
     return { start: date(from), end: date(to) }
 }
