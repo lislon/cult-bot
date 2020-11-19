@@ -9,6 +9,7 @@ import { ru } from 'date-fns/locale'
 import { i18n } from '../../util/i18n'
 import { botConfig } from '../../util/bot-config'
 import { STICKER_CAT_THUMBS_UP } from '../../util/stickers'
+import { sleep } from '../../util/scene-helper'
 
 export function getNextWeekEndRange(now: Date): MyInterval {
     return {
@@ -41,6 +42,7 @@ export async function syncrhonizeDbByUser(ctx: ContextMessageUpdate) {
         await ctx.replyWithHTML(ctx.i18n.t('sync.sync_success', {updated, errors}))
 
         if (errors === 0) {
+            await sleep(500)
             await ctx.replyWithSticker(STICKER_CAT_THUMBS_UP)
         }
     } catch (e) {
