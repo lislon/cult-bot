@@ -5,12 +5,15 @@ Feature: Feedback scene
     Given Scene is 'feedback_scene'
 
   Scenario: I can send text as feedback
-    Then Bot responds '✉️ Поскольку вы уже некоторое время пользуетесь ботом, хотелось бы спросить как он вам?' with markup buttons:
+    Then Bot responds '✉️ ' with markup buttons:
       """
-      [Опросец]
-      [Написать авторам]
       [В Главное меню]
       """
+    Then Bot responds 'Напишите здесь всё что вы хотите нам сказать. Также предлагаем пройти короткий опрос, чтобы мы смогли сделать бот более приятным для вас' with inline buttons:
+      """
+      [Написать авторам] [Пройти опрос]
+      """
+    When I click inline [Написать авторам]
     When I type 'Вы молодцы'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Вы молодцы*'
     Then Bot responds '*Спасибо*'

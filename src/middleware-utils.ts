@@ -9,8 +9,9 @@ import { userSaveMiddleware } from './lib/middleware/user-save-middleware'
 import { botConfig } from './util/bot-config'
 import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
 import { i18nMiddleware, i18nWrapSceneContext } from './lib/middleware/i18n-middleware'
-import Telegraf, { Composer, Stage } from 'telegraf'
+import { Composer, Stage } from 'telegraf'
 import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
+import { supportFeedbackMiddleware } from './lib/middleware/support-feedback.middleware'
 
 let sessionMechanism
 if (botConfig.REDIS_URL !== undefined && botConfig.NODE_ENV !== 'test') {
@@ -75,7 +76,8 @@ export default {
     session: sessionMechanism,
     logMiddleware: logMiddleware,
     userSaveMiddleware,
-    analyticsMiddleware
+    analyticsMiddleware,
+    supportFeedbackMiddleware
 }
 
 export type SceneGlobalActionsFn = (bot: Composer<ContextMessageUpdate>) => void
@@ -85,7 +87,7 @@ export interface SceneRegister {
     globalActionsFn: SceneGlobalActionsFn
 }
 
-export const myRegisterScene = (bot: Telegraf<ContextMessageUpdate>,
+export const myRegisterScene = (bot: Composer<ContextMessageUpdate>,
                                 stage: Stage<SceneContextMessageUpdate>,
                                 scenesReg: SceneRegister[]) => {
     scenesReg.map(scene => {

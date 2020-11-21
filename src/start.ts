@@ -1,5 +1,5 @@
 import { Telegraf } from 'telegraf'
-import { bot } from './bot'
+import { rawBot } from './bot'
 import logger from './util/logger'
 import { getGoogleSpreadSheetURL } from './scenes/shared/shared-logic'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
@@ -63,13 +63,13 @@ class BotStart {
 
 if (botConfig.BOT_DISABLED === false) {
     if (botConfig.NODE_ENV === 'development') {
-        BotStart.startDevMode(bot)
+        BotStart.startDevMode(rawBot)
     }
 } else {
     console.log('Bot is disabled by BOT_DISABLED')
 }
 
-app.use(BotStart.expressMiddleware(bot))
+app.use(BotStart.expressMiddleware(rawBot))
 
 app.use('/api', (request: Request, response: Response) => {
     response.send('hi')
@@ -87,7 +87,7 @@ function logErrors (err: any, req: any, res: any, next: any) {
 
 app.listen(botConfig.PORT, () => {
     if (botConfig.BOT_DISABLED === undefined && botConfig.NODE_ENV === 'production') {
-        BotStart.startProdMode(bot)
+        BotStart.startProdMode(rawBot)
     }
 
     console.log(`Bot started on port ${botConfig.PORT}!`)

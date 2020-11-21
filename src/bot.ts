@@ -1,4 +1,4 @@
-import Telegraf, { Stage } from 'telegraf'
+import Telegraf, { Composer, Stage } from 'telegraf'
 import { match } from 'telegraf-i18n';
 import { mainScene } from './scenes/main/main-scene'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
@@ -21,10 +21,13 @@ console.log(`starting bot...`);
 
 const quick = botConfig.NODE_ENV === 'development';
 
-export const bot: Telegraf<ContextMessageUpdate> = new Telegraf(botConfig.TELEGRAM_TOKEN)
+export const rawBot: Telegraf<ContextMessageUpdate> = new Telegraf(botConfig.TELEGRAM_TOKEN)
+export const bot = new Composer<ContextMessageUpdate>()
+
 const stage = new Stage([], {
     default: 'main_scene'
 })
+
 
 bot.use(performanceMiddleware('total'));
 bot.use(middlewares.i18n);
@@ -115,7 +118,7 @@ i18n.resourceKeys('ru')
 // })
 
 bot
-    .action(/.+/, async (ctx, next) => {
+    .action(/.+/, async (ctx) => {
         console.log('Аварийный выход');
         await ctx.answerCbQuery()
         await ctx.scene.enter('main_scene');
@@ -227,3 +230,7 @@ bot.hears(/.+/, async (ctx, next) => {
 //         Markup.callbackButton('* Italic *', 'italic')
 //     ])))
 // })
+
+
+rawBot.use(Composer.privateChat(bot))
+rawBot.use(Composer.groupChat(middlewares.supportFeedbackMiddleware))

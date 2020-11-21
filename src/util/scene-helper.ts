@@ -3,7 +3,7 @@ import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 import { StupidTranslit } from '../lib/translit/stupid-translit'
 import { i18n } from './i18n'
 
-export function i18nSceneHelper(scene: BaseScene<ContextMessageUpdate>) {
+export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id'>) {
     const backAction = scene.id + 'button.back'
 
     const pushEnterScene = async (ctx: ContextMessageUpdate, nextSceneId: string) => {
@@ -36,12 +36,16 @@ export function i18nSceneHelper(scene: BaseScene<ContextMessageUpdate>) {
         i18nModuleBtnName: (id: string) => {
             return i18n.t(`ru`, `scenes.${scene.id}.keyboard.${id}`)
         },
+        i18nModuleMsg: (id: string) => {
+            return i18n.t(`ru`, `scenes.${scene.id}.${id}`)
+        },
         i18nSharedBtnName: (id: string, templateData?: any) => {
             return i18n.t(`ru`, `shared.keyboard.${id}`, templateData)
         },
-        scanKeys: (prefix: string): string[] => {
+        scanKeys: (prefix: string, mode: 'return_only_postfix' | undefined = undefined): string[] => {
             return i18n.resourceKeys(`ru`)
                 .filter(s => s.startsWith(`scenes.${scene.id}.${prefix}`))
+                .map(s => mode === 'return_only_postfix' ? s.substring(`scenes.${scene.id}.${prefix}`.length + 1) : s)
         }
     }
 }

@@ -3,6 +3,7 @@ import { chidrensTags, ContextMessageUpdate, EventFormat, TagLevel2 } from '../.
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
 import {
+    checkboxi18nBtn,
     getNextWeekEndRange,
     limitEventsToPage,
     SessionEnforcer,
@@ -68,10 +69,6 @@ const content = async (ctx: ContextMessageUpdate) => {
     }
 }
 
-function checkboxName(isSelected: boolean) {
-    return `checkbox_${isSelected ? 'on' : 'off'}`;
-}
-
 type SectionName = 'oblasti_section' | 'cennosti_section' | 'time_section' | 'format_section'
 
 class Menu {
@@ -92,7 +89,7 @@ class Menu {
 
     button(tag: string, hide: boolean = false): InlineKeyboardButton {
         const isSelected = this.selected.includes(tag)
-        const text = this.ctx.i18Btn(`${this.section}.${tag}`) + this.ctx.i18Btn(checkboxName(isSelected))
+        const text = this.ctx.i18Btn(`${this.section}.${tag}`) + checkboxi18nBtn(this.ctx, isSelected)
         return Markup.callbackButton(text, this.actionName(`${tag}`), hide)
     }
 
@@ -124,7 +121,7 @@ class Menu {
         const isOpen = this.openedMenus.includes(menuTitle)
         const menuTitleFull = this.ctx.i18Btn(`menu_${isOpen ? 'open' : 'closed'}`, {
             title: menuTitleWord,
-            checkbox: this.ctx.i18Btn(checkboxName(isAnySubmenuSelected)),
+            checkbox: checkboxi18nBtn(this.ctx, isAnySubmenuSelected),
         })
         return [
             [Markup.callbackButton(menuTitleFull, this.actionName(menuTitle))],

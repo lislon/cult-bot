@@ -5,55 +5,10 @@ import { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
 import { db } from '../../db/db'
 import { SessionEnforcer } from '../shared/shared-logic'
-import { i18n } from '../../util/i18n'
+import { menuMiddleware } from './survey'
 
 const scene = new BaseScene<ContextMessageUpdate>('feedback_scene');
 const {actionName, i18nModuleBtnName, scanKeys} = i18nSceneHelper(scene)
-
-const content = async (ctx: ContextMessageUpdate) => {
-
-    // const adminButtons = [];
-    // adminButtons.push([
-    //     Markup.callbackButton(i18Btn('sync'), actionName('sync')),
-    //     Markup.callbackButton(i18Btn('version'), actionName('version')),
-    // ])
-    // adminButtons.push([Markup.callbackButton(i18SharedBtn('back'), actionName('back'))])
-
-
-    const buttons = Markup.keyboard([
-        [Markup.button(ctx.i18Btn('take_survey'))],
-        [Markup.button(ctx.i18Btn('send_letter'))],
-        [Markup.button(ctx.i18Btn('go_back_to_main'))]
-    ]).resize()
-
-    return {
-        msg: ctx.i18Msg('welcome'),
-        markup: Extra.HTML().markup(buttons)
-    }
-}
-
-const question = (ctx: ContextMessageUpdate, qId: string) => {
-    const answers = scanKeys(`keyboard.survey.${qId}`)
-    const isBinaryChoose = answers.find(it => it.endsWith('yes')) !== undefined
-
-    const buttons = Markup.keyboard(isBinaryChoose ?
-        [
-            [Markup.button(i18n.t(`ru`, answers[0])), Markup.button(i18n.t(`ru`, answers[1]))],
-            [Markup.button(ctx.i18Btn('go_back_to_main'))]
-        ] :
-        [
-            ...answers.map(answer => {
-                return [Markup.button(i18n.t(`ru`, answer))]
-            }),
-            [Markup.button(ctx.i18Btn('go_back_to_main'))]
-        ]
-    ).resize()
-
-    return {
-        msg: ctx.i18Msg(`survey.${qId}`),
-        markup: Extra.HTML().markup(buttons)
-    }
-}
 
 function globalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
     // bot
@@ -64,41 +19,82 @@ function globalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
 
 }
 
+async function sendFeedbackIfListening(ctx: ContextMessageUpdate) {
+    if (ctx.session.feedbackScene.isListening === true) {
+        await sendFeedbackToOurGroup(ctx)
+    } else {
+        await ctx.replyWithHTML(ctx.i18Msg('please_click_write_first', {button: ctx.i18Btn('survey.q_landing.send_letter')}))
+    }
+}
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
         prepareSessionStateIfNeeded(ctx)
 
-        const {msg, markup} = await content(ctx)
-        await ctx.replyWithMarkdown(msg, markup)
+        const buttons = Markup.keyboard([
+            [Markup.button(ctx.i18Btn('go_back_to_main'))]
+        ]).resize()
+
+        await ctx.replyWithMarkdown(ctx.i18Msg('welcome'), Extra.HTML().markup(buttons))
+        await menuMiddleware.replyToContext(ctx)
+        // await ctx.replyWithMarkdown(ctx.i18Msg('take_survey'), Extra.HTML(true).markup(Markup.inlineKeyboard(
+        //     [[Markup.callbackButton(ctx.i18Btn('take_survey'), 'take_survey')],
+        //             [Markup.callbackButton(ctx.i18Btn('send_letter'), 'take_survey')]]
+        // )))
 
         ctx.session.feedbackScene.messagesSent = 0
+        ctx.session.feedbackScene.surveyDone = false
+        ctx.session.feedbackScene.isFound = undefined
 
         ctx.ua.pv({dp: `/feedback/`, dt: `Обратная связь`})
     })
-    .use()
-    .hears(i18nModuleBtnName('take_survey'), async (ctx: ContextMessageUpdate) => {
-        const {msg, markup} = question(ctx, 'q1_found_events')
-        await ctx.replyWithMarkdown(msg, markup)
+    .leave((ctx: ContextMessageUpdate) => {
+        ctx.session.feedbackScene = undefined
     })
-    .hears(i18nModuleBtnName('send_letter'), async (ctx: ContextMessageUpdate) => {
+    // .action('take_survey', async (ctx: ContextMessageUpdate) => {
+    //     await ctx.answerCbQuery()
+    // })
+    .action('/found/not_found/',  async (ctx, next) => {
         prepareSessionStateIfNeeded(ctx)
-        ctx.session.feedbackScene.isListening = true
-
-        await ctx.replyWithHTML(ctx.i18Msg('send_letter_welcome'))
+        ctx.session.feedbackScene.isFound = false
+        await next()
     })
-    .action(actionName('show_filtered_events'), async (ctx: ContextMessageUpdate) => {
-        await ctx.answerCbQuery()
-        // await showNextPortionOfResults(ctx)
+    .action('/found/your_events/',  async (ctx, next) => {
+        prepareSessionStateIfNeeded(ctx)
+        ctx.session.feedbackScene.isFound = true
+        await next()
     })
+    .action([
+        '/found/not_found/end_sorry/',
+        '/found/your_events/end_nice/',
+        '/found/your_events/write_important',
+        '/found/not_found/write_not_like',
+    ], async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
+        prepareSessionStateIfNeeded(ctx)
+        ctx.session.feedbackScene.surveyDone = true
+        await db.repoFeedback.saveQuiz({
+            what_is_important: ctx.session.feedbackScene.whatImportant.map(r => r.replace(/^opt_/, '')),
+            why_not_like: ctx.session.feedbackScene.whyDontLike.map(r => r.replace(/^opt_/, '')),
+            isFound: ctx.session.feedbackScene.isFound,
+            userId: ctx.session.userId
+        })
+        await next()
+    })
+    .use(menuMiddleware)
+    // .hears(i18nModuleBtnName('send_letter'), async (ctx: ContextMessageUpdate) => {
+    //     prepareSessionStateIfNeeded(ctx)
+    //     ctx.session.feedbackScene.isListening = true
+    //
+    //     await ctx.replyWithHTML(ctx.i18Msg('send_letter_welcome'))
+    // })
     .hears(i18nModuleBtnName('go_back_to_main'), async (ctx: ContextMessageUpdate) => {
         await ctx.scene.enter('main_scene')
     })
     .hears(/^[^/].*$/, async (ctx: ContextMessageUpdate) => {
-        await sendFeedbackToOurGroup(ctx)
+        await sendFeedbackIfListening(ctx)
     })
-    .on(['voice', 'sticker', 'document', 'photo', 'animation'], async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
-        await sendFeedbackToOurGroup(ctx)
+    .on(['voice', 'sticker', 'document', 'photo', 'animation'], async (ctx: ContextMessageUpdate) => {
+        await sendFeedbackIfListening(ctx)
     })
 
 function formatUserName(ctx: ContextMessageUpdate) {
@@ -143,19 +139,20 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
 
         await db.repoFeedback.saveFeedback({
             userId: ctx.session.userId,
+            messageId: ctx.message.message_id,
             feedbackText: ctx.message.text || 'other media: ' + JSON.stringify(ctx.message)
         })
 
         if (ctx.session.feedbackScene.messagesSent === 0) {
-            await ctx.reply(ctx.i18Msg('thank_you_for_custom_feedback'))
+            await ctx.replyWithHTML(ctx.i18Msg('thank_you_for_custom_feedback'))
             await ctx.replyWithSticker(ctx.i18Msg('sticker_thank_you'))
         } else {
-            if (ctx.session.feedbackScene.messagesSent % 5 === 0) {
+            if (ctx.session.feedbackScene.messagesSent === 5) {
                 const messageSticker = await ctx.replyWithSticker(ctx.i18Msg('sticker_stop_it'))
                 await sleep(1000)
                 await ctx.deleteMessage(messageSticker.message_id)
             }
-            await ctx.reply(ctx.i18Msg('your_feedback_was_amended'))
+            await ctx.replyWithHTML(ctx.i18Msg('your_feedback_was_amended'))
         }
         ctx.session.feedbackScene.messagesSent++
 
@@ -169,11 +166,19 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     const {
         messagesSent,
         isListening,
+        whatImportant,
+        whyDontLike,
+        surveyDone,
+        isFound
     } = ctx.session.feedbackScene || {}
 
     ctx.session.feedbackScene = {
         messagesSent: SessionEnforcer.number(messagesSent, 0),
-        isListening: isListening || false
+        isListening: isListening || false,
+        surveyDone: surveyDone || false,
+        whatImportant: SessionEnforcer.array(whatImportant),
+        whyDontLike: SessionEnforcer.array(whyDontLike),
+        isFound: isFound
     }
 }
 
@@ -185,12 +190,8 @@ export const feedbackScene = {
 export interface FeedbackSceneState {
     isListening: boolean
     messagesSent: number
-    // time: string[]
-    // openedMenus: string[]
-    // cennosti: TagLevel2[]
-    // oblasti: string[]
-    // format: string[]
-    // eventsCounterMsgId?: number
-    // eventsCounterMsgText: string
-    // resultsFound: number
+    whatImportant: string[]
+    whyDontLike: string[]
+    isFound?: boolean
+    surveyDone: boolean
 }

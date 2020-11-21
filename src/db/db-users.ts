@@ -10,12 +10,12 @@ interface UserRow {
 }
 
 export class UserSaveData {
-    username: string
-    first_name: string
-    last_name: string
+    username?: string
+    first_name?: string
+    last_name?: string
     tid: number
-    language_code: string
-    ua_uuid: string
+    language_code?: string
+    ua_uuid?: string
 }
 
 export class UserDb {
