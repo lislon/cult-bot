@@ -9,7 +9,7 @@ import {
     syncrhonizeDbByUser,
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
-import { db } from '../../db'
+import { db } from '../../db/db'
 import { Paging } from '../shared/paging'
 import { isValid, parse, parseISO } from 'date-fns'
 import { CallbackButton } from 'telegraf/typings/markup'

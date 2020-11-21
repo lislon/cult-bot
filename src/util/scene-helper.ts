@@ -39,9 +39,9 @@ export function i18nSceneHelper(scene: BaseScene<ContextMessageUpdate>) {
         i18nSharedBtnName: (id: string, templateData?: any) => {
             return i18n.t(`ru`, `shared.keyboard.${id}`, templateData)
         },
-        scanKeys: (postfix: string): string[] => {
+        scanKeys: (prefix: string): string[] => {
             return i18n.resourceKeys(`ru`)
-                .filter(s => s.startsWith(`scenes.${scene.id}.${postfix}`))
+                .filter(s => s.startsWith(`scenes.${scene.id}.${prefix}`))
         }
     }
 }

@@ -50,16 +50,43 @@ const makeDefaultEvent = (content: any) => {
 export class TelegramMockServer {
     // private currentScene = ''
     private replies: BotReply[] = []
-    private repliesIndex = 0
+    private repliesIterIndex = { index: 0 }
+    private repliesIterIndexOtherChat = { index: 0 }
     private lastMsg: MessageWithInlineMarkup
     private lastEdited: BotReply
+    private lastMsgId = 0;
+    private lastCtx: ContextMessageUpdate
+
+    ctx(): ContextMessageUpdate {
+        return this.lastCtx
+    }
 
     replyIterator(): Iterator<BotReply> {
+        return this.makeIteratorWithFilter((r) => r.message.chat.id === CHAT_ID, this.repliesIterIndex)
+    }
+
+    replyIteratorOtherChat(): Iterator<BotReply> {
+        return this.makeIteratorWithFilter((r) => r.message.chat.id !== CHAT_ID, this.repliesIterIndexOtherChat)
+    }
+
+    private makeIteratorWithFilter(predicate: (reply: BotReply) => boolean, lastElement: { index: number }) {
         return {
             next: () => {
-                return {
-                    done: this.repliesIndex >= this.replies.length,
-                    value: this.repliesIndex >= this.replies.length ? undefined : this.replies[this.repliesIndex++]
+                const nextMessageWithSameChatId = (r: BotReply, index: number) =>
+                    index >= lastElement.index && predicate(r)
+
+                const foundIndex = this.replies.findIndex(nextMessageWithSameChatId)
+                if (foundIndex >= 0) {
+                    lastElement.index = foundIndex + 1
+                    return {
+                        done: false,
+                        value: this.replies[foundIndex]
+                    }
+                } else {
+                    return {
+                        done: true,
+                        value: undefined
+                    }
                 }
             }
         }
@@ -70,23 +97,23 @@ export class TelegramMockServer {
     }
 
     async sendInitialUpdate(middleware: MiddlewareFn<ContextMessageUpdate>) {
-        const update = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage()}))
-        await middleware(update, undefined)
+        this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage()}))
+        await middleware(this.lastCtx, undefined)
     }
 
-    async sendInitialUpdate2(middleware: MiddlewareFn<ContextMessageUpdate>, sceneId: string) {
-        const update = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage()}))
-        await middleware(update, async () => await update.scene.enter(sceneId))
+    async enterScene(middleware: MiddlewareFn<ContextMessageUpdate>, sceneId: string) {
+        this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage()}))
+        await middleware(this.lastCtx, async () => await this.lastCtx.scene.enter(sceneId))
     }
 
 
     async sendMessage(middleware: MiddlewareFn<ContextMessageUpdate>, text: string) {
-        const update = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage(text)}))
-        await middleware(update, undefined)
+        this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage(text)}))
+        await middleware(this.lastCtx, undefined)
     }
 
     async clickInline(middleware: MiddlewareFn<ContextMessageUpdate>, callbackData: string, message: Message) {
-        const update = this.prepareCtxFromServer(makeDefaultEvent({
+        this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({
             callback_query: {
                 id: '0',
                 ...makeFrom(),
@@ -96,7 +123,7 @@ export class TelegramMockServer {
             }
         }))
 
-        await middleware(update, undefined)
+        await middleware(this.lastCtx, undefined)
     }
 
     getListOfInlineButtonsFromLastMsg(): {message: MessageWithInlineMarkup, buttons: InlineKeyboardButton[]} {
@@ -133,7 +160,7 @@ export class TelegramMockServer {
 
         ctx.reply = async (message: string, extra: tt.ExtraReplyMessage = undefined): Promise<tt.Message> => {
             this.lastMsg = await this.generateAnswerAfterReply()
-            if (MarkupHelper.isInlineKeyboard(extra.reply_markup)) {
+            if (MarkupHelper.isInlineKeyboard(extra?.reply_markup)) {
                 this.lastMsg.reply_markup = extra.reply_markup
             }
 
@@ -153,16 +180,33 @@ export class TelegramMockServer {
 
             return lastReply.message
         }
+        tg.sendMessage = async (chatId: number | string, text: string, extra?: tt.ExtraEditMessage): Promise<tt.Message> => {
+            const message: Message = {
+                message_id: this.nextMsgId(),
+                chat: {
+                    id: +chatId,
+                    type: 'private'
+                },
+                date: new Date().getTime(),
+                text
+            }
+            this.replies.push({ message, extra, text })
+            return message
+        }
 
         return ctx
     }
 
     async generateAnswerAfterReply(): Promise<Message> {
         return {
-            message_id: (this.replies.length === 0 ? 0 : this.replies[this.replies.length - 1].message.message_id) + 1,
+            message_id: this.nextMsgId(),
             date: new Date().getTime(),
             chat: CHAT,
         }
+    }
+
+    private nextMsgId() {
+        return this.lastMsgId++
     }
 }
 

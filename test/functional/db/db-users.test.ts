@@ -1,4 +1,4 @@
-import { db, dbCfg } from '../../../src/db'
+import { db, dbCfg } from '../../../src/db/db'
 import { UserSaveData } from '../../../src/db/db-users'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
@@ -15,7 +15,7 @@ describe('Users', () => {
         ua_uuid: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'
     }
 
-    beforeEach(async () => await db.none('TRUNCATE cb_users'))
+    beforeEach(async () => await db.none('DELETE FROM cb_users'))
 
     test('User is saved', async () => {
         const id = await db.userRepo.insertUser(user)

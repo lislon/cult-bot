@@ -1,5 +1,5 @@
 import { cleanDb, expectedTitlesStrict, getMockEvent, syncDatabase4Test } from './db-test-utils'
-import { db, dbCfg } from '../../../src/db'
+import { db, dbCfg } from '../../../src/db/db'
 import { date, mkInterval } from '../../lib/timetable/test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
 

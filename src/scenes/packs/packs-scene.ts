@@ -9,7 +9,7 @@ import { getNextWeekEndRange, limitEventsToPage, ruFormat, warnAdminIfDateIsOver
 import { subSeconds } from 'date-fns/fp'
 import { getISODay, isSameMonth, startOfDay } from 'date-fns'
 import { SceneRegister } from '../../middleware-utils'
-import { db } from '../../db'
+import { db } from '../../db/db'
 import { encodeTagsLevel1 } from '../../util/tag-level1-encoder'
 
 type SubMenuVariants = 'exhibitions_temp' | 'exhibitions_perm'

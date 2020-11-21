@@ -1,4 +1,4 @@
-import { db } from '../../../src/db'
+import { db } from '../../../src/db/db'
 import { MomentIntervals } from '../../../src/lib/timetable/intervals'
 import { Event, EventCategory, TagLevel2 } from '../../../src/interfaces/app-interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'

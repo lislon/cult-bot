@@ -19,7 +19,7 @@ import {
 } from './format-explain'
 import { i18n } from '../../util/i18n'
 import { mapUserInputToTimeIntervals } from './customize-utils'
-import { db } from '../../db'
+import { db } from '../../db/db'
 import { addDays, format } from 'date-fns/fp'
 import { Paging } from '../shared/paging'
 import { getISODay, startOfISOWeek } from 'date-fns'
@@ -398,9 +398,6 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
             await resetFilter(ctx)
             await goBackToCustomize(ctx)
             await putOrRefreshCounterMessage(ctx)
-        })
-        .hears(i18nModuleBtnName('go_back_to_main'), async (ctx: ContextMessageUpdate) => {
-            await ctx.scene.enter('main_scene')
         })
 }
 

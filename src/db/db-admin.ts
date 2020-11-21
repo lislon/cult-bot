@@ -1,5 +1,5 @@
 import { Event, EventCategory, MyInterval } from '../interfaces/app-interfaces'
-import { db } from '../db'
+import { db } from './db'
 import { mapToPgInterval } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
 

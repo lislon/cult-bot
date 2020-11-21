@@ -1,4 +1,4 @@
-import { db, pgp } from '../db'
+import { db, pgp } from '../db/db'
 
 (async function run() {
     console.log('Shuffle events...')

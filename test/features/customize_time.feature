@@ -9,8 +9,10 @@ Feature: Customize time
    20	21	22	23	24	25	26
    27	28	29	30	31
 
+  Background:
+    Given Scene is 'customize_scene'
+
   Scenario: I can see number of events when click on time
-    When I enter 'customize_scene'
     Then Bot responds 'Настройте фильтры по Вашим предпочтениям' with markup buttons:
       """
       [#️⃣ Области] [#️⃣ Приоритеты]
@@ -21,7 +23,6 @@ Feature: Customize time
 
   Scenario:  I want select to events by time on friday
     Given now is 2020-01-03 12:00
-    When I enter 'customize_scene'
     When I click markup [#️⃣ Время]
     Then Bot responds 'Здесь можно настроить временные интервалы, в которых искать события' with inline buttons:
       """
@@ -31,7 +32,6 @@ Feature: Customize time
 
   Scenario: I want select to events by time on sunday
     Given now is 2020-01-05 00:00
-    When I enter 'customize_scene'
     When I click markup [#️⃣ Время]
     Then Bot responds 'Здесь можно настроить временные интервалы, в которых искать события' with inline buttons:
       """
@@ -71,7 +71,6 @@ Feature: Customize time
 
   Scenario: When I selected filter saturday 22-24, then some time passed and today is sunday, these selections should gone
     Given now is 2020-01-04 12:00
-    * I enter 'customize_scene'
     * I click markup [#️⃣ Время]
     * I click inline [➕ Суббота (04.01)]
     * I click inline [🌃 22:00-24:00]
@@ -81,7 +80,6 @@ Feature: Customize time
 
   Scenario: I don't want to see buttons with time in past
     Given now is 2020-01-05 21:50
-    When I enter 'customize_scene'
     * I click markup [#️⃣ Время]
     * I click inline [➕ Воскресенье (05.01)]
     Then Bot edits inline buttons:
@@ -93,7 +91,6 @@ Feature: Customize time
 
   Scenario: I selected time slot, but it passed
     Given now is 2020-01-05 10:00
-    When I enter 'customize_scene'
     * I click markup [#️⃣ Время]
     * I click inline [➕ Воскресенье (05.01)]
     * I click inline [🌅 06:00-12:00]

@@ -5,27 +5,30 @@ import { SceneRegister } from '../../middleware-utils'
 
 const scene = new BaseScene<ContextMessageUpdate>('main_scene');
 
-const {sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
+const {i18nModuleBtnName} = i18nSceneHelper(scene)
+
+function isTimeToShowFeedback(ctx: ContextMessageUpdate) {
+    return (ctx.session.analytics.inlineClicks + ctx.session.analytics.markupClicks > 25) || isAdmin(ctx)
+}
 
 const content = (ctx: ContextMessageUpdate) => {
-
-    const {i18Btn, i18Msg} = sceneHelper(ctx)
+    const feedbackBtn = isTimeToShowFeedback(ctx) ? ['feedback'] : []
 
     const menu = [
         ['customize'],
         ['packs'],
         ['search'],
-        ...[(isAdmin(ctx) ? ['admin', 'feedback'] : ['feedback'])]
+        ...[(isAdmin(ctx) ? ['admin', ...feedbackBtn] : feedbackBtn)]
     ]
 
     const mainButtons = menu.map(row =>
         row.map(btnName => {
-            return Markup.button(i18Btn(btnName));
+            return Markup.button(ctx.i18Btn(btnName));
         })
     );
 
     return {
-        msg: i18Msg('select_anything'),
+        msg: ctx.i18Msg('select_anything'),
         markupMainMenu: Extra.HTML(true).markup(Markup.keyboard(mainButtons).resize())
     }
 }
@@ -36,10 +39,6 @@ scene.enter(async (ctx: ContextMessageUpdate) => {
     await ctx.replyWithMarkdown(msg, markupMainMenu)
 
     ctx.ua.pv({ dp: '/', dt: 'Главное меню' })
-})
-
-scene.leave(async (ctx: ContextMessageUpdate) => {
-
 })
 
 function globalActionsFn(bot: Composer<ContextMessageUpdate>) {

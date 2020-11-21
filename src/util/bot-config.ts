@@ -20,6 +20,11 @@ export class BotConfig {
     public readonly DEBUG: string|undefined
     public readonly BOT_DISABLED: boolean
 
+    /**
+     * Chat used to receive user feedback and send reply to it.
+     */
+    public readonly SUPPORT_FEEDBACK_CHAT_ID?: number
+
     constructor() {
         this.DATABASE_URL = process.env.DATABASE_URL
         this.GOOGLE_ANALYTICS_ID = process.env.GOOGLE_ANALYTICS_ID
@@ -39,6 +44,8 @@ export class BotConfig {
         this.NODE_ENV = process.env.NODE_ENV === undefined ? 'development' : process.env.NODE_ENV as Envs
         this.DEBUG = process.env.DEBUG
         this.BOT_DISABLED = !!process.env.BOT_DISABLED
+
+        this.SUPPORT_FEEDBACK_CHAT_ID = +process.env.SUPPORT_FEEDBACK_CHAT_ID || undefined
     }
 }
 

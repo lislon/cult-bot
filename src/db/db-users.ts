@@ -24,10 +24,10 @@ export class UserDb {
 }
 
 export class UserRepository {
-    private readonly userColumns: ColumnSet
+    private readonly columns: ColumnSet
 
     constructor(private db: IDatabase<any>, private pgp: IMain) {
-        this.userColumns = new pgp.helpers.ColumnSet(
+        this.columns = new pgp.helpers.ColumnSet(
             'username, first_name, last_name, tid, language_code, ua_uuid'.split(/,\s*/),
             { table: 'cb_users' }
         );
@@ -41,7 +41,8 @@ export class UserRepository {
         user.first_name = user.first_name || ''
         user.last_name = user.last_name || ''
         user.username = user.username || ''
-        const sql = this.pgp.helpers.insert(user, this.userColumns) + ' returning id'
+        user.language_code = user.language_code || ''
+        const sql = this.pgp.helpers.insert(user, this.columns) + ' returning id'
         return +(await this.db.one(sql))['id']
     }
 }

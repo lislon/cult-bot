@@ -15,6 +15,7 @@ import { customizeScene } from './scenes/customize/customize-scene'
 import { adminScene } from './scenes/admin/admin-scene'
 import { searchScene } from './scenes/search/search-scene'
 import { packsScene } from './scenes/packs/packs-scene'
+import { feedbackScene } from './scenes/feedback/feedback-scene'
 
 console.log(`starting bot...`);
 
@@ -36,7 +37,7 @@ bot.use(middlewares.analyticsMiddleware);
 bot.use(stage.middleware());
 
 
-myRegisterScene(bot, stage, [mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene, packsScene, searchScene])
+myRegisterScene(bot, stage, [mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene, packsScene, searchScene, feedbackScene])
 
 // bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
 //     console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
@@ -89,7 +90,7 @@ bot.on('sticker', (ctx) => ctx.reply('👍'))
 bot.hears('hi', (ctx) => ctx.reply('Hey there'))
 
 i18n.resourceKeys('ru')
-    .filter((id: string) => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.].*back/))
+    .filter((id: string) => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.](back|go_back_to_main)$/))
     .forEach((id: string) => {
         bot.hears(match(id), async (ctx) => {
             console.log('main catch', id)
@@ -132,9 +133,17 @@ bot.command('sync', async (ctx) => {
     await ifAdmin(ctx, () => syncrhonizeDbByUser(ctx))
 })
 
-bot.hears(/.+/, (ctx, next) => {
+bot.hears(/.+/, async (ctx, next) => {
     console.debug(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [text=${ctx.message.text}]`)
-    return next()
+
+    // await ctx.telegram.sendMessage(-1001435463713, `Привет, мне в чате перели: ${ctx.message.text}!`)
+
+    return await next() // 91234245
+    // id = -1001435463713
+    // title = "ГулиГули Группа"
+    // type = "supergroup"
+
+    // type= private
 })
 
 

@@ -1,5 +1,5 @@
 import { AfterAll, Before, BeforeAll, DataTable, Given, Then, When } from '@cucumber/cucumber'
-import { db, dbCfg } from '../../../src/db'
+import { db, dbCfg } from '../../../src/db/db'
 
 import expect from 'expect'
 import { mskMoment } from '../../../src/util/moment-msk'
@@ -8,7 +8,9 @@ import { BotReply } from '../lib/TelegramMockServer'
 import emojiRegex from 'emoji-regex'
 import { getMockEvent, syncDatabase4Test } from '../../functional/db/db-test-utils'
 import { parseAndPredictTimetable } from '../../../src/lib/timetable/timetable-utils'
-import { allCategories } from '../../../src/interfaces/app-interfaces'
+import { allCategories, ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
+import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
+import { botConfig } from '../../../src/util/bot-config'
 
 function expectLayoutsSame(buttonsLayout: string, markup: AnyTypeOfKeyboard) {
     if (buttonsLayout.match(emojiRegex())) {
@@ -31,6 +33,15 @@ Given(/^now is (\d+-\d+-\d+ \d+:\d+)$/, async function (dateStr: string) {
     await this.setNow(mskMoment(dateStr))
 })
 
+Given(/^I'am already used bot (\d+) times$/, async function (times: number) {
+    await this.useBeforeScenes((ctx: ContextMessageUpdate) => {
+        ctx.session.analytics = {
+            inlineClicks: 0,
+            markupClicks: times
+        }
+    })
+})
+
 Given(/^there is events:$/, async function (table: DataTable) {
 
     const mockEvents = table.hashes().map((row: any) => {
@@ -50,16 +61,21 @@ Given(/^there is events:$/, async function (table: DataTable) {
             expect(row.timetable).toEqual(timetableResult.errors.join('\n'))
         }
 
-        return getMockEvent({ ...row, eventTime: timetableResult.timeIntervals })
+        return getMockEvent({...row, eventTime: timetableResult.timeIntervals})
     })
 
     await syncDatabase4Test(mockEvents)
 })
 
 
-When(/^I enter '(.+)'$/, async function (scene: string) {
+Given(/^Scene is '(.+)'$/, async function (scene: string) {
     drainEvents.call(this)
     await this.enterScene(scene)
+})
+
+When(/^I type '(.+)'$/, async function (text: string) {
+    drainEvents.call(this)
+    await this.sendMessage(text)
 })
 
 When(/^I click markup \[(.+)]$/, async function (buttonText: string) {
@@ -74,7 +90,7 @@ When(/^I click inline \[(.+)]$/, async function (buttonText: string) {
 
 Then(/^Bot responds '(.+)'$/, function (expected: string) {
     const nextReply = this.getNextMsg() as BotReply
-    expect(nextReply.text).toEqual(expected)
+    expectTextMatches(nextReply, expected)
 })
 
 function expectReplyText(nextReply: BotReply, expected: string) {
@@ -124,6 +140,29 @@ Then(/^Bot responds something$/, function () {
     const msg = this.getNextMsg()
 });
 
+function expectTextMatches(reply: BotReply, expectedText: string) {
+    if (expectedText.startsWith('*') && expectedText.endsWith('*')) {
+        expect(reply.text).toContain(expectedText.substring(1, expectedText.length - 1))
+    } else {
+        expect(reply.text).toStrictEqual(expectedText)
+    }
+}
+
+Then(/^Bot sends reply to chat '(.+)' with message '(.+)'$/, function (chatIdEnvName: 'SUPPORT_FEEDBACK_CHAT_ID', expectedText: string) {
+    const botReply = this.getNextMsgOtherChat()
+    expectTextMatches(botReply, expectedText)
+    expect(botReply.message.chat.id).toEqual(+botConfig[chatIdEnvName])
+});
+
+Then(/^I will be on scene '(.+)'$/, function (expectedScene: string) {
+    expect(this.ctx()?.scene?.current?.id).toEqual(expectedScene)
+});
+
+
+
 Before(async () => await syncDatabase4Test([]))
+Before(function (testCase: ITestCaseHookParameter) {
+    this.initTestCase(testCase)
+})
 BeforeAll(() => dbCfg.connectionString?.includes('test') || process.exit(666))
 AfterAll(db.$pool.end)

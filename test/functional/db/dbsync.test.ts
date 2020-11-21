@@ -1,5 +1,4 @@
-import { db, dbCfg } from '../../../src/db'
-import { mskMoment } from '../../../src/util/moment-msk'
+import { db, dbCfg } from '../../../src/db/db'
 import { cleanDb, getMockEvent, syncDatabase4Test } from './db-test-utils'
 import { date } from '../../lib/timetable/test-utils'
 

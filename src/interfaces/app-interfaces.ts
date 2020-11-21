@@ -10,6 +10,8 @@ import { PagingState } from '../scenes/shared/paging'
 import { SearchSceneState } from '../scenes/search/search-scene'
 import { Visitor } from 'universal-analytics'
 import { PerformanceContext } from '../lib/middleware/performance-middleware'
+import { FeedbackSceneState } from '../scenes/feedback/feedback-scene'
+import { AnalyticsState } from '../lib/middleware/analytics-middleware'
 
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
@@ -38,8 +40,10 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         timetable: TimetableSceneState
         timeInterval: TimeIntervalSceneState
         adminScene: AdminSceneState
+        feedbackScene: FeedbackSceneState
+        analytics: AnalyticsState,
         paging: PagingState
-        id: number
+        userId: number
         uaUuid: string
         language: 'en' | 'ru'
         user: tt.User

@@ -1,7 +1,7 @@
 import { ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
 import dbsync from '../../dbsync/dbsync'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
-import { db } from '../../db'
+import { db } from '../../db/db'
 import { addDays, max, parseISO, startOfDay, startOfISOWeek } from 'date-fns/fp'
 import { format, formatDistanceToNow, Locale } from 'date-fns'
 import flow from 'lodash/fp/flow'
@@ -67,8 +67,8 @@ export class SessionEnforcer {
         return (original === undefined) ? def : original;
     }
 
-    static number(original: number): number {
-        return typeof original === 'number' ? original : undefined;
+    static number(original: number, defaultValue: number = undefined): number {
+        return typeof original === 'number' ? original : defaultValue;
     }
 }
 export async function showBotVersion(ctx: ContextMessageUpdate) {

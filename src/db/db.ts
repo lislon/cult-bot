@@ -1,14 +1,15 @@
 import pg_promise, { IDatabase, IInitOptions, IMain } from 'pg-promise'
 import * as pg from 'pg-promise/typescript/pg-subset'
 import { IConnectionParameters } from 'pg-promise/typescript/pg-subset'
-import { Diagnostics } from './db/diagnostics'
-import { CustomFilterRepository } from './db/custom-filter-repository'
-import { EventsSyncRepository } from './db/sync-repository'
-import { TopEventsRepository } from './db/top-events'
-import { AdminRepository } from './db/db-admin'
-import { SearchRepository } from './db/search'
-import { UserRepository } from './db/db-users'
-import { botConfig } from './util/bot-config'
+import { Diagnostics } from './diagnostics'
+import { CustomFilterRepository } from './custom-filter-repository'
+import { EventsSyncRepository } from './sync-repository'
+import { TopEventsRepository } from './top-events'
+import { AdminRepository } from './db-admin'
+import { SearchRepository } from './search'
+import { UserRepository } from './db-users'
+import { botConfig } from '../util/bot-config'
+import { FeedbackRepository } from './db-feedbacks'
 
 export interface IExtensions {
     repoSync: EventsSyncRepository,
@@ -17,6 +18,7 @@ export interface IExtensions {
     repoAdmin: AdminRepository
     repoSearch: SearchRepository
     userRepo: UserRepository
+    repoFeedback: FeedbackRepository
 }
 
 export type BotDb = IDatabase<IExtensions> & IExtensions;
@@ -30,6 +32,7 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoAdmin = new AdminRepository(dbEx, pgp)
         dbEx.repoSearch = new SearchRepository(dbEx, pgp)
         dbEx.userRepo = new UserRepository(dbEx, pgp)
+        dbEx.repoFeedback = new FeedbackRepository(dbEx, pgp)
     },
 
     query(e) {

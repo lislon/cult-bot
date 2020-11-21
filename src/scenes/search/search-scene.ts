@@ -1,7 +1,7 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
-import { db } from '../../db'
+import { db } from '../../db/db'
 import { getNextWeekEndRange, limitEventsToPage, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import { Paging } from '../shared/paging'
@@ -102,7 +102,7 @@ scene
     .hears(i18nSharedBtnName('back'), async (ctx: ContextMessageUpdate) => {
         await ctx.scene.enter('main_scene')
     })
-    .hears(/.+/, async (ctx: ContextMessageUpdate) => {
+    .hears(/^[^/].*$/, async (ctx: ContextMessageUpdate) => {
         Paging.reset(ctx)
         ctx.session.search.request = ctx.match[0]
         await warnAdminIfDateIsOverriden(ctx)
