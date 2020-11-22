@@ -31,13 +31,11 @@ const logger = winston.createLogger({
         })
     ],
     format: combine(
-        format.colorize(),
-        timestamp({
-            format: botConfig.NODE_ENV === 'development' ? 'HH:mm:ss' : undefined
-        }),
-        format.splat(),
-        format.simple(),
-        logFormat
+            format.colorize(),
+            botConfig.NODE_ENV === 'development' ? timestamp({ format: 'HH:mm:ss' }) : { transform: (info) => info },
+            format.splat(),
+            format.simple(),
+            logFormat
     )
 });
 
