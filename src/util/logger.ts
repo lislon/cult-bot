@@ -24,19 +24,32 @@ const logFormat = printf(info => {
     return `[${info.timestamp}] [${info.level}] ${info.message}`;
 });
 
+function getFormat() {
+    if (botConfig.NODE_ENV === 'development') {
+        return combine(
+            format.colorize(),
+            timestamp({format: 'HH:mm:ss'}),
+            format.splat(),
+            format.simple(),
+            logFormat
+        )
+    } else {
+        return combine(
+            format.colorize(),
+            format.splat(),
+            format.simple(),
+            logFormat
+        )
+    }
+}
+
 const logger = winston.createLogger({
     transports: [
         new winston.transports.Console({
             level: 'silly'
         })
     ],
-    format: combine(
-            format.colorize(),
-            botConfig.NODE_ENV === 'development' ? timestamp({ format: 'HH:mm:ss' }) : { transform: (info) => info },
-            format.splat(),
-            format.simple(),
-            logFormat
-    )
+    format: getFormat()
 });
 
 if (botConfig.NODE_ENV !== 'production') {

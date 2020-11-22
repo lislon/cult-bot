@@ -59,6 +59,12 @@ REDIS_URL
 DATABASE_URL
 ```
 
+Use values for SUPPORT_FEEDBACK_CHAT_ID:
+
+* DEV: -1001435463713
+* UAT: -464597039
+* PROD: -358666254
+
 ### Backup
 ```
 heroku pg:backup -a <app name>

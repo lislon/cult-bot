@@ -2,6 +2,7 @@ import { BaseScene, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 import { StupidTranslit } from '../lib/translit/stupid-translit'
 import { i18n } from './i18n'
+import { adminIds, adminUsernames } from './admins-list'
 
 export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id'>) {
     const backAction = scene.id + 'button.back'
@@ -63,16 +64,7 @@ export function isDev(ctx: ContextMessageUpdate) {
 }
 
 export function isAdmin(ctx: ContextMessageUpdate) {
-    const admins = [
-        '@lislon',
-        '@RemboTrembo',
-        '@kashmar85',
-    ]
-    const adminIds = [
-        781083907, // Anna
-        1344589946 // Elena G
-    ]
-    return admins.includes(`@${ctx.from.username}`) || adminIds.includes(ctx.from.id);
+    return adminUsernames.includes(ctx.from.username) || adminIds.includes(ctx.from.id);
 }
 export async function ifAdmin(ctx: ContextMessageUpdate, callback: () => Promise<any>) {
     if (isAdmin(ctx)) {

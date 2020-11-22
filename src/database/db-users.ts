@@ -1,4 +1,5 @@
 import { ColumnSet, IDatabase, IMain } from 'pg-promise'
+import { adminIds, adminUsernames } from '../util/admins-list'
 
 interface UserRow {
     username: string
@@ -46,6 +47,15 @@ export class UserRepository {
                 return row;
             })
     }
+
+    public async findAllAdmins(): Promise<UserDb[] | null> {
+        return this.db.manyOrNone<UserDb>('SELECT id, ua_uuid, chat_id FROM cb_users WHERE username IN($(adminUsernames:csv)) OR tid IN ($(adminIds:csv))',
+            {
+                adminUsernames,
+                adminIds
+            })
+    }
+
 
     public async insertUser(user: UserSaveData): Promise<number> {
         user.first_name = user.first_name || ''

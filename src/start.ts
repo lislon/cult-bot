@@ -6,8 +6,28 @@ import rp from 'request-promise'
 import express, { Request, Response } from 'express'
 import { botConfig } from './util/bot-config'
 import { logger } from './util/logger'
+import { db } from './database/db'
+import { i18n } from './util/i18n'
 
 const app = express()
+
+async function notifyAdminsAboutRestart() {
+    try {
+        const admins = await db.userRepo.findAllAdmins()
+        const text = i18n.t('ru', 'scenes.admin_scene.restart_report', {
+            version: botConfig.HEROKU_RELEASE_VERSION,
+            commit: botConfig.HEROKU_SLUG_COMMIT?.substring(botConfig.HEROKU_SLUG_COMMIT.length - 6)
+        })
+        for (const admin of admins) {
+            await rawBot.telegram.sendMessage(admin.chat_id, text, {
+                parse_mode: 'HTML',
+                disable_notification: true
+            })
+        }
+    } catch (e) {
+        logger.warn(e)
+    }
+}
 
 class BotStart {
     static PATH = 'tlg'
@@ -18,13 +38,14 @@ class BotStart {
 
     private static printDiagnostic() {
         logger.debug(`google docs db: ${getGoogleSpreadSheetURL()}` );
+        logger.debug(`SUPPORT_FEEDBACK_CHAT_ID=%s`, botConfig.SUPPORT_FEEDBACK_CHAT_ID)
     }
 
     public static startDevMode(bot: Telegraf<ContextMessageUpdate>) {
         logger.info( 'Starting a bot in development mode');
         BotStart.printDiagnostic()
 
-        rp(`https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook`).then(() => {
+        rp(`https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook`).then(async () => {
             bot.startPolling()
         });
     }
@@ -86,8 +107,9 @@ app.use(function (err: any, req: any, res: any, next: any) {
 
 app.listen(botConfig.PORT, () => {
     if (botConfig.BOT_DISABLED === undefined && botConfig.NODE_ENV === 'production') {
-        BotStart.startProdMode(rawBot).then(() => {
+        BotStart.startProdMode(rawBot).then(async () => {
             logger.info(`Bot started on port ${botConfig.PORT}!`)
+            await notifyAdminsAboutRestart()
         })
     }
 })
