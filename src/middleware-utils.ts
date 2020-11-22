@@ -12,6 +12,7 @@ import { i18nMiddleware, i18nWrapSceneContext } from './lib/middleware/i18n-midd
 import { Composer, Stage } from 'telegraf'
 import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
 import { supportFeedbackMiddleware } from './lib/middleware/support-feedback.middleware'
+import { logger } from './util/logger'
 
 let sessionMechanism
 if (botConfig.REDIS_URL !== undefined && botConfig.NODE_ENV !== 'test') {
@@ -56,9 +57,9 @@ export default {
         onThrottlerError: async (ctx: ContextMessageUpdate, next, throttlerName, error) => {
 
             if (error.message === 'This job has been dropped by Bottleneck') {
-                console.log(`Throttle limit ${throttlerName}: ${error} for user ${ctx.from.username}`)
+                logger.debug(`Throttle limit ${throttlerName}: ${error} for user ${ctx.from.username}`)
             } else {
-                console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
+                logger.error(`Ooops, encountered an error for ${ctx.updateType}`, error)
                 if (isDev(ctx)) {
                     await ctx.replyWithHTML(ctx.i18n.t('shared.something_went_wrong_dev', {
                         error: error.toString().substr(0, 1000),

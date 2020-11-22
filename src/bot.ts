@@ -21,7 +21,13 @@ logger.info(`starting bot...`);
 
 const quick = botConfig.NODE_ENV === 'development';
 
-export const rawBot: Telegraf<ContextMessageUpdate> = new Telegraf(botConfig.TELEGRAM_TOKEN)
+export const rawBot: Telegraf<ContextMessageUpdate> = new Telegraf(botConfig.TELEGRAM_TOKEN, {
+    telegram: {
+        // feedback scene requires this, because otherwise it cannot obtain id message sent to admin feedback chat
+        // https://core.telegram.org/bots/faq#how-can-i-make-requests-in-response-to-updates
+        webhookReply: false
+    }
+})
 export const bot = new Composer<ContextMessageUpdate>()
 
 const stage = new Stage([], {
