@@ -65,6 +65,11 @@ Use values for SUPPORT_FEEDBACK_CHAT_ID:
 * UAT: -464597039
 * PROD: -358666254
 
+Add this variable to dev to speed up heroku build:
+```
+heroku config:set NPM_CONFIG_PRODUCTION=true YARN_PRODUCTION=true
+```
+
 ### Backup
 ```
 heroku pg:backup -a <app name>
