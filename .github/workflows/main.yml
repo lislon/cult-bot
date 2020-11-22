@@ -43,7 +43,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
       - run: yarn install --frozen-lockfile
-      - run: yarn build --if-present
+      - run: yarn build
         env:
           CI: true
       - run: yarn db:up
