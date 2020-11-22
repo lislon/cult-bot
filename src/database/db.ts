@@ -84,7 +84,8 @@ pgMonitor.setLog((msg, info) => {
 
 const dbCfg: IConnectionParameters<pg.IClient> & {} = {
     connectionString: botConfig.DATABASE_URL,
-    max: +20,
+    max:
+        +20,
     ssl: botConfig.HEROKU_APP_ID === undefined ? undefined : { rejectUnauthorized: false },
 }
 
