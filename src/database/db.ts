@@ -1,7 +1,6 @@
 import pg_promise, { IDatabase, IInitOptions, IMain } from 'pg-promise'
 import * as pg from 'pg-promise/typescript/pg-subset'
 import { IConnectionParameters } from 'pg-promise/typescript/pg-subset'
-import { Diagnostics } from './diagnostics'
 import { CustomFilterRepository } from './custom-filter-repository'
 import { EventsSyncRepository } from './sync-repository'
 import { TopEventsRepository } from './top-events'
@@ -10,6 +9,8 @@ import { SearchRepository } from './search'
 import { UserRepository } from './db-users'
 import { botConfig } from '../util/bot-config'
 import { FeedbackRepository } from './db-feedbacks'
+import { logger } from '../util/logger'
+import pgMonitor from 'pg-monitor'
 
 export interface IExtensions {
     repoSync: EventsSyncRepository,
@@ -36,9 +37,7 @@ const initOptions: IInitOptions<IExtensions> = {
     },
 
     query(e) {
-        if (botConfig.DEBUG !== undefined) {
-            console.log(e.query);
-        }
+        // logger.silly(e.query)
     }
 
 };
@@ -52,8 +51,36 @@ const initOptions: IInitOptions<IExtensions> = {
 
 const pgp: IMain = pg_promise(initOptions)
 
-// monitor.attach(initOptions);
-Diagnostics.init(initOptions)
+export function pgLogVerbose() {
+    if (pgMonitor.isAttached()) {
+        pgMonitor.detach()
+    }
+    pgMonitor.attach(initOptions, undefined);
+}
+
+export function pgLogOnlyErrors() {
+    if (pgMonitor.isAttached()) {
+        pgMonitor.detach()
+    }
+    pgMonitor.attach(initOptions, ['error']);
+}
+
+if (botConfig.NODE_ENV === 'development') {
+    pgLogVerbose()
+} else {
+    pgLogOnlyErrors()
+}
+
+pgMonitor.setLog((msg, info) => {
+    // botConfig.NODE_ENV === 'development'
+    const text = process.stdout.isTTY ? info.colorText : info.text
+    if (info.event === 'error') {
+        logger.error(text)
+    } else {
+        logger.silly(text)
+    }
+    info.display = false
+})
 
 const dbCfg: IConnectionParameters<pg.IClient> & {} = {
     connectionString: botConfig.DATABASE_URL,

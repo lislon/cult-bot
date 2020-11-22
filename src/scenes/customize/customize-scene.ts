@@ -20,7 +20,7 @@ import {
 } from './format-explain'
 import { i18n } from '../../util/i18n'
 import { mapUserInputToTimeIntervals } from './customize-utils'
-import { db } from '../../db/db'
+import { db } from '../../database/db'
 import { addDays, format } from 'date-fns/fp'
 import { Paging } from '../shared/paging'
 import { getISODay, startOfISOWeek } from 'date-fns'

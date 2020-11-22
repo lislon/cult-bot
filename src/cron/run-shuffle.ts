@@ -1,9 +1,10 @@
-import { db, pgp } from '../db/db'
+import { db, pgp } from '../database/db'
+import { logger } from '../util/logger'
 
 (async function run() {
-    console.log('Shuffle events...')
+    logger.info('Shuffle events...')
     await db.none('update cb_events set order_rnd = CEIL(random() * 1000000)')
-    console.log('Success!')
+    logger.info('Success!')
     pgp.end()
 })()
 

@@ -21,17 +21,24 @@ function prepareMessage(ctx: ContextMessageUpdate, msg: string, ...data: any[]) 
 
 const {combine, timestamp, printf} = format;
 const logFormat = printf(info => {
-    return `[${info.timestamp}] [${info.level}]${info.message}`;
+    return `[${info.timestamp}] [${info.level}] ${info.message}`;
 });
 
 const logger = winston.createLogger({
     transports: [
         new winston.transports.Console({
-            level: botConfig.NODE_ENV === 'production' ? 'debug' : 'debugM'
-        }),
-        new winston.transports.File({filename: 'debug.log', level: 'debug'})
+            level: 'silly'
+        })
     ],
-    format: combine(timestamp(), format.splat(), format.simple(), logFormat)
+    format: combine(
+        format.colorize(),
+        timestamp({
+            format: botConfig.NODE_ENV === 'development' ? 'HH:mm:ss' : undefined
+        }),
+        format.splat(),
+        format.simple(),
+        logFormat
+    )
 });
 
 if (botConfig.NODE_ENV !== 'production') {
@@ -45,4 +52,5 @@ const loggerWithCtx = {
         logger.error(prepareMessage(ctx, msg, ...data))
 };
 
-export default loggerWithCtx;
+
+export { loggerWithCtx, logger }

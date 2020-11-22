@@ -1,6 +1,6 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { Composer } from 'telegraf'
-import { db } from '../../db/db'
+import { db } from '../../database/db'
 import { botConfig } from '../../util/bot-config'
 import { i18n } from '../../util/i18n'
 

@@ -1,5 +1,5 @@
 import { expectedTitles, expectedTitlesStrict, getMockEvent, syncDatabase4Test } from './db-test-utils'
-import { db, dbCfg } from '../../../src/db/db'
+import { db, dbCfg } from '../../../src/database/db'
 import { date, mkInterval } from '../../lib/timetable/test-utils'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))

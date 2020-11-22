@@ -1,4 +1,4 @@
-import { db, dbCfg } from '../../../src/db/db'
+import { db, dbCfg } from '../../../src/database/db'
 import { cleanDb, getMockEvent, syncDatabase4Test } from './db-test-utils'
 import { date } from '../../lib/timetable/test-utils'
 

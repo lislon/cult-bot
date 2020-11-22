@@ -1,5 +1,5 @@
-import { db, dbCfg } from '../../../src/db/db'
-import { UserSaveData } from '../../../src/db/db-users'
+import { db, dbCfg } from '../../../src/database/db'
+import { UserSaveData } from '../../../src/database/db-users'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);

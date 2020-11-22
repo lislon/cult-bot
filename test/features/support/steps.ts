@@ -1,5 +1,5 @@
 import { AfterAll, Before, BeforeAll, DataTable, Given, Then, When } from '@cucumber/cucumber'
-import { db, dbCfg } from '../../../src/db/db'
+import { db, dbCfg } from '../../../src/database/db'
 
 import expect from 'expect'
 import { mskMoment } from '../../../src/util/moment-msk'

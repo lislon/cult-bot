@@ -3,10 +3,11 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
-import { db } from '../../db/db'
+import { db } from '../../database/db'
 import { SessionEnforcer } from '../shared/shared-logic'
 import { menuMiddleware } from './survey'
 import * as tt from 'telegraf/typings/telegram-types'
+import { logger, loggerWithCtx } from '../../util/logger'
 
 const scene = new BaseScene<ContextMessageUpdate>('feedback_scene');
 const {actionName, i18nModuleBtnName, scanKeys} = i18nSceneHelper(scene)
@@ -133,6 +134,8 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
             adminMessage = await ctx.telegram.forwardMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, ctx.chat.id, ctx.message.message_id)
         }
 
+        loggerWithCtx.debug(ctx, 'adminMessage = %s', JSON.stringify(adminMessage, undefined, 2))
+        logger.debug('hi')
         await db.repoFeedback.saveFeedback({
             userId: ctx.session.userId,
             messageId: ctx.message.message_id,

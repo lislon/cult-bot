@@ -13,10 +13,11 @@ import { parseTimetable } from '../lib/timetable/parser'
 import { predictIntervals } from '../lib/timetable/intervals'
 import { EventToSave } from '../interfaces/db-interfaces'
 import { WrongExcelColumnsError } from './WrongFormatException'
-import { BotDb } from '../db/db'
+import { BotDb } from '../database/db'
 import { differenceInCalendarDays, format } from 'date-fns'
 import { botConfig } from '../util/bot-config'
 import { getOnlyBotTimetable } from '../lib/timetable/timetable-utils'
+import { logger } from '../util/logger'
 import Schema$Request = sheets_v4.Schema$Request
 
 // our set of columns, to be created only once (statically), and then reused,
@@ -110,12 +111,12 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
         errors: 0
     }
     try {
-        console.log('Connection from excel...')
+        logger.debug('Connection from excel...')
         const excel = await loadExcel()
 
         const ranges = Object.values(CAT_TO_SHEET_NAME).map(name => `${name}!A1:AA`);
 
-        console.log(`Loading from excel [${ranges}]...`)
+        logger.debug(`Loading from excel [${ranges}]...`)
 
         const spreadsheetId = botConfig.GOOGLE_DOCS_ID;
         const [sheetsMetaData, sheetsData] = await Promise.all([
@@ -123,7 +124,7 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
             excel.spreadsheets.values.batchGet({ spreadsheetId, ranges })
         ]);
 
-        console.log('Saving to db...')
+        logger.debug('Saving to db...')
         const rows: EventToSave[] = []
 
         // let max = 1;
@@ -210,13 +211,13 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
 
         await db.repoSync.syncDatabase(rows)
 
-        console.log(`Insertion done. Rows inserted: ${result.updated}, Errors: ${result.errors}`);
+        logger.info(`Database updated. Insertion done. Rows inserted: ${result.updated}, Errors: ${result.errors}`);
         await excelUpdater.update();
-        console.log(`Excel updated`);
+        logger.debug(`Excel updated`);
         return result;
 
     } catch (e) {
-        console.log(e);
+        logger.error(e);
         throw e;
     }
 }

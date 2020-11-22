@@ -1,5 +1,5 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { db, IExtensions } from '../../db/db'
+import { db, IExtensions } from '../../database/db'
 import { ITask } from 'pg-promise'
 
 const UPDATE_EVERY_N_SECONDS = 5 * 60

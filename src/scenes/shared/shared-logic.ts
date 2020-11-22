@@ -1,7 +1,7 @@
 import { ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
 import dbsync from '../../dbsync/dbsync'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
-import { db } from '../../db/db'
+import { db } from '../../database/db'
 import { addDays, max, parseISO, startOfDay, startOfISOWeek } from 'date-fns/fp'
 import { format, formatDistanceToNow, Locale } from 'date-fns'
 import flow from 'lodash/fp/flow'
@@ -33,7 +33,7 @@ export function ruFormat(date: Date | number, pattern: string) {
     return format(date, pattern, ruDateFormat)
 }
 
-export async function syncrhonizeDbByUser(ctx: ContextMessageUpdate) {
+export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
     await ctx.replyWithHTML(`Пошла скачивать <a href="${getGoogleSpreadSheetURL()}">эксельчик</a>...`, {
         disable_web_page_preview: true
     })

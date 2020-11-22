@@ -1,7 +1,7 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
-import { db } from '../../db/db'
+import { db } from '../../database/db'
 import { getNextWeekEndRange, limitEventsToPage, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import { Paging } from '../shared/paging'
@@ -80,8 +80,6 @@ async function showSearchResults(ctx: ContextMessageUpdate) {
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
-        console.log('enter scene search_scene')
-
         await prepareSessionStateIfNeeded(ctx)
         Paging.reset(ctx)
 
@@ -91,7 +89,7 @@ scene
         ctx.ua.pv({dp: `/search/`, dt: `Поиск`})
     })
     .leave(async (ctx: ContextMessageUpdate) => {
-        console.log('exit scene search_scene')
+        ctx.session.search = undefined
     })
     .use(Paging.pagingMiddleware(actionName('show_more'),
         async (ctx: ContextMessageUpdate) => {

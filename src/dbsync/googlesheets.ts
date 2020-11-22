@@ -1,6 +1,7 @@
 import { google, sheets_v4 } from 'googleapis'
 import { GoogleAuth } from 'google-auth-library'
 import * as path from 'path'
+import { logger } from '../util/logger'
 import Sheets = sheets_v4.Sheets
 import Schema$Request = sheets_v4.Schema$Request
 
@@ -21,7 +22,7 @@ export async function loadExcel(): Promise<Sheets> {
         const auth = authorizeByServiceAccount();
         return google.sheets({version: 'v4', auth})
     } catch (e) {
-        console.log('Error loading client secret file:', e);
+        logger.error('Error loading client secret file:', e);
         return undefined;
     }
 }

@@ -6,16 +6,17 @@ import {
     getNextWeekEndRange,
     ruFormat,
     showBotVersion,
-    syncrhonizeDbByUser,
+    synchronizeDbByUser,
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
-import { db } from '../../db/db'
+import { db, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
 import { Paging } from '../shared/paging'
 import { isValid, parse, parseISO } from 'date-fns'
 import { CallbackButton } from 'telegraf/typings/markup'
-import { StatByReviewer } from '../../db/db-admin'
+import { StatByCat, StatByReviewer } from '../../database/db-admin'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
+import { logger } from '../../util/logger'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
@@ -38,7 +39,11 @@ function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessage
     let thisRow: CallbackButton[] = []
     statsByReviewer.forEach(({reviewer, count}) => {
         const icon = ctx.i18Msg(`admin_icons.${reviewer}`, undefined, '') || ctx.i18Msg('admin_icons.default')
-        thisRow.push(Markup.callbackButton(ctx.i18Btn('byReviewer', {count, icon, reviewer}), actionName(`r_${reviewer}`)))
+        thisRow.push(Markup.callbackButton(ctx.i18Btn('byReviewer', {
+            count,
+            icon,
+            reviewer
+        }), actionName(`r_${reviewer}`)))
         if (thisRow.length == 2) {
             btn.push(thisRow)
             thisRow = []
@@ -53,7 +58,7 @@ function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessage
 const content = async (ctx: ContextMessageUpdate) => {
     const dateRanges = getNextWeekEndRange(ctx.now())
 
-    const statsByName = await db.repoAdmin.findStatsByCat(dateRanges)
+    const statsByName: StatByCat[] = await db.repoAdmin.findStatsByCat(dateRanges)
 
     let adminButtons = menuCats.map(row =>
         row.map(btnName => {
@@ -84,8 +89,9 @@ const content = async (ctx: ContextMessageUpdate) => {
 const limitInAdmin = 10
 
 scene
+    .use(Composer.drop(ctx => !isAdmin(ctx)))
     .enter(async (ctx: ContextMessageUpdate) => {
-        prepareSessionStateIfNeeded(ctx)
+        await prepareSessionStateIfNeeded(ctx)
         const {msg, markup} = await content(ctx)
         await ctx.replyWithMarkdown(msg, markup)
     })
@@ -97,7 +103,7 @@ scene
         }))
     .action(actionName('sync'), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
-        await syncrhonizeDbByUser(ctx)
+        await synchronizeDbByUser(ctx)
     })
     .action(actionName('version'), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
@@ -123,7 +129,7 @@ menuCats.flatMap(m => m).forEach(menuItem => {
 async function getSearchedEvents(ctx: ContextMessageUpdate) {
     const nextWeekEndRange = getNextWeekEndRange(ctx.now())
     if (ctx.session.adminScene.cat !== undefined) {
-        const stats = await db.repoAdmin.findStatsByCat(nextWeekEndRange)
+        const stats: StatByCat[] = await db.repoAdmin.findStatsByCat(nextWeekEndRange)
         const total = stats.find(r => r.category === ctx.session.adminScene.cat).count
         const events = await db.repoAdmin.findAllEventsByCat(ctx.session.adminScene.cat, nextWeekEndRange, limitInAdmin, ctx.session.paging.pagingOffset)
         return {total, events}
@@ -180,8 +186,8 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 }
 
 function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
-    bot
-        .command('admin', async (ctx: ContextMessageUpdate) => {
+    const adminGlobalCommands = new Composer<ContextMessageUpdate>()
+        .command('adminGlobalCommands', async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('admin_scene');
         })
         .command('time_now', async (ctx: ContextMessageUpdate) => {
@@ -189,42 +195,62 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
             await ctx.replyWithHTML(ctx.i18Msg('time_override.reset'))
         })
         .command('time', async (ctx: ContextMessageUpdate) => {
-            if (isAdmin(ctx)) {
-                const HUMAN_OVERRIDE_FORMAT = 'dd MMMM yyyy HH:mm, iiii'
+            const HUMAN_OVERRIDE_FORMAT = 'dd MMMM yyyy HH:mm, iiii'
 
-                await prepareSessionStateIfNeeded(ctx)
-                const dateStr = ctx.message.text.replace(/^\/time[\s]*/, '')
-                if (dateStr === undefined || dateStr === 'now') {
-                    ctx.session.adminScene.overrideDate = undefined
-                    await ctx.replyWithHTML(ctx.i18Msg('time_override.reset'))
-                } else if (dateStr === '') {
-                    await ctx.replyWithHTML(ctx.i18Msg('time_override.status',
-                        {time: ruFormat(
-                                (ctx.session.adminScene.overrideDate
+            await prepareSessionStateIfNeeded(ctx)
+            const dateStr = ctx.message.text.replace(/^\/time[\s]*/, '')
+            if (dateStr === undefined || dateStr === 'now') {
+                ctx.session.adminScene.overrideDate = undefined
+                await ctx.replyWithHTML(ctx.i18Msg('time_override.reset'))
+            } else if (dateStr === '') {
+                await ctx.replyWithHTML(ctx.i18Msg('time_override.status',
+                    {
+                        time: ruFormat(
+                            (ctx.session.adminScene.overrideDate
                                 ? parseISO(ctx.session.adminScene.overrideDate)
                                 : new Date())
-                                , HUMAN_OVERRIDE_FORMAT)}))
-                } else {
-                    const now = new Date()
-                    let parsed = parse(dateStr, 'yyyy-MM-dd HH:mm', now)
+                            , HUMAN_OVERRIDE_FORMAT)
+                    }))
+            } else {
+                const now = new Date()
+                let parsed = parse(dateStr, 'yyyy-MM-dd HH:mm', now)
 
-                    if (!isValid(parsed) && dateStr.match(/^\d{1,2}$/)) {
-                        parsed = new Date(now.getFullYear(), now.getMonth(), +dateStr)
-                        if (now.getDay() > +dateStr) {
-                            parsed = addMonths(1)(parsed)
-                        }
-                    } else if (!isValid(parsed)) {
-                        parsed = undefined
+                if (!isValid(parsed) && dateStr.match(/^\d{1,2}$/)) {
+                    parsed = new Date(now.getFullYear(), now.getMonth(), +dateStr)
+                    if (now.getDay() > +dateStr) {
+                        parsed = addMonths(1)(parsed)
                     }
-                    if (parsed !== undefined) {
-                        ctx.session.adminScene.overrideDate = parsed.toISOString()
-                        await ctx.replyWithHTML(ctx.i18Msg('time_override.changed', {time: ruFormat(parsed, HUMAN_OVERRIDE_FORMAT)}))
-                    } else {
-                        await ctx.replyWithHTML(ctx.i18Msg('time_override.invalid'))
-                    }
+                } else if (!isValid(parsed)) {
+                    parsed = undefined
+                }
+                if (parsed !== undefined) {
+                    ctx.session.adminScene.overrideDate = parsed.toISOString()
+                    await ctx.replyWithHTML(ctx.i18Msg('time_override.changed', {time: ruFormat(parsed, HUMAN_OVERRIDE_FORMAT)}))
+                } else {
+                    await ctx.replyWithHTML(ctx.i18Msg('time_override.invalid'))
                 }
             }
         })
+        .command('version', async (ctx) => {
+            await showBotVersion(ctx)
+        })
+        .command('sync', async (ctx) => {
+            await synchronizeDbByUser(ctx)
+        })
+        .command(['log', 'level'], async (ctx ) => {
+            await ctx.replyWithHTML('Use:\n' + ['/level_silly (SQL)', '/level_debug (messages)', '/level_error (default)'].join('\n'))
+        })
+        .command(['level_silly', 'level_debug', 'level_error'], async (ctx ) => {
+            logger.level = ctx.message.text.replace(/^\/[^_]+_/, '')
+            await ctx.replyWithHTML('log level: ' + logger.level)
+            if (logger.level === 'silly') {
+                pgLogVerbose()
+            } else {
+                pgLogOnlyErrors()
+            }
+        })
+
+    bot.use(Composer.optional(ctx => isAdmin(ctx), adminGlobalCommands))
 }
 
 export const adminScene = {

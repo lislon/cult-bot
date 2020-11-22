@@ -1,4 +1,4 @@
-import { db, dbCfg } from '../../../src/db/db'
+import { db, dbCfg } from '../../../src/database/db'
 
 let TEST_USER_ID_A: number = undefined
 let TEST_USER_ID_B: number = undefined

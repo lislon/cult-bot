@@ -9,7 +9,7 @@ import { getNextWeekEndRange, limitEventsToPage, ruFormat, warnAdminIfDateIsOver
 import { subSeconds } from 'date-fns/fp'
 import { getISODay, isSameMonth, startOfDay } from 'date-fns'
 import { SceneRegister } from '../../middleware-utils'
-import { db } from '../../db/db'
+import { db } from '../../database/db'
 import { encodeTagsLevel1 } from '../../util/tag-level1-encoder'
 
 type SubMenuVariants = 'exhibitions_temp' | 'exhibitions_perm'
@@ -103,6 +103,9 @@ scene
 
         await ctx.replyWithMarkdown(msg, markupMainMenu)
         ctx.ua.pv({ dp: '/top/', dt: 'Подборки' })
+    })
+    .leave(async (ctx) => {
+        ctx.session.packsScene = undefined
     })
     .use(Paging.pagingMiddleware(actionName('show_more'),
         async (ctx: ContextMessageUpdate) => {
