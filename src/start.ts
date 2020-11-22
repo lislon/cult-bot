@@ -79,6 +79,7 @@ class BotStart {
         const webhookStatus = await bot.telegram.getWebhookInfo();
 
         logger.info('Webhook status', webhookStatus);
+        await notifyAdminsAboutRestart()
     }
 }
 
@@ -109,7 +110,6 @@ app.listen(botConfig.PORT, () => {
     if (botConfig.BOT_DISABLED === undefined && botConfig.NODE_ENV === 'production') {
         BotStart.startProdMode(rawBot).then(async () => {
             logger.info(`Bot started on port ${botConfig.PORT}!`)
-            await notifyAdminsAboutRestart()
         })
     }
 })

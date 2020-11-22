@@ -53,7 +53,10 @@ const logger = winston.createLogger({
 });
 
 if (botConfig.NODE_ENV !== 'production') {
+    logger.level = 'debug'
     logger.debug('Logging initialized at debug level');
+} else {
+    logger.level = 'info'
 }
 
 const loggerWithCtx = {

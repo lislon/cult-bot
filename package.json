@@ -7,7 +7,7 @@
   "mode": "auto",
   "scripts": {
     "start": "cross-env TZ=Europe/Moscow node dist/start.js",
-    "build": "tsc && npm run lint",
+    "build": "tsc && yarn run lint",
     "dev": "ts-node-dev -r source-map-support/register --respawn --ignore-watch node_modules src/start.ts",
     "dev-no-restart": "tsc && nodemon --inspect",
     "lint": "tslint -c tslint.json -p tsconfig.json",

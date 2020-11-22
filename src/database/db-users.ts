@@ -49,7 +49,12 @@ export class UserRepository {
     }
 
     public async findAllAdmins(): Promise<UserDb[] | null> {
-        return this.db.manyOrNone<UserDb>('SELECT id, ua_uuid, chat_id FROM cb_users WHERE username IN($(adminUsernames:csv)) OR tid IN ($(adminIds:csv))',
+        return this.db.manyOrNone<UserDb>(`
+        SELECT id, ua_uuid, chat_id
+        FROM cb_users
+        WHERE
+         username IN($(adminUsernames:csv)) OR tid IN ($(adminIds:csv))
+         AND chat_id > 0`,
             {
                 adminUsernames,
                 adminIds
@@ -68,7 +73,7 @@ export class UserRepository {
 
     public async updateUser(id: number, data: Partial<UserSaveData>): Promise<void> {
         const sql = this.pgp.helpers.update(data, undefined, 'cb_users') + this.pgp.as.format(' WHERE id = ${id}')
-        await this.db.none(sql, { id })
+        await this.db.none(sql, {id})
     }
 }
 
