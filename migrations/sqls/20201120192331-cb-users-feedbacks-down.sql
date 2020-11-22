@@ -1,2 +1,2 @@
-DROP TABLE cb_feedbacks;
-DROP TABLE cb_survey;
+DROP TABLE IF EXISTS cb_feedbacks;
+DROP TABLE IF EXISTS cb_survey;

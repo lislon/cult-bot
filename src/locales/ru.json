@@ -274,6 +274,13 @@
       "sticker_thank_you": "CAACAgIAAxkBAAKThl-5iv3StoFa6Fru6CtlEH3GCKIeAAJYAwACz7vUDnSoodcl1REsHgQ",
       "sticker_stop_it": "CAACAgIAAxkBAAKTil-5i_jWSqKxIBOYUHrGWFiPEOQMAALQBwAClvoSBcI4n6geBtowHgQ",
 
+      "admin_response": {
+        "template": "Вам пришел ответ от авторов бота: ${text}",
+        "error": "Ошибка! Не смогли ответить пользоваетю: ${message}",
+        "cant_find_original": "Could not find original user message to reply: ${json}",
+        "message_sent": "Ответили пользователю:\n-----------------\n${template}\n-----------------"
+      },
+
       "survey": {
         "q_landing": "Напишите здесь всё что вы хотите нам сказать. Также предлагаем пройти короткий опрос, чтобы мы смогли сделать бот более приятным для вас",
         "q_found_events": "Подобрали ли события для себя на выходные?",

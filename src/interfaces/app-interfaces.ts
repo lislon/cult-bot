@@ -4,7 +4,6 @@ import { TimetableSceneState } from '../scenes/timetable/timetable-scene'
 import { CustomizeSceneState } from '../scenes/customize/customize-scene'
 import { TimeIntervalSceneState } from '../scenes/time-interval/time-interval-scene'
 import { AdminSceneState } from '../scenes/admin/admin-scene'
-import * as tt from 'telegraf/typings/telegram-types'
 import { PacksSceneState } from '../scenes/packs/packs-scene'
 import { PagingState } from '../scenes/shared/paging'
 import { SearchSceneState } from '../scenes/search/search-scene'
@@ -12,6 +11,7 @@ import { Visitor } from 'universal-analytics'
 import { PerformanceContext } from '../lib/middleware/performance-middleware'
 import { FeedbackSceneState } from '../scenes/feedback/feedback-scene'
 import { AnalyticsState } from '../lib/middleware/analytics-middleware'
+import { UserSaveState } from '../lib/middleware/user-save-middleware'
 
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
@@ -43,10 +43,10 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         feedbackScene: FeedbackSceneState
         analytics: AnalyticsState,
         paging: PagingState
+        userSave: UserSaveState
         userId: number
         uaUuid: string
         language: 'en' | 'ru'
-        user: tt.User
     }
     webhookReply: boolean
     ua: Visitor

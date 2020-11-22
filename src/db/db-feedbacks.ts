@@ -6,6 +6,8 @@ export interface FeedbackData {
     userId: number
     feedbackText: string
     messageId: number
+    adminChatId: number
+    adminMessageId: number
 }
 
 export interface QuizData {
@@ -20,6 +22,15 @@ export interface QuizRow {
     count: number
 }
 
+export interface QueryUserFeedbackMsgId {
+    admin_chat_id: number
+    admin_message_id: number
+}
+
+export interface ResultUserFeedbackMsgId {
+    chat_id: number
+    message_id: number
+}
 
 export class FeedbackRepository {
     private readonly columnsFeedback: ColumnSet
@@ -29,7 +40,7 @@ export class FeedbackRepository {
 
     constructor(private db: IDatabase<any>, private pgp: IMain) {
         this.columnsFeedback = new pgp.helpers.ColumnSet(
-            'user_id, feedback_text, message_id'.split(/,\s*/),
+            'user_id, feedback_text, message_id, admin_chat_id, admin_message_id'.split(/,\s*/),
             {table: 'cb_feedbacks'}
         );
         this.columnsSurvey = new pgp.helpers.ColumnSet(
@@ -43,9 +54,20 @@ export class FeedbackRepository {
         const sql = this.pgp.helpers.insert({
             user_id: +feedbackData.userId,
             message_id: feedbackData.messageId,
-            feedback_text: feedbackData.feedbackText
+            feedback_text: feedbackData.feedbackText,
+            admin_chat_id: feedbackData.adminChatId,
+            admin_message_id: feedbackData.adminMessageId
         }, this.columnsFeedback) + ' returning id'
         return +(await this.db.one(sql))['id']
+    }
+
+    public async findFeedbackMessage(query: QueryUserFeedbackMsgId): Promise<ResultUserFeedbackMsgId|null> {
+        return await this.db.oneOrNone(`
+            SELECT cu.chat_id, cf.message_id
+            FROM cb_feedbacks cf
+            JOIN cb_users cu ON (cu.id = cf.user_id)
+            WHERE cf.admin_chat_id = $(admin_chat_id) AND cf.admin_message_id = $(admin_message_id)
+        `, query)
     }
 
     public async saveQuiz(quizData: QuizData): Promise<number> {

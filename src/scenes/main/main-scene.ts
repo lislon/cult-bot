@@ -2,13 +2,15 @@ import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, ifAdmin, isAdmin } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
+import { botConfig } from '../../util/bot-config'
 
 const scene = new BaseScene<ContextMessageUpdate>('main_scene');
 
 const {i18nModuleBtnName} = i18nSceneHelper(scene)
 
 function isTimeToShowFeedback(ctx: ContextMessageUpdate) {
-    return (ctx.session.analytics.inlineClicks + ctx.session.analytics.markupClicks > 25) || isAdmin(ctx)
+    return botConfig.SUPPORT_FEEDBACK_CHAT_ID !== undefined &&
+        ((ctx.session.analytics.inlineClicks + ctx.session.analytics.markupClicks > 25) || isAdmin(ctx))
 }
 
 const content = (ctx: ContextMessageUpdate) => {

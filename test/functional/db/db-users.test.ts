@@ -12,7 +12,8 @@ describe('Users', () => {
         language_code: '',
         last_name: 'Last',
         first_name: 'First',
-        ua_uuid: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'
+        ua_uuid: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
+        chat_id: 1
     }
 
     beforeEach(async () => await db.none('DELETE FROM cb_users'))
@@ -42,6 +43,7 @@ describe('Users', () => {
         await db.userRepo.insertUser(user)
         const userFromDb = await db.userRepo.findUserByTid(user.tid)
         expect(userFromDb.ua_uuid).toEqual(user.ua_uuid)
+        expect(userFromDb.chat_id).toEqual(user.chat_id)
     })
 
 

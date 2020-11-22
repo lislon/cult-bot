@@ -6,6 +6,7 @@ import { botConfig } from '../../util/bot-config'
 import { db } from '../../db/db'
 import { SessionEnforcer } from '../shared/shared-logic'
 import { menuMiddleware } from './survey'
+import * as tt from 'telegraf/typings/telegram-types'
 
 const scene = new BaseScene<ContextMessageUpdate>('feedback_scene');
 const {actionName, i18nModuleBtnName, scanKeys} = i18nSceneHelper(scene)
@@ -73,20 +74,14 @@ scene
         prepareSessionStateIfNeeded(ctx)
         ctx.session.feedbackScene.surveyDone = true
         await db.repoFeedback.saveQuiz({
-            what_is_important: ctx.session.feedbackScene.whatImportant.map(r => r.replace(/^opt_/, '')),
-            why_not_like: ctx.session.feedbackScene.whyDontLike.map(r => r.replace(/^opt_/, '')),
+            what_is_important: ctx.session.feedbackScene.whatImportant.map((r: string) => r.replace(/^opt_/, '')),
+            why_not_like: ctx.session.feedbackScene.whyDontLike.map((r: string) => r.replace(/^opt_/, '')),
             isFound: ctx.session.feedbackScene.isFound,
             userId: ctx.session.userId
         })
         await next()
     })
     .use(menuMiddleware)
-    // .hears(i18nModuleBtnName('send_letter'), async (ctx: ContextMessageUpdate) => {
-    //     prepareSessionStateIfNeeded(ctx)
-    //     ctx.session.feedbackScene.isListening = true
-    //
-    //     await ctx.replyWithHTML(ctx.i18Msg('send_letter_welcome'))
-    // })
     .hears(i18nModuleBtnName('go_back_to_main'), async (ctx: ContextMessageUpdate) => {
         await ctx.scene.enter('main_scene')
     })
@@ -128,19 +123,22 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
             uaUuid: ctx.session.uaUuid
         }
 
+        let adminMessage: tt.Message
         if (ctx.message.text !== undefined) {
             const template = ctx.i18Msg('admin_feedback_template_text', tplData)
-            await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, Extra.HTML().markup(undefined))
+            adminMessage = await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, Extra.HTML().markup(undefined))
         } else {
             const template = ctx.i18Msg('admin_feedback_template_other', tplData)
             await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, Extra.HTML().markup(undefined))
-            await ctx.telegram.forwardMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, ctx.chat.id, ctx.message.message_id)
+            adminMessage = await ctx.telegram.forwardMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, ctx.chat.id, ctx.message.message_id)
         }
 
         await db.repoFeedback.saveFeedback({
             userId: ctx.session.userId,
             messageId: ctx.message.message_id,
-            feedbackText: ctx.message.text || 'other media: ' + JSON.stringify(ctx.message)
+            feedbackText: ctx.message.text || 'other media: ' + JSON.stringify(ctx.message),
+            adminChatId: botConfig.SUPPORT_FEEDBACK_CHAT_ID,
+            adminMessageId: adminMessage.message_id
         })
 
         if (ctx.session.feedbackScene.messagesSent === 0) {
