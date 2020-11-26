@@ -3,7 +3,7 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { i18nButtonText, keyAnswers, optionSet } from './survey-utils'
 
-const {actionName, i18nModuleBtnName, i18nModuleMsg, scanKeys, i18nSharedBtnName} = i18nSceneHelper({id: 'feedback_scene'})
+const {actionName, i18nModuleBtnName, i18nModuleMsg, scanKeys, i18nSharedBtnName, i18Msg} = i18nSceneHelper({id: 'feedback_scene'})
 
 const landingMenu = new MenuTemplate<ContextMessageUpdate>(i18nModuleMsg('survey.q_landing'))
 const menuIsFoundEvent = new MenuTemplate<ContextMessageUpdate>(i18nModuleMsg('survey.q_found_events'))
@@ -17,7 +17,7 @@ function doInviteToEnterText(msgId: string) {
     return async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
         await deleteMenuFromContext(ctx)
-        await ctx.replyWithHTML(ctx.i18Msg(msgId))
+        await ctx.replyWithHTML(i18Msg(ctx, msgId))
         ctx.session.feedbackScene.isListening = true
         return false
     }
@@ -68,7 +68,5 @@ menuPositive.interact(i18nModuleBtnName('survey.q_what_is_important.comment'), '
 menuPositive.navigate(i18nSharedBtnName('back'), '..')
 menuPositive.submenu(i18nModuleBtnName('finish_survey'), 'end_nice', menuEndNice, OPT_SAME_ROW)
 
-const menuMiddleware = new MenuMiddleware('/', landingMenu)
+export const menuMiddleware = new MenuMiddleware('/', landingMenu)
 // console.log(menuMiddleware.tree())
-
-export { menuMiddleware }

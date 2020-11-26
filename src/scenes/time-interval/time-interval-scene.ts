@@ -11,7 +11,7 @@ export interface TimeIntervalSceneState {
     messageId?: number
 }
 
-const { backButton, sceneHelper, actionName } = i18nSceneHelper(scene)
+const {backButton, sceneHelper, actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 enum Actions {
     ALL_DAY = 'slot_all_day'

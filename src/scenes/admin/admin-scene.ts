@@ -26,7 +26,7 @@ export interface AdminSceneState {
     overrideDate?: string
 }
 
-const {sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
+const {sceneHelper, actionName, i18SharedBtn, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 const menuCats = [
     ['theaters', 'exhibitions'],
@@ -38,8 +38,8 @@ function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessage
     const btn = []
     let thisRow: CallbackButton[] = []
     statsByReviewer.forEach(({reviewer, count}) => {
-        const icon = ctx.i18Msg(`admin_icons.${reviewer}`, undefined, '') || ctx.i18Msg('admin_icons.default')
-        thisRow.push(Markup.callbackButton(ctx.i18Btn('byReviewer', {
+        const icon = i18Msg(ctx, `admin_icons.${reviewer}`, undefined, '') || i18Msg(ctx, 'admin_icons.default')
+        thisRow.push(Markup.callbackButton(i18Btn(ctx, 'byReviewer', {
             count,
             icon,
             reviewer
@@ -63,7 +63,7 @@ const content = async (ctx: ContextMessageUpdate) => {
     let adminButtons = menuCats.map(row =>
         row.map(btnName => {
             const count = statsByName.find(r => r.category === btnName)
-            return Markup.callbackButton(ctx.i18Btn(btnName, {count: count === undefined ? 0 : count.count}), actionName(btnName));
+            return Markup.callbackButton(i18Btn(ctx, btnName, {count: count === undefined ? 0 : count.count}), actionName(btnName));
         })
     );
 
@@ -72,13 +72,13 @@ const content = async (ctx: ContextMessageUpdate) => {
     adminButtons = [...adminButtons, ...addReviewersMenu(statsByReviewer, ctx)]
 
     adminButtons.push([
-        Markup.callbackButton(ctx.i18Btn('sync'), actionName('sync')),
-        Markup.callbackButton(ctx.i18Btn('version'), actionName('version')),
+        Markup.callbackButton(i18Btn(ctx, 'sync'), actionName('sync')),
+        Markup.callbackButton(i18Btn(ctx, 'version'), actionName('version')),
     ])
-    adminButtons.push([Markup.callbackButton(ctx.i18SharedBtn('back'), actionName('back'))])
+    adminButtons.push([Markup.callbackButton(i18SharedBtn(ctx, 'back'), actionName('back'))])
 
     return {
-        msg: ctx.i18Msg('welcome', {
+        msg: i18Msg(ctx, 'welcome', {
             start: ruFormat(dateRanges.start, 'dd.MM'),
             end: ruFormat(dateRanges.end, 'dd.MM')
         }),
@@ -146,7 +146,7 @@ async function showNextResults(ctx: ContextMessageUpdate) {
     const {total, events} = await getSearchedEvents(ctx)
 
     const nextBtn = Markup.inlineKeyboard([
-        Markup.callbackButton(ctx.i18Btn('show_more', {
+        Markup.callbackButton(i18Btn(ctx, 'show_more', {
             page: Math.ceil(ctx.session.paging.pagingOffset / limitInAdmin) + 1,
             total: Math.ceil(+total / limitInAdmin)
         }), actionName('show_more'))
@@ -192,7 +192,7 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
         .command('time_now', async (ctx: ContextMessageUpdate) => {
             ctx.session.adminScene.overrideDate = undefined
-            await ctx.replyWithHTML(ctx.i18Msg('time_override.reset'))
+            await ctx.replyWithHTML(i18Msg(ctx, 'time_override.reset'))
         })
         .command('time', async (ctx: ContextMessageUpdate) => {
             const HUMAN_OVERRIDE_FORMAT = 'dd MMMM yyyy HH:mm, iiii'
@@ -201,9 +201,9 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
             const dateStr = ctx.message.text.replace(/^\/time[\s]*/, '')
             if (dateStr === undefined || dateStr === 'now') {
                 ctx.session.adminScene.overrideDate = undefined
-                await ctx.replyWithHTML(ctx.i18Msg('time_override.reset'))
+                await ctx.replyWithHTML(i18Msg(ctx, 'time_override.reset'))
             } else if (dateStr === '') {
-                await ctx.replyWithHTML(ctx.i18Msg('time_override.status',
+                await ctx.replyWithHTML(i18Msg(ctx, 'time_override.status',
                     {
                         time: ruFormat(
                             (ctx.session.adminScene.overrideDate
@@ -225,9 +225,9 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
                 }
                 if (parsed !== undefined) {
                     ctx.session.adminScene.overrideDate = parsed.toISOString()
-                    await ctx.replyWithHTML(ctx.i18Msg('time_override.changed', {time: ruFormat(parsed, HUMAN_OVERRIDE_FORMAT)}))
+                    await ctx.replyWithHTML(i18Msg(ctx, 'time_override.changed', {time: ruFormat(parsed, HUMAN_OVERRIDE_FORMAT)}))
                 } else {
-                    await ctx.replyWithHTML(ctx.i18Msg('time_override.invalid'))
+                    await ctx.replyWithHTML(i18Msg(ctx, 'time_override.invalid'))
                 }
             }
         })

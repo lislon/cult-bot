@@ -91,6 +91,6 @@ export async function warnAdminIfDateIsOverriden(ctx: ContextMessageUpdate) {
     }
 }
 
-export function checkboxi18nBtn(ctx: ContextMessageUpdate, isSelected: boolean): string {
-    return ctx.i18SharedBtn(`checkbox_${isSelected ? 'on' : 'off'}`)
+export function checkboxi18nBtnId(ctx: ContextMessageUpdate, isSelected: boolean): string {
+    return ctx.i18n.t(`shared.keyboard.checkbox_${isSelected ? 'on' : 'off'}`)
 }

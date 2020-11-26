@@ -7,10 +7,9 @@ import { db } from '../../database/db'
 import { SessionEnforcer } from '../shared/shared-logic'
 import { menuMiddleware } from './survey'
 import * as tt from 'telegraf/typings/telegram-types'
-import { logger, loggerWithCtx } from '../../util/logger'
 
 const scene = new BaseScene<ContextMessageUpdate>('feedback_scene');
-const {actionName, i18nModuleBtnName, scanKeys} = i18nSceneHelper(scene)
+const {actionName, i18nModuleBtnName, scanKeys, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 function globalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
     // bot
@@ -25,7 +24,7 @@ async function sendFeedbackIfListening(ctx: ContextMessageUpdate) {
     if (ctx.session.feedbackScene.isListening === true) {
         await sendFeedbackToOurGroup(ctx)
     } else {
-        await ctx.replyWithHTML(ctx.i18Msg('please_click_write_first', {button: ctx.i18Btn('survey.q_landing.send_letter')}))
+        await ctx.replyWithHTML(i18Msg(ctx, 'please_click_write_first', {button: i18Btn(ctx, 'survey.q_landing.send_letter')}))
     }
 }
 
@@ -34,14 +33,14 @@ scene
         prepareSessionStateIfNeeded(ctx)
 
         const buttons = Markup.keyboard([
-            [Markup.button(ctx.i18Btn('go_back_to_main'))]
+            [Markup.button(i18Btn(ctx, 'go_back_to_main'))]
         ]).resize()
 
-        await ctx.replyWithMarkdown(ctx.i18Msg('welcome'), Extra.HTML().markup(buttons))
+        await ctx.replyWithMarkdown(i18Msg(ctx, 'welcome'), Extra.HTML().markup(buttons))
         await menuMiddleware.replyToContext(ctx)
-        // await ctx.replyWithMarkdown(ctx.i18Msg('take_survey'), Extra.HTML(true).markup(Markup.inlineKeyboard(
-        //     [[Markup.callbackButton(ctx.i18Btn('take_survey'), 'take_survey')],
-        //             [Markup.callbackButton(ctx.i18Btn('send_letter'), 'take_survey')]]
+        // await ctx.replyWithMarkdown(i18Msg(ctx, 'take_survey'), Extra.HTML(true).markup(Markup.inlineKeyboard(
+        //     [[Markup.callbackButton(i18Btn(ctx, 'take_survey'), 'take_survey')],
+        //             [Markup.callbackButton(i18Btn(ctx, 'send_letter'), 'take_survey')]]
         // )))
 
         ctx.session.feedbackScene.messagesSent = 0
@@ -126,16 +125,14 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
 
         let adminMessage: tt.Message
         if (ctx.message.text !== undefined) {
-            const template = ctx.i18Msg('admin_feedback_template_text', tplData)
+            const template = i18Msg(ctx, 'admin_feedback_template_text', tplData)
             adminMessage = await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, Extra.HTML().markup(undefined))
         } else {
-            const template = ctx.i18Msg('admin_feedback_template_other', tplData)
+            const template = i18Msg(ctx, 'admin_feedback_template_other', tplData)
             await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, Extra.HTML().markup(undefined))
             adminMessage = await ctx.telegram.forwardMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, ctx.chat.id, ctx.message.message_id)
         }
 
-        loggerWithCtx.debug(ctx, 'adminMessage = %s', JSON.stringify(adminMessage, undefined, 2))
-        logger.debug('hi')
         await db.repoFeedback.saveFeedback({
             userId: ctx.session.userId,
             messageId: ctx.message.message_id,
@@ -145,15 +142,15 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
         })
 
         if (ctx.session.feedbackScene.messagesSent === 0) {
-            await ctx.replyWithHTML(ctx.i18Msg('thank_you_for_custom_feedback'))
-            await ctx.replyWithSticker(ctx.i18Msg('sticker_thank_you'))
+            await ctx.replyWithHTML(i18Msg(ctx, 'thank_you_for_custom_feedback'))
+            await ctx.replyWithSticker(i18Msg(ctx, 'sticker_thank_you'))
         } else {
             if (ctx.session.feedbackScene.messagesSent === 5) {
-                const messageSticker = await ctx.replyWithSticker(ctx.i18Msg('sticker_stop_it'))
+                const messageSticker = await ctx.replyWithSticker(i18Msg(ctx, 'sticker_stop_it'))
                 await sleep(1000)
                 await ctx.deleteMessage(messageSticker.message_id)
             }
-            await ctx.replyWithHTML(ctx.i18Msg('your_feedback_was_amended'))
+            await ctx.replyWithHTML(i18Msg(ctx, 'your_feedback_was_amended'))
         }
         ctx.session.feedbackScene.messagesSent++
 

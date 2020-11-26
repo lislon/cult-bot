@@ -22,12 +22,12 @@ export interface PacksSceneState {
 }
 
 const scene = new BaseScene<ContextMessageUpdate>('packs_scene');
-const { sceneHelper, actionName, i18nModuleBtnName} = i18nSceneHelper(scene)
+const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 
 function getOblasti(ctx: ContextMessageUpdate) {
     if (ctx.session.packsScene.submenuSelected !== undefined) {
-        return encodeTagsLevel1('exhibitions', [ctx.i18Msg(`exhibitions_tags.${ctx.session.packsScene.submenuSelected}`)])
+        return encodeTagsLevel1('exhibitions', [i18Msg(ctx, `exhibitions_tags.${ctx.session.packsScene.submenuSelected}`)])
     }
     return []
 }
@@ -63,11 +63,11 @@ const content = (ctx: ContextMessageUpdate) => {
 
     const mainButtons = topLevelMenu.map(row =>
         row.map(btnName => {
-            return Markup.button(ctx.i18Btn(btnName));
+            return Markup.button(i18Btn(ctx, btnName));
         })
     );
     return {
-        msg: ctx.i18Msg('select_category'),
+        msg: i18Msg(ctx, 'select_category'),
         markupMainMenu: Extra.HTML(true).markup(Markup.keyboard(mainButtons).resize())
     }
 }
@@ -138,11 +138,11 @@ async function showExhibitionsSubMenu(ctx: ContextMessageUpdate) {
 
     const buttons = subMenu.map(row =>
         row.map(btnName => {
-            return Markup.button(ctx.i18Btn(btnName));
+            return Markup.button(i18Btn(ctx, btnName));
         })
     )
 
-    await ctx.reply(ctx.i18Msg('select_category'),
+    await ctx.reply(i18Msg(ctx, 'select_category'),
         Extra.HTML().markup(Markup.keyboard(buttons).resize())
     )
 }
@@ -156,7 +156,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
 
     if (events.length > 0) {
         const tplData = {
-            cat: ctx.i18Msg(`keyboard.${ctx.session.packsScene.submenuSelected ? ctx.session.packsScene.submenuSelected : ctx.session.packsScene.cat}`)
+            cat: i18Msg(ctx, `keyboard.${ctx.session.packsScene.submenuSelected ? ctx.session.packsScene.submenuSelected : ctx.session.packsScene.cat}`)
         }
 
         let humanDateRange = ''
@@ -176,13 +176,13 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
             templateName = 'let_me_show_next_weekend';
         }
 
-        await ctx.replyWithHTML(ctx.i18Msg(templateName, {humanDateRange, ...tplData}),
-            { reply_markup: backMarkup(ctx) })
+        await ctx.replyWithHTML(i18Msg(ctx, templateName, {humanDateRange, ...tplData}),
+            {reply_markup: backMarkup(ctx)})
 
         await sleep(500)
         await showNextPortionOfResults(ctx, events)
     } else {
-        await ctx.reply(ctx.i18Msg('nothing_found_in_interval', intervalTemplateParams(range)),
+        await ctx.reply(i18Msg(ctx, 'nothing_found_in_interval', intervalTemplateParams(range)),
             Extra.HTML(true).markup(backMarkup(ctx))
         )
     }
@@ -191,7 +191,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
 }
 async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event[]) {
     const nextBtn = Markup.inlineKeyboard([
-        Markup.callbackButton(ctx.i18Btn('show_more'), actionName('show_more'))
+        Markup.callbackButton(i18Btn(ctx, 'show_more'), actionName('show_more'))
     ])
 
     const fireRating = 18
@@ -207,14 +207,14 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event
 
 
         if (sortedByRating.length > 0 && sortedByRating[0] === event) {
-            await ctx.replyWithHTML(ctx.i18Msg('its_fire'));
+            await ctx.replyWithHTML(i18Msg(ctx, 'its_fire'));
         }
 
         await sleep(300)
     }
 
     if (events.length === 0) {
-        await ctx.reply(ctx.i18Msg('no_more_events'))
+        await ctx.reply(i18Msg(ctx, 'no_more_events'))
     }
 
     console.log(`${events.length} events returned for cat=${ctx.session.packsScene.cat}. offset=${ctx.session.paging.pagingOffset}`)

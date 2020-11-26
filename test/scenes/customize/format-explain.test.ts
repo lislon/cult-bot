@@ -2,7 +2,7 @@ import { mapUserInputToTimeIntervals } from '../../../src/scenes/customize/custo
 import { mkInterval } from '../../lib/timetable/test-utils'
 import { formatExplainTime } from '../../../src/scenes/customize/format-explain'
 import { i18n } from '../../../src/util/i18n'
-import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
+import { ContextMessageUpdate, I18MsgFunction } from '../../../src/interfaces/app-interfaces'
 import { parseISO } from 'date-fns'
 
 function formatExplainTimeEx(now: string, time: string[]): string[] {
@@ -18,7 +18,7 @@ function formatExplainTimeEx(now: string, time: string[]): string[] {
         } as any
     }  as ContextMessageUpdate
 
-    ctx.i18Msg = function (id: string, tplData: object = undefined, byDefault: string | null = undefined) {
+    const i18Msg: I18MsgFunction = function (ctx: ContextMessageUpdate, id: string, tplData: object = undefined, byDefault: string | null = undefined) {
         const resourceKey = `scenes.customize_scene.${id}`
         if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
             return i18n.t('ru', resourceKey, tplData)
@@ -27,7 +27,7 @@ function formatExplainTimeEx(now: string, time: string[]): string[] {
         }
     }
 
-    return formatExplainTime(ctx as ContextMessageUpdate)
+    return formatExplainTime(ctx as ContextMessageUpdate, i18Msg)
 }
 
 describe('convert_to_intervals', () => {

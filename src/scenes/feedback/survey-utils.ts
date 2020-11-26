@@ -2,7 +2,7 @@ import { i18nSceneHelper } from '../../util/scene-helper'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { MenuTemplate } from 'telegraf-inline-menu'
 import { SelectOptions } from 'telegraf-inline-menu/dist/source/buttons/select'
-import { checkboxi18nBtn } from '../shared/shared-logic'
+import { checkboxi18nBtnId } from '../shared/shared-logic'
 import { SingleButtonOptions } from 'telegraf-inline-menu/dist/source/buttons/basic'
 
 const {actionName, i18nModuleBtnName, i18nModuleMsg, scanKeys, i18nSharedBtnName} = i18nSceneHelper({ id: 'feedback_scene' })
@@ -37,7 +37,7 @@ export function optionSet(field: 'whatImportant' | 'whyDontLike'): SelectOptions
         },
         columns: 1,
         formatState: ((ctx, textResult, state) => {
-            return textResult + checkboxi18nBtn(ctx, state)
+            return textResult + checkboxi18nBtnId(ctx, state)
         }),
     }
 }

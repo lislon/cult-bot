@@ -16,6 +16,21 @@ export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id
         actionName: (id: string) => `${scene.id}.${StupidTranslit.translit(id)}`,
         revertActionName: (id: string) => `${StupidTranslit.reverse(id)}`,
         pushEnterScene,
+
+        i18Btn: (ctx: ContextMessageUpdate, id: string, tplData: object = undefined) =>
+            ctx.i18n.t(`scenes.${scene.id}.keyboard.${id}`, tplData),
+        i18SharedBtn: (ctx: ContextMessageUpdate, id: string, tplData: object = undefined) =>
+            ctx.i18n.t(`shared.keyboard.${id}`, tplData),
+        // scenes.<scene id>.<id>
+        i18Msg: (ctx: ContextMessageUpdate, id: string, tplData: object = undefined, byDefault: string | null = undefined) => {
+            const resourceKey = `scenes.${scene.id}.${id}`
+            if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
+                return ctx.i18n.t(resourceKey, tplData)
+            } else {
+                return byDefault
+            }
+        },
+
         sceneHelper: (ctx: ContextMessageUpdate) => {
             return {
                 // scenes.<scene id>.keyboard.<id>
@@ -24,7 +39,7 @@ export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id
                 i18SharedBtn: (id: string, tplData: object = undefined) =>
                     ctx.i18n.t(`shared.keyboard.${id}`, tplData),
                 // scenes.<scene id>.<id>
-                i18Msg: (id: string, tplData: object = undefined, byDefault: string|null = undefined) => {
+                i18Msg: (id: string, tplData: object = undefined, byDefault: string | null = undefined) => {
                     const resourceKey = `scenes.${scene.id}.${id}`
                     if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
                         return ctx.i18n.t(resourceKey, tplData)

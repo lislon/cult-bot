@@ -9,7 +9,7 @@ import { SceneRegister } from '../../middleware-utils'
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene');
 
-const {sceneHelper, i18nSharedBtnName, actionName} = i18nSceneHelper(scene)
+const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 export interface SearchSceneState {
     request: string

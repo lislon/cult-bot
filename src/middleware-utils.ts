@@ -8,11 +8,11 @@ import { parseISO } from 'date-fns'
 import { userSaveMiddleware } from './lib/middleware/user-save-middleware'
 import { botConfig } from './util/bot-config'
 import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
-import { i18nMiddleware, i18nWrapSceneContext } from './lib/middleware/i18n-middleware'
 import { Composer, Stage } from 'telegraf'
 import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
 import { supportFeedbackMiddleware } from './lib/middleware/support-feedback.middleware'
 import { logger } from './util/logger'
+import { i18n } from './util/i18n'
 
 let sessionMechanism
 if (botConfig.REDIS_URL !== undefined && botConfig.NODE_ENV !== 'test') {
@@ -51,7 +51,7 @@ function logMiddleware(str: string) {
 }
 
 export default {
-    i18n: i18nMiddleware,
+    i18n: i18n.middleware(),
     dateTime: dateTimeMiddleware,
     telegrafThrottler: telegrafThrottler({
         onThrottlerError: async (ctx: ContextMessageUpdate, next, throttlerName, error) => {
@@ -95,7 +95,7 @@ export const myRegisterScene = (bot: Composer<ContextMessageUpdate>,
         stage.register(scene.scene)
         // all middlewares registered inside scene.globalActionsFn will have correct ctx.i18nScene
         // This is needed for ctx.i18nMsg functions
-        bot.use(i18nWrapSceneContext(scene.scene.id, scene.globalActionsFn))
+        scene.globalActionsFn(bot)
     })
     return stage
 }

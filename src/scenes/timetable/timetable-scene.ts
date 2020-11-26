@@ -6,7 +6,7 @@ import { SceneRegister } from '../../middleware-utils'
 
 const scene = new BaseScene<ContextMessageUpdate>('timetable');
 
-const {backButton, sceneHelper, actionName, pushEnterScene} = i18nSceneHelper(scene)
+const {backButton, sceneHelper, actionName, pushEnterScene, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 const content = (ctx: ContextMessageUpdate) => {
     const [week6, week7] = ctx.session.timetable.weekSlots

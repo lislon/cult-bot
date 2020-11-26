@@ -84,3 +84,5 @@ export type MyInterval = {
     start: Date
     end: Date
 }
+
+export type I18MsgFunction = (ctx: ContextMessageUpdate, id: string, tplData?: object, byDefault?: string | null) => string

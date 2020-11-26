@@ -20,10 +20,6 @@ function prepareMessage(ctx: ContextMessageUpdate, msg: string, ...data: any[]) 
 }
 
 const {combine, timestamp, printf} = format;
-const logFormat = printf(info => {
-    return `[${info.timestamp}] [${info.level}] ${info.message}`;
-});
-
 function getFormat() {
     if (botConfig.NODE_ENV === 'development') {
         return combine(
@@ -31,14 +27,18 @@ function getFormat() {
             timestamp({format: 'HH:mm:ss'}),
             format.splat(),
             format.simple(),
-            logFormat
+            printf(info => {
+                return `[${info.timestamp}] [${info.level}] ${info.message}`;
+            })
         )
     } else {
         return combine(
             format.colorize(),
             format.splat(),
             format.simple(),
-            logFormat
+            printf(info => {
+                return `[${info.level}] ${info.message}`;
+            })
         )
     }
 }
@@ -54,7 +54,6 @@ const logger = winston.createLogger({
 
 if (botConfig.NODE_ENV !== 'production') {
     logger.level = 'debug'
-    logger.debug('Logging initialized at debug level');
 } else {
     logger.level = 'info'
 }

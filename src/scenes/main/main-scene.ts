@@ -6,7 +6,7 @@ import { botConfig } from '../../util/bot-config'
 
 const scene = new BaseScene<ContextMessageUpdate>('main_scene');
 
-const {i18nModuleBtnName} = i18nSceneHelper(scene)
+const {i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 function isTimeToShowFeedback(ctx: ContextMessageUpdate) {
     return botConfig.SUPPORT_FEEDBACK_CHAT_ID !== undefined &&
@@ -25,12 +25,12 @@ const content = (ctx: ContextMessageUpdate) => {
 
     const mainButtons = menu.map(row =>
         row.map(btnName => {
-            return Markup.button(ctx.i18Btn(btnName));
+            return Markup.button(i18Btn(ctx, btnName));
         })
     );
 
     return {
-        msg: ctx.i18Msg('select_anything'),
+        msg: i18Msg(ctx, 'select_anything'),
         markupMainMenu: Extra.HTML(true).markup(Markup.keyboard(mainButtons).resize())
     }
 }

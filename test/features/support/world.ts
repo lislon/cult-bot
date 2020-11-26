@@ -5,7 +5,6 @@ import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { customizeScene } from '../../../src/scenes/customize/customize-scene'
 import { BotReply, TelegramMockServer } from '../lib/TelegramMockServer'
 import session from 'telegraf/session'
-import { i18nMiddleware } from '../../../src/lib/middleware/i18n-middleware'
 import { packsScene } from '../../../src/scenes/packs/packs-scene'
 import { MiddlewareFn } from 'telegraf/typings/composer'
 import { feedbackScene } from '../../../src/scenes/feedback/feedback-scene'
@@ -31,7 +30,7 @@ class CustomWorld {
         })
 
         this.bot.use(
-            i18nMiddleware,
+            middlewares.i18n,
             session(),
             // middlewares.logMiddleware('pre_session'),
             middlewares.userSaveMiddleware,
