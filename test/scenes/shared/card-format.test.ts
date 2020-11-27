@@ -61,6 +61,17 @@ describe('test card format', () => {
         expect(prepare(card)).toEqual(prepare(expected))
     })
 
+    test('Cut first half of timetable', async () => {
+        const event: Event = {
+            ...defaultEvent,
+            category: 'movies',
+            timetable: `12 ноября 2020 - 29 ноября 2020: сб-вс: 10:00 - 18:00`,
+        }
+        const card = cardFormat(event)
+        const expected = (await readCard('show-timetable-cut-year.html')).toString()
+        expect(prepare(card)).toEqual(prepare(expected))
+    })
+
     test('Show date icon when complex timetable in events', async () => {
         const event: Event = {
             ...defaultEvent,
