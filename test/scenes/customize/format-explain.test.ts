@@ -16,7 +16,7 @@ function formatExplainTimeEx(now: string, time: string[]): string[] {
                 time: time,
             }
         } as any
-    }  as ContextMessageUpdate
+    } as ContextMessageUpdate
 
     const i18Msg: I18MsgFunction = function (ctx: ContextMessageUpdate, id: string, tplData: object = undefined, byDefault: string | null = undefined) {
         const resourceKey = `scenes.customize_scene.${id}`
@@ -31,15 +31,23 @@ function formatExplainTimeEx(now: string, time: string[]): string[] {
 }
 
 describe('convert_to_intervals', () => {
-    const weekends = mkInterval('[2020-01-01 00:00, 2020-01-03 00:00)')
+    const expectedInterval = mkInterval
+    const weekendsInterval = mkInterval
+
 
     test.each([
-        ['saturday.12:00-15:00', [mkInterval('[2020-01-01 12:00, 2020-01-01 15:00)')]],
-        ['sunday.15:00-02:00', [
-            mkInterval('[2020-01-02 00:00, 2020-01-02 02:00)'),
-            mkInterval('[2020-01-02 15:00, 2020-01-03 00:00)')
-        ]],
-    ])('%s', (text: string, expected: Interval[]) => {
+        ['saturday.12:00-15:00',
+            weekendsInterval('[2020-01-04 00:00, 2020-01-06 00:00)'),
+            [expectedInterval('[2020-01-04 12:00, 2020-01-04 15:00)')]],
+        ['saturday.12:00-15:00',
+            weekendsInterval('[2020-01-04 13:00, 2020-01-06 00:00)'),
+            [expectedInterval('[2020-01-04 13:00, 2020-01-04 15:00)')]],
+        ['sunday.20:00-24:00',
+            weekendsInterval('[2020-01-05 10:00, 2020-01-06 00:00)'),
+            [
+                expectedInterval('[2020-01-05 20:00, 2020-01-06 00:00)')
+            ]],
+    ])('%s', (text: string, weekends: Interval, expected: Interval[]) => {
         const actual = mapUserInputToTimeIntervals([text], weekends)
         expect(actual).toEqual(expected)
     })

@@ -1,8 +1,10 @@
-import { addDays, addHours, startOfDay } from 'date-fns/fp'
+import { addDays, addHours } from 'date-fns/fp'
 import { MyInterval } from '../../interfaces/app-interfaces'
+import { startOfISOWeek } from 'date-fns'
+import { filterByRange } from '../../lib/timetable/intervals'
 
-export function mapUserInputToTimeIntervals(times: string[], weekendInterval: Interval): MyInterval[] {
-    return (times)
+export function mapUserInputToTimeIntervals(times: string[], weekendInterval: MyInterval): MyInterval[] {
+    const hours = (times)
         .map(t => t.split(/[-.]/))
         .map(([day, from, to]) => [
             day,
@@ -17,10 +19,20 @@ export function mapUserInputToTimeIntervals(times: string[], weekendInterval: In
             }
         })
         .map(([day, from, to]: [string, number, number]) => {
-                const baseDay = startOfDay(addDays(day === 'saturday' ? 0 : 1)(weekendInterval.start))
-                return {
-                    start: addHours(from)(baseDay),
-                    end: addHours(to)(baseDay)
-                }
-            });
+            const baseDay = addDays(day === 'saturday' ? 5 : 6)(startOfISOWeek(weekendInterval.start))
+            return [addHours(from)(baseDay), addHours(to)(baseDay)]
+        })
+
+    const range = filterByRange(hours, weekendInterval, 'in')
+    const map = range.map(fromto => {
+        if (Array.isArray(fromto)) {
+            return {
+                start: fromto[0],
+                end: fromto[1]
+            }
+        } else {
+            throw Error('wtf')
+        }
+    })
+    return map
 }

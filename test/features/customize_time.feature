@@ -32,6 +32,10 @@ Feature: Customize time
 
   Scenario: I want select to events by time on sunday
     Given now is 2020-01-05 00:00
+    Given there is events:
+      | title   | category  | timetable      |
+      | A       | movies    | вс: 21:59      |
+      | B       | movies    | вс: 22:00      |
     When I click markup [#️⃣ Время]
     Then Bot responds 'Здесь можно настроить временные интервалы, в которых искать события' with inline buttons:
       """
@@ -66,7 +70,7 @@ Feature: Customize time
 
     #️⃣ <b>Время</b>:  ВС (05.01): 22.00-24.00
 
-    <b>0 событий</b> найдено
+    <b>1 событие</b> найдено
     """
 
   Scenario: When I selected filter saturday 22-24, then some time passed and today is sunday, these selections should gone
@@ -91,7 +95,7 @@ Feature: Customize time
 
   Scenario: I selected time slot, but it passed
     Given now is 2020-01-05 10:00
-    * I click markup [#️⃣ Время]
+    When I click markup [#️⃣ Время]
     * I click inline [➕ Воскресенье (05.01)]
     * I click inline [🌅 06:00-12:00]
     * I click inline [🏞 12:00-15:00]
