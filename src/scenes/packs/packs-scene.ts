@@ -132,7 +132,7 @@ function intervalTemplateParams(range: MyInterval) {
 
 async function showExhibitionsSubMenu(ctx: ContextMessageUpdate) {
     const subMenu = [
-        ['exhibitions_temp', 'exhibitions_perm'],
+        ['exhibitions_perm', 'exhibitions_temp'],
         ['back'],
     ]
 

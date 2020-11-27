@@ -21,7 +21,7 @@ Feature: Packs scene
     When I click markup [Выставки]
     Then Bot responds 'Пожалуйста, выберите категорию' with markup buttons:
       """
-      [Временные выставки] [Постоянные коллекции]
+      [Постоянные коллекции] [Временные выставки]
       [Назад]
       """
     Then I click markup [Временные выставки]
@@ -32,7 +32,7 @@ Feature: Packs scene
     When I click markup [Выставки]
     Then Bot responds 'Пожалуйста, выберите категорию' with markup buttons:
       """
-      [Временные выставки] [Постоянные коллекции]
+      [Постоянные коллекции] [Временные выставки]
       [Назад]
       """
     Then I click markup [Постоянные коллекции]
