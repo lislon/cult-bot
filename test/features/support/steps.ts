@@ -49,7 +49,7 @@ Given(/^there is events:$/, async function (table: DataTable) {
             row.timetable = 'сб-вс: 18:00'
         }
         if (row.tag_level_1 !== undefined) {
-            row.tag_level_1 = row.tag_level_1.split(/\s*,\s*/)
+            row.tag_level_1 = row.tag_level_1.split(/[\s,]+/)
         }
         if (row.category !== undefined && !allCategories.includes(row.category)) {
             expect(row.category).toEqual(`to be one of ${allCategories.join(',')}`)

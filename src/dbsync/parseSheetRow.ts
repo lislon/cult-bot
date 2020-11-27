@@ -89,6 +89,11 @@ function validateTagLevel1(event: Event, errorCallback: (errors: string[]) => vo
                 `Для выставок обязательно должен быть один из тегов:\n ${requiredTags.join('\n')}`
             ])
         }
+        if (event.tag_level_1.length === 1) {
+            errorCallback([
+                `Для выставок должен обязательно второй тег, иначе её будет не найти в подборках под себя`
+            ])
+        }
     }
 }
 

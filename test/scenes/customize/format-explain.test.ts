@@ -2,7 +2,7 @@ import { mapUserInputToTimeIntervals } from '../../../src/scenes/customize/custo
 import { mkInterval } from '../../lib/timetable/test-utils'
 import { formatExplainTime } from '../../../src/scenes/customize/format-explain'
 import { i18n } from '../../../src/util/i18n'
-import { ContextMessageUpdate, I18MsgFunction } from '../../../src/interfaces/app-interfaces'
+import { ContextMessageUpdate, I18MsgFunction, MyInterval } from '../../../src/interfaces/app-interfaces'
 import { parseISO } from 'date-fns'
 
 function formatExplainTimeEx(now: string, time: string[]): string[] {
@@ -47,7 +47,7 @@ describe('convert_to_intervals', () => {
             [
                 expectedInterval('[2020-01-05 20:00, 2020-01-06 00:00)')
             ]],
-    ])('%s', (text: string, weekends: Interval, expected: Interval[]) => {
+    ])('%s', (text: string, weekends: MyInterval, expected: Interval[]) => {
         const actual = mapUserInputToTimeIntervals([text], weekends)
         expect(actual).toEqual(expected)
     })

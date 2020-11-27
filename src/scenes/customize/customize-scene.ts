@@ -37,15 +37,25 @@ function mapFormatToDbQuery(format: string[]) {
     return format[0] as EventFormat
 }
 
+function cleanOblastiTag(ctx: ContextMessageUpdate) {
+    //  "exhibitions_perm.#историколитературные" ->   "exhibitions.#историколитературные"
+    return ctx.session.customize.oblasti.map(o => o.replace(/_.+[.]#/, '.#'))
+}
+
+function prepareRepositoryQuery(ctx: ContextMessageUpdate) {
+    return {
+        timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange(ctx.now())),
+        weekendRange: getNextWeekEndRange(ctx.now()),
+        cennosti: ctx.session.customize.cennosti,
+        oblasti: cleanOblastiTag(ctx),
+        format: mapFormatToDbQuery(ctx.session.customize.format)
+    }
+}
+
 async function countFilteredEvents(ctx: ContextMessageUpdate) {
     if (ctx.session.customize.resultsFound === undefined) {
-        ctx.session.customize.resultsFound = await db.repoCustomEvents.countEventsCustomFilter({
-            timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange(ctx.now())),
-            weekendRange: getNextWeekEndRange(ctx.now()),
-            cennosti: ctx.session.customize.cennosti,
-            oblasti: ctx.session.customize.oblasti,
-            format: mapFormatToDbQuery(ctx.session.customize.format)
-        })
+        const query = prepareRepositoryQuery(ctx)
+        ctx.session.customize.resultsFound = await db.repoCustomEvents.countEventsCustomFilter(query)
     }
     return ctx.session.customize.resultsFound;
 }
@@ -258,12 +268,9 @@ async function resetFilter(ctx: ContextMessageUpdate) {
 async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
     prepareSessionStateIfNeeded(ctx)
 
+    const query = prepareRepositoryQuery(ctx)
     const events = await db.repoCustomEvents.findEventsCustomFilter({
-        cennosti: ctx.session.customize.cennosti,
-        oblasti: ctx.session.customize.oblasti,
-        format: mapFormatToDbQuery(ctx.session.customize.format),
-        timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange(ctx.now())),
-        weekendRange: getNextWeekEndRange(ctx.now()),
+        ...query,
         limit: limitEventsToPage,
         offset: ctx.session.paging.pagingOffset
     })
