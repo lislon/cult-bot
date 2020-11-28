@@ -67,7 +67,7 @@ export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id
 }
 
 export function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 export function isDev(ctx: ContextMessageUpdate) {
@@ -75,16 +75,16 @@ export function isDev(ctx: ContextMessageUpdate) {
         '@lislon',
         '@kashmar85',
     ]
-    return devs.includes(`@${ctx.from.username}`);
+    return devs.includes(`@${ctx.from.username}`)
 }
 
 export function isAdmin(ctx: ContextMessageUpdate) {
-    return adminUsernames.includes(ctx.from.username) || adminIds.includes(ctx.from.id);
+    return adminUsernames.includes(ctx.from.username) || adminIds.includes(ctx.from.id)
 }
 export async function ifAdmin(ctx: ContextMessageUpdate, callback: () => Promise<any>) {
     if (isAdmin(ctx)) {
         return await callback()
     } else {
-        await ctx.replyWithHTML(ctx.i18n.t('shared.no_admin'));
+        await ctx.replyWithHTML(ctx.i18n.t('shared.no_admin'))
     }
 }

@@ -1,28 +1,21 @@
 import updateLogger from 'telegraf-update-logger'
-import session from 'telegraf/session';
 import telegrafThrottler from 'telegraf-throttler';
-import RedisSession from 'telegraf-session-redis'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { isDev } from './util/scene-helper'
 import { parseISO } from 'date-fns'
 import { userSaveMiddleware } from './lib/middleware/user-save-middleware'
-import { botConfig } from './util/bot-config'
 import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
-import { Composer, Stage } from 'telegraf'
+import { Composer, session, Stage } from 'telegraf'
 import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
 import { supportFeedbackMiddleware } from './lib/middleware/support-feedback.middleware'
 import { logger } from './util/logger'
 import { i18n } from './util/i18n'
+import { redisSession } from './util/reddis'
+import { botConfig } from './util/bot-config'
 
 let sessionMechanism
 if (botConfig.REDIS_URL !== undefined && botConfig.NODE_ENV !== 'test') {
-    sessionMechanism = new RedisSession({
-        store: {
-            host: undefined,
-            port: undefined,
-            url: botConfig.REDIS_URL
-        }
-    })
+    sessionMechanism = redisSession
 } else {
     sessionMechanism = session()
 }
@@ -86,11 +79,18 @@ export type SceneGlobalActionsFn = (bot: Composer<ContextMessageUpdate>) => void
 export interface SceneRegister {
     scene: Scene<ContextMessageUpdate>
     globalActionsFn: SceneGlobalActionsFn
+    preSceneGlobalActionsFn?: SceneGlobalActionsFn
 }
 
 export const myRegisterScene = (bot: Composer<ContextMessageUpdate>,
                                 stage: Stage<SceneContextMessageUpdate>,
                                 scenesReg: SceneRegister[]) => {
+    scenesReg.map(scene => {
+        if (scene.preSceneGlobalActionsFn) {
+            scene.preSceneGlobalActionsFn(bot)
+        }
+    })
+    bot.use(stage.middleware())
     scenesReg.map(scene => {
         stage.register(scene.scene)
         // all middlewares registered inside scene.globalActionsFn will have correct ctx.i18nScene

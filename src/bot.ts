@@ -36,27 +36,24 @@ const stage = new Stage([], {
 })
 
 
-bot.use(performanceMiddleware('total'));
-bot.use(middlewares.i18n);
+bot.use(performanceMiddleware('total'))
+bot.use(middlewares.i18n)
 bot.use(middlewares.telegrafThrottler)
 bot.use(middlewares.logger)
-bot.use(middlewares.session);
-bot.use(middlewares.userSaveMiddleware);
-bot.use(middlewares.dateTime);
-bot.use(middlewares.analyticsMiddleware);
-bot.use(stage.middleware());
-
-
+bot.use(middlewares.session)
+bot.use(middlewares.userSaveMiddleware)
+bot.use(middlewares.dateTime)
+bot.use(middlewares.analyticsMiddleware)
 myRegisterScene(bot, stage, [
     mainScene,
+    helpScene,
     customizeScene,
     timeTableScene,
     timeIntervalScene,
     adminScene,
     packsScene,
     searchScene,
-    feedbackScene,
-    helpScene
+    feedbackScene
 ])
 
 // bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
@@ -123,13 +120,11 @@ bot
     .hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
         await ctx.scene.enter('main_scene');
     })
+    .hears(/.+/, async (ctx, next) => {
+        logger.info(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [text=${ctx.message.text}]`)
 
-
-bot.hears(/.+/, async (ctx, next) => {
-    logger.info(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [text=${ctx.message.text}]`)
-
-    return await next()
-})
+        return await next()
+    })
 
 
 rawBot.use(Composer.privateChat(bot))

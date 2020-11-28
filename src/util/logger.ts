@@ -23,21 +23,23 @@ const {combine, timestamp, printf} = format;
 function getFormat() {
     if (botConfig.NODE_ENV === 'development') {
         return combine(
+            format.errors({stack: true}),
             format.colorize(),
             timestamp({format: 'HH:mm:ss'}),
             format.splat(),
             format.simple(),
-            printf(info => {
-                return `[${info.timestamp}] [${info.level}] ${info.message}`;
+            printf(({timestamp, level, message, stack}) => {
+                return `[${timestamp}] [${level}] ${message}${stack ? '- ' + stack : ''}`;
             })
         )
     } else {
         return combine(
+            format.errors({stack: true}),
             format.colorize(),
             format.splat(),
             format.simple(),
-            printf(info => {
-                return `[${info.level}] ${info.message}`;
+            printf(({level, message, stack}) => {
+                return `[${level}] ${message}${stack ? '- ' + stack : ''}`;
             })
         )
     }

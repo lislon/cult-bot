@@ -10,6 +10,9 @@ export interface AnalyticsState {
     inlineClicks: number
 }
 
+export function countInteractions(ctx: ContextMessageUpdate): number {
+    return ctx.session.analytics.markupClicks + ctx.session.analytics.inlineClicks
+}
 
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     const {

@@ -12,6 +12,7 @@ import { PerformanceContext } from '../lib/middleware/performance-middleware'
 import { FeedbackSceneState } from '../scenes/feedback/feedback-scene'
 import { AnalyticsState } from '../lib/middleware/analytics-middleware'
 import { UserSaveState } from '../lib/middleware/user-save-middleware'
+import { HelpSceneState } from '../scenes/help/help-scene'
 
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
@@ -44,6 +45,7 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         analytics: AnalyticsState,
         paging: PagingState
         userSave: UserSaveState
+        help: HelpSceneState,
         userId: number
         uaUuid: string
         language: 'en' | 'ru'
