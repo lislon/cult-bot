@@ -164,9 +164,10 @@ export class TelegramMockServer {
                 this.lastMsg.reply_markup = extra.reply_markup
             }
 
-            this.replies = [...this.replies, { text: message, extra, message: this.lastMsg }]
+            this.replies = [...this.replies, {text: message, extra, message: this.lastMsg}]
             return this.lastMsg
         }
+        ctx.answerCbQuery = _ => Promise.resolve(true)
         ctx.editMessageReplyMarkup = async (markup?: tt.InlineKeyboardMarkup): Promise<tt.Message | boolean> => {
             const lastReply = this.replies.find(reply => reply.message.message_id === this.lastMsg.message_id)
 

@@ -37,17 +37,11 @@ const initOptions: IInitOptions<IExtensions> = {
     },
 
     query(e) {
-        // logger.silly(e.query)
+        // console.log(e.query)
     }
 
 };
 
-
-// attach to all pg-promise events of the initOptions object:
-
-
-// Example of attaching to just events 'query' and 'error':
-// monitor.attach(initOptions, ['query', 'error']);
 
 const pgp: IMain = pg_promise(initOptions)
 
@@ -84,9 +78,8 @@ pgMonitor.setLog((msg, info) => {
 
 const dbCfg: IConnectionParameters<pg.IClient> & {} = {
     connectionString: botConfig.DATABASE_URL,
-    max:
-        +20,
-    ssl: botConfig.HEROKU_APP_ID === undefined ? undefined : { rejectUnauthorized: false },
+    max: +20,
+    ssl: botConfig.HEROKU_APP_ID === undefined ? undefined : {rejectUnauthorized: false},
 }
 
 const db: BotDb = pgp(dbCfg); // database instance;

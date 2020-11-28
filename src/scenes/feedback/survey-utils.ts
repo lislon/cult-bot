@@ -1,11 +1,9 @@
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { MenuTemplate } from 'telegraf-inline-menu'
 import { SelectOptions } from 'telegraf-inline-menu/dist/source/buttons/select'
 import { checkboxi18nBtnId } from '../shared/shared-logic'
-import { SingleButtonOptions } from 'telegraf-inline-menu/dist/source/buttons/basic'
 
-const {actionName, i18nModuleBtnName, i18nModuleMsg, scanKeys, i18nSharedBtnName} = i18nSceneHelper({ id: 'feedback_scene' })
+const {actionName, i18nModuleBtnName, i18nModuleMsg, scanKeys, i18nSharedBtnName, i18Btn} = i18nSceneHelper({id: 'feedback_scene'})
 
 
 export function keyAnswers(questionId: string): () => string[] {
@@ -14,12 +12,7 @@ export function keyAnswers(questionId: string): () => string[] {
 }
 
 export function i18nButtonText(questionId: string) {
-    return (context: ContextMessageUpdate, key: string) => context.i18Btn(`survey.${questionId}.${key}`)
-}
-
-export function appendBackButtons(menu: MenuTemplate<ContextMessageUpdate>,
-                                  options: SingleButtonOptions<ContextMessageUpdate> = {}) {
-    menu.navigate(i18nSharedBtnName('back'), '..', options)
+    return (context: ContextMessageUpdate, key: string) => i18Btn(context, `survey.${questionId}.${key}`)
 }
 
 export function optionSet(field: 'whatImportant' | 'whyDontLike'): SelectOptions<ContextMessageUpdate> {

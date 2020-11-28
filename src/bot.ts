@@ -81,7 +81,7 @@ bot
         await ctx.replyWithHTML(ctx.i18n.t('root.welcome2'), {disable_notification: true})
         if (!quick) await sleep(1000)
         await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.welcome3')});
-        if (!quick) await sleep(5000)
+        if (!quick) await sleep(1000)
         await ctx.replyWithHTML(ctx.i18n.t('root.welcome4'), {disable_notification: true})
     })
     .command('menu', async (ctx: ContextMessageUpdate) => {

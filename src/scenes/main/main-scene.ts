@@ -3,14 +3,16 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, ifAdmin, isAdmin } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
+import { countInteractions } from '../../lib/middleware/analytics-middleware'
 
 const scene = new BaseScene<ContextMessageUpdate>('main_scene');
 
 const {i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 function isTimeToShowFeedback(ctx: ContextMessageUpdate) {
+    const CLICKS_TO_TAKE_FEEDBACK = 15
     return botConfig.SUPPORT_FEEDBACK_CHAT_ID !== undefined &&
-        ((ctx.session.analytics.inlineClicks + ctx.session.analytics.markupClicks > 25) || isAdmin(ctx))
+        (countInteractions(ctx) > CLICKS_TO_TAKE_FEEDBACK) || isAdmin(ctx)
 }
 
 export type MainSceneEnterState = { override_main_scene_msg?: string }

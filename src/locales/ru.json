@@ -265,23 +265,25 @@
     },
     "feedback_scene": {
       "welcome": "✉️ ",
-
       "send_letter_welcome": "Напишите сообщение, я передам его моим авторам.\n<i>Аудиосообщения тоже поддерживаются</i>",
-      "admin_feedback_template_text": "Отзыв от <b>${user}</b> id=${userId}\n\n<i>${text}</i>",
+      "admin_feedback_template_text": "📝 Отзыв от <b>${user}</b> id=${userId}\n\n<i>${text}</i>",
+      "admin_feedback_template_like": "❤️ ❗️ вариант опроса от <b>${user}</b> id=${userId}\n\n😀 Мне важно:\n${selections}\n - <b>${text}</b>",
+      "admin_feedback_template_dislike": "💔❗️ Свой вариант опроса от <b>${user}</b> id=${userId}\n\n😀 Мне не понравилось:\n${selections}\n - <b>${text}</b>",
       "admin_feedback_template_other": "Отзыв от <b>${user}</b> id=${userId}:",
+      "admin_survey_template_like": "Новый результат опроса от <b>${user}</b> id=${userId}\n\n❤️ Мне важно:\n${selections}",
+      "admin_survey_template_dislike": "Новый результат опроса от <b>${user}</b> id=${userId}\n\n💔 Мне не понравилось:\n${selections}",
       "thank_you_for_custom_feedback": "Спасибо за Ваш отклик. Мы будем рады услышать ваши предложения по боту",
       "your_feedback_was_amended": "Отклик дополнен, спасибо.",
       "please_click_write_first": "Пожалуйста, если хотите написать отзыв, нажмите на кнопку '${button}'",
       "sticker_thank_you": "CAACAgIAAxkBAAKThl-5iv3StoFa6Fru6CtlEH3GCKIeAAJYAwACz7vUDnSoodcl1REsHgQ",
       "sticker_stop_it": "CAACAgIAAxkBAAKTil-5i_jWSqKxIBOYUHrGWFiPEOQMAALQBwAClvoSBcI4n6geBtowHgQ",
-
+      "select_at_least_one": "Пожалуйста, выберите хотя бы один пункт",
       "admin_response": {
         "template": "Вам пришел ответ от авторов бота: ${text}",
         "error": "Ошибка! Не смогли ответить пользоваетю: ${message}",
         "cant_find_original": "Could not find original user message to reply: ${json}",
         "message_sent": "Ответили пользователю:\n-----------------\n${template}\n-----------------"
       },
-
       "survey": {
         "q_landing": "Напишите здесь всё что вы хотите нам сказать. Также предлагаем пройти короткий опрос, чтобы мы смогли сделать бот более приятным для вас",
         "q_found_events": "Подобрали ли события для себя на выходные?",
@@ -312,7 +314,7 @@
             "opt_poor_description": "Невнятное описание",
             "opt_everything_bad": "Ничего не понравилось",
             "opt_bad_time": "Неудобное время",
-            "comment": "\uD83D\uDCDD Другое"
+            "comment": "\uD83D\uDCDD Свой вариант"
           },
           "q_what_is_important": {
             "opt_interesting_subject": "Тема события",
@@ -321,7 +323,7 @@
             "opt_area": "Площадка",
             "opt_child": "Возможность пойти с детьми",
             "opt_unique_event": "Уникальное событие",
-            "comment": "\uD83D\uDCDD Другое"
+            "comment": "\uD83D\uDCDD Свой вариант"
           }
         }
       }

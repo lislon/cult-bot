@@ -453,7 +453,8 @@ function formatOptionLogic(ctx: ContextMessageUpdate, selected: string) {
     }
 }
 
-function checkOrUncheckMenu(ctx: ContextMessageUpdate) {
+async function checkOrUncheckMenu(ctx: ContextMessageUpdate) {
+    await ctx.answerCbQuery()
     const menuTitle = ctx.match[1]
     if (ctx.session.customize.openedMenus.includes(menuTitle)) {
         ctx.session.customize.openedMenus = []
@@ -486,15 +487,15 @@ scene
         await showNextPortionOfResults(ctx)
     })
     .action(/customize_scene[.]p_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
-        checkOrUncheckMenu(ctx)
+        await checkOrUncheckMenu(ctx)
         await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
     })
     .action(/customize_scene[.]o_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
-        checkOrUncheckMenu(ctx)
+        await checkOrUncheckMenu(ctx)
         await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx))
     })
     .action(/customize_scene[.]t_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
-        checkOrUncheckMenu(ctx)
+        await checkOrUncheckMenu(ctx)
         await ctx.editMessageReplyMarkup(await getKeyboardTime(ctx))
     })
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {

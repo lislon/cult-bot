@@ -48,9 +48,10 @@ export default {
     dateTime: dateTimeMiddleware,
     telegrafThrottler: telegrafThrottler({
         onThrottlerError: async (ctx: ContextMessageUpdate, next, throttlerName, error) => {
-
             if (error.message === 'This job has been dropped by Bottleneck') {
                 logger.debug(`Throttle limit ${throttlerName}: ${error} for user ${ctx.from.username}`)
+            } else if (error.message === 'query is too old and response timeout expired') {
+                // ignore
             } else {
                 logger.error(`Ooops, encountered an error for ${ctx.updateType}`, error)
                 if (isDev(ctx)) {
