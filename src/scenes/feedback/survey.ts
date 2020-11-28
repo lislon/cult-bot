@@ -52,7 +52,7 @@ menuNegative.select('not_like', keyAnswers(`q_why_not_like`), {
 })
 menuNegative.interact(i18nModuleBtnName('survey.q_why_not_like.comment'),
     'write_not_like', {
-        do: doInviteToEnterText('survey.write_now_important', 'dislike'),
+        do: doInviteToEnterText('survey.write_now_not_like', 'dislike'),
     })
 
 menuNegative.navigate(i18nSharedBtnName('back'), '..')
