@@ -61,13 +61,13 @@ export default {
             } else {
                 logger.error(`Ooops, encountered an error for ${ctx.updateType}`, error)
                 if (isDev(ctx)) {
-                    await ctx.replyWithHTML(ctx.i18n.t('shared.something_went_wrong_dev', {
+                    await ctx.replyWithHTML(ctx.i18n.t('root.something_went_wrong_dev', {
                         error: error.toString().substr(0, 1000),
                         time: (new Date()).toString(),
                         session: JSON.stringify(ctx.session, undefined, 2)
                     }))
                 } else {
-                    await ctx.replyWithHTML(ctx.i18n.t('shared.something_went_wrong'))
+                    await ctx.replyWithHTML(ctx.i18n.t('root.something_went_wrong'))
                 }
             }
             // console.log(throttlerName, error)

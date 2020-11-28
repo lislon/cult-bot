@@ -16,10 +16,11 @@ import { searchScene } from './scenes/search/search-scene'
 import { packsScene } from './scenes/packs/packs-scene'
 import { feedbackScene } from './scenes/feedback/feedback-scene'
 import { logger } from './util/logger'
+import { helpScene } from './scenes/help/help-scene'
 
 logger.info(`starting bot...`);
 
-const quick = botConfig.NODE_ENV === 'development';
+const quick = botConfig.NODE_ENV === 'development'
 
 export const rawBot: Telegraf<ContextMessageUpdate> = new Telegraf(botConfig.TELEGRAM_TOKEN, {
     telegram: {
@@ -46,39 +47,46 @@ bot.use(middlewares.analyticsMiddleware);
 bot.use(stage.middleware());
 
 
-myRegisterScene(bot, stage, [mainScene, customizeScene, timeTableScene, timeIntervalScene, adminScene, packsScene, searchScene, feedbackScene])
+myRegisterScene(bot, stage, [
+    mainScene,
+    customizeScene,
+    timeTableScene,
+    timeIntervalScene,
+    adminScene,
+    packsScene,
+    searchScene,
+    feedbackScene,
+    helpScene
+])
 
 // bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
 //     console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
 //     await ctx.reply(ctx.i18n.t('shared.something_went_wrong_dev', { error: error.toString().substr(0, 1000) }))
 // })
 
-bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }) => {
-    console.log([
-        `/start`,
-        `id=${ctx.from.id}`,
-        `first_name=${ctx.from.first_name}`,
-        `last_name=${ctx.from.last_name}`,
-        `username=${ctx.from.username}`,
-        `startPayload=${ctx.startPayload}`,
-        `ua_uuid=${ctx.session.uaUuid}`].join(' '))
+bot
+    .start(async (ctx: ContextMessageUpdate & { startPayload: string }) => {
+        console.log([
+            `/start`,
+            `id=${ctx.from.id}`,
+            `first_name=${ctx.from.first_name}`,
+            `last_name=${ctx.from.last_name}`,
+            `username=${ctx.from.username}`,
+            `startPayload=${ctx.startPayload}`,
+            `ua_uuid=${ctx.session.uaUuid}`].join(' '))
 
-    // cn Campaign Name
-    // cs
-    const name = ctx.message.from.first_name
-    if (!quick) await sleep(500)
-    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome1', {name: name}))
-    if (!quick) await sleep(1000)
-    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome2'), {disable_notification: true})
-    if (!quick) await sleep(1000)
-    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome3'), {disable_notification: true})
-    if (!quick) await sleep(1000)
-    await ctx.replyWithHTML(ctx.i18n.t('shared.welcome4'), {disable_notification: true})
-    await sleep(1000)
-    await ctx.scene.enter('main_scene');
-})
-
-
+        // cn Campaign Name
+        // cs
+        const name = ctx.message.from.first_name
+        if (!quick) await sleep(500)
+        await ctx.replyWithHTML(ctx.i18n.t('root.welcome1', {name: name}))
+        if (!quick) await sleep(1000)
+        await ctx.replyWithHTML(ctx.i18n.t('root.welcome2'), {disable_notification: true})
+        if (!quick) await sleep(1000)
+        await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.welcome3')});
+        if (!quick) await sleep(5000)
+        await ctx.replyWithHTML(ctx.i18n.t('root.welcome4'), {disable_notification: true})
+    })
     .command('menu', async (ctx: ContextMessageUpdate) => {
         await ctx.scene.enter('main_scene');
     })
@@ -93,7 +101,6 @@ bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }) => {
         }
     })
     .start((ctx) => ctx.reply('Welcome!'))
-    .help((ctx) => ctx.reply('Send me a sticker'))
     .on('sticker', (ctx) => ctx.reply('👍'))
     .hears('hi', (ctx) => ctx.reply('Hey there'))
 

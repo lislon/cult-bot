@@ -13,6 +13,8 @@ function isTimeToShowFeedback(ctx: ContextMessageUpdate) {
         ((ctx.session.analytics.inlineClicks + ctx.session.analytics.markupClicks > 25) || isAdmin(ctx))
 }
 
+export type MainSceneEnterState = { override_main_scene_msg?: string }
+
 const content = (ctx: ContextMessageUpdate) => {
     const feedbackBtn = isTimeToShowFeedback(ctx) ? ['feedback'] : []
 
@@ -29,8 +31,9 @@ const content = (ctx: ContextMessageUpdate) => {
         })
     );
 
+    const state = ctx.scene.state as MainSceneEnterState
     return {
-        msg: i18Msg(ctx, 'select_anything'),
+        msg: state.override_main_scene_msg ? state.override_main_scene_msg : i18Msg(ctx, 'select_anything'),
         markupMainMenu: Extra.HTML(true).markup(Markup.keyboard(mainButtons).resize())
     }
 }

@@ -108,19 +108,6 @@ scene
     })
 
 function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
-    // bot
-    //     .hears(i18nModuleBtnName('packs'), async (ctx: ContextMessageUpdate) => {
-    //         await ctx.scene.enter('packs_scene')
-    //     })
-    //     .hears(i18nModuleBtnName('search'), async (ctx: ContextMessageUpdate) => {
-    //         await ctx.scene.enter('search_scene')
-    //     })
-    //     .hears(i18nModuleBtnName('customize'), async (ctx: ContextMessageUpdate) => {
-    //         await ctx.scene.enter('customize_scene')
-    //     })
-    //     .hears(i18nModuleBtnName('admin'), async (ctx: ContextMessageUpdate) => {
-    //         await ifAdmin(ctx, () => ctx.scene.enter('admin_scene'))
-    //     });
 }
 
 export const searchScene = {

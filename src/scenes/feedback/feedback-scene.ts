@@ -52,15 +52,18 @@ scene
     .leave((ctx: ContextMessageUpdate) => {
         ctx.session.feedbackScene = undefined
     })
-    // .action('take_survey', async (ctx: ContextMessageUpdate) => {
-    //     await ctx.answerCbQuery()
-    // })
+    .action('/found/', async (ctx, next) => {
+        ctx.ua.pv({dp: `/feedback/take_survey`, dt: `Пройти опрос`})
+        await next()
+    })
     .action('/found/not_found/',  async (ctx, next) => {
+        ctx.ua.pv({dp: `/feedback/take_survey/not_found`, dt: `Не нашел событий`})
         prepareSessionStateIfNeeded(ctx)
         ctx.session.feedbackScene.isFound = false
         await next()
     })
     .action('/found/your_events/',  async (ctx, next) => {
+        ctx.ua.pv({dp: `/feedback/take_survey/your_events`, dt: `Нашел события`})
         prepareSessionStateIfNeeded(ctx)
         ctx.session.feedbackScene.isFound = true
         await next()
@@ -71,6 +74,7 @@ scene
         '/found/your_events/write_important',
         '/found/not_found/write_not_like',
     ], async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
+        ctx.ua.pv({dp: `/feedback/take_survey/done`, dt: `Прошел опрос`})
         prepareSessionStateIfNeeded(ctx)
         ctx.session.feedbackScene.surveyDone = true
         await db.repoFeedback.saveQuiz({

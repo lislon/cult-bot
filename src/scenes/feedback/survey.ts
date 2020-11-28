@@ -15,6 +15,7 @@ const menuEndSorry = new MenuTemplate<ContextMessageUpdate>(i18nModuleMsg('surve
 
 function doInviteToEnterText(msgId: string) {
     return async (ctx: ContextMessageUpdate) => {
+        ctx.ua.pv({dp: `/feedback/send_letter`, dt: `Написать авторам`})
         await ctx.answerCbQuery()
         await deleteMenuFromContext(ctx)
         await ctx.replyWithHTML(i18Msg(ctx, msgId))
