@@ -374,31 +374,31 @@
     enabled "2.0.x"
     kuler "^2.0.0"
 
-"@databases/pg-config@^1.1.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@databases/pg-config/-/pg-config-1.2.0.tgz#f816d07c7a48883455b1142cb8df1d2913874ecd"
-  integrity sha512-Iz767MMlylKBojfepHKwhol9eJNRzC5yNVyMsb6hjhwtVCc2cwrFwptFexAGYKVJkaEmszFjhjYwO9vbPsYCwg==
+"@databases/pg-config@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@databases/pg-config/-/pg-config-2.0.0.tgz#77fb9439f9ccf50340ae45363eaccb74e56416c5"
+  integrity sha512-1Ps21oyw2EnGuL7UeGPGdoy39HwBl0WzS2PausWpUPJcr5cmPZ08UmoNfUVxd4ax9A4/gK5JJ4IEaOlLIM4E/A==
   dependencies:
     "@types/cosmiconfig" "^5.0.3"
     ajv "^6.7.0"
     cosmiconfig "^5.0.7"
 
-"@databases/pg-test@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@databases/pg-test/-/pg-test-2.0.0.tgz#d99c2a8fd8a17583d35bef335503e12694f943a0"
-  integrity sha512-pl7tjMjid8XtL0eiYa2r1R2yn1HHciW/6aXlsDCgMg10hxsJVriE+70uCiiHS7AoP64v1YFo57/yf5l7hA7Htg==
+"@databases/pg-test@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@databases/pg-test/-/pg-test-3.0.0.tgz#fe537f3bcfe74459b0c8bab94aaa34c151472f82"
+  integrity sha512-D0eJCLnYgpqWUG0kVh/vj0UmcxYHLKelknRm/KoZFmlEi88s/5L6L4OKM4oPEvhHeH7r1oDt+xZCaNpLUYccSg==
   dependencies:
-    "@databases/pg-config" "^1.1.0"
-    "@databases/with-container" "^1.0.0"
+    "@databases/pg-config" "^2.0.0"
+    "@databases/with-container" "^2.0.0"
     modern-spawn "^1.0.0"
     ms "^2.1.2"
-    parameter-reducers "^1.0.1"
+    parameter-reducers "^2.0.0"
     type-assertions "^1.1.0"
 
-"@databases/with-container@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@databases/with-container/-/with-container-1.0.0.tgz#739360d083140503e7126b5f5612833d1576a365"
-  integrity sha512-4ev38sOPkBKcc6qnDdDkfa8b6SDQIlKSgxhklnFket1uFsmkeMSiBTrXEkjGVmCiLUlhHG2ROjWRF+C0g5hC0A==
+"@databases/with-container@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@databases/with-container/-/with-container-2.0.0.tgz#6ff1e846ccc728ca8fa2b7425c6bf7f652876e59"
+  integrity sha512-HWCrxvVTvQp3zhb+eATdicd1xfo+0PCttrjXZRcXIELgFtymVJRZnjtSiyGhNeyIWnLkCEGS0DSGiyRzhMNfTA==
   dependencies:
     "@types/cross-spawn" "^6.0.0"
     cross-spawn "^6.0.5"
@@ -5316,10 +5316,10 @@ pad-right@^0.2.2:
   dependencies:
     repeat-string "^1.5.2"
 
-parameter-reducers@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/parameter-reducers/-/parameter-reducers-1.0.1.tgz#d07ecc73befbce15208ca604c76d15f6d5acad21"
-  integrity sha512-k72V6GpMC2/LNwy6gwzMZ5ivJ2RUdWhurEZ3OdXqTk9HOypPK+6Ip0w9wdopHKkCxjRFTmpYUsi0TkiJWUuQ/w==
+parameter-reducers@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/parameter-reducers/-/parameter-reducers-2.0.0.tgz#504a3e5c157bddd7bf8ae53dbc5bf3f40c1edf9a"
+  integrity sha512-9uA0EXkGfAIGge9dY8/ZLSWa/nLnEKyIIIjYTQhP8wMMURFgOevLToJJ8NFK4ltXz73D+wBTLObixi/P9HABNw==
 
 parse-database-url@~0.3.0:
   version "0.3.0"
