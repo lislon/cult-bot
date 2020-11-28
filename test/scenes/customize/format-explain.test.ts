@@ -6,7 +6,7 @@ import { ContextMessageUpdate, I18MsgFunction, MyInterval } from '../../../src/i
 import { parseISO } from 'date-fns'
 
 function formatExplainTimeEx(now: string, time: string[]): string[] {
-    const ctx: Pick<ContextMessageUpdate, 'i18n' | 'now' | 'session' | 'i18Msg'> = {
+    const ctx: Pick<ContextMessageUpdate, 'i18n' | 'now' | 'session'> = {
         i18n: i18n,
         now(): Date {
             return parseISO(now)
