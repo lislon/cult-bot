@@ -2,7 +2,7 @@ import * as P from 'parsimmon'
 import { Result, Success } from 'parsimmon'
 import { DateExact, DateRange, EventTimetable, mapInterval, WeekTime } from './intervals'
 import { cleanText } from './timetable-utils'
-import { addYears, format, isValid, parseISO, setYear } from 'date-fns'
+import { addYears, format, isValid, parseISO, setYear, subMonths } from 'date-fns'
 import cloneDeep from 'lodash/cloneDeep'
 
 
@@ -208,7 +208,7 @@ export function parseTimetable(text: string, now: Date): TimetableParseResult {
     if (parseRes.status === true) {
 
         const dateValidation: string[] = []
-        parseRes = fillUnkownYearsAndValidate(parseRes, dateValidation, now)
+        parseRes = fillUnkownYearsAndValidate(parseRes, dateValidation, subMonths(now, 3))
         if (dateValidation.length > 0) {
             return {status: false, errors: dateValidation}
         }

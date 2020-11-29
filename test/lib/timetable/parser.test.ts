@@ -220,7 +220,7 @@ describe('parser', () => {
                 'datesExact': [
                     {
                         'dateRange': [
-                            '2020-10-17'
+                            '2019-10-17'
                         ],
                         'times': [
                             [
@@ -231,7 +231,7 @@ describe('parser', () => {
                     },
                     {
                         'dateRange': [
-                            '2020-10-18'
+                            '2019-10-18'
                         ],
                         'times': [
                             [
@@ -278,7 +278,7 @@ describe('parser', () => {
     });
 
     test('year rollolver', () => {
-        const actual = parseTimetable('1 января: 12:00', date('2020-01-02'))
+        const actual = parseTimetable('1 января: 12:00', date('2020-07-02'))
         if (actual.status === true) {
             expect(actual.value.datesExact).toStrictEqual([{'dateRange': ['2021-01-01'], 'times': ['12:00']}])
         } else {
