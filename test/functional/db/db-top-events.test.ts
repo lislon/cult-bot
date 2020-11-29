@@ -59,7 +59,7 @@ describe('Top events', () => {
                     date('2020-01-02 15:00'),
                 ],
                 category: 'exhibitions',
-                tag_level_1: ['#постояннаяколлекция']
+                tag_level_1: ['#постоянныеколлекции']
             }),
             getMockEvent({
                 title: 'B',
@@ -72,7 +72,7 @@ describe('Top events', () => {
         const interval = mkInterval('[2020-01-01 15:00, 2020-01-03 15:00)')
         expectedTitlesStrict(['A'], await db.repoTopEvents.getTop({
             category: 'exhibitions',
-            oblasti: ['exhibitions.#постояннаяколлекция'],
+            oblasti: ['exhibitions.#постоянныеколлекции'],
             interval: interval
         }))
     })

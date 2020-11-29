@@ -38,8 +38,17 @@ function mapFormatToDbQuery(format: string[]) {
 }
 
 function cleanOblastiTag(ctx: ContextMessageUpdate) {
-    //  "exhibitions_perm.#историколитературные" ->   "exhibitions.#историколитературные"
-    return ctx.session.customize.oblasti.map(o => o.replace(/_.+[.]#/, '.#'))
+    return ctx.session.customize.oblasti
+        .flatMap(o => {
+            if (o === 'exhibitions_perm.#научнотехнические') {
+                return [
+                    'exhibitions.#наука',
+                    'exhibitions.#техника',
+                ]
+            }
+            return [o];
+        })
+        .map(o => o.replace(/_.+[.]#/, '.#')) //  "exhibitions_perm.#историколитературные" ->   "exhibitions.#историколитературные"
 }
 
 function prepareRepositoryQuery(ctx: ContextMessageUpdate) {

@@ -4,9 +4,9 @@ Feature: Packs scene
     Given now is 2020-01-01 12:00
     Given Scene is 'packs_scene'
     Given there is events:
-      | title   | category           | tag_level_1           | timetable      |
-      | A     | exhibitions | #временнаявыставка   | пн-вс: 15:00 |
-      | B     | exhibitions | #постояннаяколлекция | пн-вс: 15:00 |
+      | title | category    | tag_level_1          | timetable    |
+      | A     | exhibitions | #временныевыставки   | пн-вс: 15:00 |
+      | B     | exhibitions | #постоянныеколлекции | пн-вс: 15:00 |
 
   Scenario: I can 6 categories when i enter customize
     Then Bot responds 'Пожалуйста, выберите категорию' with markup buttons:

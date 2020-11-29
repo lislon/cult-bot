@@ -15,7 +15,7 @@ Feature: Customize time
   Scenario: I can filter only temporary exhibition
     Given there is events:
       | title   | category     | tag_level_1                     | timetable        |
-      | A       | exhibitions  | #постояннаяколлекция #доммузей  | вс: 21:59        |
+      | A       | exhibitions  | #постоянныеколлекции #доммузей  | вс: 21:59        |
     When I click markup [Области]
     Then Bot responds 'Укажите области' with inline buttons:
       """
@@ -35,8 +35,8 @@ Feature: Customize time
       [➕ Временные выставки ]
       [➖ Постоянная коллекция ]
       [Художественные ]
-      [Естественно-научные ]
-      [Историко-литературные ]
+      [Научно-технические ]
+      [Гуманитарные ]
       [Дом-музей ]
       [➕ Театр ]
       [➕ Мероприятия ]
@@ -50,8 +50,8 @@ Feature: Customize time
       [➕ Временные выставки ]
       [➖ Постоянная коллекция ✔]
       [Художественные ]
-      [Естественно-научные ]
-      [Историко-литературные ]
+      [Научно-технические ]
+      [Гуманитарные ]
       [Дом-музей ✔]
       [➕ Театр ]
       [➕ Мероприятия ]
@@ -68,3 +68,24 @@ Feature: Customize time
     """
     When I click markup [Показать события]
     Then Bot responds with event 'A'
+
+  Scenario: I will see both #наука и #техника when select Научно-технические
+    Given there is events:
+      | title   | category     | tag_level_1                    | timetable        |
+      | A       | exhibitions  | #постоянныеколлекции #наука    | вс: 21:59        |
+      | B       | exhibitions  | #постоянныеколлекции #техника  | вс: 21:59        |
+    When I click markup [Области]
+    When I click inline [Постоянная коллекция]
+    When I click inline [Научно-технические]
+    When I click markup [◀ Назад]
+    Then Bot responds:
+    """
+    Вы выбрали фильтр:
+
+    #️⃣ <b>Области</b>:  Научно-технические
+
+    <b>2 события</b> найдено
+    """
+    When I click markup [Показать события]
+    Then Bot responds with event 'A'
+    Then Bot responds with event 'B'
