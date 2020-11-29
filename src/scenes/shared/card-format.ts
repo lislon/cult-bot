@@ -34,7 +34,7 @@ function formatTimetable(event: Event) {
     }
 
     function cutYear(humanTimetable: string) {
-        return humanTimetable.replace(/^\d+ [а-яА-Я]+(\s+\d+)?\s*-/g, 'до')
+        return humanTimetable.replace(/^\d+ [а-яА-Я]+(\s+\d+)?\s*-\s*/g, 'до ')
     }
 
     return formatCinimaUrls(cutYear(humanTimetable))
