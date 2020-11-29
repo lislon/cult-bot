@@ -92,13 +92,19 @@ scene
         await next()
     })
     .action('/found/your_events/end_nice', async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
-        await saveSurveyToDb(ctx)
-        await sendSurveyToOurGroup(ctx, 'like')
+        prepareSessionStateIfNeeded(ctx)
+        if (ctx.session.feedbackScene.whatImportant.length > 0) {
+            await saveSurveyToDb(ctx)
+            await sendSurveyToOurGroup(ctx, 'like')
+        }
         await next()
     })
     .action('/found/not_found/end_sorry', async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
-        await saveSurveyToDb(ctx)
-        await sendSurveyToOurGroup(ctx, 'dislike')
+        prepareSessionStateIfNeeded(ctx)
+        if (ctx.session.feedbackScene.whyDontLike.length > 0) {
+            await saveSurveyToDb(ctx)
+            await sendSurveyToOurGroup(ctx, 'dislike')
+        }
         await next()
     })
     .use(menuMiddleware)
