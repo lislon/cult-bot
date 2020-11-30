@@ -341,8 +341,8 @@
         "finish_survey": "✉️ Отправить",
         "survey": {
           "q_landing": {
-            "take_survey": "✏️ Пройти опросец",
-            "send_letter": "✉️ Написать авторам"
+            "take_survey": "✏️ Пройти опрос",
+            "send_letter": "✉️ Написать нам"
           },
 
           "q_found_events": {
