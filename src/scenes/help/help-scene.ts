@@ -66,8 +66,8 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     }
 }
 
-const MIN_INTERVAL_BETWEEN_HELPS_SECONDS = 60
-const IDLE_TO_SHOW_HELP_SECONDS = 10
+const MIN_INTERVAL_BETWEEN_HELPS_SECONDS = 60 * 5
+const IDLE_TO_SHOW_HELP_SECONDS = 60
 const CLICKS_TO_BE_MASTER = 30
 
 async function throttleActionsToShowHelpForNewComers(ctx: ContextMessageUpdate) {
@@ -86,10 +86,8 @@ async function throttleActionsToShowHelpForNewComers(ctx: ContextMessageUpdate) 
                 ctx.session = freshSession
 
                 if (freshSession && (countInteractions(ctx) == countInteractionsAfterMiddlewaresDone)) {
-                    console.log(`before <-> after  ${countInteractions(ctx)} <-> ${countInteractionsAfterMiddlewaresDone}`)
 
                     if (await newcomerIsIdle(ctx)) {
-                        console.log(`Save session`, ctx.session)
                         await redisSession.saveSession(sessionKey, ctx.session)
                     }
                 }

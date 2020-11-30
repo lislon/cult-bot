@@ -73,13 +73,13 @@ class BotStart {
         } else {
             logger.error(`hook was not set!`)
             const webhookStatus = await bot.telegram.getWebhookInfo();
-            logger.error('Webhook status', webhookStatus);
+            logger.error('Webhook status', JSON.stringify(webhookStatus));
             process.exit(2)
         }
 
         const webhookStatus = await bot.telegram.getWebhookInfo();
 
-        logger.info('Webhook status', webhookStatus);
+        logger.info('Webhook status: ' + JSON.stringify(webhookStatus));
         await notifyAdminsAboutRestart()
     }
 }
@@ -108,9 +108,11 @@ app.use(function (err: any, req: any, res: any, next: any) {
 })
 
 app.listen(botConfig.PORT, () => {
-    if (botConfig.BOT_DISABLED === undefined && botConfig.NODE_ENV === 'production') {
+    if (botConfig.BOT_DISABLED === false && botConfig.NODE_ENV === 'production') {
         BotStart.startProdMode(rawBot).then(async () => {
             logger.info(`Bot started on port ${botConfig.PORT}!`)
         })
+    } else {
+        logger.info(`Bot is disabled or NODE_ENV (${botConfig.NODE_ENV}) is not production`)
     }
 })
