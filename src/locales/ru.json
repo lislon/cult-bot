@@ -342,7 +342,7 @@
         "survey": {
           "q_landing": {
             "take_survey": "✏️ Пройти опрос",
-            "send_letter": "✉️ Написать нам"
+            "send_letter": "✉️ Написать авторам"
           },
 
           "q_found_events": {
