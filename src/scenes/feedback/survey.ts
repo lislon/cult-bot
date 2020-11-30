@@ -57,12 +57,12 @@ menuNegative.interact(i18nModuleBtnName('survey.q_why_not_like.comment'),
 
 menuNegative.navigate(i18nSharedBtnName('back'), '..')
 
-function selectAtLeastOne(predicate: (ctx: ContextMessageUpdate) => boolean) {
+function selectAtLeastOne(predicate: (ctx: ContextMessageUpdate) => boolean, responseId: 'end_sorry' | 'end_nice') {
     return async (ctx: ContextMessageUpdate) => {
         if (predicate(ctx)) {
             await ctx.answerCbQuery()
             await deleteMenuFromContext(ctx)
-            await ctx.replyWithHTML(i18nModuleMsg('survey.end_sorry'))
+            await ctx.replyWithHTML(i18nModuleMsg(`survey.${responseId}`))
         } else {
             await ctx.answerCbQuery(i18Msg(ctx, 'select_at_least_one'), true)
         }
@@ -73,7 +73,7 @@ function selectAtLeastOne(predicate: (ctx: ContextMessageUpdate) => boolean) {
 menuNegative.interact(i18nModuleBtnName('finish_survey'), 'end_sorry',
     {
         ...OPT_SAME_ROW,
-        do: selectAtLeastOne(ctx => ctx.session.feedbackScene.whyDontLike.length > 0),
+        do: selectAtLeastOne(ctx => ctx.session.feedbackScene.whyDontLike.length > 0, 'end_sorry'),
     })
 
 
@@ -88,7 +88,7 @@ menuPositive.navigate(i18nSharedBtnName('back'), '..')
 menuPositive.interact(i18nModuleBtnName('finish_survey'), 'end_nice',
     {
         ...OPT_SAME_ROW,
-        do: selectAtLeastOne(ctx => ctx.session.feedbackScene.whatImportant.length > 0),
+        do: selectAtLeastOne(ctx => ctx.session.feedbackScene.whatImportant.length > 0, 'end_nice'),
     })
 
 export const menuMiddleware = new MenuMiddleware('/', landingMenu)

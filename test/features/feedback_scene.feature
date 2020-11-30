@@ -23,7 +23,7 @@ Feature: Feedback scene
     When I click inline [Да, подобрал]
     When I click inline [Цена]
     When I click inline [Отправить]
-    Then Bot responds 'Спасибо за Ваш отклик. Вернитесь к нам через пару недель, мы обязательно станем лучше'
+    Then Bot responds '*рады услышать*'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Цена*'
 
   Scenario: I select positive items in survey with custom answer

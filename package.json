@@ -8,7 +8,7 @@
   "scripts": {
     "start": "cross-env TZ=Europe/Moscow node dist/start.js",
     "build": "tsc && yarn run lint && copyfiles -u 1 'src/**/assets/*.png' dist",
-    "dev": "ts-node-dev -r source-map-support/register --respawn --ignore-watch node_modules src/start.ts",
+    "dev": "dotenv ts-node-dev -r source-map-support/register  --respawn --ignore-watch node_modules src/start.ts",
     "dev-no-restart": "tsc && nodemon --inspect",
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "test": "cross-env TZ=Europe/Moscow jest && cross-env TZ=Europe/Moscow cucumber-js",
@@ -64,6 +64,7 @@
     "@types/uuid": "^8.3.0",
     "concurrently": "^5.3.0",
     "copyfiles": "^2.4.1",
+    "dotenv-cli": "^4.0.0",
     "emoji-regex": "^9.2.0",
     "esm": "^3.2.25",
     "jest": "^26.6.1",
