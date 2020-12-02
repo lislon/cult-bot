@@ -238,11 +238,11 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
             await synchronizeDbByUser(ctx)
         })
         .command(['log', 'level'], async (ctx ) => {
-            await ctx.replyWithHTML('Use:\n' + ['/level_silly (SQL)', '/level_debug (messages)', '/level_error (default)'].join('\n'))
+            await ctx.replyWithHTML(i18Msg(ctx, 'select_log_level'))
         })
         .command(['level_silly', 'level_debug', 'level_error'], async (ctx ) => {
             logger.level = ctx.message.text.replace(/^\/[^_]+_/, '')
-            await ctx.replyWithHTML('log level: ' + logger.level)
+            await ctx.replyWithHTML(i18Msg(ctx, 'log_level_selected', {level: logger.level}))
             if (logger.level === 'silly') {
                 pgLogVerbose()
             } else {

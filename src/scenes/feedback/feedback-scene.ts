@@ -210,7 +210,6 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
 
         if (ctx.session.feedbackScene.messagesSent === 0) {
             await ctx.replyWithHTML(i18Msg(ctx, 'thank_you_for_custom_feedback'))
-            await ctx.replyWithSticker(i18Msg(ctx, 'sticker_thank_you'))
         } else {
             if (ctx.session.feedbackScene.messagesSent === 5) {
                 const messageSticker = await ctx.replyWithSticker(i18Msg(ctx, 'sticker_stop_it'))
