@@ -47,19 +47,24 @@ function globalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
 function preSceneGlobalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
     bot
         .hears(/.+/, async (ctx, next) => {
-            await throttleActionsToShowHelpForNewComers(ctx)
-            await next()
+            try {
+                throttleActionsToShowHelpForNewComers(ctx)
+            } finally {
+                await next()
+            }
         })
         .action(/.+/, async (ctx, next) => {
-            await throttleActionsToShowHelpForNewComers(ctx)
-            await next()
+            try {
+                throttleActionsToShowHelpForNewComers(ctx)
+            } finally {
+                await next()
+            }
         })
 }
 
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     if (ctx.session.help === undefined) {
         ctx.session.help = {
-            timerId: 0,
             lastTimeShow: 0,
             cnt: 0
         }
@@ -67,15 +72,15 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 }
 
 const MIN_INTERVAL_BETWEEN_HELPS_SECONDS = 60 * 5
-const IDLE_TO_SHOW_HELP_SECONDS = 60
-const CLICKS_TO_BE_MASTER = 30
+const IDLE_TO_SHOW_HELP_SECONDS = 30
+const CLICKS_TO_BE_MASTER = 10
+const MIN_CLICKS_BEFORE_SHOW_HELP = 3
 
-async function throttleActionsToShowHelpForNewComers(ctx: ContextMessageUpdate) {
-    if (ctx.session.analytics.inlineClicks <= CLICKS_TO_BE_MASTER) {
+function throttleActionsToShowHelpForNewComers(ctx: ContextMessageUpdate) {
+    const countInteractionsBefore = countInteractions(ctx)
+
+    if (countInteractionsBefore >= MIN_CLICKS_BEFORE_SHOW_HELP && countInteractionsBefore <= CLICKS_TO_BE_MASTER) {
         prepareSessionStateIfNeeded(ctx)
-
-        const countInteractionsBefore = countInteractions(ctx)
-
         const promise = new Promise(resolve => setTimeout(resolve, IDLE_TO_SHOW_HELP_SECONDS * 1000))
         promise.then(async () => {
 
@@ -98,7 +103,8 @@ async function throttleActionsToShowHelpForNewComers(ctx: ContextMessageUpdate) 
 
 async function newcomerIsIdle(ctx: ContextMessageUpdate): Promise<boolean> {
     const secondsFromLastHelp = (new Date().getTime() - ctx.session.help.lastTimeShow) / 1000
-    if (ctx.session.help.cnt < 2 && secondsFromLastHelp > MIN_INTERVAL_BETWEEN_HELPS_SECONDS) {
+    const MAX_COUNT_SHOW_HELP = 2
+    if (ctx.session.help.cnt < MAX_COUNT_SHOW_HELP && secondsFromLastHelp > MIN_INTERVAL_BETWEEN_HELPS_SECONDS) {
         ctx.session.help.lastTimeShow = new Date().getTime()
         ctx.session.help.cnt++
         await ctx.replyWithHTML(i18Msg(ctx, 'newcomer_hint'), {disable_notification: true})
@@ -108,7 +114,6 @@ async function newcomerIsIdle(ctx: ContextMessageUpdate): Promise<boolean> {
 }
 
 export class HelpSceneState {
-    timerId: number
     lastTimeShow: number
     cnt: number
 }

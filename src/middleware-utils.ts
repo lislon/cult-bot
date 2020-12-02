@@ -36,9 +36,9 @@ const dateTimeMiddleware = async (ctx: ContextMessageUpdate, next: any) => {
 
 function logMiddleware(str: string) {
     return (ctx: ContextMessageUpdate, next: any) => {
-        console.log(`before ${str}  (uauuId=${ctx.session?.uaUuid})`)
+        logger.silly(`before ${str}  (uauuId=${ctx.session?.uaUuid})`)
         return Promise.resolve(next()).then(() => {
-            console.log(`after ${str} (uauuId=${ctx.session?.uaUuid})`)
+            logger.silly(`after ${str} (uauuId=${ctx.session?.uaUuid})`)
         })
     }
 }

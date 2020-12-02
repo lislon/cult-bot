@@ -1,12 +1,14 @@
+import { config } from 'dotenv'
+
 type Envs = 'development' | 'production' | 'test'
 
 export class BotConfig {
     public readonly DATABASE_URL: string
-    public readonly GOOGLE_ANALYTICS_ID: string|undefined
+    public readonly GOOGLE_ANALYTICS_ID: string | undefined
     public readonly GOOGLE_ANALYTICS_COUNT_ADMINS: boolean
     public readonly GOOGLE_DOCS_ID: string
-    public readonly HEROKU_APP_NAME: string|undefined
-    public readonly HEROKU_APP_ID: string|undefined
+    public readonly HEROKU_APP_NAME: string | undefined
+    public readonly HEROKU_APP_ID: string | undefined
     public readonly HEROKU_RELEASE_VERSION: string|undefined
     public readonly HEROKU_SLUG_COMMIT: string|undefined
     public readonly HEROKU_RELEASE_CREATED_AT: string|undefined
@@ -26,6 +28,7 @@ export class BotConfig {
     public readonly SUPPORT_FEEDBACK_CHAT_ID?: number
 
     constructor() {
+        config()
         this.DATABASE_URL = process.env.DATABASE_URL
         this.GOOGLE_ANALYTICS_ID = process.env.GOOGLE_ANALYTICS_ID
         this.GOOGLE_ANALYTICS_COUNT_ADMINS = !!process.env.GOOGLE_ANALYTICS_COUNT_ADMINS || false
