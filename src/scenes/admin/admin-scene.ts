@@ -89,7 +89,14 @@ const content = async (ctx: ContextMessageUpdate) => {
 const limitInAdmin = 10
 
 scene
-    .use(Composer.drop(ctx => !isAdmin(ctx)))
+    .use(async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
+        if (!isAdmin(ctx)) {
+            logger.warn('User is not more admin. Rederict it to main_scene')
+            await ctx.scene.enter('main_scene')
+        } else {
+            await next()
+        }
+    })
     .enter(async (ctx: ContextMessageUpdate) => {
         await prepareSessionStateIfNeeded(ctx)
         const {msg, markup} = await content(ctx)

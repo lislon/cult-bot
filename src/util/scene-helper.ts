@@ -2,7 +2,7 @@ import { BaseScene, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 import { StupidTranslit } from '../lib/translit/stupid-translit'
 import { i18n } from './i18n'
-import { adminIds, adminUsernames } from './admins-list'
+import { adminIds, adminUsernames, devUsernames } from './admins-list'
 
 export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id'>) {
     const backAction = scene.id + 'button.back'
@@ -71,11 +71,7 @@ export function sleep(ms: number) {
 }
 
 export function isDev(ctx: ContextMessageUpdate) {
-    const devs = [
-        '@lislon',
-        '@kashmar85',
-    ]
-    return devs.includes(`@${ctx.from.username}`)
+    return devUsernames.includes(`@${ctx.from.username}`)
 }
 
 export function isAdmin(ctx: ContextMessageUpdate) {
