@@ -1,12 +1,13 @@
 import { BaseScene, Telegraf } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { SceneRegister } from '../../middleware-utils'
+import middlewares, { SceneRegister } from '../../middleware-utils'
 import { InputFile } from 'telegraf/typings/telegram-types'
 import { createReadStream } from 'fs'
 import path from 'path'
 import { redisSession } from '../../util/reddis'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
+import { logger } from '../../util/logger'
 
 const scene = new BaseScene<ContextMessageUpdate>('help_scene');
 const {i18Msg} = i18nSceneHelper(scene)
@@ -15,6 +16,7 @@ let cached_help_file_id = ''
 
 function globalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
     bot
+        .use(middlewares.logMiddleware('globalActionsFn scene: ' + scene.id))
         .help(async (ctx) => {
             ctx.ua.pv({dp: '/help', dt: 'Помощь'})
 
@@ -47,10 +49,13 @@ function globalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
 function preSceneGlobalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
     bot
         .hears(/.+/, async (ctx, next) => {
+            logger.silly('helper: hears')
             try {
                 throttleActionsToShowHelpForNewComers(ctx)
             } finally {
+                logger.silly('helper: finally throttleActionsToShowHelpForNewComers')
                 await next()
+                logger.silly('helper: finally done')
             }
         })
         .action(/.+/, async (ctx, next) => {

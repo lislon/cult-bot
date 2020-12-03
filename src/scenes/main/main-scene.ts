@@ -1,7 +1,7 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, ifAdmin, isAdmin } from '../../util/scene-helper'
-import { SceneRegister } from '../../middleware-utils'
+import middlewares, { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
 
@@ -50,6 +50,7 @@ scene.enter(async (ctx: ContextMessageUpdate) => {
 
 function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
+        .use(middlewares.logMiddleware('globalActionsFn scene: ' + scene.id))
         .hears(i18nModuleBtnName('packs'), async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('packs_scene')
         })

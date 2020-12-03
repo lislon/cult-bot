@@ -91,6 +91,7 @@ export const myRegisterScene = (bot: Composer<ContextMessageUpdate>,
             scene.preSceneGlobalActionsFn(bot)
         }
     })
+    bot.use(logMiddleware('beforeStage'))
     bot.use(stage.middleware())
     scenesReg.map(scene => {
         stage.register(scene.scene)

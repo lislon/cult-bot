@@ -45,6 +45,7 @@ bot.use(middlewares.logMiddleware('session'))
 bot.use(middlewares.userSaveMiddleware)
 bot.use(middlewares.dateTime)
 bot.use(middlewares.analyticsMiddleware)
+bot.use(middlewares.logMiddleware('analyticsMiddleware'))
 myRegisterScene(bot, stage, [
     mainScene,
     helpScene,
