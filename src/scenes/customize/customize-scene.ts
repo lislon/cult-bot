@@ -162,7 +162,7 @@ async function getKeyboardCennosti(ctx: ContextMessageUpdate, state: CustomizeSc
         [menu.button('#новыеформы')],
         [menu.button('#успетьзачас')],
         [menu.button('#культурныйбазис')],
-        ...(menu.dropDownButtons('menu_cost', [['#доступноподеньгам', '#бесплатно']])),
+        ...(menu.dropDownButtons('menu_cost', [['#бесплатно', '#доступноподеньгам']])),
         ...(menu.dropDownButtons('menu_childrens', [chidrensTags]))
         // [Markup.callbackButton(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}), actionName('show_filtered_events'))]
     ]
