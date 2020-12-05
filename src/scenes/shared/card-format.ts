@@ -81,7 +81,7 @@ export function cardFormat(row: Event, options: CardOptions = { showAdminInfo: f
     text += '\n'
     text += `${escapeHTML([...row.tag_level_3, ...row.tag_level_2].join(' '))}\n`
     if (options.showAdminInfo) {
-        text += `<i>${row.reviewer}, оценка ${row.rating}</i>\n`
+        text += `<i>${row.ext_id}, ${row.reviewer}, оценка ${row.rating}</i>\n`
     }
 
     return text;

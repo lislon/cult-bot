@@ -88,7 +88,8 @@ heroku releases:rollback -a <app name>
 heroku addons:create scheduler:standard -a cult-hub-bot-dev
 heroku addons:open scheduler -a cult-hub-bot-dev
 ```
- - Add cron job `npm run cron:shuffle-events` `everyday` at `03:00 UTC`. This job will rotate random events order in cb_events to allow consistent paging.
+ - Add cron job `npm run cron:refresh-events` `everyday` at `03:00 UTC`. 
+   This job will rotate random events order in cb_events to allow consistent paging. Also it will update timetable for recurrent events
 
 ### Db migrations
 
@@ -100,7 +101,7 @@ heroku run npm run db:down
 heroku run npm run db:up
 ``` 
 
-Create new migraton:
+Create new migration:
 ```
 db-migrate create <name-of-migration>
 ```
@@ -125,3 +126,34 @@ https://devcenter.heroku.com/articles/heroku-postgres-backups#scheduling-backups
 heroku pg:credentials:url -a <app name> DATABASE
 heroku pg:backups:schedule DATABASE_URL --at '02:00 Europe/Moscow' --app cult-hub-bot-dev
 ```
+
+## Quick run:
+
+```
+import { config } from 'dotenv'
+
+config()
+process.env.DATABASE_URL = process.env.TEST_DATABASE_URL
+import { db, pgp } from '../database/db'
+import { EventsSyncRepository } from '../database/db-sync-repository'
+import { DbEvent } from '../interfaces/db-interfaces'
+
+
+(async function run() {
+
+    try {
+
+    } finally {
+        pgp.end()
+    }
+
+
+})()
+```
+
+In IDEA:
+
+- node type:
+- file: `ts-node.cmd`
+- args: `--transpile-only`
+- path to ts script

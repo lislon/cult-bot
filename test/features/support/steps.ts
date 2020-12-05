@@ -160,7 +160,7 @@ Then(/^I will be on scene '(.+)'$/, function (expectedScene: string) {
 
 
 
-Before(async () => await syncDatabase4Test([]))
+Before(async () => { await syncDatabase4Test([]) })
 Before(function (testCase: ITestCaseHookParameter) {
     this.initTestCase(testCase)
 })

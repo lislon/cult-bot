@@ -5,7 +5,7 @@ import { parseAndPredictTimetable } from '../lib/timetable/timetable-utils'
 import { i18n } from '../util/i18n'
 
 export const EXCEL_COLUMN_NAMES = [
-    'no',
+    'ext_id',
     'publish',
     'subcategory',
     'title',
@@ -45,12 +45,13 @@ export const CAT_TO_SHEET_NAME: { [key in EventCategory]?: string } = {
 
 }
 
-interface ExcelRowResult {
+export interface ExcelRowResult {
     valid: boolean,
     publish: boolean,
     errors?: {
         timetable?: string[],
         emptyRows?: ExcelColumnName[],
+        invalidExtId?: string[],
         invalidTagLevel1?: string[]
         invalidTagLevel2?: string[]
         invalidTagLevel3?: string[]
@@ -98,7 +99,7 @@ function validateTagLevel1(event: Event, errorCallback: (errors: string[]) => vo
 }
 
 function validateTag(tags: string[], errorCallback: (errors: string[]) => void) {
-    const badTag = tags.find(t => t.match(/^#[^_\s#?@$%^&*()!-\\№]+$/) === null )
+    const badTag = tags.find(t => t.match(/^#[^_\s#?@$%^&*()!\\№:;',-]+$/) === null )
     if (badTag !== undefined) {
         errorCallback([`Плохой тег ${badTag}`])
     }
@@ -112,6 +113,18 @@ function isAddressValid(data: Event) {
     return true
 }
 
+function validateExtId(data: Event): boolean {
+    switch (data.category) {
+        case 'theaters': return !!data.ext_id.match(/^T\d+[A-Z]?$/)
+        case 'exhibitions': return !!data.ext_id.match(/^V\d+[A-Z]?$/)
+        case 'concerts': return !!data.ext_id.match(/^K\d+[A-Z]?$/)
+        case 'events': return !!data.ext_id.match(/^M\d+[A-Z]?$/)
+        case 'movies': return !!data.ext_id.match(/^C\d+[A-Z]?$/)
+        case 'walks': return !!data.ext_id.match(/^P\d+[A-Z]?$/)
+        default: throw new Error(`Unknown category: ${data.category}`)
+    }
+}
+
 export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory, now: Date): ExcelRowResult {
 
     const notNull = (s: string) => s === undefined ? '' : s.trim();
@@ -120,6 +133,7 @@ export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory,
     const splitTags = (s: string) => s.split(/\s+|(?<=[^\s])(?=#)/)
 
     const data: Event = {
+        'ext_id': row.ext_id,
         'category': category,
         'publish': row.publish,
         'subcategory': row.subcategory,
@@ -148,6 +162,7 @@ export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory,
             invalidTagLevel1: [],
             invalidTagLevel2: [],
             invalidTagLevel3: [],
+            invalidExtId: []
         },
         timeIntervals: [],
         data
@@ -167,6 +182,9 @@ export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory,
         result.errors.emptyRows.push('address');
     }
 
+    if (!validateExtId(data)) {
+        result.errors.invalidExtId = ['Идентификатор должен соответствовать вкладке (начинаться с букв TVKMCP) и заканчиться цифрой.']
+    }
     validateTag(data.tag_level_1, (errors) => result.errors.invalidTagLevel1 = [...result.errors.invalidTagLevel1, ...errors])
     validateTag(data.tag_level_2, (errors) => result.errors.invalidTagLevel2 = [...result.errors.invalidTagLevel2, ...errors])
     validateTag(data.tag_level_3, (errors) => result.errors.invalidTagLevel3 = [...result.errors.invalidTagLevel3, ...errors])
@@ -177,6 +195,7 @@ export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory,
     result.valid = result.valid && result.errors.invalidTagLevel1.length == 0
     result.valid = result.valid && result.errors.invalidTagLevel2.length == 0
     result.valid = result.valid && result.errors.invalidTagLevel3.length == 0
+    result.valid = result.valid && result.errors.invalidExtId.length == 0
 
     return result
 }

@@ -1,15 +1,10 @@
 import { ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
-import dbsync from '../../dbsync/dbsync'
-import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
-import { db } from '../../database/db'
 import { addDays, max, parseISO, startOfDay, startOfISOWeek } from 'date-fns/fp'
 import { format, formatDistanceToNow, Locale } from 'date-fns'
 import flow from 'lodash/fp/flow'
 import { ru } from 'date-fns/locale'
 import { i18n } from '../../util/i18n'
 import { botConfig } from '../../util/bot-config'
-import { STICKER_CAT_THUMBS_UP } from '../../util/stickers'
-import { sleep } from '../../util/scene-helper'
 
 export function getNextWeekEndRange(now: Date): MyInterval {
     return {
@@ -31,27 +26,6 @@ const ruDateFormat: {
 
 export function ruFormat(date: Date | number, pattern: string) {
     return format(date, pattern, ruDateFormat)
-}
-
-export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
-    await ctx.replyWithHTML(`Пошла скачивать <a href="${getGoogleSpreadSheetURL()}">эксельчик</a>...`, {
-        disable_web_page_preview: true
-    })
-    try {
-        const {updated, errors} = await dbsync(db)
-        await ctx.replyWithHTML(ctx.i18n.t('sync.sync_success', {updated, errors}))
-
-        if (errors === 0) {
-            await sleep(500)
-            await ctx.replyWithSticker(STICKER_CAT_THUMBS_UP)
-        }
-    } catch (e) {
-        if (e instanceof WrongExcelColumnsError) {
-            await ctx.reply(ctx.i18n.t('sync.wrong_format', e.data))
-        } else {
-            await ctx.reply(`❌ Эх, что-то не удалось :(...` + e.toString().substr(0, 100))
-        }
-    }
 }
 
 export function getGoogleSpreadSheetURL() {

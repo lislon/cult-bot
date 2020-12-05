@@ -6,6 +6,7 @@ import {
     EXCEL_HEADER_SKIP_ROWS,
     ExcelColumnName,
     ExcelRow,
+    ExcelRowResult,
     processExcelRow
 } from './parseSheetRow'
 import { sheets_v4 } from 'googleapis'
@@ -18,6 +19,8 @@ import { differenceInCalendarDays, format } from 'date-fns'
 import { botConfig } from '../util/bot-config'
 import { getOnlyBotTimetable } from '../lib/timetable/timetable-utils'
 import { logger } from '../util/logger'
+import { countBy } from 'lodash'
+import { SyncResults } from '../database/db-sync-repository'
 import Schema$Request = sheets_v4.Schema$Request
 
 // our set of columns, to be created only once (statically), and then reused,
@@ -105,11 +108,35 @@ function debugTimetable(mapped: any, excelUpdater: ExcelUpdater, sheetId: number
     excelUpdater.annotateCell(sheetId, 'timetable', rowNo, text.join('\n'))
 }
 
-export default async function run(db: BotDb): Promise<{ updated: number, errors: number }> {
-    const result = {
-        updated: 0,
-        errors: 0
+function validateUnique(excelRows: ExcelRowResult[]) {
+    const uniqueId = countBy(excelRows, (e) => e.data.ext_id)
+    excelRows.forEach(row => {
+        if (uniqueId[row.data.ext_id] !== 1) {
+            row.errors.invalidExtId = [...row.errors.invalidExtId, 'ID не уникальный (глобально)']
+            row.valid = false
+        }
+    })
+}
+
+
+export interface ExcelSheetError {
+    sheetName: string,
+    extIds: string[]
+}
+export interface ExcelSyncResult {
+    errors: ExcelSheetError[]
+    syncResult?: SyncResults
+}
+
+function listExtIds(eventToSaves: EventToSave[]): string {
+    return eventToSaves.map(z => z.primaryData.ext_id).join(',')
+}
+
+export default async function run(db: BotDb): Promise<ExcelSyncResult> {
+    const syncResult: ExcelSyncResult = {
+        errors: []
     }
+
     try {
         logger.debug('Connection from excel...')
         const excel = await loadExcel()
@@ -120,8 +147,8 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
 
         const spreadsheetId = botConfig.GOOGLE_DOCS_ID;
         const [sheetsMetaData, sheetsData] = await Promise.all([
-            excel.spreadsheets.get({ spreadsheetId, ranges }),
-            excel.spreadsheets.values.batchGet({ spreadsheetId, ranges })
+            excel.spreadsheets.get({spreadsheetId, ranges}),
+            excel.spreadsheets.values.batchGet({spreadsheetId, ranges})
         ]);
 
         logger.debug('Saving to db...')
@@ -133,7 +160,7 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
 
         sheetsData.data.valueRanges.forEach((sheet, sheetNo: number) => {
             const sheetId = sheetsMetaData.data.sheets[sheetNo].properties.sheetId;
-            const numOfRows = sheet.values.length
+            const numOfRows = sheet.values?.length
 
             const columnToClearFormat: ExcelColumnName[] = [
                 'publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3'
@@ -142,24 +169,32 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
             columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, numOfRows))
             // Print columns A and E, which correspond to indices 0 and 4.
 
-            sheet.values.forEach((row: string[], rowNo: number) => {
-
-                if (rowNo == 0) {
-                    const columnNo = EXCEL_COLUMN_NAMES.indexOf('wasOrNot')
-                    if (row[columnNo] !== 'Была/не была') {
-                        throw new WrongExcelColumnsError({
+            const parsedRows = sheet.values
+                .map((row: string[], rowNo: number) => {
+                    if (rowNo == 0) {
+                        const columnNo = EXCEL_COLUMN_NAMES.indexOf('wasOrNot')
+                        if (row[columnNo] !== 'Была/не была') {
+                            throw new WrongExcelColumnsError({
                                 listName: sheetsMetaData.data.sheets[sheetNo].properties.title,
                                 columnName: String.fromCharCode('A'.charCodeAt(0) + columnNo) + `1`,
                                 expected: 'Была/не была',
                                 actual: row[columnNo]
                             });
+                        }
+                        return
                     }
-                    return
-                }
 
-                const keyValueRow = mapRowToColumnObject(row)
+                    const keyValueRow = mapRowToColumnObject(row)
 
-                const mapped = processExcelRow(keyValueRow, getSheetCategory(sheetNo), new Date())
+                    const mapped = processExcelRow(keyValueRow, getSheetCategory(sheetNo), new Date())
+                    return mapped
+                })
+                .filter(e => e !== undefined)
+
+            validateUnique(parsedRows)
+            const erroredExtIds: string[] = []
+
+            parsedRows.forEach((mapped: ExcelRowResult, rowNo: number) => {
 
                 rowNo = EXCEL_HEADER_SKIP_ROWS + rowNo;
 
@@ -175,9 +210,10 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
                         excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
 
                         debugTimetable(mapped, excelUpdater, sheetId, rowNo)
-                        result.updated++;
+
                     } else {
-                        result.errors++;
+                        erroredExtIds.push(mapped.data.ext_id)
+
                         // rows.push(mapped.data);
                         if (mapped.errors.timetable && !mapped.data.timetable.includes('???')) {
                             excelUpdater.annotateCell(sheetId, 'timetable', rowNo, mapped.errors.timetable.join('\n'))
@@ -188,6 +224,13 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
 
                         for (const mappedElement of mapped.errors.emptyRows) {
                             excelUpdater.colorCell(sheetId, mappedElement, rowNo, 'red')
+                        }
+
+                        if (mapped.errors.invalidExtId.length > 0) {
+                            excelUpdater.annotateCell(sheetId, 'ext_id', rowNo, mapped.errors.invalidExtId.join('\n'))
+                            excelUpdater.colorCell(sheetId, 'ext_id', rowNo, 'red')
+                        } else {
+                            excelUpdater.annotateCell(sheetId, 'ext_id', rowNo, '')
                         }
 
                         if (mapped.errors.invalidTagLevel1.length > 0) {
@@ -207,14 +250,25 @@ export default async function run(db: BotDb): Promise<{ updated: number, errors:
                     }
                 }
             })
+
+            syncResult.errors.push({
+                sheetName: sheetsMetaData.data.sheets[sheetNo].properties.title,
+                extIds: erroredExtIds
+            })
         })
 
-        await db.repoSync.syncDatabase(rows)
+        syncResult.syncResult = await db.repoSync.syncDatabase(rows)
 
-        logger.info(`Database updated. Insertion done. Rows inserted: ${result.updated}, Errors: ${result.errors}`);
+        logger.info([
+            `Database updated.`,
+            `Insertion done.`,
+            `inserted={${listExtIds(syncResult.syncResult.insertedEvents)}}`,
+            `updated={${listExtIds(syncResult.syncResult.updatedEvents)}}`,
+            `deleted={${syncResult.syncResult.deletedEvents.map(d => d.ext_id).join(',')}}`
+        ].join(' '));
         await excelUpdater.update();
         logger.debug(`Excel updated`);
-        return result;
+        return syncResult;
 
     } catch (e) {
         logger.error(e);

@@ -2,14 +2,15 @@ import { db } from '../../../src/database/db'
 import { MomentIntervals } from '../../../src/lib/timetable/intervals'
 import { Event, EventCategory, TagLevel2 } from '../../../src/interfaces/app-interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
-
+import { SyncResults } from '../../../src/database/db-sync-repository'
 
 export async function cleanDb() {
     await db.none('DELETE FROM cb_events')
 }
 
 export interface MockEvent {
-    title: string,
+    ext_id: string
+    title: string
     eventTime: MomentIntervals
     category: EventCategory
     address: string
@@ -21,8 +22,8 @@ export interface MockEvent {
     reviewer: string
 }
 
-export function getMockEvent(
-    {
+export function getMockEvent({
+        ext_id = '',
         eventTime = [],
         title = 'Event title',
         category = 'theaters',
@@ -36,6 +37,7 @@ export function getMockEvent(
     }: Partial<MockEvent> = {}
 ): EventToSave {
     const event: Event = {
+        ext_id: ext_id,
         category: category,
         publish: '',
         subcategory: '',
@@ -74,7 +76,12 @@ export function expectedTitlesStrict(titles: string[], events: Event[]) {
     expect(events.map(t => t.title)).toEqual(titles)
 }
 
-export async function syncDatabase4Test(events: EventToSave[]) {
+export async function syncDatabase4Test(events: EventToSave[]): Promise<SyncResults> {
+    events.forEach((e, i) => {
+        if (e.primaryData.ext_id === '') {
+            e.primaryData.ext_id = 'TEST-' + i
+        }
+    })
     for (let i = 0; true; i++) {
         try {
             return await db.repoSync.syncDatabase(events)
@@ -85,7 +92,6 @@ export async function syncDatabase4Test(events: EventToSave[]) {
                 '25P02': 'current transaction is aborted, commands ignored until end of transaction block'
             }
 
-            console.log('opsik ' + i + ' ' + e.code);
             console.log(e);
 
             if (Object.keys(repeatCodes).includes(e.code) && i <= 5) {

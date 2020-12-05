@@ -21,6 +21,7 @@ export interface DbEvent {
     reviewer: string
     is_anytime: boolean
     order_rnd: number
+    ext_id: string
 }
 
 export interface EventToSave {
