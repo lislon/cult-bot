@@ -12,7 +12,7 @@ import {
 import { db, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
 import { Paging } from '../shared/paging'
 import { isValid, parse, parseISO, subSeconds } from 'date-fns'
-import { CallbackButton } from 'telegraf/typings/markup'
+import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
 import { StatByCat, StatByReviewer } from '../../database/db-admin'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
@@ -23,6 +23,8 @@ import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import { EventToSave } from '../../interfaces/db-interfaces'
 import { chunkString } from '../../util/chunk-split'
 
+const POSTS_PER_PAGE_ADMIN = 10
+
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
 export interface AdminSceneState {
@@ -31,7 +33,7 @@ export interface AdminSceneState {
     overrideDate?: string
 }
 
-const {sceneHelper, actionName, i18SharedBtn, i18Btn, i18Msg} = i18nSceneHelper(scene)
+const {actionName, i18SharedBtn, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 const menuCats = [
     ['theaters', 'exhibitions'],
@@ -97,8 +99,6 @@ const content = async (ctx: ContextMessageUpdate) => {
         markup: Extra.HTML().markup(Markup.inlineKeyboard(adminButtons))
     }
 }
-
-const limitInAdmin = 10
 
 async function replyWithHTMLMaybeChunk(ctx: ContextMessageUpdate, msg: string) {
     const MAX_TELEGRAM_MESSAGE_LENGTH = 4096
@@ -177,8 +177,11 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
             })
         }
 
+        const dbTotalRows = await db.repoAdmin.countTotalRows()
+
         await replyWithHTMLMaybeChunk(ctx, i18Msg(ctx, `sync_stats_title`, {
-            body: formatBody() + '\n' + (totalErrors > 0 ? formatErrors() : '✅ 0 Ошибок')
+            body: formatBody() + '\n' + (totalErrors > 0 ? formatErrors() : '✅ 0 Ошибок'),
+            rows: dbTotalRows
         }))
 
         if (totalErrors === 0) {
@@ -211,7 +214,7 @@ scene
     })
     .use(Paging.pagingMiddleware(actionName('show_more'),
         async (ctx: ContextMessageUpdate) => {
-            Paging.increment(ctx, limitInAdmin)
+            Paging.increment(ctx, POSTS_PER_PAGE_ADMIN)
             await showNextResults(ctx)
             await ctx.answerCbQuery()
         }))
@@ -230,7 +233,7 @@ scene
         ctx.session.adminScene.reviewer = ctx.match[1]
         await showNextResults(ctx)
     })
-    .action('fake', async (ctx ) => await ctx.answerCbQuery(i18Msg(ctx, 'just_a_button')))
+    .action('fake', async (ctx) => await ctx.answerCbQuery(i18Msg(ctx, 'just_a_button')))
 
 menuCats.flatMap(m => m).forEach(menuItem => {
     scene.action(actionName(menuItem), async (ctx: ContextMessageUpdate) => {
@@ -246,32 +249,57 @@ async function getSearchedEvents(ctx: ContextMessageUpdate) {
     if (ctx.session.adminScene.cat !== undefined) {
         const stats: StatByCat[] = await db.repoAdmin.findChangedEventsByCatStats(nextWeekEndRange)
         const total = stats.find(r => r.category === ctx.session.adminScene.cat).count
-        const events = await db.repoAdmin.findAllChangedEventsByCat(ctx.session.adminScene.cat, nextWeekEndRange, limitInAdmin, ctx.session.paging.pagingOffset)
+        const events = await db.repoAdmin.findAllChangedEventsByCat(ctx.session.adminScene.cat, nextWeekEndRange, POSTS_PER_PAGE_ADMIN, ctx.session.paging.pagingOffset)
         return {total, events}
     } else {
         const stats = await db.repoAdmin.findStatsByReviewer(nextWeekEndRange)
         const total = stats.find(r => r.reviewer === ctx.session.adminScene.reviewer).count
-        const events = await db.repoAdmin.findAllEventsByReviewer(ctx.session.adminScene.reviewer, nextWeekEndRange, limitInAdmin, ctx.session.paging.pagingOffset)
+        const events = await db.repoAdmin.findAllEventsByReviewer(ctx.session.adminScene.reviewer, nextWeekEndRange, POSTS_PER_PAGE_ADMIN, ctx.session.paging.pagingOffset)
         return {total, events}
     }
+}
+
+function getButtonsSwitch(ctx: ContextMessageUpdate, eventId: number, active: 'snapshot' | 'current' = 'current') {
+    return [Markup.callbackButton(
+        i18Btn(ctx, `switch_to_snapshot`,
+            {active_icon: active === 'snapshot' ? i18Btn(ctx, 'snapshot_active_icon') : ''}
+        ),
+        actionName(`snapshot_${eventId}`)),
+        Markup.callbackButton(
+            i18Btn(ctx, 'switch_to_current',
+                {active_icon: active === 'current' ? i18Btn(ctx, 'current_active_icon') : ''}
+            ),
+            actionName(`current_${eventId}`))
+    ]
 }
 
 async function showNextResults(ctx: ContextMessageUpdate) {
     await prepareSessionStateIfNeeded(ctx)
     const {total, events} = await getSearchedEvents(ctx)
 
-    const nextBtn = Markup.inlineKeyboard([
-        Markup.callbackButton(i18Btn(ctx, 'show_more', {
-            page: Math.ceil(ctx.session.paging.pagingOffset / limitInAdmin) + 1,
-            total: Math.ceil(+total / limitInAdmin)
-        }), actionName('show_more'))
-    ])
+    const showMoreBtn = Markup.callbackButton(i18Btn(ctx, 'show_more', {
+        page: Math.ceil(ctx.session.paging.pagingOffset / POSTS_PER_PAGE_ADMIN) + 1,
+        total: Math.ceil(+total / POSTS_PER_PAGE_ADMIN)
+    }), actionName('show_more'))
 
     let count = 0
     for (const event of events) {
+
+        let buttons: InlineKeyboardButton[][] = []
+
+        if (event.snapshotStatus === 'updated') {
+            buttons = [...buttons,
+                getButtonsSwitch(ctx, event.id, 'current')
+            ]
+        }
+
+        if (++count == events.length && events.length === POSTS_PER_PAGE_ADMIN) {
+            buttons = [...buttons, [showMoreBtn]]
+        }
+
         await ctx.replyWithHTML(cardFormat(event, {showAdminInfo: true}), {
             disable_web_page_preview: true,
-            reply_markup: (++count == events.length && events.length === limitInAdmin ? nextBtn : undefined)
+            reply_markup: buttons.length > 0 ? Markup.inlineKeyboard(buttons) : undefined
         })
         await sleep(200)
     }
@@ -298,6 +326,21 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
             overrideDate: undefined
         }
     }
+}
+
+function findExistingButtonRow(ctx: ContextMessageUpdate, predicate: (btn: CallbackButton) => boolean): CallbackButton[] {
+    const existingKeyboard = (ctx as any).update?.callback_query?.message?.reply_markup?.inline_keyboard as CallbackButton[][]
+    return existingKeyboard?.find(btns => btns.find(predicate) !== undefined)
+}
+
+async function switchCard(ctx: ContextMessageUpdate, version: 'current'|'snapshot') {
+    const eventId = +ctx.match[1]
+    await ctx.answerCbQuery()
+    const event = await db.repoAdmin.findSnapshotEvent(eventId, version)
+    const existingKeyboard = findExistingButtonRow(ctx, btn => btn.callback_data === actionName('show_more'))
+    const buttons = [getButtonsSwitch(ctx, eventId, version), ...(existingKeyboard ? [existingKeyboard] : [])]
+    await ctx.editMessageText(cardFormat(event, {showAdminInfo: true}),
+        Extra.HTML().markup(Markup.inlineKeyboard(buttons)).webPreview(false))
 }
 
 function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
@@ -367,6 +410,12 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
             } else {
                 pgLogOnlyErrors()
             }
+        })
+        .action(/admin_scene[.]snapshot_(\d+)$/, async (ctx) => {
+            await switchCard(ctx, 'snapshot')
+        })
+        .action(/admin_scene[.]current_(\d+)$/, async (ctx) => {
+            await switchCard(ctx, 'current')
         })
 
     bot.use(Composer.optional(ctx => isAdmin(ctx), adminGlobalCommands))

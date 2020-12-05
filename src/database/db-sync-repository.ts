@@ -65,8 +65,8 @@ export function postgresConcat(event: DbEvent) {
 }
 
 function getMd5Columns(): (keyof DbEvent)[] {
-    const md5Columns = db.repoSync.dbColEvents.columns
-        .map(c => c.name)
+    const md5Columns = eventColumnsDef
+        .map(c => typeof c === 'string' ? c : c.name)
         .filter(n => n !== 'order_rnd')
     return md5Columns as (keyof DbEvent)[]
 }
@@ -75,37 +75,36 @@ export function buildPostgresMd5Expression(prefix: string = undefined) {
     return `json_build_array(${(getMd5Columns().map(c => prefix ? prefix + '.' + c : c)).join(',')})`
 }
 
+export const eventColumnsDef = [
+    'category',
+    'subcategory',
+    'title',
+    'place',
+    'address',
+    'geotag',
+    'timetable',
+    'duration',
+    'price',
+    'notes',
+    'description',
+    'url',
+    { name: 'tag_level_1', cast: 'text[]' },
+    { name: 'tag_level_2', cast: 'text[]' },
+    { name: 'tag_level_3', cast: 'text[]' },
+    'rating',
+    'reviewer',
+    'is_anytime',
+    'order_rnd',
+    'ext_id'
+]
+
 export class EventsSyncRepository {
     readonly dbColIntervals: ColumnSet
     readonly dbColEvents: ColumnSet
 
     constructor(private db: IDatabase<any>, private pgp: IMain) {
-        this.dbColIntervals = new pgp.helpers.ColumnSet(['event_id', 'entrance'], {table: 'cb_events_entrance_times'});
-
-        const columns = [
-            'category',
-            'subcategory',
-            'title',
-            'place',
-            'address',
-            'geotag',
-            'timetable',
-            'duration',
-            'price',
-            'notes',
-            'description',
-            'url',
-            { name: 'tag_level_1', cast: 'text[]' },
-            { name: 'tag_level_2', cast: 'text[]' },
-            { name: 'tag_level_3', cast: 'text[]' },
-            'rating',
-            'reviewer',
-            'is_anytime',
-            'order_rnd',
-            'ext_id'
-        ]
-        this.dbColEvents = new pgp.helpers.ColumnSet(columns, {table: 'cb_events'});
-
+        this.dbColIntervals = new pgp.helpers.ColumnSet(['event_id', 'entrance'], {table: 'cb_events_entrance_times'})
+        this.dbColEvents = new pgp.helpers.ColumnSet(eventColumnsDef, {table: 'cb_events'});
     }
 
     public async syncDatabase(newEvents: EventToSave[]): Promise<SyncResults> {

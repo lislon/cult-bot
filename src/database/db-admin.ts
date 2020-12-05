@@ -2,6 +2,7 @@ import { Event, EventCategory, MyInterval } from '../interfaces/app-interfaces'
 import { db } from './db'
 import { mapToPgInterval } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
+import { buildPostgresMd5Expression } from './db-sync-repository'
 
 export class StatByCat {
     category: string
@@ -13,7 +14,28 @@ export class StatByReviewer {
     count: string
 }
 
+export interface EventWithOldVersion extends Event {
+    snapshotStatus: 'updated' | 'inserted' | 'unchanged'
+}
+
 export class AdminRepository {
+
+    private snapshotSelectQueryPart = `
+        CASE
+            WHEN cbs.id IS NULL THEN 'inserted'
+            WHEN (${buildPostgresMd5Expression('cbs')}::TEXT <> ${buildPostgresMd5Expression('cb')}::TEXT) THEN 'updated'
+            ELSE 'unchanged'
+        END AS snapshot_status`
+
+    private snapshotWhereQueryPart = `(cbs.id IS NULL OR (${buildPostgresMd5Expression('cbs')}::TEXT <> ${buildPostgresMd5Expression('cb')}::TEXT))`
+
+    private snapshotOrderByQueryPart = `
+        (CASE
+            WHEN w.snapshot_status = 'inserted' THEN 0
+            WHEN w.snapshot_status = 'updated' THEN 1
+            ELSE 2
+        END)`
+
     constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
@@ -23,7 +45,7 @@ export class AdminRepository {
         FROM cb_events cb
         LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
         WHERE
-            (cbs.id IS NULL OR  (json_build_array(cbs.title)::TEXT <> json_build_array(cb.title)::TEXT))
+            ${this.snapshotWhereQueryPart}
             AND
             EXISTS(
                 select id
@@ -58,53 +80,84 @@ export class AdminRepository {
             }) as StatByReviewer[];
     }
 
-    async findAllChangedEventsByCat(category: EventCategory, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<Event[]> {
+    async findAllChangedEventsByCat(category: EventCategory, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<EventWithOldVersion[]> {
         const finalQuery = `
-        SELECT cb.*
-        FROM cb_events cb
-        LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
-        WHERE
-            (cbs.id IS NULL OR  (json_build_array(cbs.title)::TEXT <> json_build_array(cb.title)::TEXT))
-            AND
-            EXISTS(
-                select id
-                FROM cb_events_entrance_times cbet
-                where $(interval) && cbet.entrance AND cbet.event_id = cb.id
-                 )
-            AND cb.category = $(category)
-        ORDER BY cb.title
+        select * FROM (
+            SELECT cb.*, ${this.snapshotSelectQueryPart}
+            FROM cb_events cb
+            LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
+            WHERE
+                ${this.snapshotWhereQueryPart}
+                AND
+                EXISTS(
+                    select id
+                    FROM cb_events_entrance_times cbet
+                    where $(interval) && cbet.entrance AND cbet.event_id = cb.id
+                     )
+                AND cb.category = $(category)
+        ) w
+        ORDER BY ${this.snapshotOrderByQueryPart}, w.title
         LIMIT $(limit) OFFSET $(offset)
     `
-        return await db.any(finalQuery,
+        return await db.map(finalQuery,
             {
                 interval: mapToPgInterval(interval),
                 category,
                 limit,
                 offset
-            }) as Event[];
+            }, AdminRepository.mapToEventWithId) as EventWithOldVersion[];
     }
 
-    async findAllEventsByReviewer(reviewer: string, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<Event[]> {
+    async findAllEventsByReviewer(reviewer: string, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<EventWithOldVersion[]> {
         const finalQuery = `
-        SELECT cb.*
-        FROM cb_events cb
-        WHERE
-            EXISTS(
-                select id
-                FROM cb_events_entrance_times cbet
-                where $(interval) && cbet.entrance AND cbet.event_id = cb.id
-                 )
-            AND cb.reviewer = $(reviewer)
-        ORDER BY cb.is_anytime ASC, cb.title ASC
+        select * FROM (
+            SELECT cb.*, ${this.snapshotSelectQueryPart}
+            FROM cb_events cb
+            LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
+            WHERE
+                EXISTS(
+                    select id
+                    FROM cb_events_entrance_times cbet
+                    where $(interval) && cbet.entrance AND cbet.event_id = cb.id
+                     )
+                AND cb.reviewer = $(reviewer)
+        ) w
+        ORDER BY ${this.snapshotOrderByQueryPart}, w.is_anytime ASC, w.title ASC
         LIMIT $(limit) OFFSET $(offset)
     `
-        return await db.any(finalQuery,
+
+        return await db.map(finalQuery,
             {
                 interval: mapToPgInterval(interval),
                 reviewer,
                 limit,
                 offset
-            }) as Event[];
+            }, AdminRepository.mapToEventWithId) as EventWithOldVersion[]
     }
+
+    async findSnapshotEvent(id: number, version: 'current' | 'snapshot'): Promise<EventWithOldVersion> {
+        const table = version == 'current' ? 'cb_events' : 'cb_events_snapshot'
+        return await db.one(`
+            SELECT *, 'updated' AS snapshot_status
+            FROM ${table}
+            WHERE id = $1`, id, AdminRepository.mapToEventWithId)
+    }
+
+    async countTotalRows(): Promise<number> {
+        return await db.one(`
+        select  (select COUNT(*) from cb_events ce) +
+                (select COUNT(*) from cb_events_entrance_times) +
+                (select COUNT(*) from cb_feedbacks) +
+                (select COUNT(*) from cb_survey) +
+                (select COUNT(*) from cb_users) +
+                (select COUNT(*) from migrations m2 ) AS count`, undefined, (c => +c.count))
+    }
+
+    private static mapToEventWithId(row: any ): EventWithOldVersion {
+        const newRow = { ...row, id: +row.id, snapshotStatus: row.snapshot_status }
+        delete row.snapshot_status
+        return newRow
+    }
+
 }
 
