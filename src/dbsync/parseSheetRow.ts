@@ -98,7 +98,7 @@ function validateTagLevel1(event: Event, errorCallback: (errors: string[]) => vo
 }
 
 function validateTag(tags: string[], errorCallback: (errors: string[]) => void) {
-    const badTag = tags.find(t => t.match(/^#[^_\s#?@$%^&*()!-]+$/) === null )
+    const badTag = tags.find(t => t.match(/^#[^_\s#?@$%^&*()!-\\№]+$/) === null )
     if (badTag !== undefined) {
         errorCallback([`Плохой тег ${badTag}`])
     }
