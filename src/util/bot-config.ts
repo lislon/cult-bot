@@ -21,6 +21,7 @@ export class BotConfig {
     public readonly NODE_ENV: Envs
     public readonly DEBUG: string|undefined
     public readonly BOT_DISABLED: boolean
+    public readonly LOG_LEVEL: string
 
     /**
      * Chat used to receive user feedback and send reply to it.
@@ -47,6 +48,11 @@ export class BotConfig {
         this.NODE_ENV = process.env.NODE_ENV === undefined ? 'development' : process.env.NODE_ENV as Envs
         this.DEBUG = process.env.DEBUG
         this.BOT_DISABLED = !!process.env.BOT_DISABLED
+        this.LOG_LEVEL = process.env.LOG_LEVEL
+        if (this.LOG_LEVEL === undefined) {
+            this.LOG_LEVEL = (this.NODE_ENV === 'production' || this.NODE_ENV === 'test') ? 'info' : 'debug'
+        }
+
 
         this.SUPPORT_FEEDBACK_CHAT_ID = +process.env.SUPPORT_FEEDBACK_CHAT_ID || undefined
     }

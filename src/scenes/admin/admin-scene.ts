@@ -16,7 +16,7 @@ import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
 import { StatByCat, StatByReviewer } from '../../database/db-admin'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
-import { logger } from '../../util/logger'
+import { logger, loggerTransport } from '../../util/logger'
 import dbsync from '../../dbsync/dbsync'
 import { STICKER_CAT_THUMBS_UP } from '../../util/stickers'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
@@ -403,9 +403,9 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
             await ctx.replyWithHTML(i18Msg(ctx, 'snapshot_taken'))
         })
         .command(['level_silly', 'level_debug', 'level_error'], async (ctx) => {
-            logger.level = ctx.message.text.replace(/^\/[^_]+_/, '')
+            loggerTransport.level = ctx.message.text.replace(/^\/[^_]+_/, '')
             await ctx.replyWithHTML(i18Msg(ctx, 'log_level_selected', {level: logger.level}))
-            if (logger.level === 'silly') {
+            if (loggerTransport.level === 'silly') {
                 pgLogVerbose()
             } else {
                 pgLogOnlyErrors()

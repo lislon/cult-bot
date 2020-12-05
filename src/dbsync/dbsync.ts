@@ -3,7 +3,6 @@ import { EventCategory } from '../interfaces/app-interfaces'
 import {
     CAT_TO_SHEET_NAME,
     EXCEL_COLUMN_NAMES,
-    EXCEL_HEADER_SKIP_ROWS,
     ExcelColumnName,
     ExcelRow,
     ExcelRowResult,
@@ -186,7 +185,7 @@ export default async function run(db: BotDb): Promise<ExcelSyncResult> {
 
                     const keyValueRow = mapRowToColumnObject(row)
 
-                    const mapped = processExcelRow(keyValueRow, getSheetCategory(sheetNo), new Date())
+                    const mapped = processExcelRow(keyValueRow, getSheetCategory(sheetNo), new Date(), rowNo)
                     return mapped
                 })
                 .filter(e => e !== undefined)
@@ -194,9 +193,9 @@ export default async function run(db: BotDb): Promise<ExcelSyncResult> {
             validateUnique(parsedRows)
             const erroredExtIds: string[] = []
 
-            parsedRows.forEach((mapped: ExcelRowResult, rowNo: number) => {
+            parsedRows.forEach((mapped: ExcelRowResult) => {
 
-                rowNo = EXCEL_HEADER_SKIP_ROWS + rowNo;
+                const rowNo = mapped.rowNumber;
 
                 if (mapped.publish) {
 

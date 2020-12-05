@@ -45,27 +45,19 @@ function getFormat() {
     }
 }
 
-const logger = winston.createLogger({
+export const loggerTransport = new winston.transports.Console({
+    level: botConfig.LOG_LEVEL
+})
+export const logger = winston.createLogger({
     transports: [
-        new winston.transports.Console({
-            level: 'silly'
-        })
+        loggerTransport
     ],
     format: getFormat()
 });
 
-if (botConfig.NODE_ENV === 'production' || botConfig.NODE_ENV === 'test') {
-    logger.level = 'info'
-} else {
-    logger.level = 'debug'
-}
-
-const loggerWithCtx = {
+export const loggerWithCtx = {
     debug: (ctx: ContextMessageUpdate, msg: string, ...data: any[]) =>
         logger.debug(prepareMessage(ctx, msg, ...data)),
     error: (ctx: ContextMessageUpdate, msg: string, ...data: any[]) =>
         logger.error(prepareMessage(ctx, msg, ...data))
-};
-
-
-export { loggerWithCtx, logger }
+}

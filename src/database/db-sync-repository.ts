@@ -155,9 +155,9 @@ export class EventsSyncRepository {
 
                         const old = existingIdsRaw.find(e => e['extid'] === newEvent.primaryData.ext_id)['md5text']
                         const new2 = postgresConcat(newRow)
-                        logger.debug('problem md5?')
-                        logger.debug(old)
-                        logger.debug(new2)
+                        logger.silly('problem md5?')
+                        logger.silly(old)
+                        logger.silly(new2)
 
                     } else {
                         result.notChangedEvents.push(newEvent)

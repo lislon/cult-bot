@@ -58,6 +58,7 @@ export interface ExcelRowResult {
     }
     timetable?: EventTimetable,
     timeIntervals: MomentOrInterval[]
+    rowNumber: number
     data: Event
 }
 
@@ -125,7 +126,7 @@ function validateExtId(data: Event): boolean {
     }
 }
 
-export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory, now: Date): ExcelRowResult {
+export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory, now: Date, rowNo: number): ExcelRowResult {
 
     const notNull = (s: string) => s === undefined ? '' : s.trim();
     const notNullOrUnknown = (s: string) => s === undefined ? '' : s;
@@ -165,6 +166,7 @@ export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory,
             invalidExtId: []
         },
         timeIntervals: [],
+        rowNumber: rowNo,
         data
     }
     const predictTimetableResult = parseAndPredictTimetable(data.timetable, now)
