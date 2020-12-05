@@ -12,6 +12,7 @@ async function readCard(card: string) {
 }
 
 const defaultEvent: Event = {
+    ext_id: '',
     title: 'A',
     description: 'описание',
     timetable: `17 октября: 11:30 - 23:45`,

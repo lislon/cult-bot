@@ -1,4 +1,4 @@
-import { expectedTitles, getMockEvent, syncDatabase4Test } from './db-test-utils'
+import { cleanDb, expectedTitles, getMockEvent, syncDatabase4Test } from './db-test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { db, dbCfg } from '../../../src/database/db'
 import { mkInterval } from '../../lib/timetable/test-utils'
@@ -7,6 +7,8 @@ beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
 
 describe('Search', () => {
+
+    beforeEach(cleanDb)
 
     const eventTime = [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]
     const yearRange = mkInterval('[2020-01-01 00:00, 2021-01-02 00:00)')

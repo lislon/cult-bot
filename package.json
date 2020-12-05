@@ -18,7 +18,7 @@
     "db:down": "cross-env TZ=Europe/Moscow db-migrate down",
     "db:up-test": "cross-env DATABASE_URL=postgres://cult-test:cult-test@localhost:5434/cult-test db-migrate up",
     "db:down-test": "cross-env DATABASE_URL=postgres://cult-test:cult-test@localhost:5434/cult-test db-migrate down",
-    "cron:shuffle-events": "cross-env TZ=Europe/Moscow node dist/cron/run-shuffle"
+    "cron:refresh-events": "cross-env TZ=Europe/Moscow node dist/cron/run-refresh"
   },
   "dependencies": {
     "anymatch": "^3.1.1",
@@ -30,6 +30,7 @@
     "express": "^4.17.1",
     "googleapis": "^64.0.0",
     "lodash": "^4.17.20",
+    "md5": "^2.3.0",
     "parsimmon": "^1.16.0",
     "pg": "^8.4.2",
     "pg-monitor": "^1.4.1",
@@ -57,6 +58,7 @@
     "@types/express": "^4.17.8",
     "@types/jest": "^26.0.14",
     "@types/lodash": "^4.14.161",
+    "@types/md5": "^2.2.1",
     "@types/node": "^14.14.6",
     "@types/parsimmon": "^1.10.4",
     "@types/pg": "^7.14.4",

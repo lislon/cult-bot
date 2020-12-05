@@ -1,12 +1,12 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
-import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
+import { allCategories, ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
 import {
+    getGoogleSpreadSheetURL,
     getNextWeekEndRange,
     ruFormat,
     showBotVersion,
-    synchronizeDbByUser,
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
 import { db, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
@@ -17,6 +17,11 @@ import { StatByCat, StatByReviewer } from '../../database/db-admin'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
 import { logger } from '../../util/logger'
+import dbsync from '../../dbsync/dbsync'
+import { STICKER_CAT_THUMBS_UP } from '../../util/stickers'
+import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
+import { EventToSave } from '../../interfaces/db-interfaces'
+import { chunkString } from '../../util/chunk-split'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
@@ -87,6 +92,101 @@ const content = async (ctx: ContextMessageUpdate) => {
 }
 
 const limitInAdmin = 10
+
+async function replyWithHTMLMaybeChunk(ctx: ContextMessageUpdate, msg: string) {
+    const MAX_TELEGRAM_MESSAGE_LENGTH = 4096
+    const chunks: string[] = chunkString(msg, MAX_TELEGRAM_MESSAGE_LENGTH)
+    for (const msg of chunks) {
+        await ctx.replyWithHTML(msg)
+    }
+}
+
+export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
+    await ctx.replyWithHTML(i18Msg(ctx, 'start_sync', {url: getGoogleSpreadSheetURL()}), {
+        disable_web_page_preview: true
+    })
+    try {
+        const {syncResult, errors} = await dbsync(db)
+        // await ctx.replyWithHTML(i18Msg(ctx, 'sync_success', {updated, errors}))
+
+        const totalErrors = errors.reduce((total, e) => total + e.extIds.length, 0)
+
+        const formatBody = () => {
+            const s = allCategories
+                .map(cat => {
+                    const inserted = syncResult.insertedEvents.filter(e => e.primaryData.category === cat)
+                    const updated = syncResult.updatedEvents.filter(e => e.primaryData.category === cat)
+                    const deleted = syncResult.deletedEvents.filter(e => e.category === cat)
+                    return {cat, inserted, updated, deleted}
+                })
+                .filter(({inserted, updated, deleted}) => {
+                    return inserted.length + updated.length + deleted.length > 0
+                })
+                .map(({cat, inserted, updated, deleted}) => {
+                    let rows: string[] = [
+                        i18Msg(ctx, `sync_stats_cat_header`, {
+                            icon: i18Msg(ctx, 'sync_stats_category_icons.' + cat),
+                            categoryTitle: i18Msg(ctx, 'sync_stats_category_titles.' + cat)
+                        })
+                    ]
+
+                    if (inserted.length > 0) {
+                        rows = [...rows, ...inserted.map((i: EventToSave) => i18Msg(ctx, 'sync_stats_cat_item_inserted', {
+                            ext_id: i.primaryData.ext_id,
+                            title: i.primaryData.title
+                        }))]
+                    }
+                    if (updated.length > 0) {
+                        rows = [...rows,  ...updated.map((i: EventToSave) => i18Msg(ctx, 'sync_stats_cat_item_updated', {
+                            ext_id: i.primaryData.ext_id,
+                            title: i.primaryData.title
+                        }))]
+                    }
+                    if (deleted.length > 0) {
+                        rows = [...rows, ...deleted.map(i => i18Msg(ctx, 'sync_stats_cat_item_deleted', {
+                            ext_id: i.ext_id,
+                            title: i.title
+                        }))]
+                    }
+                    return rows.join('\n')
+                }).join('\n')
+            if (s.length === 0) {
+                return ' - ничего нового с момента последней синхронизации'
+            } else {
+                return `\n\n${s}`
+            }
+        }
+
+        const formatErrors = () => {
+            return i18Msg(ctx, 'sync_error_title', {
+                totalErrors: totalErrors,
+                errors: errors
+                    .filter(e => e.extIds.length > 0)
+                    .map(e => i18Msg(ctx, 'sync_error_row', {
+                        sheetName: e.sheetName,
+                        extIds: e.extIds.join(', ')
+                    }))
+                    .join('\n')
+            })
+        }
+
+        await replyWithHTMLMaybeChunk(ctx, i18Msg(ctx, `sync_stats_title`, {
+            body: formatBody() + '\n' + (totalErrors > 0 ? formatErrors() : '✅ 0 Ошибок')
+        }))
+
+        if (totalErrors === 0) {
+            await sleep(500)
+            await ctx.replyWithSticker(STICKER_CAT_THUMBS_UP)
+        }
+    } catch (e) {
+        if (e instanceof WrongExcelColumnsError) {
+            await ctx.reply(i18Msg(ctx, 'sync_wrong_format', e.data))
+        } else {
+            await ctx.reply(i18Msg(ctx, 'sync_error', {error: e.toString().substr(0, 100)}))
+            throw e
+        }
+    }
+}
 
 scene
     .use(async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
@@ -244,10 +344,14 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
         .command('sync', async (ctx) => {
             await synchronizeDbByUser(ctx)
         })
-        .command(['log', 'level'], async (ctx ) => {
+        .command(['log', 'level'], async (ctx) => {
             await ctx.replyWithHTML(i18Msg(ctx, 'select_log_level'))
         })
-        .command(['level_silly', 'level_debug', 'level_error'], async (ctx ) => {
+        .command('snapshot', async (ctx) => {
+            await db.repoSnapshot.takeSnapshot()
+            await ctx.replyWithHTML(i18Msg(ctx, 'snapshot_taken'))
+        })
+        .command(['level_silly', 'level_debug', 'level_error'], async (ctx) => {
             logger.level = ctx.message.text.replace(/^\/[^_]+_/, '')
             await ctx.replyWithHTML(i18Msg(ctx, 'log_level_selected', {level: logger.level}))
             if (logger.level === 'silly') {

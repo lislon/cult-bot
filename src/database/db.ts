@@ -2,7 +2,6 @@ import pg_promise, { IDatabase, IInitOptions, IMain } from 'pg-promise'
 import * as pg from 'pg-promise/typescript/pg-subset'
 import { IConnectionParameters } from 'pg-promise/typescript/pg-subset'
 import { CustomFilterRepository } from './custom-filter-repository'
-import { EventsSyncRepository } from './sync-repository'
 import { TopEventsRepository } from './top-events'
 import { AdminRepository } from './db-admin'
 import { SearchRepository } from './search'
@@ -11,6 +10,8 @@ import { botConfig } from '../util/bot-config'
 import { FeedbackRepository } from './db-feedbacks'
 import { logger } from '../util/logger'
 import pgMonitor from 'pg-monitor'
+import { SnapshotRepository } from './db-snapshot'
+import { EventsSyncRepository } from './db-sync-repository'
 
 export interface IExtensions {
     repoSync: EventsSyncRepository,
@@ -18,6 +19,7 @@ export interface IExtensions {
     repoTopEvents: TopEventsRepository
     repoAdmin: AdminRepository
     repoSearch: SearchRepository
+    repoSnapshot: SnapshotRepository
     userRepo: UserRepository
     repoFeedback: FeedbackRepository
 }
@@ -34,6 +36,7 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoSearch = new SearchRepository(dbEx, pgp)
         dbEx.userRepo = new UserRepository(dbEx, pgp)
         dbEx.repoFeedback = new FeedbackRepository(dbEx, pgp)
+        dbEx.repoSnapshot = new SnapshotRepository(dbEx, pgp)
     },
 
     query(e) {
