@@ -54,10 +54,10 @@ const logger = winston.createLogger({
     format: getFormat()
 });
 
-if (botConfig.NODE_ENV !== 'production') {
-    logger.level = 'debug'
-} else {
+if (botConfig.NODE_ENV === 'production' || botConfig.NODE_ENV === 'test') {
     logger.level = 'info'
+} else {
+    logger.level = 'debug'
 }
 
 const loggerWithCtx = {
