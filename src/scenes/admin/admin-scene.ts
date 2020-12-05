@@ -248,12 +248,12 @@ async function getSearchedEvents(ctx: ContextMessageUpdate) {
     const nextWeekEndRange = getNextWeekEndRange(ctx.now())
     if (ctx.session.adminScene.cat !== undefined) {
         const stats: StatByCat[] = await db.repoAdmin.findChangedEventsByCatStats(nextWeekEndRange)
-        const total = stats.find(r => r.category === ctx.session.adminScene.cat).count
+        const total = stats.find(r => r.category === ctx.session.adminScene.cat)?.count || 0
         const events = await db.repoAdmin.findAllChangedEventsByCat(ctx.session.adminScene.cat, nextWeekEndRange, POSTS_PER_PAGE_ADMIN, ctx.session.paging.pagingOffset)
         return {total, events}
     } else {
         const stats = await db.repoAdmin.findStatsByReviewer(nextWeekEndRange)
-        const total = stats.find(r => r.reviewer === ctx.session.adminScene.reviewer).count
+        const total = stats.find(r => r.reviewer === ctx.session.adminScene.reviewer)?.count || 0
         const events = await db.repoAdmin.findAllEventsByReviewer(ctx.session.adminScene.reviewer, nextWeekEndRange, POSTS_PER_PAGE_ADMIN, ctx.session.paging.pagingOffset)
         return {total, events}
     }
