@@ -5,7 +5,7 @@ import { EventToSave } from '../../../src/interfaces/db-interfaces'
 import { SyncResults } from '../../../src/database/db-sync-repository'
 
 export async function cleanDb() {
-    await db.none('DELETE FROM cb_events')
+    await db.none('TRUNCATE cb_events_entrance_times, cb_events RESTART identity')
 }
 
 export interface MockEvent {

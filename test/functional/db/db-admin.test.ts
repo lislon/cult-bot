@@ -19,7 +19,7 @@ describe('Admin', () => {
             ]
         )
 
-        expectedTitles(['A', 'B'], await db.repoAdmin.findAllEventsByCat('movies', yearRange, 10))
+        expectedTitles(['A', 'B'], await db.repoAdmin.findAllChangedEventsByCat('movies', yearRange, 10))
     })
 
     test('find stats by cat', async () => {
@@ -28,7 +28,7 @@ describe('Admin', () => {
                 getMockEvent({title: 'B', eventTime, category: 'theaters', rating: 20})
             ]
         )
-        const actual = await db.repoAdmin.findStatsByCat(yearRange)
+        const actual = await db.repoAdmin.findChangedEventsByCatStats(yearRange)
         expect(actual).toEqual([
             {
                 'category': 'movies',

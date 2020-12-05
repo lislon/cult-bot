@@ -11,6 +11,7 @@ export interface PagingRequest {
 export interface SearchRequest extends PagingRequest {
     query: string
     interval: MyInterval
+    allowSearchById?: boolean
 }
 
 export class SearchRepository {
@@ -18,6 +19,8 @@ export class SearchRepository {
     }
 
     public async search(request: SearchRequest): Promise<Event[]> {
+
+        const byIdSearch = request.allowSearchById ? ` OR cb.ext_id = $(query)`  : ''
 
         const fts = `(
                     setweight(to_tsvector('russian', coalesce(title,'')), 'A') ||
@@ -30,7 +33,7 @@ export class SearchRepository {
             SELECT cb.*, ts_rank_cd(${fts}, query) AS rank
             FROM cb_events cb,
             plainto_tsquery('russian', $(query)) query
-            WHERE ${fts} @@ query
+            WHERE (${fts} @@ query ${byIdSearch})
             AND EXISTS
             (
                 select id

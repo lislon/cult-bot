@@ -104,7 +104,7 @@ describe('db sync test', () => {
             deleted: [],
         })
 
-        expectedTitlesStrict([stressTestEventA], await db.repoAdmin.findAllEventsByCat('theaters', eventInterval))
+        expectedTitlesStrict([stressTestEventA], await db.repoAdmin.findAllChangedEventsByCat('theaters', eventInterval))
 
 
     }, 100000)
@@ -128,6 +128,6 @@ describe('db sync test', () => {
             notChanged: ['A'],
             deleted: ['C'],
         })
-        expectedTitlesStrict(['A', 'B1', 'D'], await db.repoAdmin.findAllEventsByCat('theaters', eventInterval))
+        expectedTitlesStrict(['A', 'B1', 'D'], await db.repoAdmin.findAllChangedEventsByCat('theaters', eventInterval))
     }, 100000)
 })

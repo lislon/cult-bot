@@ -71,8 +71,8 @@ function getMd5Columns(): (keyof DbEvent)[] {
     return md5Columns as (keyof DbEvent)[]
 }
 
-export function buildPostgresMd5Expression() {
-    return `json_build_array(${(getMd5Columns())})`
+export function buildPostgresMd5Expression(prefix: string = undefined) {
+    return `json_build_array(${(getMd5Columns().map(c => prefix ? prefix + '.' + c : c)).join(',')})`
 }
 
 export class EventsSyncRepository {

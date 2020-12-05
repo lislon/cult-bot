@@ -17,11 +17,14 @@ export class AdminRepository {
     constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
-    async findStatsByCat(interval: MyInterval): Promise<StatByCat[]> {
+    async findChangedEventsByCatStats(interval: MyInterval): Promise<StatByCat[]> {
         const finalQuery = `
         SELECT cb.category, COUNT(cb.id)
         FROM cb_events cb
+        LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
         WHERE
+            (cbs.id IS NULL OR  (json_build_array(cbs.title)::TEXT <> json_build_array(cb.title)::TEXT))
+            AND
             EXISTS(
                 select id
                 FROM cb_events_entrance_times cbet
@@ -55,11 +58,14 @@ export class AdminRepository {
             }) as StatByReviewer[];
     }
 
-    async findAllEventsByCat(category: EventCategory, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<Event[]> {
+    async findAllChangedEventsByCat(category: EventCategory, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<Event[]> {
         const finalQuery = `
         SELECT cb.*
         FROM cb_events cb
+        LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
         WHERE
+            (cbs.id IS NULL OR  (json_build_array(cbs.title)::TEXT <> json_build_array(cb.title)::TEXT))
+            AND
             EXISTS(
                 select id
                 FROM cb_events_entrance_times cbet

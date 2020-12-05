@@ -1,15 +1,15 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, sleep } from '../../util/scene-helper'
-import { db } from '../../database/db'
+import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import { getNextWeekEndRange, limitEventsToPage, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import { Paging } from '../shared/paging'
 import { SceneRegister } from '../../middleware-utils'
+import { db } from '../../database/db'
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene');
 
-const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)
+const {sceneHelper, i18nSharedBtnName, actionName } = i18nSceneHelper(scene)
 
 export interface SearchSceneState {
     request: string
@@ -44,7 +44,8 @@ async function showSearchResults(ctx: ContextMessageUpdate) {
         query: ctx.session.search.request,
         limit: limitEventsToPage,
         offset: ctx.session.paging.pagingOffset,
-        interval: range
+        interval: range,
+        allowSearchById: isAdmin(ctx)
     })
 
     console.log(`Search: '${ctx.session.search.request}' offset=${ctx.session.paging.pagingOffset} found=${events.length}`)

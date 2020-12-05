@@ -48,22 +48,17 @@
       "support": "🤝 Если ты хочешь послать сообщение моему создателю, пожалуйста, напиши его тут, а потом нажми кнопку Отправить."
     },
     "admin_scene": {
-      "welcome": "👨🏻‍🎤 Админка \n\nТут представлены все события на ${start} - ${end}, которые прошли валидацию бота",
+      "welcome": "👨🏻‍🎤 Админка \n\nCобытия на <b>${start} — ${end}</b>",
       "restart_report": "🐝 Бот был обновлен. Версия ${version} (Коммит ${commit})",
       "select_log_level": "Use:\n/level_silly (SQL)\n/level_debug (messages)\n/level_error (default)",
       "log_level_selected": "\uD83D\uDCC3 log level: ${level}",
       "snapshot_taken": "Снапшот базы сохранен. Теперь можно сравнивать изменения базы относительно него",
       "start_sync": "Пошла скачивать <a href=\"${url}\">эксельчик</a>...",
       "sync_stats_title": "✅ База обновлена${body}\nПовторим? /sync",
-      "sync_stats_cat_header": "${icon}${categoryTitle}",
+      "sync_stats_cat_header": "${icon}<b>${categoryTitle}</b>",
       "sync_stats_cat_item_inserted": "➕ ${title}, <i>${ext_id}</i>",
       "sync_stats_cat_item_updated": "〰️ ${title}, <i>${ext_id}</i>",
-      "sync_stats_cat_item_deleted": "✖️ <s>${title}, <i>${ext_id}</i></s>",
-
-      "sync_stats_cat_item": " - ${title}, <i>${ext_id}</i>",
-      "sync_stats_cat_header_inserted": "➕ Добавились ${icon}${categoryTitle}",
-      "sync_stats_cat_header_updated": "〰️Изменились ${icon}${categoryTitle}",
-      "sync_stats_cat_header_deleted": "➖ Удалились ${icon}${categoryTitle}",
+      "sync_stats_cat_item_deleted": "<s>✖️ ${title}, <i>${ext_id}</i></s>",
 
       "sync_error_title": "\n\uD83C\uDF77 Я отметила ошибки красненьким в файлике (${totalErrors} шт):\n${errors}\n",
       "sync_error_row": " - ${sheetName}: ${extIds}",
@@ -85,7 +80,11 @@
       },
       "sync_error": "❌ Эх, что-то не удалось :(...${error}`",
       "sync_wrong_format": "❌ Ошибочка вышла. Девочки, я заметила что эксель поменялся. \n\nНа листе <b>${listName}</b> в ячейке <b>${columnName}</b> я ожидала колонку \"${expected}\", но сейчас там \"${actual}\"",
+      "just_a_button": "Просто кнопка, ничего не делает",
       "keyboard": {
+        "menu_changed_snapshot": "Добавилось/Поменялось с момента снепшота",
+        "menu_per_names": "Наши старатели",
+        "menu_actions": "Пульт",
         "theaters": "🎭  Театры (${count})",
         "exhibitions": "🎨  Выставки (${count})",
         "movies": "🎥  Кино (${count})",

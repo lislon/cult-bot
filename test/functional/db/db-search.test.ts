@@ -44,4 +44,17 @@ describe('Search', () => {
         }))
     })
 
+    test('search by ext_id works', async () => {
+        await syncDatabase4Test([
+                getMockEvent({ext_id: 'ABC', title: 'event dog 5', eventTime, category: 'movies', rating: 5}),
+            ]
+        )
+        expectedTitles(['event dog 5'], await db.repoSearch.search({
+            query: 'ABC',
+            interval: yearRange,
+            limit: 100,
+            allowSearchById: true
+        }))
+    })
+
 })

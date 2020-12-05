@@ -11,7 +11,7 @@ import {
 } from '../shared/shared-logic'
 import { db, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
 import { Paging } from '../shared/paging'
-import { isValid, parse, parseISO } from 'date-fns'
+import { isValid, parse, parseISO, subSeconds } from 'date-fns'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { StatByCat, StatByReviewer } from '../../database/db-admin'
 import { addMonths } from 'date-fns/fp'
@@ -63,18 +63,25 @@ function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessage
 const content = async (ctx: ContextMessageUpdate) => {
     const dateRanges = getNextWeekEndRange(ctx.now())
 
-    const statsByName: StatByCat[] = await db.repoAdmin.findStatsByCat(dateRanges)
+    const statsByName: StatByCat[] = await db.repoAdmin.findChangedEventsByCatStats(dateRanges)
 
-    let adminButtons = menuCats.map(row =>
+    let adminButtons: CallbackButton[][] = []
+
+    adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_changed_snapshot'), 'fake')]]
+
+    adminButtons = [...adminButtons, ...await menuCats.map(row =>
         row.map(btnName => {
             const count = statsByName.find(r => r.category === btnName)
             return Markup.callbackButton(i18Btn(ctx, btnName, {count: count === undefined ? 0 : count.count}), actionName(btnName));
         })
-    );
+    )]
 
+    adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_per_names'), 'fake')]]
 
     const statsByReviewer = await db.repoAdmin.findStatsByReviewer(dateRanges)
     adminButtons = [...adminButtons, ...addReviewersMenu(statsByReviewer, ctx)]
+
+    adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_actions'), 'fake')]]
 
     adminButtons.push([
         Markup.callbackButton(i18Btn(ctx, 'sync'), actionName('sync')),
@@ -84,8 +91,8 @@ const content = async (ctx: ContextMessageUpdate) => {
 
     return {
         msg: i18Msg(ctx, 'welcome', {
-            start: ruFormat(dateRanges.start, 'dd.MM'),
-            end: ruFormat(dateRanges.end, 'dd.MM')
+            start: ruFormat(dateRanges.start, 'dd MMMM HH:mm'),
+            end: ruFormat(subSeconds(dateRanges.end, 1), 'dd MMMM HH:mm')
         }),
         markup: Extra.HTML().markup(Markup.inlineKeyboard(adminButtons))
     }
@@ -137,7 +144,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
                         }))]
                     }
                     if (updated.length > 0) {
-                        rows = [...rows,  ...updated.map((i: EventToSave) => i18Msg(ctx, 'sync_stats_cat_item_updated', {
+                        rows = [...rows, ...updated.map((i: EventToSave) => i18Msg(ctx, 'sync_stats_cat_item_updated', {
                             ext_id: i.primaryData.ext_id,
                             title: i.primaryData.title
                         }))]
@@ -149,7 +156,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
                         }))]
                     }
                     return rows.join('\n')
-                }).join('\n')
+                }).join('\n\n')
             if (s.length === 0) {
                 return ' - ничего нового с момента последней синхронизации'
             } else {
@@ -223,6 +230,7 @@ scene
         ctx.session.adminScene.reviewer = ctx.match[1]
         await showNextResults(ctx)
     })
+    .action('fake', async (ctx ) => await ctx.answerCbQuery(i18Msg(ctx, 'just_a_button')))
 
 menuCats.flatMap(m => m).forEach(menuItem => {
     scene.action(actionName(menuItem), async (ctx: ContextMessageUpdate) => {
@@ -236,9 +244,9 @@ menuCats.flatMap(m => m).forEach(menuItem => {
 async function getSearchedEvents(ctx: ContextMessageUpdate) {
     const nextWeekEndRange = getNextWeekEndRange(ctx.now())
     if (ctx.session.adminScene.cat !== undefined) {
-        const stats: StatByCat[] = await db.repoAdmin.findStatsByCat(nextWeekEndRange)
+        const stats: StatByCat[] = await db.repoAdmin.findChangedEventsByCatStats(nextWeekEndRange)
         const total = stats.find(r => r.category === ctx.session.adminScene.cat).count
-        const events = await db.repoAdmin.findAllEventsByCat(ctx.session.adminScene.cat, nextWeekEndRange, limitInAdmin, ctx.session.paging.pagingOffset)
+        const events = await db.repoAdmin.findAllChangedEventsByCat(ctx.session.adminScene.cat, nextWeekEndRange, limitInAdmin, ctx.session.paging.pagingOffset)
         return {total, events}
     } else {
         const stats = await db.repoAdmin.findStatsByReviewer(nextWeekEndRange)
