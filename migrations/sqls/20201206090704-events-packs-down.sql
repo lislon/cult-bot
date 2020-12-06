@@ -1,0 +1,1 @@
+DROP TABLE cb_events_packs;

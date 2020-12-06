@@ -27,8 +27,6 @@ export const EXCEL_COLUMN_NAMES = [
     'entryDate',
 ] as const
 
-// Header row
-export const EXCEL_HEADER_SKIP_ROWS = 0
 
 export type ExcelColumnName = typeof EXCEL_COLUMN_NAMES[number]
 export type ExcelRow = {
