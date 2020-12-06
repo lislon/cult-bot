@@ -14,20 +14,20 @@ import { encodeTagsLevel1 } from '../../util/tag-level1-encoder'
 
 type SubMenuVariants = 'exhibitions_temp' | 'exhibitions_perm'
 
-export interface PacksSceneState {
+export interface TopsSceneState {
     isWatchingEvents: boolean,
     isInSubMenu: boolean,
     cat: EventCategory
     submenuSelected: SubMenuVariants
 }
 
-const scene = new BaseScene<ContextMessageUpdate>('packs_scene');
+const scene = new BaseScene<ContextMessageUpdate>('tops_scene');
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 
 function getOblasti(ctx: ContextMessageUpdate) {
-    if (ctx.session.packsScene.submenuSelected !== undefined) {
-        return encodeTagsLevel1('exhibitions', [i18Msg(ctx, `exhibitions_tags.${ctx.session.packsScene.submenuSelected}`)])
+    if (ctx.session.topsScene.submenuSelected !== undefined) {
+        return encodeTagsLevel1('exhibitions', [i18Msg(ctx, `exhibitions_tags.${ctx.session.topsScene.submenuSelected}`)])
     }
     return []
 }
@@ -36,7 +36,7 @@ function getOblasti(ctx: ContextMessageUpdate) {
 async function getTopEvents(ctx: ContextMessageUpdate): Promise<{range: MyInterval, events: Event[]}> {
     const range = getNextWeekEndRange(ctx.now())
     const events = await db.repoTopEvents.getTop({
-        category: ctx.session.packsScene.cat,
+        category: ctx.session.topsScene.cat,
         interval: range,
         oblasti: getOblasti(ctx),
         limit: limitEventsToPage,
@@ -74,7 +74,7 @@ const content = (ctx: ContextMessageUpdate) => {
 
 async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     if (!ctx.scene.current) {
-        await ctx.scene.enter('packs_scene', undefined, true)
+        await ctx.scene.enter('tops_scene', undefined, true)
     }
     Paging.prepareSession(ctx)
 
@@ -83,9 +83,9 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         isInSubMenu,
         cat,
         submenuSelected,
-    } = ctx.session.packsScene || {}
+    } = ctx.session.topsScene || {}
 
-    ctx.session.packsScene = {
+    ctx.session.topsScene = {
         isWatchingEvents: isWatchingEvents || false,
         isInSubMenu: isInSubMenu || false,
         cat: cat,
@@ -98,14 +98,14 @@ scene
         const { msg, markupMainMenu} = content(ctx)
         await prepareSessionStateIfNeeded(ctx)
         Paging.reset(ctx)
-        ctx.session.packsScene.isWatchingEvents = false
-        ctx.session.packsScene.isInSubMenu = false
+        ctx.session.topsScene.isWatchingEvents = false
+        ctx.session.topsScene.isInSubMenu = false
 
         await ctx.replyWithMarkdown(msg, markupMainMenu)
         ctx.ua.pv({ dp: '/top/', dt: 'Подборки' })
     })
     .leave(async (ctx) => {
-        ctx.session.packsScene = undefined
+        ctx.session.topsScene = undefined
     })
     .use(Paging.pagingMiddleware(actionName('show_more'),
         async (ctx: ContextMessageUpdate) => {
@@ -156,7 +156,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
 
     if (events.length > 0) {
         const tplData = {
-            cat: i18Msg(ctx, `keyboard.${ctx.session.packsScene.submenuSelected ? ctx.session.packsScene.submenuSelected : ctx.session.packsScene.cat}`)
+            cat: i18Msg(ctx, `keyboard.${ctx.session.topsScene.submenuSelected ? ctx.session.topsScene.submenuSelected : ctx.session.topsScene.cat}`)
         }
 
         let humanDateRange = ''
@@ -187,7 +187,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
         )
     }
 
-    ctx.ua.pv({ dp: `/top/${ctx.session.packsScene.cat}`, dt: `Подборки (${ctx.session.packsScene.cat})` })
+    ctx.ua.pv({ dp: `/top/${ctx.session.topsScene.cat}`, dt: `Подборки (${ctx.session.topsScene.cat})` })
 }
 async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event[]) {
     const nextBtn = Markup.inlineKeyboard([
@@ -217,13 +217,13 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event
         await ctx.reply(i18Msg(ctx, 'no_more_events'))
     }
 
-    console.log(`${events.length} events returned for cat=${ctx.session.packsScene.cat}. offset=${ctx.session.paging.pagingOffset}`)
+    console.log(`${events.length} events returned for cat=${ctx.session.topsScene.cat}. offset=${ctx.session.paging.pagingOffset}`)
 }
 
 scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
     await prepareSessionStateIfNeeded(ctx)
-    if (ctx.session.packsScene.isWatchingEvents || ctx.session.packsScene.isInSubMenu) {
-        await ctx.scene.enter('packs_scene')
+    if (ctx.session.topsScene.isWatchingEvents || ctx.session.topsScene.isInSubMenu) {
+        await ctx.scene.enter('tops_scene')
     } else {
         await ctx.scene.enter('main_scene')
     }
@@ -235,26 +235,26 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
         bot.hears(i18nModuleBtnName(cat), async (ctx: ContextMessageUpdate) => {
             await prepareSessionStateIfNeeded(ctx)
             if (cat === 'exhibitions_temp' || cat === 'exhibitions_perm') {
-                ctx.session.packsScene.cat = 'exhibitions';
-                ctx.session.packsScene.submenuSelected = cat
+                ctx.session.topsScene.cat = 'exhibitions';
+                ctx.session.topsScene.submenuSelected = cat
             } else {
-                ctx.session.packsScene.cat = cat as EventCategory;
+                ctx.session.topsScene.cat = cat as EventCategory;
             }
-            ctx.session.packsScene.isWatchingEvents = true
-            ctx.session.packsScene.isInSubMenu = false
+            ctx.session.topsScene.isWatchingEvents = true
+            ctx.session.topsScene.isInSubMenu = false
             await showEventsFirstTime(ctx)
         });
     }
     bot.hears(i18nModuleBtnName('exhibitions'), async (ctx: ContextMessageUpdate) => {
         await prepareSessionStateIfNeeded(ctx)
 
-        ctx.session.packsScene.isInSubMenu = true
-        ctx.session.packsScene.cat = 'exhibitions';
+        ctx.session.topsScene.isInSubMenu = true
+        ctx.session.topsScene.cat = 'exhibitions';
         await showExhibitionsSubMenu(ctx)
     });
 }
 
-export const packsScene = {
+export const topsScene = {
     scene,
     globalActionsFn
 } as SceneRegister

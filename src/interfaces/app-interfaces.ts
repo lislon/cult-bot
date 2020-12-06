@@ -4,7 +4,7 @@ import { TimetableSceneState } from '../scenes/timetable/timetable-scene'
 import { CustomizeSceneState } from '../scenes/customize/customize-scene'
 import { TimeIntervalSceneState } from '../scenes/time-interval/time-interval-scene'
 import { AdminSceneState } from '../scenes/admin/admin-scene'
-import { PacksSceneState } from '../scenes/packs/packs-scene'
+import { TopsSceneState } from '../scenes/tops/tops-scene'
 import { PagingState } from '../scenes/shared/paging'
 import { SearchSceneState } from '../scenes/search/search-scene'
 import { Visitor } from 'universal-analytics'
@@ -35,7 +35,7 @@ export type EventFormat = 'online' | 'outdoor' | undefined
 export interface ContextMessageUpdate extends SceneContextMessageUpdate {
     i18n: I18n
     session: {
-        packsScene: PacksSceneState
+        topsScene: TopsSceneState
         search: SearchSceneState
         customize: CustomizeSceneState
         timetable: TimetableSceneState

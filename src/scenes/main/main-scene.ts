@@ -22,7 +22,7 @@ const content = (ctx: ContextMessageUpdate) => {
 
     const menu = [
         ['customize'],
-        ['packs'],
+        ['tops'],
         ['search'],
         ...[(isAdmin(ctx) ? ['admin', ...feedbackBtn] : feedbackBtn)]
     ]
@@ -51,8 +51,8 @@ scene.enter(async (ctx: ContextMessageUpdate) => {
 function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
         .use(middlewares.logMiddleware('globalActionsFn scene: ' + scene.id))
-        .hears(i18nModuleBtnName('packs'), async (ctx: ContextMessageUpdate) => {
-            await ctx.scene.enter('packs_scene')
+        .hears(i18nModuleBtnName('tops'), async (ctx: ContextMessageUpdate) => {
+            await ctx.scene.enter('tops_scene')
         })
         .hears(i18nModuleBtnName('search'), async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('search_scene')

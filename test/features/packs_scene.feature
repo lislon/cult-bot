@@ -1,8 +1,8 @@
-Feature: Packs scene
+Feature: Tops scene
 
   Background:
     Given now is 2020-01-01 12:00
-    Given Scene is 'packs_scene'
+    Given Scene is 'tops_scene'
     Given there is events:
       | title | category    | tag_level_1          | timetable    |
       | A     | exhibitions | #временныевыставки   | пн-вс: 15:00 |
@@ -39,11 +39,11 @@ Feature: Packs scene
     Then Bot responds '<b>❔ Постоянные коллекции</b> на предстоящие выходные 04-05 января:'
     Then Bot responds with event 'B'
 
-  Scenario: When I click back in subcategory I get into packs menu
+  Scenario: When I click back in subcategory I get into tops menu
     When I click markup [Выставки]
     Then I click markup [Назад]
     Then Bot responds 'Пожалуйста, выберите категорию'
 
-  Scenario: When I click back in packs menu i will get to main scene
+  Scenario: When I click back in tops menu i will get to main scene
     Then I click markup [Назад]
     Then I will be on scene 'main_scene'

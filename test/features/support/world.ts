@@ -5,7 +5,7 @@ import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { customizeScene } from '../../../src/scenes/customize/customize-scene'
 import { BotReply, TelegramMockServer } from '../lib/TelegramMockServer'
 import session from 'telegraf/session'
-import { packsScene } from '../../../src/scenes/packs/packs-scene'
+import { topsScene } from '../../../src/scenes/tops/tops-scene'
 import { MiddlewareFn } from 'telegraf/typings/composer'
 import { feedbackScene } from '../../../src/scenes/feedback/feedback-scene'
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
@@ -40,7 +40,7 @@ class CustomWorld {
             stage.middleware()
         )
 
-        myRegisterScene(this.bot, stage, [ mainScene, customizeScene, packsScene, feedbackScene ])
+        myRegisterScene(this.bot, stage, [ mainScene, customizeScene, topsScene, feedbackScene ])
     }
 
     async initTestCase(testCase: ITestCaseHookParameter) {

@@ -13,7 +13,7 @@ import { botConfig } from './util/bot-config'
 import { customizeScene } from './scenes/customize/customize-scene'
 import { adminScene } from './scenes/admin/admin-scene'
 import { searchScene } from './scenes/search/search-scene'
-import { packsScene } from './scenes/packs/packs-scene'
+import { topsScene } from './scenes/tops/tops-scene'
 import { feedbackScene } from './scenes/feedback/feedback-scene'
 import { logger } from './util/logger'
 import { helpScene } from './scenes/help/help-scene'
@@ -53,7 +53,7 @@ myRegisterScene(bot, stage, [
     timeTableScene,
     timeIntervalScene,
     adminScene,
-    packsScene,
+    topsScene,
     searchScene,
     feedbackScene
 ])

@@ -83,7 +83,7 @@ function validateTagLevel1(event: Event, errorCallback: (errors: string[]) => vo
     if (event.category === 'exhibitions') {
 
         const requiredTags = i18n.resourceKeys('ru')
-            .filter((id: string) => id.match(/^scenes[.]packs_scene[.]exhibitions_tags[.]/))
+            .filter((id: string) => id.match(/^scenes[.]tops_scene[.]exhibitions_tags[.]/))
             .map(id => i18n.t(`ru`, id))
 
         if (event.tag_level_1.find(value => requiredTags.includes(value)) === undefined) {
