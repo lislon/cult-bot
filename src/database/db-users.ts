@@ -1,5 +1,5 @@
 import { ColumnSet, IDatabase, IMain } from 'pg-promise'
-import { adminIds, adminUsernames } from '../util/admins-list'
+import { devUsernames } from '../util/admins-list'
 
 interface UserRow {
     username: string
@@ -48,16 +48,15 @@ export class UserRepository {
             })
     }
 
-    public async findAllAdmins(): Promise<UserDb[] | null> {
+    public async findAllDevs(): Promise<UserDb[] | null> {
         return this.db.manyOrNone<UserDb>(`
         SELECT id, ua_uuid, chat_id
         FROM cb_users
         WHERE
-         username IN($(adminUsernames:csv)) OR tid IN ($(adminIds:csv))
+         username IN($(devUsernames:csv))
          AND chat_id > 0`,
             {
-                adminUsernames,
-                adminIds
+                devUsernames
             })
     }
 

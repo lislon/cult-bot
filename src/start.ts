@@ -13,10 +13,10 @@ const app = express()
 
 async function notifyAdminsAboutRestart() {
     try {
-        const admins = await db.userRepo.findAllAdmins()
+        const admins = await db.userRepo.findAllDevs()
         const text = i18n.t('ru', 'scenes.admin_scene.restart_report', {
             version: botConfig.HEROKU_RELEASE_VERSION,
-            commit: botConfig.HEROKU_SLUG_COMMIT?.substring(botConfig.HEROKU_SLUG_COMMIT.length - 6)
+            commit: botConfig.HEROKU_SLUG_COMMIT?.substring(botConfig.HEROKU_SLUG_COMMIT.length - 7)
         })
         for (const admin of admins) {
             await rawBot.telegram.sendMessage(admin.chat_id, text, {
