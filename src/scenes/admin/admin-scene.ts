@@ -65,7 +65,8 @@ function getUserFromCtx(ctx: ContextMessageUpdate) {
 export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
     const oldUser = GLOBAL_SYNC_STATE.lockOnSync(ctx)
     if (oldUser !== undefined) {
-        await ctx.replyWithHTML(i18Msg(ctx, 'sync_is_locked', oldUser))
+        await ctx.replyWithHTML(i18Msg(ctx, 'sync_is_locked',
+            { user: oldUser.first_name || oldUser.last_name || oldUser.username || oldUser.id }))
         return
     }
 
