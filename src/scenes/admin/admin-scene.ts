@@ -86,7 +86,6 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 
             const askUserToConfirm = dbDiff.deletedEvents.length > 0
             if (askUserToConfirm === false) {
-                await dbTx.repoSync.syncDiff(dbDiff, dbTx)
                 await GLOBAL_SYNC_STATE.executeSync(dbTx)
             }
             return { dbDiff, askUserToConfirm }
@@ -150,12 +149,12 @@ class GlobalSync {
     private user: User
 
     public async executeSync(dbTx: ITask<IExtensions> & IExtensions) {
-        console.log('hasData?', this.syncDiff !== undefined)
+        logger.debug('hasData?', this.syncDiff !== undefined)
         this.stopOldTimerIfExists()
         try {
-            console.log('hasData?', this.syncDiff !== undefined)
+            logger.debug('hasData?', this.syncDiff !== undefined)
             await dbTx.repoSync.syncDiff(this.syncDiff, dbTx)
-            console.log('Sync done')
+            logger.debug('Sync done')
         } finally {
             this.cleanup()
         }
@@ -163,7 +162,7 @@ class GlobalSync {
     public abort() {
         this.stopOldTimerIfExists()
         this.cleanup()
-        console.log('Abort done')
+        logger.debug('Abort done')
     }
 
     private cleanup() {
@@ -178,11 +177,11 @@ class GlobalSync {
     }
 
     private startTimer() {
-        console.log('Start cancel timer')
+        logger.debug('Start cancel timer')
         this.stopOldTimerIfExists()
         this.cleanup()
         this.timeoutId = setTimeout(() => {
-            console.log('Timer hit')
+            logger.debug('Timer hit')
             this.timeoutId = undefined
             this.abort()
         }, GlobalSync.TIMEOUT_SECONDS * 1000)
@@ -190,7 +189,7 @@ class GlobalSync {
 
     private stopOldTimerIfExists() {
         if (this.timeoutId !== undefined) {
-            console.log('Stop timer')
+            logger.debug('Stop timer')
             clearTimeout(this.timeoutId)
         }
     }
@@ -200,15 +199,15 @@ class GlobalSync {
         if (this.user === undefined || this.user.id === user.id) {
             this.startTimer()
             this.user = user
-            console.log('Lock done')
+            logger.debug('Lock done')
             return undefined
         }
-        console.log('Lock fail')
+        logger.debug('Lock fail')
         return this.user
     }
 
     charge(dbDiff: SyncDiff) {
-        console.log('Charge')
+        logger.debug('Charge')
         this.syncDiff = dbDiff
     }
 
