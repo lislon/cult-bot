@@ -23,7 +23,7 @@ import { EventToSave } from '../../interfaces/db-interfaces'
 import { chunkString } from '../../util/chunk-split'
 import { parseAndValidateGoogleSpreadsheets } from '../../dbsync/dbsync'
 import { formatMainAdminMenu, formatMessageForSyncReport } from './admin-format'
-import { menuCats, POSTS_PER_PAGE_ADMIN, totalValidationErrors } from './admin-common'
+import { menuCats, POSTS_PER_PAGE_ADMIN, SYNC_CONFIRM_TIMEOUT_SECONDS, totalValidationErrors } from './admin-common'
 import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 import { Message, User } from 'telegram-typings'
 import { SyncDiff } from '../../database/db-sync-repository'
@@ -142,7 +142,6 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 }
 
 class GlobalSync {
-    private static TIMEOUT_SECONDS = 30
     private timeoutId: Timeout
     private syncDiff: SyncDiff
     private confirmIdMsg: Message
@@ -184,7 +183,7 @@ class GlobalSync {
             logger.debug('Timer hit')
             this.timeoutId = undefined
             this.abort()
-        }, GlobalSync.TIMEOUT_SECONDS * 1000)
+        }, SYNC_CONFIRM_TIMEOUT_SECONDS * 1000)
     }
 
     private stopOldTimerIfExists() {

@@ -1,6 +1,8 @@
 import { SpreadSheetValidationError } from '../../dbsync/dbsync'
 
 export const POSTS_PER_PAGE_ADMIN = 10
+
+export const SYNC_CONFIRM_TIMEOUT_SECONDS = 60 * 3
 export const menuCats = [
     ['theaters', 'exhibitions'],
     ['movies', 'events'],
