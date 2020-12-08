@@ -62,10 +62,10 @@ export function pgLogOnlyErrors() {
     pgMonitor.attach(initOptions, ['error']);
 }
 
-if (botConfig.NODE_ENV === 'development') {
-    pgLogVerbose()
-} else {
+if (botConfig.NODE_ENV === 'production') {
     pgLogOnlyErrors()
+} else {
+    pgLogVerbose()
 }
 
 pgMonitor.setLog((msg, info) => {

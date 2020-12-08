@@ -2,7 +2,7 @@ import { db } from '../../../src/database/db'
 import { MomentIntervals } from '../../../src/lib/timetable/intervals'
 import { Event, EventCategory, TagLevel2 } from '../../../src/interfaces/app-interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
-import { SyncResults } from '../../../src/database/db-sync-repository'
+import { SyncDiff } from '../../../src/database/db-sync-repository'
 
 export async function cleanDb() {
     await db.none('TRUNCATE cb_events_entrance_times, cb_events RESTART identity')
@@ -76,7 +76,7 @@ export function expectedTitlesStrict(titles: string[], events: Event[]) {
     expect(events.map(t => t.title)).toEqual(titles)
 }
 
-export async function syncDatabase4Test(events: EventToSave[]): Promise<SyncResults> {
+export async function syncDatabase4Test(events: EventToSave[]): Promise<SyncDiff> {
     events.forEach((e, i) => {
         if (e.primaryData.ext_id === '') {
             e.primaryData.ext_id = 'TEST-' + i

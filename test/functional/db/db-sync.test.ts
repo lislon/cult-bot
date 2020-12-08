@@ -2,7 +2,7 @@ import { db, dbCfg } from '../../../src/database/db'
 import { cleanDb, expectedTitlesStrict, getMockEvent, syncDatabase4Test } from './db-test-utils'
 import { date, mkInterval } from '../../lib/timetable/test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
-import { SyncResults } from '../../../src/database/db-sync-repository'
+import { SyncDiff } from '../../../src/database/db-sync-repository'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
@@ -14,7 +14,7 @@ type ExpectedSyncResults = {
     deleted: string[]
 }
 
-function expectSyncResult(syncResults: SyncResults, expected: ExpectedSyncResults) {
+function expectSyncResult(syncResults: SyncDiff, expected: ExpectedSyncResults) {
     const actual: ExpectedSyncResults = {
         created: syncResults.insertedEvents.map(e => e.primaryData.title),
         notChanged: syncResults.notChangedEvents.map(e => e.primaryData.title),
@@ -130,4 +130,15 @@ describe('db sync test', () => {
         })
         expectedTitlesStrict(['A', 'B1', 'D'], await db.repoAdmin.findAllChangedEventsByCat('theaters', eventInterval))
     }, 100000)
+
+    test('tags will not be corrupted', async () => {
+        await cleanDb()
+        await syncDatabase4Test([
+            getMockEvent({ext_id: 'A', title: 'A', eventTime, tag_level_1: ['#lisa']}),
+        ])
+        const syncDiff = await syncDatabase4Test([
+            getMockEvent({ext_id: 'A', title: 'A', eventTime, tag_level_1: ['#lisa']}),
+        ])
+        expect(0).toEqual(syncDiff.updatedEvents.length)
+    })
 })

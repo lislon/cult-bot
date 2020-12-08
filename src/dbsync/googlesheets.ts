@@ -17,7 +17,7 @@ const CELL_BG_COLORS = {
 export type CellColor = keyof typeof CELL_BG_COLORS
 
 
-export async function loadExcel(): Promise<Sheets> {
+export async function authToExcel(): Promise<Sheets> {
     try {
         const auth = authorizeByServiceAccount();
         return google.sheets({version: 'v4', auth})

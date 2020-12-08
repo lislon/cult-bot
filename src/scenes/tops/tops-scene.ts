@@ -216,8 +216,6 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event
     if (events.length === 0) {
         await ctx.reply(i18Msg(ctx, 'no_more_events'))
     }
-
-    console.log(`${events.length} events returned for cat=${ctx.session.topsScene.cat}. offset=${ctx.session.paging.pagingOffset}`)
 }
 
 scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {

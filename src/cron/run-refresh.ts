@@ -16,24 +16,24 @@ async function refreshDates() {
             const eventsToUpdate = allEvents
                 .map(e => {
                     return {
-                        id: e.id,
+                        eventId: e.id,
                         timeIntervals: parseAndPredictTimetable(e.timetable, now).timeIntervals
                     }
                 })
-                .filter(({id, timeIntervals}) => {
+                .filter(({eventId, timeIntervals}) => {
                     if (timeIntervals.length === 0) {
                         return true;
                     }
                     const i = timeIntervals[timeIntervals.length - 1]
                     const lastInterval = (Array.isArray(i) ? i[1] : i)
-                    if (isEqual(lastInterval, lastEventDateByIds[id].lastDate)) {
+                    if (isEqual(lastInterval, lastEventDateByIds[eventId].lastDate)) {
                         return false
                     }
                     return true
                 })
             if (eventsToUpdate.length > 0) {
-                logger.info(`RefreshDates: updated ${eventsToUpdate.length}: ` + eventsToUpdate.map(e => e.id).join(','))
-                await dbTx.repoSync.syncEventIntervals(dbTx, eventsToUpdate)
+                logger.info(`RefreshDates: updated ${eventsToUpdate.length}: ` + eventsToUpdate.map(e => e.eventId).join(','))
+                await dbTx.repoSync.syncEventIntervals(eventsToUpdate, dbTx)
             } else {
                 logger.info(`RefreshDates: all ${allEvents.length} events are fresh`)
             }

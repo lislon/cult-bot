@@ -1,9 +1,9 @@
 export function chunkString(str: string, size: number): string[] {
-    const spacePieces = str.split(' ');
+    const spacePieces = str.split('\n');
     return spacePieces.reduce(function (chunks, piece, index) {
         const isFirstPiece = index === 0;
 
-        const chunkSeparator = isFirstPiece ? '' : ' ';
+        const chunkSeparator = isFirstPiece ? '' : '\n';
         let currentChunk = chunks[chunks.length - 1];
         // If a piece is simply too long, split it up harshly
         if (piece.length > size) {

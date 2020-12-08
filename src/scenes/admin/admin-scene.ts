@@ -1,5 +1,5 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
-import { allCategories, ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
 import {
@@ -9,21 +9,26 @@ import {
     showBotVersion,
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
-import { db, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
+import { db, IExtensions, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
 import { Paging } from '../shared/paging'
-import { isValid, parse, parseISO, subSeconds } from 'date-fns'
+import { isValid, parse, parseISO } from 'date-fns'
 import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
-import { StatByCat, StatByReviewer } from '../../database/db-admin'
+import { StatByCat } from '../../database/db-admin'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
 import { logger, loggerTransport } from '../../util/logger'
-import dbsync from '../../dbsync/dbsync'
 import { STICKER_CAT_THUMBS_UP } from '../../util/stickers'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import { EventToSave } from '../../interfaces/db-interfaces'
 import { chunkString } from '../../util/chunk-split'
-
-const POSTS_PER_PAGE_ADMIN = 10
+import { parseAndValidateGoogleSpreadsheets } from '../../dbsync/dbsync'
+import { formatMainAdminMenu, formatMessageForSyncReport } from './admin-format'
+import { menuCats, POSTS_PER_PAGE_ADMIN, totalValidationErrors } from './admin-common'
+import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
+import { Message, User } from 'telegram-typings'
+import { SyncDiff } from '../../database/db-sync-repository'
+import { ITask } from 'pg-promise'
+import Timeout = NodeJS.Timeout
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
@@ -35,158 +40,97 @@ export interface AdminSceneState {
 
 const {actionName, i18SharedBtn, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
-const menuCats = [
-    ['theaters', 'exhibitions'],
-    ['movies', 'events'],
-    ['walks', 'concerts']
-]
-
-function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessageUpdate) {
-    const btn = []
-    let thisRow: CallbackButton[] = []
-    statsByReviewer.forEach(({reviewer, count}) => {
-        const icon = i18Msg(ctx, `admin_icons.${reviewer}`, undefined, '') || i18Msg(ctx, 'admin_icons.default')
-        thisRow.push(Markup.callbackButton(i18Btn(ctx, 'byReviewer', {
-            count,
-            icon,
-            reviewer
-        }), actionName(`r_${reviewer}`)))
-        if (thisRow.length == 2) {
-            btn.push(thisRow)
-            thisRow = []
-        }
-    })
-    if (thisRow.length > 0) {
-        btn.push(thisRow)
-    }
-    return btn
-}
-
-const content = async (ctx: ContextMessageUpdate) => {
-    const dateRanges = getNextWeekEndRange(ctx.now())
-
-    const statsByName: StatByCat[] = await db.repoAdmin.findChangedEventsByCatStats(dateRanges)
-
-    let adminButtons: CallbackButton[][] = []
-
-    adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_changed_snapshot'), 'fake')]]
-
-    adminButtons = [...adminButtons, ...await menuCats.map(row =>
-        row.map(btnName => {
-            const count = statsByName.find(r => r.category === btnName)
-            return Markup.callbackButton(i18Btn(ctx, btnName, {count: count === undefined ? 0 : count.count}), actionName(btnName));
-        })
-    )]
-
-    adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_per_names'), 'fake')]]
-
-    const statsByReviewer = await db.repoAdmin.findStatsByReviewer(dateRanges)
-    adminButtons = [...adminButtons, ...addReviewersMenu(statsByReviewer, ctx)]
-
-    adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_actions'), 'fake')]]
-
-    adminButtons.push([
-        Markup.callbackButton(i18Btn(ctx, 'sync'), actionName('sync')),
-        Markup.callbackButton(i18Btn(ctx, 'version'), actionName('version')),
-    ])
-    adminButtons.push([Markup.callbackButton(i18SharedBtn(ctx, 'back'), actionName('back'))])
-
-    return {
-        msg: i18Msg(ctx, 'welcome', {
-            start: ruFormat(dateRanges.start, 'dd MMMM HH:mm'),
-            end: ruFormat(subSeconds(dateRanges.end, 1), 'dd MMMM HH:mm')
-        }),
-        markup: Extra.HTML().markup(Markup.inlineKeyboard(adminButtons))
-    }
-}
-
-async function replyWithHTMLMaybeChunk(ctx: ContextMessageUpdate, msg: string) {
+async function replyWithHTMLMaybeChunk(ctx: ContextMessageUpdate, msg: string, extra?: ExtraReplyMessage) {
     const MAX_TELEGRAM_MESSAGE_LENGTH = 4096
     const chunks: string[] = chunkString(msg, MAX_TELEGRAM_MESSAGE_LENGTH)
-    for (const msg of chunks) {
-        await ctx.replyWithHTML(msg)
+
+    let last: Message = undefined
+    for (let i = 0; i < chunks.length; i++) {
+        last = await ctx.replyWithHTML(chunks[i], i === chunks.length - 1 ? extra : { disable_notification: true })
     }
+    return last
+}
+
+function listExtIds(eventToSaves: EventToSave[]): string {
+    return eventToSaves.map(z => z.primaryData.ext_id).join(',')
+}
+
+function getUserFromCtx(ctx: ContextMessageUpdate) {
+    if (ctx.update.message !== undefined) {
+        return ctx.update.message.from
+    }
+    return ctx.update.callback_query.from
 }
 
 export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
-    await ctx.replyWithHTML(i18Msg(ctx, 'start_sync', {url: getGoogleSpreadSheetURL()}), {
-        disable_web_page_preview: true
-    })
+    const oldUser = GLOBAL_SYNC_STATE.lockOnSync(ctx)
+    if (oldUser !== undefined) {
+        await ctx.replyWithHTML(i18Msg(ctx, 'sync_is_locked', oldUser))
+        return
+    }
+
     try {
-        const {syncResult, errors} = await dbsync(db)
-        // await ctx.replyWithHTML(i18Msg(ctx, 'sync_success', {updated, errors}))
 
-        const totalErrors = errors.reduce((total, e) => total + e.extIds.length, 0)
+        await ctx.replyWithHTML(i18Msg(ctx, 'sync_start', {url: getGoogleSpreadSheetURL()}), {
+            disable_web_page_preview: true
+        })
 
-        const formatBody = () => {
-            const s = allCategories
-                .map(cat => {
-                    const inserted = syncResult.insertedEvents.filter(e => e.primaryData.category === cat)
-                    const updated = syncResult.updatedEvents.filter(e => e.primaryData.category === cat)
-                    const deleted = syncResult.deletedEvents.filter(e => e.category === cat)
-                    return {cat, inserted, updated, deleted}
-                })
-                .filter(({inserted, updated, deleted}) => {
-                    return inserted.length + updated.length + deleted.length > 0
-                })
-                .map(({cat, inserted, updated, deleted}) => {
-                    let rows: string[] = [
-                        i18Msg(ctx, `sync_stats_cat_header`, {
-                            icon: i18Msg(ctx, 'sync_stats_category_icons.' + cat),
-                            categoryTitle: i18Msg(ctx, 'sync_stats_category_titles.' + cat)
-                        })
-                    ]
+        const {validationErrors, rows, excelUpdater} = await parseAndValidateGoogleSpreadsheets()
 
-                    if (inserted.length > 0) {
-                        rows = [...rows, ...inserted.map((i: EventToSave) => i18Msg(ctx, 'sync_stats_cat_item_inserted', {
-                            ext_id: i.primaryData.ext_id,
-                            title: i.primaryData.title
-                        }))]
-                    }
-                    if (updated.length > 0) {
-                        rows = [...rows, ...updated.map((i: EventToSave) => i18Msg(ctx, 'sync_stats_cat_item_updated', {
-                            ext_id: i.primaryData.ext_id,
-                            title: i.primaryData.title
-                        }))]
-                    }
-                    if (deleted.length > 0) {
-                        rows = [...rows, ...deleted.map(i => i18Msg(ctx, 'sync_stats_cat_item_deleted', {
-                            ext_id: i.ext_id,
-                            title: i.title
-                        }))]
-                    }
-                    return rows.join('\n')
-                }).join('\n\n')
-            if (s.length === 0) {
-                return ' - ничего нового с момента последней синхронизации'
-            } else {
-                return `\n\n${s}`
+        await excelUpdater.update();
+
+         const { dbDiff, askUserToConfirm } = await db.tx('sync', async (dbTx) => {
+
+            const dbDiff = await dbTx.repoSync.prepareDiffForSync(rows, dbTx)
+             GLOBAL_SYNC_STATE.charge(dbDiff)
+
+            const askUserToConfirm = dbDiff.deletedEvents.length > 0
+            if (askUserToConfirm === false) {
+                await dbTx.repoSync.syncDiff(dbDiff, dbTx)
+                await GLOBAL_SYNC_STATE.executeSync(dbTx)
             }
-        }
+            return { dbDiff, askUserToConfirm }
+        })
 
-        const formatErrors = () => {
-            return i18Msg(ctx, 'sync_error_title', {
-                totalErrors: totalErrors,
-                errors: errors
-                    .filter(e => e.extIds.length > 0)
-                    .map(e => i18Msg(ctx, 'sync_error_row', {
-                        sheetName: e.sheetName,
-                        extIds: e.extIds.join(', ')
-                    }))
-                    .join('\n')
+        if (askUserToConfirm === true) {
+            const body = await formatMessageForSyncReport(validationErrors, dbDiff, ctx)
+            const keyboard = [[
+                Markup.callbackButton(i18Btn(ctx, 'sync_back'), actionName('sync_back')),
+                Markup.callbackButton(i18Btn(ctx, 'sync_confirm'), actionName('sync_confirm')),
+            ]]
+            const msgId = await replyWithHTMLMaybeChunk(ctx, i18Msg(ctx, 'sync_ask_user_to_confirm', {
+                body
+            }), Extra.HTML().markup(Markup.inlineKeyboard(keyboard)))
+
+            GLOBAL_SYNC_STATE.saveConfirmIdMessage(msgId)
+
+        } else {
+
+            logger.info([
+                `Database updated.`,
+                `Insertion done.`,
+                `inserted={${listExtIds(dbDiff.insertedEvents)}}`,
+                `updated={${listExtIds(dbDiff.updatedEvents)}}`,
+                `deleted={${dbDiff.deletedEvents.map(d => d.ext_id).join(',')}}`
+            ].join(' '));
+
+
+            const body = await formatMessageForSyncReport(validationErrors, dbDiff, ctx)
+
+            const msg = i18Msg(ctx, `sync_stats_title`, {
+                body,
+                rows: await db.repoAdmin.countTotalRows()
             })
-        }
 
-        const dbTotalRows = await db.repoAdmin.countTotalRows()
+            await replyWithHTMLMaybeChunk(ctx, msg)
 
-        await replyWithHTMLMaybeChunk(ctx, i18Msg(ctx, `sync_stats_title`, {
-            body: formatBody() + '\n' + (totalErrors > 0 ? formatErrors() : '✅ 0 Ошибок'),
-            rows: dbTotalRows
-        }))
-
-        if (totalErrors === 0) {
-            await sleep(500)
-            await ctx.replyWithSticker(STICKER_CAT_THUMBS_UP)
+            const isSomethingChanged = dbDiff.deletedEvents.length
+                + dbDiff.insertedEvents.length
+                + dbDiff.updatedEvents.length > 0
+            if (totalValidationErrors(validationErrors) === 0 && isSomethingChanged) {
+                await sleep(500)
+                await ctx.replyWithSticker(STICKER_CAT_THUMBS_UP)
+            }
         }
     } catch (e) {
         if (e instanceof WrongExcelColumnsError) {
@@ -198,10 +142,87 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
     }
 }
 
+class GlobalSync {
+    private static TIMEOUT_SECONDS = 30
+    private timeoutId: Timeout
+    private syncDiff: SyncDiff
+    private confirmIdMsg: Message
+    private user: User
+
+    public async executeSync(dbTx: ITask<IExtensions> & IExtensions) {
+        console.log('hasData?', this.syncDiff !== undefined)
+        this.stopOldTimerIfExists()
+        try {
+            console.log('hasData?', this.syncDiff !== undefined)
+            await dbTx.repoSync.syncDiff(this.syncDiff, dbTx)
+            console.log('Sync done')
+        } finally {
+            this.cleanup()
+        }
+    }
+    public abort() {
+        this.stopOldTimerIfExists()
+        this.cleanup()
+        console.log('Abort done')
+    }
+
+    private cleanup() {
+        this.syncDiff = undefined
+        this.user = undefined
+        this.confirmIdMsg = undefined
+    }
+
+    public isRunning(ctx: ContextMessageUpdate) {
+        const user = getUserFromCtx(ctx)
+        return this.user?.id === user.id
+    }
+
+    private startTimer() {
+        console.log('Start cancel timer')
+        this.stopOldTimerIfExists()
+        this.cleanup()
+        this.timeoutId = setTimeout(() => {
+            console.log('Timer hit')
+            this.timeoutId = undefined
+            this.abort()
+        }, GlobalSync.TIMEOUT_SECONDS * 1000)
+    }
+
+    private stopOldTimerIfExists() {
+        if (this.timeoutId !== undefined) {
+            console.log('Stop timer')
+            clearTimeout(this.timeoutId)
+        }
+    }
+
+    lockOnSync(ctx: ContextMessageUpdate): User {
+        const user = getUserFromCtx(ctx)
+        if (this.user === undefined || this.user.id === user.id) {
+            this.startTimer()
+            this.user = user
+            console.log('Lock done')
+            return undefined
+        }
+        console.log('Lock fail')
+        return this.user
+    }
+
+    charge(dbDiff: SyncDiff) {
+        console.log('Charge')
+        this.syncDiff = dbDiff
+    }
+
+    saveConfirmIdMessage(msg: Message) {
+        this.confirmIdMsg = msg
+    }
+}
+
+const GLOBAL_SYNC_STATE = new GlobalSync()
+
 scene
     .use(async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
         if (!isAdmin(ctx)) {
-            logger.warn('User is not more admin. Rederict it to main_scene')
+            logger.warn('User is not more admin. Redirect it to main_scene')
             await ctx.scene.enter('main_scene')
         } else {
             await next()
@@ -209,7 +230,7 @@ scene
     })
     .enter(async (ctx: ContextMessageUpdate) => {
         await prepareSessionStateIfNeeded(ctx)
-        const {msg, markup} = await content(ctx)
+        const {msg, markup} = await formatMainAdminMenu(ctx)
         await ctx.replyWithMarkdown(msg, markup)
     })
     .use(Paging.pagingMiddleware(actionName('show_more'),
@@ -225,6 +246,30 @@ scene
     .action(actionName('version'), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
         await showBotVersion(ctx)
+    })
+    .action(actionName('sync_back'), async (ctx: ContextMessageUpdate) => {
+        await ctx.answerCbQuery()
+        if (GLOBAL_SYNC_STATE.isRunning(ctx)) {
+            GLOBAL_SYNC_STATE.abort()
+            await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]))
+            await ctx.replyWithHTML(i18Msg(ctx, 'sync_cancelled'))
+        } else {
+            await ctx.replyWithHTML(i18Msg(ctx, 'sync_no_transaction'))
+        }
+    })
+    .action(actionName('sync_confirm'), async (ctx: ContextMessageUpdate) => {
+        await ctx.answerCbQuery()
+        if (GLOBAL_SYNC_STATE.isRunning(ctx)) {
+            await db.tx(async (dbTx: ITask<IExtensions> & IExtensions) => {
+                await GLOBAL_SYNC_STATE.executeSync(dbTx)
+            })
+            await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]))
+            await ctx.replyWithHTML(i18Msg(ctx, 'sync_confirmed', {
+                rows: await db.repoAdmin.countTotalRows()
+            }))
+        } else {
+            await ctx.replyWithHTML(i18Msg(ctx, 'sync_no_transaction'))
+        }
     })
     .action(new RegExp(`${actionName('r_')}(.+)`), async (ctx: ContextMessageUpdate) => {
         // db.repoAdmin.findAllEventsByReviewer(ctx.match[1], getNextWeekEndRange(ctx.now()), )
