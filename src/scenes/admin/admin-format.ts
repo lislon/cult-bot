@@ -44,14 +44,23 @@ export const formatMainAdminMenu = async (ctx: ContextMessageUpdate) => {
 
         let adminButtons: CallbackButton[][] = []
 
-        adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_changed_snapshot'), 'fake')]]
+        const snapshotMeta = await dbTask.repoSnapshot.getSnapshotMeta()
+        if (snapshotMeta !== undefined) {
 
-        adminButtons = [...adminButtons, ...await menuCats.map(row =>
-            row.map(btnName => {
-                const count = statsByName.find(r => r.category === btnName)
-                return Markup.callbackButton(i18Btn(ctx, btnName, {count: count === undefined ? 0 : count.count}), actionName(btnName));
-            })
-        )]
+            adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_changed_snapshot', {
+                    date: ruFormat(snapshotMeta.createdAt, 'dd MMMM HH:mm:ss'),
+                    user: snapshotMeta.createdBy
+                }),
+                'fake'
+            )]]
+
+            adminButtons = [...adminButtons, ...await menuCats.map(row =>
+                row.map(btnName => {
+                    const count = statsByName.find(r => r.category === btnName)
+                    return Markup.callbackButton(i18Btn(ctx, btnName, {count: count === undefined ? 0 : count.count}), actionName(btnName));
+                })
+            )]
+        }
 
         adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_per_names'), 'fake')]]
 

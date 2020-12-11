@@ -15,6 +15,11 @@ describe('Users', () => {
             getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_1: ['#A', '#B', '#C']}),
         ])
 
-        await db.repoSnapshot.takeSnapshot()
+        await db.repoSnapshot.takeSnapshot('lisa', date('2020-01-03 18:00'))
+        const meta = await db.repoSnapshot.getSnapshotMeta()
+        expect(meta).toStrictEqual({
+            createdBy: 'lisa',
+            createdAt: date('2020-01-03 18:00')
+        })
     })
 })

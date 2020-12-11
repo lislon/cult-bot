@@ -55,18 +55,22 @@ function listExtIds(eventToSaves: EventToSave[]): string {
     return eventToSaves.map(z => z.primaryData.ext_id).join(',')
 }
 
-function getUserFromCtx(ctx: ContextMessageUpdate) {
+function getUserFromCtx(ctx: ContextMessageUpdate): User {
     if (ctx.update.message !== undefined) {
         return ctx.update.message.from
     }
     return ctx.update.callback_query.from
 }
 
+function getHumanReadableUsername(user: User): string {
+    return user.first_name || user.last_name || user.username || user.id + ''
+}
+
 export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
     const oldUser = GLOBAL_SYNC_STATE.lockOnSync(ctx)
     if (oldUser !== undefined) {
         await ctx.replyWithHTML(i18Msg(ctx, 'sync_is_locked',
-            { user: oldUser.first_name || oldUser.last_name || oldUser.username || oldUser.id }))
+            { user: getHumanReadableUsername(oldUser) }))
         return
     }
 
@@ -443,7 +447,7 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
             await ctx.replyWithHTML(i18Msg(ctx, 'select_log_level'))
         })
         .command('snapshot', async (ctx) => {
-            await db.repoSnapshot.takeSnapshot()
+            await db.repoSnapshot.takeSnapshot(getHumanReadableUsername(getUserFromCtx(ctx)), new Date())
             await ctx.replyWithHTML(i18Msg(ctx, 'snapshot_taken'))
         })
         .command(['level_silly', 'level_debug', 'level_error'], async (ctx) => {

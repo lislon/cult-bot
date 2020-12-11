@@ -91,7 +91,8 @@
         "sync_back": "✖️ Отмена",
         "sync_confirm": "✅ Подтвердить",
 
-        "menu_changed_snapshot": "Добавилось/Поменялось с момента снепшота",
+        "menu_changed_snapshot": "Разница с ${date} (${user})",
+
         "menu_per_names": "Наши старатели",
         "menu_actions": "Пульт",
 
