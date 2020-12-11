@@ -116,12 +116,12 @@ function isAddressValid(data: Event) {
 
 function validateExtId(data: Event): boolean {
     switch (data.category) {
-        case 'theaters': return !!data.ext_id.match(/^T\d+[A-Z]?$/)
-        case 'exhibitions': return !!data.ext_id.match(/^V\d+[A-Z]?$/)
-        case 'concerts': return !!data.ext_id.match(/^K\d+[A-Z]?$/)
-        case 'events': return !!data.ext_id.match(/^M\d+[A-Z]?$/)
-        case 'movies': return !!data.ext_id.match(/^C\d+[A-Z]?$/)
-        case 'walks': return !!data.ext_id.match(/^P\d+[A-Z]?$/)
+        case 'theaters': return !!data.ext_id?.match(/^T\d+[A-Z]?$/)
+        case 'exhibitions': return !!data.ext_id?.match(/^V\d+[A-Z]?$/)
+        case 'concerts': return !!data.ext_id?.match(/^K\d+[A-Z]?$/)
+        case 'events': return !!data.ext_id?.match(/^M\d+[A-Z]?$/)
+        case 'movies': return !!data.ext_id?.match(/^C\d+[A-Z]?$/)
+        case 'walks': return !!data.ext_id?.match(/^P\d+[A-Z]?$/)
         default: throw new Error(`Unknown category: ${data.category}`)
     }
 }
