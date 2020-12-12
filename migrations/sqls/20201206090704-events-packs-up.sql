@@ -3,10 +3,9 @@ CREATE TABLE cb_events_packs (
 	title text NOT NULL,
 	description text NOT NULL DEFAULT '',
 	author text NOT NULL DEFAULT '',
-	date_range tstzrange NOT NULL,
 	image bytea,
+	image_src text NOT NULL DEFAULT '',
     event_ids int8[] NOT NULL DEFAULT '{}',
-	created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    weight int8 NOT NULL DEFAULT 0,
+	created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE INDEX cb_events_packs_date_range_idx ON cb_events_packs (date_range);

@@ -1,4 +1,4 @@
-import { SpreadSheetValidationError } from '../../dbsync/dbsync'
+import { SpreadSheetValidationError } from '../../dbsync/parserSpresdsheetEvents'
 
 export const POSTS_PER_PAGE_ADMIN = 10
 

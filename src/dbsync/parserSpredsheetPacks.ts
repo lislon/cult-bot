@@ -1,42 +1,44 @@
-import { BotDb } from '../database/db'
 import { sheets_v4 } from 'googleapis'
 import { logger } from '../util/logger'
-import { loadExcel } from './googlesheets'
-import { EXCEL_COLUMN_NAMES, ExcelColumnName, ExcelRowResult, processExcelRow } from './parseSheetRow'
 import { botConfig } from '../util/bot-config'
-import { WrongExcelColumnsError } from './WrongFormatException'
+import { EventPackValidated } from './run-packs-sync'
 import { ExcelUpdater } from './ExcelUpdater'
 import Sheets = sheets_v4.Sheets
-import { DateRange } from '../lib/timetable/intervals'
 
-export async function runFetchAndParsePacks(db: BotDb): Promise<ExcelPacksSyncResult> {
-    logger.debug('Connection from excel...')
-    try {
-        const excel: Sheets = await loadExcel()
-        return fetchAndParsePacks(db, excel)
-    } catch (e) {
-        logger.error(e);
-        throw e;
-    }
+const EXCEL_COLUMNS_PACKS = {
+    keys: '',
+    values: '',
 }
 
-export interface EventInPack {
+const VERTICAL_ORDER = {
+    title: 'Название',
+    isPublish: 'Опубликована:',
+    author: 'Куратор',
+    imageSrc: 'Картинка',
+    description: 'Описание',
+    events: 'События'
+} as const
+
+export interface EventInPackExcel {
     title: string
     rowNumber: number
     extId: string
 }
 
-export interface EventPack {
+export interface EventPackExcel {
     title: string
     description: string
     author: string
-    date_range: DateRange
-    events: EventInPack[]
+    imageSrc: string
+    events: EventInPackExcel[]
     isPublish: boolean
+    weight: number
+    sheetId: number
+    rowNumber: number
 }
 
-interface ExcelPacksSyncResult {
-    packs: EventPack[]
+export interface ExcelPacksSyncResult {
+    packs: EventPackExcel[]
 }
 
 const PACKS_SHEET_NAME = 'Подборки'
@@ -46,10 +48,33 @@ function getEventExtId(rowValue: string) {
     if (match) return match[1]
 }
 
-async function fetchAndParsePacks(db: BotDb, excel: Sheets): Promise<ExcelPacksSyncResult> {
-    const syncResult: ExcelPacksSyncResult = {
-        packs: []
-    }
+function getRowNumber({ rowNumber }: EventPackExcel, field: keyof typeof VERTICAL_ORDER) {
+    return rowNumber + Object.keys(VERTICAL_ORDER).indexOf(field)
+}
+
+export async function saveValidationErrors(excel: Sheets, validatedEvents: EventPackValidated[]): Promise<void> {
+    const excelUpdater = new ExcelUpdater(excel, EXCEL_COLUMNS_PACKS)
+
+    validatedEvents.forEach(({ raw, errors }) => {
+
+        excelUpdater.clearColumnFormat(raw.sheetId, 'values', raw.rowNumber, Object.keys(VERTICAL_ORDER).length + raw.events.length - 1)
+
+        if (errors.imageUrl !== undefined) {
+            excelUpdater.colorCell(raw.sheetId, 'values', getRowNumber(raw, 'imageSrc'), 'red')
+            excelUpdater.annotateCell(raw.sheetId, 'values', getRowNumber(raw, 'imageSrc'), errors.imageUrl)
+        }
+
+        errors.badEvents.forEach(({ rawEvent, error }) => {
+            excelUpdater.colorCell(raw.sheetId, 'values', rawEvent.rowNumber, 'red')
+            excelUpdater.annotateCell(raw.sheetId, 'values', rawEvent.rowNumber, error)
+        })
+    })
+
+    await excelUpdater.update(botConfig.GOOGLE_DOCS_ID)
+}
+
+export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncResult> {
+    const packs: EventPackExcel[] = []
 
     const range = `${PACKS_SHEET_NAME}!A1:AA`;
 
@@ -60,28 +85,35 @@ async function fetchAndParsePacks(db: BotDb, excel: Sheets): Promise<ExcelPacksS
         excel.spreadsheets.values.get({ spreadsheetId: botConfig.GOOGLE_DOCS_ID, range: range, valueRenderOption: 'FORMULA' })
     ]);
 
-    const excelUpdater = new ExcelUpdater(excel)
+    // const excelUpdater = new ExcelUpdater(excel)
 
-    let currentPack: EventPack = undefined
+    let currentPack: EventPackExcel = undefined
 
     let rowNumber = 0;
     for (const [rowLabel, rowValue] of sheetsData.data.values) {
         if (rowLabel === 'Название') {
             if (currentPack !== undefined) {
-                syncResult.packs.push(currentPack)
+                packs.push(currentPack)
             }
             currentPack = {
                 title: rowValue,
                 events: [],
                 description: '',
                 author: '',
+                imageSrc: '',
+                weight: 0,
                 isPublish: false,
-                date_range: ['', '']
+                rowNumber,
+                sheetId: sheetsMetaData.data.sheets[0].properties.sheetId
             }
         } else if (rowLabel === 'Опубликована') {
             currentPack.isPublish = !!(rowValue as string).match(/(YES|да|TRUE)/ig)
         } else if (rowLabel === 'Куратор') {
             currentPack.author = rowValue
+        } else if (rowLabel === 'Вес') {
+            currentPack.weight = +rowValue
+        } else if (rowLabel === 'Картинка') {
+            currentPack.imageSrc = rowValue
         } else if (rowLabel === 'Описание') {
             currentPack.description = rowValue
         } else if (rowValue !== undefined && getEventExtId(rowValue) !== undefined) {
@@ -93,7 +125,9 @@ async function fetchAndParsePacks(db: BotDb, excel: Sheets): Promise<ExcelPacksS
         }
         rowNumber++
     }
-    syncResult.packs.push(currentPack)
+    packs.push(currentPack)
 
-    return syncResult;
+    return {
+        packs,
+    };
 }

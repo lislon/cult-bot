@@ -2,6 +2,7 @@ import { google, sheets_v4 } from 'googleapis'
 import { GoogleAuth } from 'google-auth-library'
 import * as path from 'path'
 import { logger } from '../util/logger'
+import { ruFormat } from '../scenes/shared/shared-logic'
 import Sheets = sheets_v4.Sheets
 import Schema$Request = sheets_v4.Schema$Request
 
@@ -9,9 +10,9 @@ import Schema$Request = sheets_v4.Schema$Request
 const SERVICE_ACCOUNT_CREDENTIALS_FILE = path.resolve(__dirname, '../../secrets/culthubbot-google-account.json')
 
 const CELL_BG_COLORS = {
-    green: { red: 0.95, green: 1, blue: 0.95 },
-    lightred: { red: 1, green: 0.95, blue: 0.95 },
-    red: { red: 0.95, green: 0.8, blue: 0.85 },
+    green: {red: 0.95, green: 1, blue: 0.95},
+    lightred: {red: 1, green: 0.95, blue: 0.95},
+    red: {red: 0.95, green: 0.8, blue: 0.85},
 }
 
 export type CellColor = keyof typeof CELL_BG_COLORS
@@ -41,7 +42,7 @@ function repeat<T>(param: T, columnsNo: number): T[] {
 }
 
 
-export function colorRow(sheetId: number, color: CellColor, row: number, columns: number): Schema$Request {
+export function mkColorRow(sheetId: number, color: CellColor, row: number, columns: number): Schema$Request {
 
     return {
         updateCells: {
@@ -74,7 +75,7 @@ interface Range {
     endColumnIndex: number
 }
 
-export function clearFormat(sheetId: number, { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex }: Range): Schema$Request {
+export function mkClearFormat(sheetId: number, {startRowIndex, endRowIndex, startColumnIndex, endColumnIndex}: Range): Schema$Request {
     return {
         updateCells: {
             range: {
@@ -90,7 +91,7 @@ export function clearFormat(sheetId: number, { startRowIndex, endRowIndex, start
 }
 
 
-export function colorCell(sheetId: number, color: CellColor, column: number, row: number): Schema$Request {
+export function mkColorCell(sheetId: number, color: CellColor, column: number, row: number): Schema$Request {
     return {
         updateCells: {
             range: {
@@ -116,7 +117,7 @@ export function colorCell(sheetId: number, color: CellColor, column: number, row
     }
 }
 
-export function annotateCell(sheetId: number, text: string, column: number, row: number): Schema$Request {
+export function mkAnnotateCell(sheetId: number, text: string, column: number, row: number): Schema$Request {
     return {
         repeatCell: {
             range: {
@@ -130,6 +131,38 @@ export function annotateCell(sheetId: number, text: string, column: number, row:
             cell: {
                 note: text,
             }
+        }
+    }
+}
+
+export function mkEditCellDate(sheetId: number, text: Date, column: number, row: number): Schema$Request {
+    return {
+        updateCells: {
+            range: {
+                sheetId: sheetId,
+                startRowIndex: row,
+                endRowIndex: row + 1,
+                startColumnIndex: column - 1,
+                endColumnIndex: column
+            },
+            fields: '*',
+            rows: [
+                {
+                    values: [
+                        {
+                            userEnteredValue: {
+                                stringValue: ruFormat(text, 'yyyy-dd-MM HH:mm')
+                            },
+                            userEnteredFormat: {
+                                numberFormat: {
+                                    type: 'DATE',
+                                    pattern: 'yyyy-dd-mm hh:mm:ss'
+                                }
+                            }
+                        },
+                    ]
+                }
+            ]
         }
     }
 }

@@ -21,13 +21,14 @@ import { STICKER_CAT_THUMBS_UP } from '../../util/stickers'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import { EventToSave } from '../../interfaces/db-interfaces'
 import { chunkString } from '../../util/chunk-split'
-import { parseAndValidateGoogleSpreadsheets } from '../../dbsync/dbsync'
 import { formatMainAdminMenu, formatMessageForSyncReport } from './admin-format'
 import { menuCats, POSTS_PER_PAGE_ADMIN, SYNC_CONFIRM_TIMEOUT_SECONDS, totalValidationErrors } from './admin-common'
 import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 import { Message, User } from 'telegram-typings'
 import { SyncDiff } from '../../database/db-sync-repository'
 import { ITask } from 'pg-promise'
+import { parseAndValidateGoogleSpreadsheets } from '../../dbsync/parserSpresdsheetEvents'
+import { authToExcel } from '../../dbsync/googlesheets'
 import Timeout = NodeJS.Timeout
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
@@ -80,13 +81,12 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
             disable_web_page_preview: true
         })
 
-        const {validationErrors, rows, excelUpdater} = await parseAndValidateGoogleSpreadsheets()
-
-        await excelUpdater.update();
+        const syncResult = await parseAndValidateGoogleSpreadsheets(db, await authToExcel())
+        // const {validationErrors, rows, excelUpdater} = await parseAndValidateGoogleSpreadsheets()
 
          const { dbDiff, askUserToConfirm } = await db.tx('sync', async (dbTx) => {
 
-            const dbDiff = await dbTx.repoSync.prepareDiffForSync(rows, dbTx)
+            const dbDiff = await dbTx.repoSync.prepareDiffForSync(syncResult.rawEvents, dbTx)
              GLOBAL_SYNC_STATE.charge(dbDiff)
 
             const askUserToConfirm = dbDiff.deletedEvents.length > 0
@@ -97,7 +97,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
         })
 
         if (askUserToConfirm === true) {
-            const body = await formatMessageForSyncReport(validationErrors, dbDiff, ctx)
+            const body = await formatMessageForSyncReport(syncResult.errors, dbDiff, ctx)
             const keyboard = [[
                 Markup.callbackButton(i18Btn(ctx, 'sync_back'), actionName('sync_back')),
                 Markup.callbackButton(i18Btn(ctx, 'sync_confirm'), actionName('sync_confirm')),
@@ -119,7 +119,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
             ].join(' '));
 
 
-            const body = await formatMessageForSyncReport(validationErrors, dbDiff, ctx)
+            const body = await formatMessageForSyncReport(syncResult.errors, dbDiff, ctx)
 
             const msg = i18Msg(ctx, `sync_stats_title`, {
                 body,
@@ -131,16 +131,16 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
             const isSomethingChanged = dbDiff.deletedEvents.length
                 + dbDiff.insertedEvents.length
                 + dbDiff.updatedEvents.length > 0
-            if (totalValidationErrors(validationErrors) === 0 && isSomethingChanged) {
+            if (totalValidationErrors(syncResult.errors) === 0 && isSomethingChanged) {
                 await sleep(500)
                 await ctx.replyWithSticker(STICKER_CAT_THUMBS_UP)
             }
         }
     } catch (e) {
         if (e instanceof WrongExcelColumnsError) {
-            await ctx.reply(i18Msg(ctx, 'sync_wrong_format', e.data))
+            await ctx.replyWithHTML(i18Msg(ctx, 'sync_wrong_format', e.data))
         } else {
-            await ctx.reply(i18Msg(ctx, 'sync_error', {error: e.toString().substr(0, 100)}))
+            await ctx.replyWithHTML(i18Msg(ctx, 'sync_error', {error: e.toString().substr(0, 100)}))
             throw e
         }
     }

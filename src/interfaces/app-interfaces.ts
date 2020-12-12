@@ -13,6 +13,7 @@ import { FeedbackSceneState } from '../scenes/feedback/feedback-scene'
 import { AnalyticsState } from '../lib/middleware/analytics-middleware'
 import { UserSaveState } from '../lib/middleware/user-save-middleware'
 import { HelpSceneState } from '../scenes/help/help-scene'
+import { PacksSceneState } from '../scenes/packs/packs-scene'
 
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
@@ -36,6 +37,7 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
     i18n: I18n
     session: {
         topsScene: TopsSceneState
+        packsScene: PacksSceneState
         search: SearchSceneState
         customize: CustomizeSceneState
         timetable: TimetableSceneState

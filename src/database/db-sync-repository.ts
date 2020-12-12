@@ -200,6 +200,7 @@ export class EventsSyncRepository {
             if (newDbRows.length > 0) {
                 const newEventsId = await this.insertNewEvents(dbTx, newDbRows)
                 syncDiff.insertedEvents.forEach((createdEvent, index) => {
+                    createdEvent.primaryData.id = newEventsId[index]
                     eventsIntervalToSync.push({
                         eventId: newEventsId[index],
                         timeIntervals: createdEvent.timeIntervals

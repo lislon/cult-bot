@@ -44,6 +44,9 @@ export interface EventTimetable {
 export type MomentOrInterval = Date | Date[];
 export type MomentIntervals = MomentOrInterval[]
 
+export function rightDate(q: MomentOrInterval) {
+    return Array.isArray(q) ? q[1] : q
+}
 
 function toDateOrUndefined(dateStr: string) {
     if (dateStr === undefined) return undefined

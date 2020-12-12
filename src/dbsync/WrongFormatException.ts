@@ -1,6 +1,5 @@
 interface ExcelWrongData {
     listName: string
-    columnName: string
     expected: string
     actual: string
 }

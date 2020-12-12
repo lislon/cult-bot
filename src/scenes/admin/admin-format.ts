@@ -6,10 +6,10 @@ import { CallbackButton } from 'telegraf/typings/markup'
 import { getNextWeekEndRange, ruFormat } from '../shared/shared-logic'
 import { db } from '../../database/db'
 import { subSeconds } from 'date-fns'
-import { SpreadSheetValidationError } from '../../dbsync/dbsync'
 import { SyncDiff } from '../../database/db-sync-repository'
 import { EventToSave } from '../../interfaces/db-interfaces'
 import { menuCats, totalValidationErrors } from './admin-common'
+import { SpreadSheetValidationError } from '../../dbsync/parserSpresdsheetEvents'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 

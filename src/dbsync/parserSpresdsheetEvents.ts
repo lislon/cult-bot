@@ -1,72 +1,45 @@
-import { loadExcel } from './googlesheets'
 import { EventCategory } from '../interfaces/app-interfaces'
 import {
     CAT_TO_SHEET_NAME,
-    EXCEL_COLUMN_NAMES,
-    ExcelColumnName,
-    ExcelRow,
+    EXCEL_COLUMNS_EVENTS,
+    ExcelColumnNameEvents,
+    ExcelRowEvents,
     ExcelRowResult,
     processExcelRow
 } from './parseSheetRow'
 import { sheets_v4 } from 'googleapis'
-import { parseTimetable } from '../lib/timetable/parser'
-import { predictIntervals } from '../lib/timetable/intervals'
+import { rightDate } from '../lib/timetable/intervals'
 import { EventToSave } from '../interfaces/db-interfaces'
 import { WrongExcelColumnsError } from './WrongFormatException'
 import { BotDb } from '../database/db'
-import { differenceInCalendarDays, format } from 'date-fns'
+import { isEqual } from 'date-fns'
 import { botConfig } from '../util/bot-config'
-import { getOnlyBotTimetable } from '../lib/timetable/timetable-utils'
 import { logger } from '../util/logger'
-import { countBy } from 'lodash'
-import { SyncResults } from '../database/db-sync-repository'
+import { countBy, last } from 'lodash'
 import { ExcelUpdater } from './ExcelUpdater'
 import Sheets = sheets_v4.Sheets
 
-// our set of columns, to be created only once (statically), and then reused,
-// to let it cache up its formatting templates for high performance:
+export interface SpreadSheetValidationError {
+    sheetName: string,
+    extIds: string[]
+}
+export interface ExcelParseResult {
+    errors: SpreadSheetValidationError[]
+    rawEvents?: EventToSave[]
+}
 
 function getSheetCategory(sheetNo: number) {
     return Object.keys(CAT_TO_SHEET_NAME)[sheetNo] as EventCategory
 }
 
-function mapRowToColumnObject(row: string[]) {
-    const keyValueRow: Partial<ExcelRow> = {}
-    row.forEach((val: string, index) => keyValueRow[EXCEL_COLUMN_NAMES[index]] = val)
-    return keyValueRow
+function getExcelColumns() {
+    return Object.keys(EXCEL_COLUMNS_EVENTS) as ExcelColumnNameEvents[]
 }
 
-function debugTimetable(mapped: any, excelUpdater: ExcelUpdater, sheetId: number, rowNo: number) {
-    const fromTime = new Date()
-    const timetableParseResult = parseTimetable(getOnlyBotTimetable(mapped.data.timetable), fromTime)
-    if (timetableParseResult.status !== true) {
-        throw new Error('wtf')
-    }
-    const intervals = predictIntervals(fromTime, timetableParseResult.value, 14)
-
-    // TODO: TZ
-    const text = [`События после ${format(fromTime, 'MM.dd HH:mm')}: `, '-----------']
-    if (intervals.length === 0) {
-        text.push(' - Нет событий');
-    } else {
-        intervals.forEach((interval) => {
-            function format2(m: Date, formatS = 'MM.dd HH:mm') {
-                return format(m, formatS)
-            }
-
-            if (Array.isArray(interval)) {
-                if (differenceInCalendarDays(interval[0], interval[1]) === 0) {
-                    text.push(`  ${format2(interval[0], 'MM.dd HH:mm')} - ${format2(interval[1], 'HH:mm')}`);
-                } else {
-                    text.push(`  ${format2(interval[0])} - ${format2(interval[1])}`);
-                }
-            } else {
-                text.push(`  ${format2(interval)} `);
-            }
-        })
-    }
-
-    excelUpdater.annotateCell(sheetId, 'timetable', rowNo, text.join('\n'))
+function mapRowToColumnObject(row: string[]) {
+    const keyValueRow: Partial<ExcelRowEvents> = {}
+    row.forEach((val: string, index) => keyValueRow[(getExcelColumns())[index]] = val)
+    return keyValueRow
 }
 
 function validateUnique(excelRows: ExcelRowResult[]) {
@@ -79,35 +52,32 @@ function validateUnique(excelRows: ExcelRowResult[]) {
     })
 }
 
-
 export interface ExcelSheetError {
     sheetName: string,
     extIds: string[]
 }
-export interface ExcelSyncResult {
-    errors: ExcelSheetError[]
-    syncResult?: SyncResults
-}
+// export interface ExcelSyncResult {
+//     errors: ExcelSheetError[]
+//     syncResult?: SyncDiff
+// }
 
 function listExtIds(eventToSaves: EventToSave[]): string {
     return eventToSaves.map(z => z.primaryData.ext_id).join(',')
 }
 
-export default async function run(db: BotDb): Promise<ExcelSyncResult> {
-    logger.debug('Connection from excel...')
-    try {
-        const excel: Sheets = await loadExcel()
-        return fetchAndParseEventsFromLists(db, excel)
-    } catch (e) {
-        logger.error(e);
-        throw e;
-    }
-}
+// async function run(db: BotDb): Promise<ExcelSyncResult> {
+//     logger.debug('Connection from excel...')
+//     try {
+//         const excel: Sheets = await authToExcel()
+//         return fetchAndParseEventsFromLists(db, excel)
+//     } catch (e) {
+//         logger.error(e);
+//         throw e;
+//     }
+// }
 
-async function fetchAndParseEventsFromLists(db: BotDb, excel: Sheets): Promise<ExcelSyncResult> {
-    const syncResult: ExcelSyncResult = {
-        errors: []
-    }
+export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheets): Promise<ExcelParseResult> {
+    const errors: SpreadSheetValidationError[] = []
 
     const ranges = Object.values(CAT_TO_SHEET_NAME).map(name => `${name}!A1:AA`);
 
@@ -120,34 +90,32 @@ async function fetchAndParseEventsFromLists(db: BotDb, excel: Sheets): Promise<E
     ]);
 
     logger.debug('Saving to db...')
-    const rows: EventToSave[] = []
+    const rawEvents: EventToSave[] = []
 
     // let max = 1;
 
-    const excelUpdater = new ExcelUpdater(excel)
+    const excelUpdater = new ExcelUpdater(excel, EXCEL_COLUMNS_EVENTS)
 
     sheetsData.data.valueRanges.forEach((sheet, sheetNo: number) => {
         const sheetId = sheetsMetaData.data.sheets[sheetNo].properties.sheetId;
         const numOfRows = sheet.values?.length
 
-        const columnToClearFormat: ExcelColumnName[] = [
-            'publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3'
+        const columnToClearFormat: ExcelColumnNameEvents[] = [
+            'publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3', 'due_date'
         ]
 
-        columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, numOfRows))
+        columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, 1, numOfRows))
         // Print columns A and E, which correspond to indices 0 and 4.
 
         const parsedRows = sheet.values
             .map((row: string[], rowNo: number) => {
                 if (rowNo == 0) {
-                    const columnNo = EXCEL_COLUMN_NAMES.indexOf('wasOrNot')
-                    if (row[columnNo] !== 'Была/не была') {
+                    if (JSON.stringify(row) !== JSON.stringify(Object.values(EXCEL_COLUMNS_EVENTS))) {
                         throw new WrongExcelColumnsError({
                             listName: sheetsMetaData.data.sheets[sheetNo].properties.title,
-                            columnName: String.fromCharCode('A'.charCodeAt(0) + columnNo) + `1`,
-                            expected: 'Была/не была',
-                            actual: row[columnNo]
-                        });
+                            expected: Object.values(EXCEL_COLUMNS_EVENTS).join(', '),
+                            actual: row.join(', ')
+                        })
                     }
                     return
                 }
@@ -169,7 +137,7 @@ async function fetchAndParseEventsFromLists(db: BotDb, excel: Sheets): Promise<E
             if (mapped.publish) {
 
                 if (mapped.valid) {
-                    rows.push({
+                    rawEvents.push({
                         primaryData: mapped.data,
                         timetable: mapped.timetable,
                         timeIntervals: mapped.timeIntervals,
@@ -177,7 +145,14 @@ async function fetchAndParseEventsFromLists(db: BotDb, excel: Sheets): Promise<E
                     });
                     excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
 
-                    debugTimetable(mapped, excelUpdater, sheetId, rowNo)
+                    // debugTimetable(mapped, excelUpdater, sheetId, rowNo)
+
+                    if (last(mapped.timeIntervals) !== undefined) {
+                        const dueDate = rightDate(last(mapped.timeIntervals))
+                        if (!isEqual(mapped.dueDate, dueDate)) {
+                            excelUpdater.editCellDate(sheetId, 'due_date', rowNo, dueDate)
+                        }
+                    }
 
                 } else {
                     erroredExtIds.push(mapped.data.ext_id)
@@ -213,30 +188,36 @@ async function fetchAndParseEventsFromLists(db: BotDb, excel: Sheets): Promise<E
                     if (mapped.errors.invalidTagLevel3.length > 0) {
                         excelUpdater.colorCell(sheetId, 'tag_level_3', rowNo, 'red')
                     }
+                    if (mapped.errors.dueDate.length > 0) {
+                        excelUpdater.colorCell(sheetId, 'due_date', rowNo, 'red')
+                    }
 
                     excelUpdater.colorCell(sheetId, 'publish', rowNo, 'lightred')
                 }
             }
         })
 
-        syncResult.errors.push({
+        errors.push({
             sheetName: sheetsMetaData.data.sheets[sheetNo].properties.title,
             extIds: erroredExtIds
         })
     })
 
-    syncResult.syncResult = await db.repoSync.syncDatabase(rows)
-
-    logger.info([
-        `Database updated.`,
-        `Insertion done.`,
-        `inserted={${listExtIds(syncResult.syncResult.insertedEvents)}}`,
-        `updated={${listExtIds(syncResult.syncResult.updatedEvents)}}`,
-        `deleted={${syncResult.syncResult.deletedEvents.map(d => d.ext_id).join(',')}}`
-    ].join(' '));
-    await excelUpdater.update();
-    logger.debug(`Excel updated`);
-    return syncResult;
+    // syncResult.syncDiff = await db.repoSync.syncDatabase(rows)
+    //
+    // logger.info([
+    //     `Database updated.`,
+    //     `Insertion done.`,
+    //     `inserted={${listExtIds(syncResult.syncDiff.insertedEvents)}}`,
+    //     `updated={${listExtIds(syncResult.syncDiff.updatedEvents)}}`,
+    //     `deleted={${syncResult.syncDiff.deletedEvents.map(d => d.ext_id).join(',')}}`
+    // ].join(' '));
+    await excelUpdater.update(spreadsheetId);
+    // logger.debug(`Excel updated`);
+    return {
+        errors,
+        rawEvents
+    };
 }
 
 

@@ -17,6 +17,7 @@ import { topsScene } from './scenes/tops/tops-scene'
 import { feedbackScene } from './scenes/feedback/feedback-scene'
 import { logger } from './util/logger'
 import { helpScene } from './scenes/help/help-scene'
+import { packsScene } from './scenes/packs/packs-scene'
 
 logger.info(`starting bot...`);
 
@@ -50,6 +51,7 @@ myRegisterScene(bot, stage, [
     mainScene,
     helpScene,
     customizeScene,
+    packsScene,
     timeTableScene,
     timeIntervalScene,
     adminScene,

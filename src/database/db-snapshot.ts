@@ -12,10 +12,10 @@ export class SnapshotRepository {
 
     async takeSnapshot(createdBy: string, date: Date): Promise<void> {
         await this.db.tx(async (dbTx: ITask<IExtensions> & IExtensions) => {
-            await db.none('DELETE FROM cb_events_snapshot')
-            await db.none('DELETE FROM cb_events_snapshot_meta')
-            await db.none('INSERT INTO cb_events_snapshot (SELECT * FROM cb_events)')
-            await db.none(this.pgp.helpers.insert({
+            await dbTx.none('DELETE FROM cb_events_snapshot')
+            await dbTx.none('DELETE FROM cb_events_snapshot_meta')
+            await dbTx.none('INSERT INTO cb_events_snapshot (SELECT * FROM cb_events)')
+            await dbTx.none(this.pgp.helpers.insert({
                 created_by: createdBy,
                 created_at: date
             }, undefined, 'cb_events_snapshot_meta'))

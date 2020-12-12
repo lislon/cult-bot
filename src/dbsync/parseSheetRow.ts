@@ -3,34 +3,35 @@ import { EventTimetable, MomentOrInterval } from '../lib/timetable/intervals'
 import { fieldIsQuestionMarkOrEmpty } from '../util/filed-utils'
 import { parseAndPredictTimetable } from '../lib/timetable/timetable-utils'
 import { i18n } from '../util/i18n'
+import { isValid, parseISO } from 'date-fns'
 
-export const EXCEL_COLUMN_NAMES = [
-    'ext_id',
-    'publish',
-    'subcategory',
-    'title',
-    'place',
-    'address',
-    'geotag',
-    'timetable',
-    'duration',
-    'price',
-    'notes',
-    'description',
-    'url',
-    'tag_level_1',
-    'tag_level_2',
-    'tag_level_3',
-    'rating',
-    'reviewer',
-    'wasOrNot',
-    'entryDate',
-] as const
+export const EXCEL_COLUMNS_EVENTS = {
+    ext_id: '№',
+    publish: 'Публикация',
+    subcategory: 'Вид',
+    title: 'Название',
+    place: 'Место ',
+    address: 'Адрес',
+    geotag: 'Yandex.Maps',
+    timetable: 'Время (Формат)',
+    duration: 'Длительность осмотра',
+    price: 'Стоимость',
+    notes: 'Особенности',
+    description: 'Описание',
+    url: 'Ссылка',
+    tag_level_1: 'Теги 1 уровня',
+    tag_level_2: 'Теги 2 уровня',
+    tag_level_3: 'Теги 3 уровня',
+    rating: 'Оценка',
+    reviewer: 'Кто описал',
+    wasOrNot: 'Была/не была',
+    entry_date: 'Дата обновления',
+    due_date: 'Due date'
+}
 
-
-export type ExcelColumnName = typeof EXCEL_COLUMN_NAMES[number]
-export type ExcelRow = {
-    [K in ExcelColumnName]: string
+export type ExcelColumnNameEvents = keyof typeof EXCEL_COLUMNS_EVENTS
+export type ExcelRowEvents = {
+    [K in ExcelColumnNameEvents]: string
 }
 
 export const CAT_TO_SHEET_NAME: { [key in EventCategory]?: string } = {
@@ -48,16 +49,18 @@ export interface ExcelRowResult {
     publish: boolean,
     errors?: {
         timetable?: string[],
-        emptyRows?: ExcelColumnName[],
+        emptyRows?: ExcelColumnNameEvents[],
         invalidExtId?: string[],
         invalidTagLevel1?: string[]
         invalidTagLevel2?: string[]
         invalidTagLevel3?: string[]
+        dueDate?: string[]
     }
     timetable?: EventTimetable,
     timeIntervals: MomentOrInterval[]
     rowNumber: number
     data: Event
+    dueDate: Date
 }
 
 function preparePublish(data: Event, result: ExcelRowResult) {
@@ -104,6 +107,12 @@ function validateTag(tags: string[], errorCallback: (errors: string[]) => void) 
     }
 }
 
+function validateDueDate(dueDate: string, errorCallback: (errors: string[]) => void) {
+    if (dueDate && !isValid(parseISO(dueDate))) {
+        errorCallback(['Колонка dueDate должна заполняться только ботом'])
+    }
+}
+
 function isAddressValid(data: Event) {
     if (data.address.toLowerCase() === 'онлайн' && data.address.toLowerCase() !== data.address) {
         return false
@@ -124,7 +133,7 @@ function validateExtId(data: Event): boolean {
     }
 }
 
-export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory, now: Date, rowNo: number): ExcelRowResult {
+export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCategory, now: Date, rowNo: number): ExcelRowResult {
 
     const notNull = (s: string) => s === undefined ? '' : s.trim();
     const notNullOrUnknown = (s: string) => s === undefined ? '' : s;
@@ -161,8 +170,10 @@ export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory,
             invalidTagLevel1: [],
             invalidTagLevel2: [],
             invalidTagLevel3: [],
-            invalidExtId: []
+            invalidExtId: [],
+            dueDate: []
         },
+        dueDate: notNull(row.due_date) ? parseISO(notNull(row.due_date)) : undefined,
         timeIntervals: [],
         rowNumber: rowNo,
         data
@@ -189,6 +200,7 @@ export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory,
     validateTag(data.tag_level_2, (errors) => result.errors.invalidTagLevel2 = [...result.errors.invalidTagLevel2, ...errors])
     validateTag(data.tag_level_3, (errors) => result.errors.invalidTagLevel3 = [...result.errors.invalidTagLevel3, ...errors])
     validateTagLevel1(data, (errors) => result.errors.invalidTagLevel1 = [...result.errors.invalidTagLevel1, ...errors])
+    validateDueDate(row.due_date, (errors) => result.errors.dueDate = [...result.errors.dueDate, ...errors])
 
 
     result.valid = result.valid && result.errors.emptyRows.length == 0
@@ -196,6 +208,7 @@ export function processExcelRow(row: Partial<ExcelRow>, category: EventCategory,
     result.valid = result.valid && result.errors.invalidTagLevel2.length == 0
     result.valid = result.valid && result.errors.invalidTagLevel3.length == 0
     result.valid = result.valid && result.errors.invalidExtId.length == 0
+    result.valid = result.valid && result.errors.dueDate.length == 0
 
     return result
 }

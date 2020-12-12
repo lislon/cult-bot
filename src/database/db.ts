@@ -2,7 +2,7 @@ import pg_promise, { IDatabase, IInitOptions, IMain } from 'pg-promise'
 import * as pg from 'pg-promise/typescript/pg-subset'
 import { IConnectionParameters } from 'pg-promise/typescript/pg-subset'
 import { CustomFilterRepository } from './custom-filter-repository'
-import { TopEventsRepository } from './top-events'
+import { TopEventsRepository } from './db-top-events'
 import { AdminRepository } from './db-admin'
 import { SearchRepository } from './search'
 import { UserRepository } from './db-users'
@@ -12,6 +12,7 @@ import { logger } from '../util/logger'
 import pgMonitor from 'pg-monitor'
 import { SnapshotRepository } from './db-snapshot'
 import { EventsSyncRepository } from './db-sync-repository'
+import { PacksRepository } from './db-packs'
 
 export interface IExtensions {
     repoSync: EventsSyncRepository,
@@ -22,6 +23,7 @@ export interface IExtensions {
     repoSnapshot: SnapshotRepository
     userRepo: UserRepository
     repoFeedback: FeedbackRepository
+    repoPacks: PacksRepository
 }
 
 export type BotDb = IDatabase<IExtensions> & IExtensions;
@@ -37,6 +39,7 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.userRepo = new UserRepository(dbEx, pgp)
         dbEx.repoFeedback = new FeedbackRepository(dbEx, pgp)
         dbEx.repoSnapshot = new SnapshotRepository(dbEx, pgp)
+        dbEx.repoPacks = new PacksRepository(dbEx, pgp)
     },
 
     query(e) {

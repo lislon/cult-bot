@@ -13,6 +13,13 @@ export function getNextWeekEndRange(now: Date): MyInterval {
     }
 }
 
+export function getNextWeekRange(now: Date): MyInterval {
+    return {
+        start: max([now, (flow(startOfISOWeek, startOfDay, addDays(0))(now))]),
+        end: flow(startOfISOWeek, startOfDay, addDays(7))(now)
+    }
+}
+
 const ruDateFormat: {
     locale?: Locale
     weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6
