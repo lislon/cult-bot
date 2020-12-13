@@ -101,7 +101,7 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
         const numOfRows = sheet.values?.length
 
         const columnToClearFormat: ExcelColumnNameEvents[] = [
-            'publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3', 'due_date'
+            'ext_id', 'publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3', 'due_date'
         ]
 
         columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, 1, numOfRows))

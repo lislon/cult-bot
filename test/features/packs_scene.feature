@@ -8,13 +8,13 @@ Feature: Tops scene
       | A     | exhibitions | #временныевыставки   | пн-вс: 15:00 |
       | B     | exhibitions | #постоянныеколлекции | пн-вс: 15:00 |
 
-  Scenario: I can 6 categories when i enter customize
+  Scenario: I can see 6 categories when i enter customize
     Then Bot responds 'Пожалуйста, выберите категорию' with markup buttons:
       """
-      [🎭 Театры] [🎨 Выставки]
-      [🎥 Кино] [🌐 Мероприятия]
-      [🌤 Прогулки] [🎷 Концерты]
-      [◀️ Назад]
+      [Театры] [Выставки]
+      [Кино] [Мероприятия]
+      [Прогулки] [Концерты]
+      [Назад]
       """
 
   Scenario: I can see events in category 'temporary exhibitions'
@@ -25,7 +25,7 @@ Feature: Tops scene
       [Назад]
       """
     Then I click markup [Временные выставки]
-    Then Bot responds '<b>❔ Временные выставки</b> на предстоящие выходные 04-05 января:'
+    Then Bot responds '<b>Временные выставки</b> на предстоящие выходные 04-05 января:'
     Then Bot responds with event 'A'
 
   Scenario: I can see events in category 'permanent exhibitions'
@@ -36,7 +36,7 @@ Feature: Tops scene
       [Назад]
       """
     Then I click markup [Постоянные коллекции]
-    Then Bot responds '<b>❔ Постоянные коллекции</b> на предстоящие выходные 04-05 января:'
+    Then Bot responds '<b>Постоянные коллекции</b> на предстоящие выходные 04-05 января:'
     Then Bot responds with event 'B'
 
   Scenario: When I click back in subcategory I get into tops menu

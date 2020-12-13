@@ -12,16 +12,30 @@ import { allCategories, ContextMessageUpdate } from '../../../src/interfaces/app
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
 import { botConfig } from '../../../src/util/bot-config'
 
-function expectLayoutsSame(buttonsLayout: string, markup: AnyTypeOfKeyboard) {
-    if (buttonsLayout.match(emojiRegex())) {
-        expect(MarkupHelper.toLayout(markup)).toEqual(MarkupHelper.trimLeft(buttonsLayout))
+function clean(str: string) {
+    return str
+        .replace(emojiRegex(), '')
+        .replace(/[🏛]/g, '')
+        .replace(/\[\s+/g, '[')
+        .replace(/\s]+/g, ']')
+        .replace(/(?<=<[^/>]+>)\s+/g, '')
+}
+
+function assertEqualsWithEmojyRespect(expected: string, actual: string) {
+    if (expected.match(emojiRegex())) {
+        expect(actual).toEqual(expected)
     } else {
-        expect(MarkupHelper.toLayout(markup)
-            .replace(emojiRegex(), '')
-            .replace(/\[\s+/g, '[')
-            .replace(/\s]+/g, ']')
-        ).toEqual(MarkupHelper.trimLeft(buttonsLayout))
+        const a = clean(actual)
+        const e = clean(expected)
+        expect(a).toEqual(e)
     }
+}
+
+function expectLayoutsSame(expectedLayout: string, actualLayout: AnyTypeOfKeyboard) {
+    const actual = MarkupHelper.toLayout(actualLayout)
+    const expected = MarkupHelper.trimLeft(expectedLayout)
+
+    assertEqualsWithEmojyRespect(expected, actual)
 }
 
 function drainEvents() {
@@ -144,7 +158,7 @@ function expectTextMatches(reply: BotReply, expectedText: string) {
     if (expectedText.startsWith('*') && expectedText.endsWith('*')) {
         expect(reply.text).toContain(expectedText.substring(1, expectedText.length - 1))
     } else {
-        expect(reply.text).toStrictEqual(expectedText)
+        assertEqualsWithEmojyRespect(expectedText, reply.text)
     }
 }
 

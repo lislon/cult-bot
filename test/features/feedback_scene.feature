@@ -7,7 +7,7 @@ Feature: Feedback scene
   Scenario: I can send text as feedback
     Then Bot responds '✉️ ' with markup buttons:
       """
-      [В Главное меню]
+      [Назад]
       """
     Then Bot responds 'Напишите здесь всё что вы хотите нам сказать. Также предлагаем пройти короткий опрос, чтобы мы смогли сделать бот более приятным для вас' with inline buttons:
       """
@@ -56,5 +56,5 @@ Feature: Feedback scene
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Вы ужасны*'
 
   Scenario: I go back to main scene
-    When I click markup [В Главное меню]
+    When I click markup [Назад]
     Then I will be on scene 'main_scene'

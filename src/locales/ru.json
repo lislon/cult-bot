@@ -72,7 +72,7 @@
       "select_log_level": "Use:\n/level_silly (SQL)\n/level_debug (messages)\n/level_error (default)",
       "log_level_selected": "\uD83D\uDCC3 log level: ${level}",
       "snapshot_taken": "Снапшот базы сохранен. Теперь можно сравнивать изменения базы относительно него",
-      "start_sync": "Пошла скачивать <a href=\"${url}\">эксельчик</a>...",
+      "sync_start": "Пошла скачивать <a href=\"${url}\">эксельчик</a>...",
       "sync_stats_title": "✅ База обновлена${body}\nСамочувствие БД: ${rows} из 10 000\nПовторим? /sync",
       "sync_stats_cat_header": "${icon}<b>${categoryTitle}</b>",
       "sync_stats_cat_item_inserted": "➕ ${title}, <i>${ext_id}</i>",

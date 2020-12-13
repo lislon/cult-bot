@@ -104,6 +104,9 @@ bot
     .start((ctx) => ctx.reply('Welcome!'))
     .on('sticker', (ctx) => ctx.reply('👍'))
     .hears('hi', (ctx) => ctx.reply('Hey there'))
+    .hears(/.+/, async (ctx) => {
+        await ctx.replyWithHTML('Введена непонятная команда. Вернемся вначало? /menu')
+    })
 
 i18n.resourceKeys('ru')
     .filter((id: string) => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.](back|go_back_to_main)$/))
