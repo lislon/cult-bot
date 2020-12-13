@@ -5,6 +5,7 @@ import { cleanTagLevel1 } from '../../util/tag-level1-encoder'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/filed-utils'
 import { i18n } from '../../util/i18n'
 import { EventWithOldVersion } from '../../database/db-admin'
+import { getCurEventIndex, getEventsCount } from '../packs/packs-common'
 
 function addHtmlNiceUrls(text: string) {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
@@ -48,6 +49,7 @@ function getWhereEmoji(row: Event) {
 
 export interface CardOptions {
     showAdminInfo: boolean
+    packs?: boolean
 }
 
 export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions = { showAdminInfo: false }) {
@@ -63,10 +65,20 @@ export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions 
         }
     }
 
+    // if (options.packs) {
+    //     text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`
+    //     text += '\n'
+    //     text += '\n'
+    //     text += `<b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>`
+    // } else {
+    //
+    // }
     text += `<b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>`
     text += '\n'
     text += '\n'
-    text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>\n`
+    text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`
+
+    text += '\n'
     text += '\n'
     text += `${addHtmlNiceUrls(escapeHTML(row.description))} \n`
     text += '\n'

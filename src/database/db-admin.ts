@@ -145,12 +145,12 @@ export class AdminRepository {
 
     async countTotalRows(): Promise<number> {
         return await db.one(`
-        select  (select COUNT(*) from cb_events ce) +
-                (select COUNT(*) from cb_events_entrance_times) +
-                (select COUNT(*) from cb_feedbacks) +
-                (select COUNT(*) from cb_survey) +
-                (select COUNT(*) from cb_users) +
-                (select COUNT(*) from migrations m2 ) AS count`, undefined, (c => +c.count))
+        select  (select COUNT(id) from cb_events) +
+                (select COUNT(id) from cb_events_entrance_times) +
+                (select COUNT(id) from cb_feedbacks) +
+                (select COUNT(id) from cb_survey) +
+                (select COUNT(id) from cb_users) +
+                (select COUNT(id) from migrations m2 ) AS count`, undefined, (c => +c.count))
     }
 
     private static mapToEventWithId(row: any ): EventWithOldVersion {

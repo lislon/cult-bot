@@ -1,7 +1,7 @@
 {
   "scenes": {
     "main_scene": {
-      "select_anything": "Пожалуйста, выберите что-нибудь",
+      "select_anything": "Пожалуйста, воспользуйтесь нижним меню",
       "keyboard": {
         "customize": "⭐️ Мои интересы",
         "packs": "\uD83C\uDF81 Подборки по теме",
@@ -37,7 +37,22 @@
       }
     },
     "packs_scene": {
-      "welcome": "Тут подборки на неделю"
+      "welcome": "Тут подборки на неделю",
+      "header": "\uD83D\uDC47",
+      "pack_card": "<b>${title}</b>\n\n${description}\n\nСобытия:\n${listOfEvents}",
+      "pack_card_event": " - ${title}",
+      "event_curr_tip": "Используйте кнопки « и » для навигации между событиями",
+      "keyboard": {
+        "single_pack": "${title}",
+        "event": "${title}",
+        "event_prev": "«",
+        "event_curr": "${page} / ${total}",
+        "event_next": "»",
+        "event_back": "◀️ Назад [${packTitle}]",
+        "pack_next": "Следующая подборка » (${page} / ${total})",
+        "pack_back": "◀️ Назад [Список подборок]",
+        "pack_card_open": "Посмотреть события"
+      }
     },
     "search_scene": {
       "please_search": "Введите ключевое слово или фразу для поиска по событиям",
@@ -69,6 +84,9 @@
       "sync_stats_cat_item_inserted": "➕ ${title}, <i>${ext_id}</i>",
       "sync_stats_cat_item_updated": "〰️ ${title}, <i>${ext_id}</i>",
       "sync_stats_cat_item_deleted": "<s>✖️ ${title}, <i>${ext_id}</i></s>",
+
+      "sync_packs_status_good": "\uD83D\uDFE2 Подборки: ${countGood} успешно импортировано",
+      "sync_packs_status_bad": "\uD83D\uDD34 Подборки: ${countGood} успешно импортировано, ${countBad} с ошибками",
 
       "sync_error_title": "\n\uD83C\uDF77 Я отметила ошибки красненьким в файлике (${totalErrors} шт):\n${errors}\n",
       "sync_error_row": " - ${sheetName}: ${extIds}",

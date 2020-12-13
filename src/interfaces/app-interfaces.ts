@@ -13,7 +13,7 @@ import { FeedbackSceneState } from '../scenes/feedback/feedback-scene'
 import { AnalyticsState } from '../lib/middleware/analytics-middleware'
 import { UserSaveState } from '../lib/middleware/user-save-middleware'
 import { HelpSceneState } from '../scenes/help/help-scene'
-import { PacksSceneState } from '../scenes/packs/packs-scene'
+import { PacksSceneState } from '../scenes/packs/packs-common'
 
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'

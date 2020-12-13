@@ -41,7 +41,7 @@ export class CustomFilterRepository {
     public async countEventsCustomFilter(customFilter: CustomFilter): Promise<number> {
         const {queryBody, queryParams} = doQueryCore(customFilter)
 
-        const sql = `SELECT COUNT(*) AS count ${queryBody}`
+        const sql = `SELECT COUNT(cb.id) AS count ${queryBody}`
         const numberPromise = await this.db.one(sql, queryParams)
         return +(numberPromise['count'])
     }

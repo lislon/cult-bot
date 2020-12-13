@@ -85,7 +85,7 @@ export function mkClearFormat(sheetId: number, {startRowIndex, endRowIndex, star
                 startColumnIndex,
                 endColumnIndex,
             },
-            fields: 'userEnteredFormat'
+            fields: 'userEnteredFormat, note'
         }
     }
 }

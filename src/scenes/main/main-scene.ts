@@ -17,12 +17,18 @@ function isTimeToShowFeedback(ctx: ContextMessageUpdate) {
 
 export type MainSceneEnterState = { override_main_scene_msg?: string }
 
+function isDevEnv() {
+    const isProdOrUat = botConfig.HEROKU_APP_NAME === 'cult-hub-bot-uat' ||
+        botConfig.HEROKU_APP_NAME === 'cult-hub-bot-prod'
+    return !isProdOrUat
+}
+
 const content = (ctx: ContextMessageUpdate) => {
     const feedbackBtn = isTimeToShowFeedback(ctx) ? ['feedback'] : []
 
     const menu = [
         ['customize'],
-        ['packs'],
+        ...(isDevEnv() ? [['packs']] : []),
         ['tops'],
         ['search'],
         ...[(isAdmin(ctx) ? ['admin', ...feedbackBtn] : feedbackBtn)]

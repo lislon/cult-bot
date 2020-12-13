@@ -50,13 +50,14 @@ export default {
         onThrottlerError: async (ctx: ContextMessageUpdate, next, throttlerName, error) => {
             if (error.message === 'This job has been dropped by Bottleneck') {
                 logger.debug(`Throttle limit ${throttlerName}: ${error} for user ${ctx.from.username}`)
-            } else if (error.message === 'query is too old and response timeout expired') {
+            } else if (error.message.includes('query is too old and response timeout expired')) {
+                logger.debug(error.message)
                 // ignore
             } else {
                 logger.error(`Ooops, encountered an error for ${ctx.updateType}`, error)
                 if (isDev(ctx)) {
                     await ctx.replyWithHTML(ctx.i18n.t('root.something_went_wrong_dev', {
-                        error: error.toString().substr(0, 1000),
+                        error: error.toString().substr(0, 4000),
                         time: (new Date()).toString(),
                         session: JSON.stringify(ctx.session, undefined, 2)
                     }))

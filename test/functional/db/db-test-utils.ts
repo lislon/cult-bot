@@ -68,11 +68,11 @@ export function getMockEvent({
     }
 }
 
-export function expectedTitles(titles: string[], events: Event[]) {
+export function expectedTitles(titles: string[], events: Pick<Event, 'title'>[]) {
     expect(events.map(t => t.title).sort()).toEqual(titles.sort())
 }
 
-export function expectedTitlesStrict(titles: string[], events: Event[]) {
+export function expectedTitlesStrict(titles: string[], events: Pick<Event, 'title'>[]) {
     expect(events.map(t => t.title)).toEqual(titles)
 }
 

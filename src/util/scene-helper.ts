@@ -5,7 +5,7 @@ import { i18n } from './i18n'
 import { adminIds, adminUsernames, devUsernames } from './admins-list'
 
 export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id'>) {
-    const backAction = scene.id + 'button.back'
+    const backAction = scene.id + '.button.back'
 
     const pushEnterScene = async (ctx: ContextMessageUpdate, nextSceneId: string) => {
         await ctx.scene.enter(nextSceneId)
@@ -25,7 +25,11 @@ export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id
         i18Msg: (ctx: ContextMessageUpdate, id: string, tplData: object = undefined, byDefault: string | null = undefined) => {
             const resourceKey = `scenes.${scene.id}.${id}`
             if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
-                return ctx.i18n.t(resourceKey, tplData)
+                try {
+                    return ctx.i18n.t(resourceKey, tplData)
+                } catch (e) {
+                    throw Error(`Compile error for template '${resourceKey}'`)
+                }
             } else {
                 return byDefault
             }

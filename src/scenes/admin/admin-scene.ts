@@ -30,6 +30,8 @@ import { ITask } from 'pg-promise'
 import { parseAndValidateGoogleSpreadsheets } from '../../dbsync/parserSpresdsheetEvents'
 import { authToExcel } from '../../dbsync/googlesheets'
 import Timeout = NodeJS.Timeout
+import { EventPackValidated, getOnlyValid, prepareForPacksSync } from '../../dbsync/packsSyncLogic'
+import { EventPackForSave } from '../../database/db-packs'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
@@ -47,7 +49,7 @@ async function replyWithHTMLMaybeChunk(ctx: ContextMessageUpdate, msg: string, e
 
     let last: Message = undefined
     for (let i = 0; i < chunks.length; i++) {
-        last = await ctx.replyWithHTML(chunks[i], i === chunks.length - 1 ? extra : { disable_notification: true })
+        last = await ctx.replyWithHTML(chunks[i], i === chunks.length - 1 ? extra : {disable_notification: true})
     }
     return last
 }
@@ -71,7 +73,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
     const oldUser = GLOBAL_SYNC_STATE.lockOnSync(ctx)
     if (oldUser !== undefined) {
         await ctx.replyWithHTML(i18Msg(ctx, 'sync_is_locked',
-            { user: getHumanReadableUsername(oldUser) }))
+            {user: getHumanReadableUsername(oldUser)}))
         return
     }
 
@@ -81,23 +83,27 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
             disable_web_page_preview: true
         })
 
-        const syncResult = await parseAndValidateGoogleSpreadsheets(db, await authToExcel())
+        const excel = await authToExcel()
+        const syncResult = await parseAndValidateGoogleSpreadsheets(db, excel)
         // const {validationErrors, rows, excelUpdater} = await parseAndValidateGoogleSpreadsheets()
 
-         const { dbDiff, askUserToConfirm } = await db.tx('sync', async (dbTx) => {
+        const {dbDiff, askUserToConfirm, eventPacks} = await db.tx('sync', async (dbTx) => {
 
             const dbDiff = await dbTx.repoSync.prepareDiffForSync(syncResult.rawEvents, dbTx)
-             GLOBAL_SYNC_STATE.charge(dbDiff)
+
+            const eventPacks = await prepareForPacksSync(excel)
+
+            GLOBAL_SYNC_STATE.chargeEventsSync(dbDiff, getOnlyValid(eventPacks))
 
             const askUserToConfirm = dbDiff.deletedEvents.length > 0
             if (askUserToConfirm === false) {
                 await GLOBAL_SYNC_STATE.executeSync(dbTx)
             }
-            return { dbDiff, askUserToConfirm }
+            return {dbDiff, askUserToConfirm, eventPacks}
         })
 
+        const body = await formatMessageForSyncReport(syncResult.errors, dbDiff, eventPacks, ctx)
         if (askUserToConfirm === true) {
-            const body = await formatMessageForSyncReport(syncResult.errors, dbDiff, ctx)
             const keyboard = [[
                 Markup.callbackButton(i18Btn(ctx, 'sync_back'), actionName('sync_back')),
                 Markup.callbackButton(i18Btn(ctx, 'sync_confirm'), actionName('sync_confirm')),
@@ -117,9 +123,6 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
                 `updated={${listExtIds(dbDiff.updatedEvents)}}`,
                 `deleted={${dbDiff.deletedEvents.map(d => d.ext_id).join(',')}}`
             ].join(' '));
-
-
-            const body = await formatMessageForSyncReport(syncResult.errors, dbDiff, ctx)
 
             const msg = i18Msg(ctx, `sync_stats_title`, {
                 body,
@@ -149,6 +152,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 class GlobalSync {
     private timeoutId: Timeout
     private syncDiff: SyncDiff
+    private eventPacks: EventPackForSave[]
     private confirmIdMsg: Message
     private user: User
 
@@ -158,11 +162,15 @@ class GlobalSync {
         try {
             logger.debug('hasData?', this.syncDiff !== undefined)
             await dbTx.repoSync.syncDiff(this.syncDiff, dbTx)
+
+            await db.repoPacks.sync(this.eventPacks)
+
             logger.debug('Sync done')
         } finally {
             this.cleanup()
         }
     }
+
     public abort() {
         this.stopOldTimerIfExists()
         this.cleanup()
@@ -173,6 +181,7 @@ class GlobalSync {
         this.syncDiff = undefined
         this.user = undefined
         this.confirmIdMsg = undefined
+        this.eventPacks = undefined
     }
 
     public isRunning(ctx: ContextMessageUpdate) {
@@ -210,9 +219,10 @@ class GlobalSync {
         return this.user
     }
 
-    charge(dbDiff: SyncDiff) {
+    chargeEventsSync(dbDiff: SyncDiff, eventPacks: EventPackForSave[]) {
         logger.debug('Charge')
         this.syncDiff = dbDiff
+        this.eventPacks = eventPacks
     }
 
     saveConfirmIdMessage(msg: Message) {
@@ -381,7 +391,7 @@ function findExistingButtonRow(ctx: ContextMessageUpdate, predicate: (btn: Callb
     return existingKeyboard?.find(btns => btns.find(predicate) !== undefined)
 }
 
-async function switchCard(ctx: ContextMessageUpdate, version: 'current'|'snapshot') {
+async function switchCard(ctx: ContextMessageUpdate, version: 'current' | 'snapshot') {
     const eventId = +ctx.match[1]
     await ctx.answerCbQuery()
     const event = await db.repoAdmin.findSnapshotEvent(eventId, version)

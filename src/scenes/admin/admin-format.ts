@@ -10,6 +10,7 @@ import { SyncDiff } from '../../database/db-sync-repository'
 import { EventToSave } from '../../interfaces/db-interfaces'
 import { menuCats, totalValidationErrors } from './admin-common'
 import { SpreadSheetValidationError } from '../../dbsync/parserSpresdsheetEvents'
+import { EventPackValidated } from '../../dbsync/packsSyncLogic'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
@@ -87,7 +88,20 @@ export const formatMainAdminMenu = async (ctx: ContextMessageUpdate) => {
 
 }
 
-export async function formatMessageForSyncReport(errors: SpreadSheetValidationError[], syncResult: SyncDiff, ctx: ContextMessageUpdate) {
+function formatPacksReport(eventPackValidated: EventPackValidated[], ctx: ContextMessageUpdate) {
+    const countGood = eventPackValidated.filter(e => e.published && e.isValid).length
+    const countBad = eventPackValidated.filter(e => e.published && !e.isValid).length
+    if (countGood > 0 || countBad > 0) {
+        return i18Msg(ctx, `sync_packs_status_${countBad ? 'bad' : 'good'}`, {
+            countGood, countBad
+        })
+    }
+    return ''
+}
+
+export async function formatMessageForSyncReport(errors: SpreadSheetValidationError[], syncResult: SyncDiff,
+                                                 eventPackValidated: EventPackValidated[],
+                                                 ctx: ContextMessageUpdate) {
     const formatBody = () => {
         const categoryRows = allCategories
             .map(cat => {
@@ -128,6 +142,7 @@ export async function formatMessageForSyncReport(errors: SpreadSheetValidationEr
                 return rows.join('\n') + (rows.length > 0 ? '\n' : '')
             })
         const s = categoryRows.join('\n') + '\n'
+
         if (categoryRows.length === 0) {
             return ' - ничего нового'
         } else {
@@ -148,5 +163,6 @@ export async function formatMessageForSyncReport(errors: SpreadSheetValidationEr
         })
     }
 
-    return formatBody() + '\n' + (totalValidationErrors(errors) > 0 ? formatErrors() : '✅ 0 Ошибок')
+    const packsErr = formatPacksReport(eventPackValidated, ctx)
+    return formatBody() + '\n' + (totalValidationErrors(errors) > 0 ? formatErrors() : '✅ 0 Ошибок') + (packsErr ? '\n' + packsErr : '')
 }

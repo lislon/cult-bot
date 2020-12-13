@@ -26,42 +26,42 @@ export class TopEventsRepository {
         }
 
         const primaryEvents = `
-        SELECT cb.*
-        FROM cb_events cb
-        WHERE
-            EXISTS
-            (
-                select id
-                FROM cb_events_entrance_times cbet
-                where ${rangeHalfOpenIntersect('$(interval)::tstzrange', 'cbet.entrance')} AND cbet.event_id = cb.id
-            )
-            AND cb.category = $(category)
-            AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
-            AND cb.is_anytime = false
-        ORDER BY cb.rating DESC, cb.order_rnd
-    `
-
-        const secondaryEvents = `
-        select
-            top30.*
-        from
-            (select cb.*
-            from cb_events cb
-            where
+            SELECT cb.*
+            FROM cb_events cb
+            WHERE
                 EXISTS
                 (
                     select id
                     FROM cb_events_entrance_times cbet
                     where ${rangeHalfOpenIntersect('$(interval)::tstzrange', 'cbet.entrance')} AND cbet.event_id = cb.id
                 )
-                and cb.category =  $(category)
+                AND cb.category = $(category)
                 AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
-                and cb.is_anytime = true
-            order by
-                cb.rating desc
-            limit 30 ) as top30
-        order by top30.order_rnd
-    `
+                AND cb.is_anytime = false
+            ORDER BY cb.rating DESC, cb.order_rnd
+        `
+
+        const secondaryEvents = `
+            select
+                top30.*
+            from
+                (select cb.*
+                from cb_events cb
+                where
+                    EXISTS
+                    (
+                        select id
+                        FROM cb_events_entrance_times cbet
+                        where ${rangeHalfOpenIntersect('$(interval)::tstzrange', 'cbet.entrance')} AND cbet.event_id = cb.id
+                    )
+                    and cb.category =  $(category)
+                    AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
+                    and cb.is_anytime = true
+                order by
+                    cb.rating desc
+                limit 30 ) as top30
+            order by top30.order_rnd
+        `
 
         const finalQuery = `(${primaryEvents}) UNION ALL (${secondaryEvents}) limit $(limit) offset $(offset)`
 

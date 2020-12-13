@@ -1,8 +1,8 @@
 import { sheets_v4 } from 'googleapis'
 import { logger } from '../util/logger'
 import { botConfig } from '../util/bot-config'
-import { EventPackValidated } from './run-packs-sync'
 import { ExcelUpdater } from './ExcelUpdater'
+import { EventPackValidated } from './packsSyncLogic'
 import Sheets = sheets_v4.Sheets
 
 const EXCEL_COLUMNS_PACKS = {
@@ -102,12 +102,12 @@ export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncR
                 author: '',
                 imageSrc: '',
                 weight: 0,
-                isPublish: false,
+                isPublish: undefined,
                 rowNumber,
                 sheetId: sheetsMetaData.data.sheets[0].properties.sheetId
             }
         } else if (rowLabel === 'Опубликована') {
-            currentPack.isPublish = !!(rowValue as string).match(/(YES|да|TRUE)/ig)
+            currentPack.isPublish = !!(rowValue as string).toLocaleLowerCase().match(/(yes|да|true)/)
         } else if (rowLabel === 'Куратор') {
             currentPack.author = rowValue
         } else if (rowLabel === 'Вес') {
