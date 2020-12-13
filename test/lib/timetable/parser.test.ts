@@ -260,7 +260,11 @@ describe('parser', () => {
                     }
                 ],
             }
+        ],
+        ['16 декабря 2020 — 01 декабря 2020: 12:00–20:00',
+            [`Дата '2020-12-16' должна быть меньше, чем '2020-12-01'`]
         ]
+
     ])('%s', (text: string, expected: any) => {
         if (expected) {
             expected.dateRangesTimetable = expected.dateRangesTimetable || []

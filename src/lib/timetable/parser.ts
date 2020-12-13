@@ -1,6 +1,6 @@
 import * as P from 'parsimmon'
 import { Result, Success } from 'parsimmon'
-import { DateExact, DateRange, EventTimetable, mapInterval, WeekTime } from './intervals'
+import { DateExact, DateOrDateRange, DateRange, EventTimetable, mapInterval, WeekTime } from './intervals'
 import { cleanText } from './timetable-utils'
 import { addYears, format, isValid, parseISO, setYear, subMonths } from 'date-fns'
 import cloneDeep from 'lodash/cloneDeep'
@@ -178,14 +178,22 @@ function fillUnkownYearsAndValidate(parse: Success<RawParseResult>, dateValidati
     const fixed = cloneDeep(parse)
 
     const validationAndFixation = (d: string) => validateAndFixDate(d, dateValidation, now)
+    const validateDateRangeOrder = (d: DateOrDateRange) => {
+        if (d.length === 2 && d[0] > d[1]) {
+            dateValidation.push(`Дата '${d[0]}' должна быть меньше, чем '${d[1]}'`)
+        }
+    }
 
     for (const p of fixed.value) {
         if (p.dateRange !== undefined) {
             p.dateRange = mapInterval(p.dateRange, validationAndFixation) as any
+            validateDateRangeOrder(p.dateRange)
         } else if (p.dateRangesTimetable !== undefined) {
             p.dateRangesTimetable.dateRange = mapInterval(p.dateRangesTimetable.dateRange, validationAndFixation) as any
+            validateDateRangeOrder(p.dateRangesTimetable.dateRange)
         } else if (p.exactDate) {
             p.exactDate.dateRange = mapInterval(p.exactDate.dateRange, validationAndFixation) as any
+            validateDateRangeOrder(p.exactDate.dateRange)
         }
     }
     return fixed;
