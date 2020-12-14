@@ -1,13 +1,7 @@
 import imageType = require('image-type')
 import { EventPackForSave } from '../database/db-packs'
-import {
-    EventInPackExcel,
-    EventPackExcel,
-    ExcelPacksSyncResult,
-    fetchAndParsePacks,
-    saveValidationErrors
-} from './parserSpredsheetPacks'
-import { compact, Dictionary, keyBy } from 'lodash'
+import { EventInPackExcel, EventPackExcel, fetchAndParsePacks, saveValidationErrors } from './parserSpredsheetPacks'
+import { Dictionary, keyBy } from 'lodash'
 import { db } from '../database/db'
 import { logger } from '../util/logger'
 import fetch from 'node-fetch'
@@ -74,7 +68,7 @@ async function processPack(p: EventPackExcel, listOfLoadedImages: string[], idBy
             }
         })
 
-    const eventIds = compact(p.events.map(e => idByExtId[e.extId])).map(e => e.id)
+    const eventIds = p.events.map(e => idByExtId[e.extId]).filter(Boolean).map(e => e.id)
     return {
         published: p.isPublish,
         raw: p,
@@ -92,18 +86,17 @@ async function processPack(p: EventPackExcel, listOfLoadedImages: string[], idBy
     }
 }
 
-async function convertAndValidatePacks(packsSyncResult: ExcelPacksSyncResult, listOfLoadedImages: string[]): Promise<EventPackValidated[]> {
-
-    const eventsExtIds = packsSyncResult.packs.flatMap(p => p.events.map(e => e.extId))
-    const idByExtId = keyBy(await db.repoPacks.fetchIdsByExtIds(eventsExtIds), 'extId')
-
-    return await Promise.all(packsSyncResult.packs.map(p => processPack(p, listOfLoadedImages, idByExtId)))
-}
 
 export async function prepareForPacksSync(excel: sheets_v4.Sheets): Promise<EventPackValidated[]> {
     const packsSyncResult = await fetchAndParsePacks(excel)
     const loadedImages = await db.repoPacks.fetchAlreadyLoadedImages()
-    const validationResult = await convertAndValidatePacks(packsSyncResult, loadedImages)
+
+    const existingIds = await db.repoPacks.fetchAllIdsExtIds()
+
+    const idByExtId: Dictionary<{ id: number }> = keyBy(existingIds, 'extId')
+
+    const validationResult = await Promise.all(packsSyncResult.packs.map(p => processPack(p, loadedImages, idByExtId)))
+
 
     await saveValidationErrors(excel, validationResult)
     return validationResult

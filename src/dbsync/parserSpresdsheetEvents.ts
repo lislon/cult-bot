@@ -146,14 +146,6 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
                     excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
 
                     // debugTimetable(mapped, excelUpdater, sheetId, rowNo)
-
-                    if (last(mapped.timeIntervals) !== undefined) {
-                        const dueDate = rightDate(last(mapped.timeIntervals))
-                        if (!isEqual(mapped.dueDate, dueDate)) {
-                            excelUpdater.editCellDate(sheetId, 'due_date', rowNo, dueDate)
-                        }
-                    }
-
                 } else {
                     erroredExtIds.push(mapped.data.ext_id)
 
@@ -190,11 +182,20 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
                     }
                     if (mapped.errors.dueDate.length > 0) {
                         excelUpdater.colorCell(sheetId, 'due_date', rowNo, 'red')
+                        excelUpdater.annotateCell(sheetId, 'due_date', rowNo, mapped.errors.dueDate.join('\n'))
                     }
 
                     excelUpdater.colorCell(sheetId, 'publish', rowNo, 'lightred')
                 }
             }
+
+            if (last(mapped.timeIntervals) !== undefined) {
+                const dueDate = rightDate(last(mapped.timeIntervals))
+                if (!isEqual(mapped.dueDate, dueDate)) {
+                    excelUpdater.editCellDate(sheetId, 'due_date', rowNo, dueDate)
+                }
+            }
+
         })
 
         errors.push({

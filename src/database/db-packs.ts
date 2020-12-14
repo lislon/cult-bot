@@ -152,15 +152,11 @@ export class PacksRepository {
         // `, {}, r => r.image_src)
     }
 
-    public async fetchIdsByExtIds(extIds: string[]): Promise<{ id: number; extId: string }[]> {
-        if (extIds.length === 0) {
-            return []
-        }
+    public async fetchAllIdsExtIds(): Promise<{ id: number; extId: string }[]> {
         return await this.db.map(`
             SELECT e.id, e.ext_id
             FROM cb_events e
-            WHERE e.ext_id IN ($(extIds:csv))
-            `, { extIds }, ({ id, ext_id}) => {
+            `, undefined, ({ id, ext_id}) => {
                 return {id: +id, extId: ext_id}
             })
     }

@@ -151,12 +151,12 @@ export function mkEditCellDate(sheetId: number, text: Date, column: number, row:
                     values: [
                         {
                             userEnteredValue: {
-                                stringValue: ruFormat(text, 'yyyy-dd-MM HH:mm')
+                                stringValue: ruFormat(text, 'dd-MM-yyyy HH:mm:ss')
                             },
                             userEnteredFormat: {
                                 numberFormat: {
                                     type: 'DATE',
-                                    pattern: 'yyyy-dd-mm hh:mm:ss'
+                                    pattern: 'dd-mm-yyyy hh:mm:ss'
                                 }
                             }
                         },
