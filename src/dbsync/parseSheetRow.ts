@@ -3,7 +3,7 @@ import { EventTimetable, MomentOrInterval } from '../lib/timetable/intervals'
 import { fieldIsQuestionMarkOrEmpty } from '../util/filed-utils'
 import { parseAndPredictTimetable } from '../lib/timetable/timetable-utils'
 import { i18n } from '../util/i18n'
-import { isValid, parseISO } from 'date-fns'
+import { parseISO } from 'date-fns'
 
 export const EXCEL_COLUMNS_EVENTS = {
     ext_id: '№',
@@ -54,7 +54,6 @@ export interface ExcelRowResult {
         invalidTagLevel1?: string[]
         invalidTagLevel2?: string[]
         invalidTagLevel3?: string[]
-        dueDate?: string[]
     }
     timetable?: EventTimetable,
     timeIntervals: MomentOrInterval[]
@@ -107,11 +106,6 @@ function validateTag(tags: string[], errorCallback: (errors: string[]) => void) 
     }
 }
 
-function validateDueDate(dueDate: string, errorCallback: (errors: string[]) => void) {
-    if (dueDate && !isValid(parseISO(dueDate))) {
-        errorCallback(['Колонка dueDate должна заполняться только ботом'])
-    }
-}
 
 function isAddressValid(data: Event) {
     if (data.address.toLowerCase() === 'онлайн' && data.address.toLowerCase() !== data.address) {
@@ -171,7 +165,6 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
             invalidTagLevel2: [],
             invalidTagLevel3: [],
             invalidExtId: [],
-            dueDate: []
         },
         dueDate: notNull(row.due_date) ? parseISO(notNull(row.due_date)) : undefined,
         timeIntervals: [],
@@ -200,7 +193,6 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
     validateTag(data.tag_level_2, (errors) => result.errors.invalidTagLevel2 = [...result.errors.invalidTagLevel2, ...errors])
     validateTag(data.tag_level_3, (errors) => result.errors.invalidTagLevel3 = [...result.errors.invalidTagLevel3, ...errors])
     validateTagLevel1(data, (errors) => result.errors.invalidTagLevel1 = [...result.errors.invalidTagLevel1, ...errors])
-    validateDueDate(row.due_date, (errors) => result.errors.dueDate = [...result.errors.dueDate, ...errors])
 
 
     result.valid = result.valid && result.errors.emptyRows.length == 0
@@ -208,7 +200,6 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
     result.valid = result.valid && result.errors.invalidTagLevel2.length == 0
     result.valid = result.valid && result.errors.invalidTagLevel3.length == 0
     result.valid = result.valid && result.errors.invalidExtId.length == 0
-    result.valid = result.valid && result.errors.dueDate.length == 0
 
     return result
 }

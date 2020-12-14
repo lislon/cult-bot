@@ -180,10 +180,6 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
                     if (mapped.errors.invalidTagLevel3.length > 0) {
                         excelUpdater.colorCell(sheetId, 'tag_level_3', rowNo, 'red')
                     }
-                    if (mapped.errors.dueDate.length > 0) {
-                        excelUpdater.colorCell(sheetId, 'due_date', rowNo, 'red')
-                        excelUpdater.annotateCell(sheetId, 'due_date', rowNo, mapped.errors.dueDate.join('\n'))
-                    }
 
                     excelUpdater.colorCell(sheetId, 'publish', rowNo, 'lightred')
                 }
