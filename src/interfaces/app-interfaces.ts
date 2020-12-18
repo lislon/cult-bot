@@ -64,7 +64,6 @@ export interface Event {
     ext_id: string
     category: EventCategory
     publish: string
-    subcategory: string
     title: string
     place: string
     address: string

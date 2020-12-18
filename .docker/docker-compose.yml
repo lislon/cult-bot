@@ -2,7 +2,7 @@ version: '2.1'
 services:
   cult_bot:
     image: "postgres:12"
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_ROOT_PASSWORD: root
       POSTGRES_DATABASE: cult
@@ -15,7 +15,7 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
   cult_bot_test:
     image: "postgres:12"
-    restart: always
+    restart: unless-stopped
     command: -c fsync=off
     environment:
       POSTGRES_ROOT_PASSWORD: root
@@ -29,5 +29,6 @@ services:
 
   redis:
     image: redis
+    restart: unless-stopped
     ports:
       - "6380:6379"

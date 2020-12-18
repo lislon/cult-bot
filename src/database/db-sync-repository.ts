@@ -81,7 +81,6 @@ export function buildPostgresMd5Expression(prefix: string = undefined) {
 
 export const eventColumnsDef = [
     'category',
-    'subcategory',
     'title',
     'place',
     'address',

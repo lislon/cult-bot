@@ -62,7 +62,7 @@ myRegisterScene(bot, stage, [
 
 // bot.catch(async (error: any, ctx: ContextMessageUpdate) => {
 //     console.log(`Ooops, encountered an error for ${ctx.updateType}`, error)
-//     await ctx.reply(ctx.i18n.t('shared.something_went_wrong_dev', { error: error.toString().substr(0, 1000) }))
+//     await ctx.reply(ctx.i18n.t('shared.something_went_wrong_admin', { error: error.toString().substr(0, 1000) }))
 // })
 
 bot

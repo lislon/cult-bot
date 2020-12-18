@@ -29,9 +29,9 @@ import { SyncDiff } from '../../database/db-sync-repository'
 import { ITask } from 'pg-promise'
 import { parseAndValidateGoogleSpreadsheets } from '../../dbsync/parserSpresdsheetEvents'
 import { authToExcel } from '../../dbsync/googlesheets'
-import Timeout = NodeJS.Timeout
-import { EventPackValidated, getOnlyValid, prepareForPacksSync } from '../../dbsync/packsSyncLogic'
+import { getOnlyValid, prepareForPacksSync } from '../../dbsync/packsSyncLogic'
 import { EventPackForSave } from '../../database/db-packs'
+import Timeout = NodeJS.Timeout
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
 
@@ -317,17 +317,17 @@ async function getSearchedEvents(ctx: ContextMessageUpdate) {
     }
 }
 
-function getButtonsSwitch(ctx: ContextMessageUpdate, eventId: number, active: 'snapshot' | 'current' = 'current') {
+function getButtonsSwitch(ctx: ContextMessageUpdate, extId: string, active: 'snapshot' | 'current' = 'current') {
     return [Markup.callbackButton(
         i18Btn(ctx, `switch_to_snapshot`,
             {active_icon: active === 'snapshot' ? i18Btn(ctx, 'snapshot_active_icon') : ''}
         ),
-        actionName(`snapshot_${eventId}`)),
+        actionName(`snapshot_${extId.toLowerCase()}`)),
         Markup.callbackButton(
             i18Btn(ctx, 'switch_to_current',
                 {active_icon: active === 'current' ? i18Btn(ctx, 'current_active_icon') : ''}
             ),
-            actionName(`current_${eventId}`))
+            actionName(`current_${extId.toLowerCase()}`))
     ]
 }
 
@@ -347,7 +347,7 @@ async function showNextResults(ctx: ContextMessageUpdate) {
 
         if (event.snapshotStatus === 'updated') {
             buttons = [...buttons,
-                getButtonsSwitch(ctx, event.id, 'current')
+                getButtonsSwitch(ctx, event.ext_id, 'current')
             ]
         }
 
@@ -392,11 +392,11 @@ function findExistingButtonRow(ctx: ContextMessageUpdate, predicate: (btn: Callb
 }
 
 async function switchCard(ctx: ContextMessageUpdate, version: 'current' | 'snapshot') {
-    const eventId = +ctx.match[1]
+    const extId = ctx.match[1].toUpperCase()
     await ctx.answerCbQuery()
-    const event = await db.repoAdmin.findSnapshotEvent(eventId, version)
+    const event = await db.repoAdmin.findSnapshotEvent(extId, version)
     const existingKeyboard = findExistingButtonRow(ctx, btn => btn.callback_data === actionName('show_more'))
-    const buttons = [getButtonsSwitch(ctx, eventId, version), ...(existingKeyboard ? [existingKeyboard] : [])]
+    const buttons = [getButtonsSwitch(ctx, extId, version), ...(existingKeyboard ? [existingKeyboard] : [])]
     await ctx.editMessageText(cardFormat(event, {showAdminInfo: true}),
         Extra.HTML().markup(Markup.inlineKeyboard(buttons)).webPreview(false))
 }
@@ -469,10 +469,10 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
                 pgLogOnlyErrors()
             }
         })
-        .action(/admin_scene[.]snapshot_(\d+)$/, async (ctx) => {
+        .action(/admin_scene[.]snapshot_(\w+)$/, async (ctx) => {
             await switchCard(ctx, 'snapshot')
         })
-        .action(/admin_scene[.]current_(\d+)$/, async (ctx) => {
+        .action(/admin_scene[.]current_(\w+)$/, async (ctx) => {
             await switchCard(ctx, 'current')
         })
 

@@ -40,7 +40,6 @@ export function getMockEvent({
         ext_id: ext_id,
         category: category,
         publish: '',
-        subcategory: '',
         title: title,
         place: '',
         address: address,

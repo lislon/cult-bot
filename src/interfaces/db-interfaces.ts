@@ -3,7 +3,6 @@ import { EventTimetable, MomentIntervals } from '../lib/timetable/intervals'
 
 export interface DbEvent {
     category: string
-    subcategory: string
     title: string
     place: string
     address: string

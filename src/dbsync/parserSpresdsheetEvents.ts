@@ -56,25 +56,6 @@ export interface ExcelSheetError {
     sheetName: string,
     extIds: string[]
 }
-// export interface ExcelSyncResult {
-//     errors: ExcelSheetError[]
-//     syncResult?: SyncDiff
-// }
-
-function listExtIds(eventToSaves: EventToSave[]): string {
-    return eventToSaves.map(z => z.primaryData.ext_id).join(',')
-}
-
-// async function run(db: BotDb): Promise<ExcelSyncResult> {
-//     logger.debug('Connection from excel...')
-//     try {
-//         const excel: Sheets = await authToExcel()
-//         return fetchAndParseEventsFromLists(db, excel)
-//     } catch (e) {
-//         logger.error(e);
-//         throw e;
-//     }
-// }
 
 export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheets): Promise<ExcelParseResult> {
     const errors: SpreadSheetValidationError[] = []

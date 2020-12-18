@@ -1,7 +1,7 @@
 import updateLogger from 'telegraf-update-logger'
 import telegrafThrottler from 'telegraf-throttler';
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
-import { isDev } from './util/scene-helper'
+import { isAdmin } from './util/scene-helper'
 import { parseISO } from 'date-fns'
 import { userSaveMiddleware } from './lib/middleware/user-save-middleware'
 import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
@@ -55,8 +55,8 @@ export default {
                 // ignore
             } else {
                 logger.error(`Ooops, encountered an error for ${ctx.updateType}`, error)
-                if (isDev(ctx)) {
-                    await ctx.replyWithHTML(ctx.i18n.t('root.something_went_wrong_dev', {
+                if (isAdmin(ctx)) {
+                    await ctx.replyWithHTML(ctx.i18n.t('root.something_went_wrong_admin', {
                         error: error.toString().substr(0, 4000),
                         time: (new Date()).toString(),
                         session: JSON.stringify(ctx.session, undefined, 2)

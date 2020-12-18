@@ -135,12 +135,12 @@ export class AdminRepository {
             }, AdminRepository.mapToEventWithId) as EventWithOldVersion[]
     }
 
-    async findSnapshotEvent(id: number, version: 'current' | 'snapshot'): Promise<EventWithOldVersion> {
+    async findSnapshotEvent(extId: string, version: 'current' | 'snapshot'): Promise<EventWithOldVersion> {
         const table = version == 'current' ? 'cb_events' : 'cb_events_snapshot'
         return await db.one(`
             SELECT *, 'updated' AS snapshot_status
             FROM ${table}
-            WHERE id = $1`, id, AdminRepository.mapToEventWithId)
+            WHERE ext_id = $1`, extId, AdminRepository.mapToEventWithId)
     }
 
     async countTotalRows(): Promise<number> {

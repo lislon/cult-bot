@@ -29,8 +29,7 @@ const defaultEvent: Event = {
     publish: '',
     place: '',
     url: '',
-    reviewer: '',
-    subcategory: ''
+    reviewer: ''
 }
 
 const prepare = (str: string) => {

@@ -115,15 +115,26 @@ function isAddressValid(data: Event) {
     return true
 }
 
-function validateExtId(data: Event): boolean {
-    switch (data.category) {
-        case 'theaters': return !!data.ext_id?.match(/^T\d+[A-Z]?$/)
-        case 'exhibitions': return !!data.ext_id?.match(/^V\d+[A-Z]?$/)
-        case 'concerts': return !!data.ext_id?.match(/^K\d+[A-Z]?$/)
-        case 'events': return !!data.ext_id?.match(/^M\d+[A-Z]?$/)
-        case 'movies': return !!data.ext_id?.match(/^C\d+[A-Z]?$/)
-        case 'walks': return !!data.ext_id?.match(/^P\d+[A-Z]?$/)
-        default: throw new Error(`Unknown category: ${data.category}`)
+function validateExtId(data: Event, errorCallback: (errors: string[]) => void): void {
+    const extId = data.ext_id
+    if (extId?.match(/^[А-Я]/)) {
+        return errorCallback([`Замечена русская буква '${extId.substring(0, 1)}' в ID-шнике. Допускаются только английские`])
+    }
+    const CATEGORY_TO_LETTER = {
+        theaters: 'T',
+        exhibitions: 'V',
+        concerts: 'K',
+        events: 'M',
+        movies: 'C',
+        walks: 'P',
+    }
+    const startLetter = CATEGORY_TO_LETTER[data.category]
+    if (startLetter === undefined) {
+        throw new Error(`Unknown category: ${data.category}`)
+    }
+    if (!extId?.startsWith(startLetter) && extId?.match(/^.\d+[A-Z]?$/)) {
+        return errorCallback([`Идентификатор для категории ${data.category} должен начинатся с буквы '${startLetter}'.
+            \nЗатем должна идти цифра, и возможно другая буква, например: ${startLetter}123 или ${startLetter}123B`])
     }
 }
 
@@ -138,7 +149,6 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
         'ext_id': row.ext_id,
         'category': category,
         'publish': row.publish,
-        'subcategory': row.subcategory,
         'title': row.title,
         'place': notNull(row.place),
         'address': notNull(row.address),
@@ -186,9 +196,8 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
         result.errors.emptyRows.push('address');
     }
 
-    if (!validateExtId(data)) {
-        result.errors.invalidExtId = ['Идентификатор должен соответствовать вкладке (начинаться с букв TVKMCP) и заканчиться цифрой.']
-    }
+    validateExtId(data, (errors) => result.errors.invalidExtId = errors)
+
     validateTag(data.tag_level_1, (errors) => result.errors.invalidTagLevel1 = [...result.errors.invalidTagLevel1, ...errors])
     validateTag(data.tag_level_2, (errors) => result.errors.invalidTagLevel2 = [...result.errors.invalidTagLevel2, ...errors])
     validateTag(data.tag_level_3, (errors) => result.errors.invalidTagLevel3 = [...result.errors.invalidTagLevel3, ...errors])
