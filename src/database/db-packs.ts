@@ -17,8 +17,6 @@ export interface EventPackForSave {
     description: string
     author: string
     eventIds: number[]
-    image: Buffer|null
-    imageSrc: string
     weight: number
 }
 
@@ -27,7 +25,6 @@ export interface ScenePack {
     title: string
     events: PackEventSummary[]
     description: string
-    imageSrc: string
 }
 
 export interface PackEventSummary {
@@ -39,7 +36,6 @@ export interface PackWithEvents {
     id: number
     title: string
     description: string
-    imageSrc: string
     events: PackEventSummary[]
 }
 
@@ -57,8 +53,6 @@ export class PacksRepository {
             'author',
             'weight',
             { name: 'event_ids', cast: '_int8' },
-            'image_src',
-            'image',
             ], {table: 'cb_events_packs'})
     }
 
@@ -73,8 +67,6 @@ export class PacksRepository {
                         author: p.author,
                         weight: p.weight,
                         event_ids: p.eventIds,
-                        image: p.image,
-                        image_src: p.imageSrc
                     }
                 }), this.columns) + ' RETURNING id'
 
@@ -91,7 +83,6 @@ export class PacksRepository {
                 p.id,
                 p.title,
                 p.description,
-                p.image_src,
                 array_agg(pe.id) event_ids,
                 array_agg(pe.title) event_titles
             from cb_events_packs p
@@ -115,7 +106,6 @@ export class PacksRepository {
                     id: +r.id,
                     title: r.title,
                     description: r.description,
-                    imageSrc: r.image_src,
                     events: zip<string, string>(r.event_ids, r.event_titles)
                         .map(([id, title]) => {
                             return {id: +id, title}

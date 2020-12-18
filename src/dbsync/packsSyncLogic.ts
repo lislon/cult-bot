@@ -47,17 +47,6 @@ async function processPack(p: EventPackExcel, listOfLoadedImages: string[], idBy
         description: undefined,
         badEvents: []
     }
-    let image: Buffer = undefined
-    let imageSrc = ''
-    if (p.imageSrc !== '') {
-        try {
-            image = listOfLoadedImages.includes(p.imageSrc) ? undefined : await downloadImage(p.imageSrc)
-            imageSrc = p.imageSrc
-        } catch (e) {
-            errors.imageUrl = e.toString()
-            logger.warn(e)
-        }
-    }
 
     errors.badEvents = p.events
         .filter(({extId}) => idByExtId[extId] === undefined)
@@ -74,8 +63,6 @@ async function processPack(p: EventPackExcel, listOfLoadedImages: string[], idBy
         raw: p,
         pack: {
             title: p.title,
-            imageSrc: imageSrc,
-            image: imageSrc ? image : undefined,
             eventIds: eventIds,
             author: p.author,
             description: p.description,

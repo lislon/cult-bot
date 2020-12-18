@@ -1,9 +1,6 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { db } from '../../database/db'
 import { Markup } from 'telegraf'
-import { createReadStream } from 'fs'
-import path from 'path'
 import {
     getCurEventIndex,
     getCurPackIndex,
@@ -37,12 +34,6 @@ export async function displayMainMenu(ctx: ContextMessageUpdate) {
     ]
 
     await updateMenu(ctx, {
-        imgCacheId: 'podborka.png',
-        imgLoad: async () => {
-            return {
-                source: createReadStream(path.resolve(__dirname, './assets/podborka.png'))
-            }
-        },
         text: i18Msg(ctx, 'welcome'),
         buttons
     })
@@ -78,12 +69,6 @@ export async function displayPackMenu(ctx: ContextMessageUpdate) {
     ]
 
     await updateMenu(ctx, {
-        imgCacheId: pack.imageSrc,
-        imgLoad: async () => {
-            return {
-                source: await db.repoPacks.loadImage(pack.id)
-            }
-        },
         text: text,
         buttons
     })
@@ -112,12 +97,6 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
     ]
 
     await updateMenu(ctx, {
-        imgCacheId: pack.imageSrc,
-        imgLoad: async () => {
-            return {
-                source: await db.repoPacks.loadImage(pack.id)
-            }
-        },
         text: cardFormat(event, {
             showAdminInfo: false,
             packs: true

@@ -1,15 +1,11 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
-import { BaseScene, Markup } from 'telegraf'
+import { BaseScene, Extra, Markup } from 'telegraf'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { CallbackButton } from 'telegraf/typings/markup'
-import { InputFile } from 'telegraf/typings/telegram-types'
-import { redis } from '../../util/reddis'
-import { promisify } from 'util'
 import { logger } from '../../util/logger'
 import { ScenePack } from '../../database/db-packs'
 import { getNextWeekRange, SessionEnforcer } from '../shared/shared-logic'
 import { db } from '../../database/db'
-import md5 from 'md5'
 
 export const scene = new BaseScene<ContextMessageUpdate>('packs_scene');
 
@@ -25,31 +21,16 @@ export interface PacksSceneState {
 }
 
 export interface UpdateMenu {
-    imgCacheId: string
-    imgLoad: () => Promise<InputFile>,
     text: string,
     buttons: CallbackButton[][]
 }
 
-const redisGET = promisify(redis.get.bind(redis))
-const redisSet: (id: string, value: any) => Promise<void> = promisify(redis.set.bind(redis)) as any
-const redisExpire = promisify(redis.expire.bind(redis))
-const EXPIRE_IMG_CACHE_SECONDS = 3600 * 24
-
 export async function updateMenu(ctx: ContextMessageUpdate, upd: UpdateMenu) {
-
-    const imageCacheId = `packs:img_${md5(upd.imgCacheId)}`
-    const imageFileId = await redisGET(imageCacheId)
-
-    const media = imageFileId !== null ? imageFileId : await upd.imgLoad()
 
     let response;
     if (ctx.session.packsScene.msgId === undefined) {
-        response = await ctx.replyWithPhoto(media, {
-            caption: upd.text,
-            parse_mode: 'HTML',
-            reply_markup: Markup.inlineKeyboard(upd.buttons)
-        })
+        response = await ctx.replyWithHTML(upd.text,
+            Extra.markup(Markup.inlineKeyboard(upd.buttons)))
     } else {
 
         if (ctx.session.packsScene.lastText === upd.text && JSON.stringify(ctx.session.packsScene.lastMarkup) === JSON.stringify(upd.buttons)) {
@@ -57,28 +38,9 @@ export async function updateMenu(ctx: ContextMessageUpdate, upd: UpdateMenu) {
             return
         }
 
-        response = await ctx.editMessageMedia({
-            type: 'photo',
-            media,
-            caption: upd.text
-        }, {
-            reply_markup: Markup.inlineKeyboard(upd.buttons),
-            parse_mode: 'HTML'
-        })
-
-
-        // if (ctx.session.packsScene.lastText !== upd.text) {
-        //     await ctx.editMessageText(upd.text, {
-        //         parse_mode: 'HTML'
-        //     })
-        //     ctx.session.packsScene.lastText = upd.text
-        // }
+        response = await ctx.editMessageText(upd.text, Extra.HTML().markup(Markup.inlineKeyboard(upd.buttons)))
     }
     if (typeof response !== 'boolean') {
-        if (imageFileId === null) {
-            await redisSet(imageCacheId, response.photo[0].file_id)
-            await redisExpire(imageCacheId, EXPIRE_IMG_CACHE_SECONDS)
-        }
         ctx.session.packsScene.msgId = response.message_id
         ctx.session.packsScene.lastText = upd.text
         ctx.session.packsScene.lastMarkup = upd.buttons

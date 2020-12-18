@@ -28,8 +28,7 @@ const content = (ctx: ContextMessageUpdate) => {
 
     const menu = [
         ['customize'],
-        ...(isDevEnv() ? [['packs']] : []),
-        ['tops'],
+        ['tops', 'packs'],
         ['search'],
         ...[(isAdmin(ctx) ? ['admin', ...feedbackBtn] : feedbackBtn)]
     ]

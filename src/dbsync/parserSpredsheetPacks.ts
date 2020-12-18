@@ -14,7 +14,6 @@ const VERTICAL_ORDER = {
     title: 'Название',
     isPublish: 'Опубликована:',
     author: 'Куратор',
-    imageSrc: 'Картинка',
     description: 'Описание',
     events: 'События'
 } as const
@@ -29,7 +28,6 @@ export interface EventPackExcel {
     title: string
     description: string
     author: string
-    imageSrc: string
     events: EventInPackExcel[]
     isPublish: boolean
     weight: number
@@ -58,11 +56,6 @@ export async function saveValidationErrors(excel: Sheets, validatedEvents: Event
     validatedEvents.forEach(({ raw, errors }) => {
 
         excelUpdater.clearColumnFormat(raw.sheetId, 'values', raw.rowNumber, Object.keys(VERTICAL_ORDER).length + raw.events.length - 1)
-
-        if (errors.imageUrl !== undefined) {
-            excelUpdater.colorCell(raw.sheetId, 'values', getRowNumber(raw, 'imageSrc'), 'red')
-            excelUpdater.annotateCell(raw.sheetId, 'values', getRowNumber(raw, 'imageSrc'), errors.imageUrl)
-        }
 
         errors.badEvents.forEach(({ rawEvent, error }) => {
             excelUpdater.colorCell(raw.sheetId, 'values', rawEvent.rowNumber, 'red')
@@ -100,7 +93,6 @@ export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncR
                 events: [],
                 description: '',
                 author: '',
-                imageSrc: '',
                 weight: 0,
                 isPublish: undefined,
                 rowNumber,
@@ -112,8 +104,6 @@ export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncR
             currentPack.author = rowValue
         } else if (rowLabel === 'Вес') {
             currentPack.weight = +rowValue
-        } else if (rowLabel === 'Картинка') {
-            currentPack.imageSrc = rowValue
         } else if (rowLabel === 'Описание') {
             currentPack.description = rowValue
         } else if (rowValue !== undefined && getEventExtId(rowValue) !== undefined) {

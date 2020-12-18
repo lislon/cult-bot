@@ -7,13 +7,6 @@ import { EventPackForSave } from '../../../src/database/db-packs'
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
 
-function sampleImage() {
-    return Buffer.from('data:image/png;base64,iVBORw0KGgoAAA\n' +
-        'ANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4\n' +
-        '//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU\n' +
-        '5ErkJggg==', 'base64')
-}
-
 export function expectedPacksTitle(titles: string[], packs: any[]) {
     expect(packs.map(t => t.title)).toEqual(titles)
 }
@@ -24,8 +17,6 @@ export function makePack({
                              author = 'author',
                              weight = 0,
                              eventIds = [1],
-                             imageSrc = '',
-                             image = undefined,
                          }: Partial<EventPackForSave> = {}
 ): EventPackForSave {
     return {
@@ -34,8 +25,6 @@ export function makePack({
         author,
         weight,
         eventIds,
-        imageSrc,
-        image
     }
 }
 
@@ -49,7 +38,7 @@ describe('Packs', () => {
     })
 
     test('sync packs', async () => {
-        await db.repoPacks.sync([makePack({title: 'A', image: sampleImage()})])
+        await db.repoPacks.sync([makePack({title: 'A'})])
     })
 
     test('packs will be filtered by date', async () => {
