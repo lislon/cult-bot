@@ -29,8 +29,11 @@ export async function updateMenu(ctx: ContextMessageUpdate, upd: UpdateMenu) {
 
     let response;
     if (ctx.session.packsScene.msgId === undefined) {
-        response = await ctx.replyWithHTML(upd.text,
-            Extra.markup(Markup.inlineKeyboard(upd.buttons)))
+        response = await ctx.replyWithHTML(upd.text, {
+                ...Extra.markup(Markup.inlineKeyboard(upd.buttons)),
+                disable_web_page_preview: true
+            }
+        )
     } else {
 
         if (ctx.session.packsScene.lastText === upd.text && JSON.stringify(ctx.session.packsScene.lastMarkup) === JSON.stringify(upd.buttons)) {
@@ -38,7 +41,9 @@ export async function updateMenu(ctx: ContextMessageUpdate, upd: UpdateMenu) {
             return
         }
 
-        response = await ctx.editMessageText(upd.text, Extra.HTML().markup(Markup.inlineKeyboard(upd.buttons)))
+        response = await ctx.editMessageText(upd.text, Extra.HTML()
+            .webPreview(false)
+            .markup(Markup.inlineKeyboard(upd.buttons)))
     }
     if (typeof response !== 'boolean') {
         ctx.session.packsScene.msgId = response.message_id

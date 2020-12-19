@@ -158,7 +158,12 @@
       "select_time": "Здесь можно настроить временные интервалы, в которых искать события",
       "select_format": "Укажите формат события",
       "select_counter": "${eventPlural} выбрано",
-      "select_footer": "☝",
+      "select_counter_zero": "Нет событий под этот фильтр. Попробуйте выбрать другие варианты.",
+      "select_counter_init_oblasti": "Выберите интересующие области, а затем нажмите ниже кнопку\n<b>${show_personalized_events}</b>",
+      "select_counter_init_priorities": "Выберите интересующие приоритеты, а затем нажмите ниже кнопку\n<b>${show_personalized_events}</b>",
+      "select_counter_init_format": "Настройте фильтры по формату событий, а затем нажмите ниже кнопку\n<b>${show_personalized_events}</b>",
+      "select_counter_init_time": "Выберете события в подходящее вам время, а затем нажмите ниже кнопку\n<b>${show_personalized_events}</b>",
+      "select_finger_up": "☝",
 
       "popup_selected": "${eventPlural} выбрано",
 
@@ -217,6 +222,7 @@
         "show_more": "Показать еще",
         "menu_open": "➖ ${title}${checkbox}",
         "menu_closed": "➕ ${title}${checkbox}",
+        "back_to_filters": "◀️ Назад [К другим фильтрам]",
 
         "cennosti_section": {
           "menu_childrens": "С детьми",

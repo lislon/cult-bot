@@ -25,6 +25,7 @@ import { addDays, format } from 'date-fns/fp'
 import { Paging } from '../shared/paging'
 import { getISODay, startOfISOWeek } from 'date-fns'
 import { saveSession, SceneRegister } from '../../middleware-utils'
+import { isEmpty } from 'lodash'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
@@ -247,7 +248,9 @@ async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
             Markup.button(i18Btn(ctx, 'reset_filter')),
             Markup.button(i18Btn(ctx, 'show_personalized_events', {count: await countFilteredEvents(ctx)}))
         ],
-        [Markup.button(i18SharedBtn(ctx, 'back'))]
+        ctx.session.customize.currentStage === 'root'
+            ? [Markup.button(i18SharedBtn(ctx, 'back'))]
+            : [Markup.button(i18nModuleBtnName('back_to_filters'))]
     ]).resize()
 }
 
@@ -318,8 +321,33 @@ async function generateAmountSelectedPlural(ctx: ContextMessageUpdate) {
     return plural(count, i18Msg(ctx, 'plural.event.one'), i18Msg(ctx, 'plural.event.two'), i18Msg(ctx, 'plural.event.many'))
 }
 
+function isFilterEmpty(ctx: ContextMessageUpdate) {
+    const customize = ctx.session.customize
+    return isEmpty(customize.time) && isEmpty(customize.cennosti) && isEmpty(customize.oblasti) && isEmpty(customize.format)
+}
+
+async function getMsgForCountEvents(ctx: ContextMessageUpdate, count: number) {
+    if (isFilterEmpty(ctx) && ctx.session.customize.currentStage !== 'root') {
+        const tplData = {
+            show_personalized_events: i18Btn(ctx, 'show_personalized_events').replace(' ', '')
+        }
+        switch (ctx.session.customize.currentStage) {
+            case 'oblasti': return i18Msg(ctx, 'select_counter_init_oblasti', tplData)
+            case 'priorities': return i18Msg(ctx, 'select_counter_init_priorities', tplData)
+            case 'format': return i18Msg(ctx, 'select_counter_init_format', tplData)
+            case 'time': return i18Msg(ctx, 'select_counter_init_time', tplData)
+        }
+    } else if (count === 0) {
+        return i18Msg(ctx, 'select_counter_zero')
+    } else {
+        return i18Msg(ctx, 'select_counter', {eventPlural: await generateAmountSelectedPlural(ctx)})
+    }
+}
+
 async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
-    const msg = i18Msg(ctx, 'select_counter', {eventPlural: await generateAmountSelectedPlural(ctx)})
+    const count = await countFilteredEvents(ctx)
+    const msg = await getMsgForCountEvents(ctx, count)
+
 
     if (ctx.session.customize.eventsCounterMsgText !== msg) {
         if (ctx.session.customize.eventsCounterMsgId === undefined) {
@@ -359,14 +387,14 @@ export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<st
     return undefined
 }
 
-async function withSubdialog(ctx: ContextMessageUpdate, callback: () => Promise<void>) {
-    ctx.session.customize.currentStage = 'sub_dialog'
+async function withSubdialog(ctx: ContextMessageUpdate, subStage: CurrentStageType,  callback: () => Promise<void>) {
+    ctx.session.customize.currentStage = subStage
     prepareSessionStateIfNeeded(ctx)
     resetOpenMenus(ctx)
     resetBottomMessageWithNumberOfEventsFound(ctx)
 
     await callback()
-    await ctx.replyWithHTML(i18Msg(ctx, 'select_footer'), Extra.markup((await getMarkupKeyboard(ctx))))
+    await ctx.replyWithHTML(i18Msg(ctx, 'select_finger_up'), Extra.markup((await getMarkupKeyboard(ctx))))
 
     await putOrRefreshCounterMessage(ctx)
 }
@@ -375,7 +403,7 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
         .hears(i18nModuleBtnName('oblasti'), async (ctx: ContextMessageUpdate) => {
 
-            await withSubdialog(ctx, async () => {
+            await withSubdialog(ctx, 'oblasti', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_oblasti'), Extra.markup((await getKeyboardOblasti(ctx))))
                 ctx.ua.pv({dp: `/customize/oblasti/`, dt: `Подобрать под себя / Области`})
             })
@@ -383,21 +411,21 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
         .hears(i18nModuleBtnName('priorities'), async (ctx: ContextMessageUpdate) => {
 
-            await withSubdialog(ctx, async () => {
+            await withSubdialog(ctx, 'priorities', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_priorities'), Extra.markup((await getKeyboardCennosti(ctx, ctx.session.customize))))
                 ctx.ua.pv({dp: `/customize/priorities/`, dt: `Подобрать под себя / Приоритеты`})
             })
 
         })
         .hears(i18nModuleBtnName('time'), async (ctx: ContextMessageUpdate) => {
-            await withSubdialog(ctx, async () => {
+            await withSubdialog(ctx,  'time', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_time'), Extra.markup((await getKeyboardTime(ctx))))
                 ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под себя / Время`})
             })
 
         })
         .hears(i18nModuleBtnName('format'), async (ctx: ContextMessageUpdate) => {
-            await withSubdialog(ctx, async () => {
+            await withSubdialog(ctx, 'format', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_format'), Extra.markup((await getKeyboardFormat(ctx))))
                 ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под себя / Формат`})
             })
@@ -417,7 +445,7 @@ async function goBackToCustomize(ctx: ContextMessageUpdate) {
     prepareSessionStateIfNeeded(ctx)
     const explainMsg = await getMsgExplainFilter(ctx)
     const msg = explainMsg !== undefined ? explainMsg : i18Msg(ctx, 'welcome')
-    ctx.session.customize.currentStage = 'root_dialog'
+    ctx.session.customize.currentStage = 'root'
 
     const {markup} = await content(ctx)
     await ctx.replyWithMarkdown(msg, markup)
@@ -541,21 +569,33 @@ scene
             {eventPlural: await generateAmountSelectedPlural(ctx)}))
         await putOrRefreshCounterMessage(ctx)
     })
-    .hears(i18nSharedBtnName('back'), async (ctx: ContextMessageUpdate) => {
-        try {
+    .hears(i18nModuleBtnName('back_to_filters'), async (ctx: ContextMessageUpdate) => {
+        await resetSessionIfProblem(ctx, async () => {
             prepareSessionStateIfNeeded(ctx)
-            if (ctx.session.customize.currentStage === 'root_dialog') {
+            await goBackToCustomize(ctx)
+        })
+    })
+    .hears(i18nSharedBtnName('back'), async (ctx: ContextMessageUpdate) => {
+        await resetSessionIfProblem(ctx, async () => {
+            prepareSessionStateIfNeeded(ctx)
+            if (ctx.session.customize.currentStage === 'root') {
                 await ctx.scene.enter('main_scene')
             } else {
                 await goBackToCustomize(ctx)
             }
-        } catch (e) {
-            ctx.session.customize = undefined
-            await saveSession(ctx)
-            throw e
-        }
+        })
     })
-;
+
+
+async function resetSessionIfProblem(ctx: ContextMessageUpdate, callback: () => Promise<void>) {
+    try {
+        await callback()
+    } catch (e) {
+        ctx.session.customize = undefined
+        await saveSession(ctx)
+        throw e
+    }
+}
 
 
 function resetPaging(ctx: ContextMessageUpdate) {
@@ -586,7 +626,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         time: SessionEnforcer.array(time),
         format: SessionEnforcer.array(format),
         eventsCounterMsgText,
-        currentStage: currentStage || 'root_dialog',
+        currentStage: currentStage || 'root',
         resultsFound: SessionEnforcer.number(resultsFound),
 
         eventsCounterMsgId: SessionEnforcer.number(eventsCounterMsgId),
@@ -598,6 +638,8 @@ export const customizeScene = {
     globalActionsFn
 } as SceneRegister
 
+type CurrentStageType = 'root' | 'time' | 'oblasti' | 'priorities' | 'format'
+
 export interface CustomizeSceneState {
     time: string[]
     openedMenus: string[]
@@ -607,5 +649,5 @@ export interface CustomizeSceneState {
     eventsCounterMsgId?: number
     eventsCounterMsgText: string
     resultsFound: number
-    currentStage: 'root_dialog'|'sub_dialog'
+    currentStage: CurrentStageType
 }
