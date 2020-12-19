@@ -39,6 +39,18 @@ function formatTimetable(event: Event) {
     return formatCinimaUrls(cutYear(humanTimetable))
 }
 
+function formatEventDuration(text: string) {
+    const m = text.match(/(\d+)\s*мин[^ ]*/)
+    if (m && +m[1] >= 60) {
+        const rawMinutes = +m[1]
+        const hours = Math.floor(rawMinutes / 60)
+        const minutes = rawMinutes % 60
+        const format = minutes > 0 ? `${hours} ч ${minutes} мин` : `${hours} ч`
+        return text.replace(/(\d+)\s*мин[^ ]*/, format)
+    }
+    return text
+}
+
 function getWhereEmoji(row: Event) {
     return i18n.t(`ru`, `shared.category_icons.${row.category}`)
 }
@@ -92,7 +104,7 @@ export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions 
     }
     text += formatTimetable(row)
     if (!fieldIsQuestionMarkOrEmpty(row.duration)) {
-        text += `🕐 ${escapeHTML(row.duration)}\n`
+        text += `🕐 ${escapeHTML(formatEventDuration(row.duration))}\n`
     }
     if (!fieldIsQuestionMarkOrEmpty(row.price)) {
         text += `💳 ${addHtmlNiceUrls(escapeHTML(formatPrice(parsePrice((row.price)))))}\n`

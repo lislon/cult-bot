@@ -94,6 +94,21 @@ describe('test card format', () => {
         const expected = (await readCard('show-icon-theatre.html')).toString()
         expect(prepare(card)).toEqual(prepare(expected))
     })
+
+    test('Test minutes helper (no minutes)', async () => {
+        expect(cardFormat({
+            ...defaultEvent,
+            duration: '60 минут'
+        })).toContain('1 ч')
+    })
+
+    test('Test minutes helper (with minutes)', async () => {
+        expect(cardFormat({
+            ...defaultEvent,
+            duration: '90 минут'
+        })).toContain('1 ч 30 мин')
+    })
+
 })
 
 describe('rouble formatting', () => {
