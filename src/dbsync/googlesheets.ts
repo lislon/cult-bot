@@ -2,7 +2,7 @@ import { google, sheets_v4 } from 'googleapis'
 import { GoogleAuth } from 'google-auth-library'
 import * as path from 'path'
 import { logger } from '../util/logger'
-import { ruFormat } from '../scenes/shared/shared-logic'
+import { differenceInSeconds, parseISO } from 'date-fns'
 import Sheets = sheets_v4.Sheets
 import Schema$Request = sheets_v4.Schema$Request
 
@@ -135,7 +135,9 @@ export function mkAnnotateCell(sheetId: number, text: string, column: number, ro
     }
 }
 
-export function mkEditCellDate(sheetId: number, text: Date, column: number, row: number): Schema$Request {
+const GOOGLE_BASE_DATE = parseISO('1899-12-29T23:30:17')
+
+export function mkEditCellDate(sheetId: number, date: Date, column: number, row: number): Schema$Request {
     return {
         updateCells: {
             range: {
@@ -151,12 +153,12 @@ export function mkEditCellDate(sheetId: number, text: Date, column: number, row:
                     values: [
                         {
                             userEnteredValue: {
-                                stringValue: ruFormat(text, 'dd-MM-yyyy HH:mm:ss')
+                                numberValue: differenceInSeconds(date, GOOGLE_BASE_DATE) / (3600 * 24)
                             },
                             userEnteredFormat: {
                                 numberFormat: {
                                     type: 'DATE',
-                                    pattern: 'dd-mm-yyyy hh:mm:ss'
+                                    pattern: 'yyyy-mm-dd hh:mm:ss'
                                 }
                             }
                         },

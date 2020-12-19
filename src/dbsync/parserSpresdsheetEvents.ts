@@ -12,7 +12,7 @@ import { rightDate } from '../lib/timetable/intervals'
 import { EventToSave } from '../interfaces/db-interfaces'
 import { WrongExcelColumnsError } from './WrongFormatException'
 import { BotDb } from '../database/db'
-import { isEqual } from 'date-fns'
+import { isEqual, parseISO } from 'date-fns'
 import { botConfig } from '../util/bot-config'
 import { logger } from '../util/logger'
 import { countBy, last } from 'lodash'
@@ -55,6 +55,20 @@ function validateUnique(excelRows: ExcelRowResult[]) {
 export interface ExcelSheetError {
     sheetName: string,
     extIds: string[]
+}
+
+const OLD_DATE = parseISO('1999-01-01T00:00:00Z')
+const FUTURE_DATE = parseISO('3000-01-01 00:00:00')
+
+function getDueDate(mapped: ExcelRowResult) {
+    const lastEventDate = last(mapped.timeIntervals)
+    if (lastEventDate === undefined) {
+        return OLD_DATE
+    } else if (mapped.timetable?.anytime) {
+        return FUTURE_DATE
+    } else {
+        return rightDate(last(mapped.timeIntervals))
+    }
 }
 
 export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheets): Promise<ExcelParseResult> {
@@ -166,14 +180,11 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
                 }
             }
 
-            if (last(mapped.timeIntervals) !== undefined) {
-                const dueDate = rightDate(last(mapped.timeIntervals))
-                if (!isEqual(mapped.dueDate, dueDate)) {
-                    excelUpdater.editCellDate(sheetId, 'due_date', rowNo, dueDate)
-                }
+            const dueDate = getDueDate(mapped)
+            if (!isEqual(mapped.dueDate, dueDate)) {
+                excelUpdater.editCellDate(sheetId, 'due_date', rowNo, dueDate)
             }
-
-        })
+       })
 
         errors.push({
             sheetName: sheetsMetaData.data.sheets[sheetNo].properties.title,
