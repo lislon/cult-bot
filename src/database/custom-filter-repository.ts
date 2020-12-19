@@ -1,4 +1,4 @@
-import { chidrensTags, Event, EventFormat, MyInterval, TagLevel2 } from '../interfaces/app-interfaces'
+import { chidrensTags, Event, EventFormat, moneyTags, MyInterval, TagLevel2 } from '../interfaces/app-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
 
@@ -64,6 +64,11 @@ function childAlternativesLogic(cennosti: TagLevel2[]): TagLevel2[] {
             return []
     }
 }
+function priceTagsAlternativesLogic(cennosti: TagLevel2[]): TagLevel2[] {
+    return cennosti.filter(c => moneyTags.includes(c))
+}
+
+
 
 function doQueryCore(customFilter: CustomFilter) {
     const queryBody = `
@@ -86,8 +91,9 @@ function doQueryCore(customFilter: CustomFilter) {
                     )
             )
             AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
-            AND cb.tag_level_2 @> $(cennosti)
+            AND (cb.tag_level_2 @> $(cennosti) OR $(cennosti) = '{}')
             AND (cb.tag_level_2 && $(childTagsAlternatives) OR $(childTagsAlternatives) = '{}')
+            AND (cb.tag_level_2 && $(priceTagsAlternatives) OR $(priceTagsAlternatives) = '{}')
             AND (
                    ((CASE WHEN cb.address = 'онлайн' THEN 'online' ELSE 'outdoor' END) = $(format))
                    OR
@@ -95,14 +101,17 @@ function doQueryCore(customFilter: CustomFilter) {
                 )
             `
 
-    const cennosti = customFilter.cennosti || [];
-    const cennostiFilteredFromHardTags = cennosti.filter(c => !chidrensTags.includes(c))
-
+    const cennosti = customFilter.cennosti || []
+    const cennostiFilteredFromHardTags = cennosti
+        .filter(t => !t.startsWith('#_'))
+        .filter(c => !chidrensTags.includes(c))
+        .filter(c => !moneyTags.includes(c))
 
     const queryParams = {
         oblasti: customFilter.oblasti || [],
         cennosti: cennostiFilteredFromHardTags || [],
         childTagsAlternatives: childAlternativesLogic(cennosti),
+        priceTagsAlternatives: priceTagsAlternativesLogic(cennosti),
         weekendRange: mapToPgInterval(customFilter.weekendRange),
         format: customFilter.format,
         timeIntervals: (customFilter.timeIntervals || []).map(i => mapToPgInterval(i)),

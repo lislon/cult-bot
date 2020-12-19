@@ -154,7 +154,7 @@ Then(/^Bot edits text:$/, function (expected: string) {
 Then(/^Bot edits inline buttons:$/, function (buttonsLayout: string) {
     const markup = this.getLastEditedInline() as BotReply
     if (markup === undefined) {
-        fail('Expected edited markup but none')
+        expect('').toStrictEqual('Expected edited markup but none')
     }
     expectLayoutsSame(buttonsLayout, markup.extra.reply_markup)
 })

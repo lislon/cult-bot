@@ -14,7 +14,14 @@ export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id
     return {
         backButton: (ctx: ContextMessageUpdate) => Markup.callbackButton(ctx.i18n.t('shared.keyboard.back'), backAction),
         actionName: (id: string) => `${scene.id}.${ReversableTranslit.translit(id)}`,
-        revertActionName: (id: string) => `${ReversableTranslit.reverse(id)}`,
+        revertActionName: (id: string) => {
+            if (id.startsWith('#_')) {
+                // this is needed to handle menu buttons with #_tags like this
+                // otherwise it converted to '# tag' with space!
+                return `#_${ReversableTranslit.reverse(id.substring(2))}`
+            }
+            return ReversableTranslit.reverse(id)
+        },
         pushEnterScene,
 
         i18Btn: (ctx: ContextMessageUpdate, id: string, tplData: object = undefined) =>

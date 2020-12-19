@@ -24,7 +24,7 @@ import { db } from '../../database/db'
 import { addDays, format } from 'date-fns/fp'
 import { Paging } from '../shared/paging'
 import { getISODay, startOfISOWeek } from 'date-fns'
-import { SceneRegister } from '../../middleware-utils'
+import { saveSession, SceneRegister } from '../../middleware-utils'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
@@ -154,6 +154,8 @@ async function getKeyboardCennosti(ctx: ContextMessageUpdate, state: CustomizeSc
     const menu = new Menu(ctx, state.cennosti, state.openedMenus, 'cennosti_section')
 
     const buttons = [
+        ...(menu.dropDownButtons('menu_childrens', [chidrensTags])),
+        ...(menu.dropDownButtons('menu_cost', [['#бесплатно', '#доступноподеньгам', '#_недешево']])),
         [menu.button('#комфорт')],
         [menu.button('#премьера')],
         [menu.button('#навоздухе')],
@@ -162,8 +164,6 @@ async function getKeyboardCennosti(ctx: ContextMessageUpdate, state: CustomizeSc
         [menu.button('#новыеформы')],
         [menu.button('#успетьзачас')],
         [menu.button('#культурныйбазис')],
-        ...(menu.dropDownButtons('menu_cost', [['#бесплатно', '#доступноподеньгам']])),
-        ...(menu.dropDownButtons('menu_childrens', [chidrensTags]))
         // [Markup.callbackButton(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}), actionName('show_filtered_events'))]
     ]
     return Markup.inlineKeyboard(buttons)
@@ -542,11 +542,17 @@ scene
         await putOrRefreshCounterMessage(ctx)
     })
     .hears(i18nSharedBtnName('back'), async (ctx: ContextMessageUpdate) => {
-        prepareSessionStateIfNeeded(ctx)
-        if (ctx.session.customize.currentStage === 'root_dialog') {
-            await ctx.scene.enter('main_scene')
-        } else {
-            await goBackToCustomize(ctx)
+        try {
+            prepareSessionStateIfNeeded(ctx)
+            if (ctx.session.customize.currentStage === 'root_dialog') {
+                await ctx.scene.enter('main_scene')
+            } else {
+                await goBackToCustomize(ctx)
+            }
+        } catch (e) {
+            ctx.session.customize = undefined
+            await saveSession(ctx)
+            throw e
         }
     })
 ;

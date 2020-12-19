@@ -38,7 +38,7 @@ describe('Filtering', () => {
 
     test('search only by cennosti works', async () => {
         await syncEventsDb4Test([
-            getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_2: ['#ЗОЖ', '#комфорт', 'премьера']}),
+            getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_2: ['#ЗОЖ', '#комфорт', '#премьера']}),
             getMockEvent({title: 'B', category: 'theaters', eventTime, tag_level_2: ['#ЗОЖ', '#комфорт']}),
             getMockEvent({title: 'C', category: 'concerts', eventTime, tag_level_2: ['#ЗОЖ']})
         ])
@@ -93,6 +93,19 @@ describe('Filtering', () => {
                 mkInterval('[2020-01-01 13:30, 2020-01-01 13:35)'),
             ]}))
     }, 1000000)
+
+    test('search expensive', async () => {
+        await syncEventsDb4Test([
+            getMockEvent({title: 'A', eventTime, tag_level_2: ['#доступноподеньгам']}),
+            getMockEvent({title: 'B', eventTime, tag_level_2: ['#бесплатно']}),
+            getMockEvent({title: 'C', eventTime, tag_level_2: ['#ЗОЖ', '#_недешево']})
+        ])
+        expectedTitles(['B', 'C'], await db.repoCustomEvents.findEventsCustomFilter({
+            cennosti: ['#_недешево', '#бесплатно'],
+            weekendRange}))
+
+    }, 1000000)
+
 });
 
 

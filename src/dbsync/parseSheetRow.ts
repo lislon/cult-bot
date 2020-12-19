@@ -1,9 +1,10 @@
-import { Event, EventCategory } from '../interfaces/app-interfaces'
+import { CHEAP_PRICE_THRESHOLD, Event, EventCategory, TagLevel2 } from '../interfaces/app-interfaces'
 import { EventTimetable, MomentOrInterval } from '../lib/timetable/intervals'
 import { fieldIsQuestionMarkOrEmpty } from '../util/filed-utils'
 import { parseAndPredictTimetable } from '../lib/timetable/timetable-utils'
 import { i18n } from '../util/i18n'
 import { parseISO } from 'date-fns'
+import { parsePrice } from '../lib/price-parser'
 
 export const EXCEL_COLUMNS_EVENTS = {
     ext_id: '№',
@@ -50,10 +51,13 @@ export interface ExcelRowResult {
     errors?: {
         timetable?: string[],
         emptyRows?: ExcelColumnNameEvents[],
-        invalidExtId?: string[],
-        invalidTagLevel1?: string[]
-        invalidTagLevel2?: string[]
-        invalidTagLevel3?: string[]
+        extId?: string[],
+        tagLevel1?: string[]
+        tagLevel2?: string[]
+        tagLevel3?: string[]
+    }
+    warnings?: {
+        tagLevel2?: string[]
     }
     timetable?: EventTimetable,
     timeIntervals: MomentOrInterval[]
@@ -79,7 +83,10 @@ export function getOnlyHumanTimetable(timetable: string) {
     return timetable.replace(/{(?:бот|bot):([^}]+)}/, '').trim()
 }
 
-function validateTagLevel1(event: Event, errorCallback: (errors: string[]) => void) {
+type ErrorCallback = (errors: string[]) => void
+type WarningCallback = (warnings: string[]) => void
+
+function validateTagLevel1(event: Event, errorCallback: ErrorCallback) {
     if (event.category === 'exhibitions') {
 
         const requiredTags = i18n.resourceKeys('ru')
@@ -99,7 +106,7 @@ function validateTagLevel1(event: Event, errorCallback: (errors: string[]) => vo
     }
 }
 
-function validateTag(tags: string[], errorCallback: (errors: string[]) => void) {
+function validateTag(tags: string[], errorCallback: ErrorCallback) {
     const badTag = tags.find(t => t.match(/^#[^_\s#?@$%^&*()!\\№:;',-]+$/) === null )
     if (badTag !== undefined) {
         errorCallback([`Плохой тег ${badTag}`])
@@ -115,7 +122,7 @@ function isAddressValid(data: Event) {
     return true
 }
 
-function validateExtId(data: Event, errorCallback: (errors: string[]) => void): void {
+function validateExtId(data: Event, errorCallback: ErrorCallback): void {
     const extId = data.ext_id
     if (extId?.match(/^[А-Я]/)) {
         return errorCallback([`Замечена русская буква '${extId.substring(0, 1)}' в ID-шнике. Допускаются только английские`])
@@ -136,6 +143,40 @@ function validateExtId(data: Event, errorCallback: (errors: string[]) => void): 
         return errorCallback([`Идентификатор для категории ${data.category} должен начинатся с буквы '${startLetter}'.
             \nЗатем должна идти цифра, и возможно другая буква, например: ${startLetter}123 или ${startLetter}123B`])
     }
+}
+
+
+function autoAppendLevel2Tags(data: Event, errorCallback: ErrorCallback, warningCallback: ErrorCallback): Event {
+    const tagFree: TagLevel2 = '#бесплатно'
+    const tagCheap: TagLevel2 = '#доступноподеньгам'
+    const tagNotCheap: TagLevel2 = '#_недешево'
+
+    const tagFreeIncl = data.tag_level_2.includes(tagFree)
+    const tagCheapIncl = data.tag_level_2.includes(tagCheap)
+
+    if (tagFreeIncl && tagCheapIncl) {
+        errorCallback([`Теги ${tagFree} и ${tagCheap} не могут быть вместе`])
+    }
+
+    const priceParsed = parsePrice(data.price)
+
+    if (priceParsed.type === 'free') {
+        if (!tagFreeIncl) {
+            data.tag_level_2.push(tagFree)
+            warningCallback([`Бот добавил тег ${tagFree}, тут тоже хорошо бы поправить`])
+        }
+    } else if (priceParsed.type === 'paid') {
+        if (priceParsed.max !== undefined && priceParsed.max <= CHEAP_PRICE_THRESHOLD && !tagCheapIncl) {
+            data.tag_level_2.push(tagCheap)
+            warningCallback([`Бот добавил тег ${tagCheap}, тут тоже хорошо бы поправить`])
+        } else if (priceParsed.min > CHEAP_PRICE_THRESHOLD && (tagCheapIncl || tagFreeIncl)) {
+            warningCallback([`Дороговатое событие для тегов ${tagCheap} или ${tagFree}`])
+        }
+    }
+    if (!data.tag_level_2.includes(tagFree) && !data.tag_level_2.includes(tagCheap)) {
+        data.tag_level_2.push(tagNotCheap)
+    }
+    return data
 }
 
 export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCategory, now: Date, rowNo: number): ExcelRowResult {
@@ -171,10 +212,13 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
         publish: true,
         errors: {
             emptyRows: [],
-            invalidTagLevel1: [],
-            invalidTagLevel2: [],
-            invalidTagLevel3: [],
-            invalidExtId: [],
+            tagLevel1: [],
+            tagLevel2: [],
+            tagLevel3: [],
+            extId: [],
+        },
+        warnings: {
+            tagLevel2: []
         },
         dueDate: notNull(row.due_date) ? parseISO(notNull(row.due_date)) : undefined,
         timeIntervals: [],
@@ -196,19 +240,23 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
         result.errors.emptyRows.push('address');
     }
 
-    validateExtId(data, (errors) => result.errors.invalidExtId = errors)
+    validateExtId(data, (errors) => result.errors.extId = errors)
 
-    validateTag(data.tag_level_1, (errors) => result.errors.invalidTagLevel1 = [...result.errors.invalidTagLevel1, ...errors])
-    validateTag(data.tag_level_2, (errors) => result.errors.invalidTagLevel2 = [...result.errors.invalidTagLevel2, ...errors])
-    validateTag(data.tag_level_3, (errors) => result.errors.invalidTagLevel3 = [...result.errors.invalidTagLevel3, ...errors])
-    validateTagLevel1(data, (errors) => result.errors.invalidTagLevel1 = [...result.errors.invalidTagLevel1, ...errors])
+    validateTag(data.tag_level_1, (errors) => result.errors.tagLevel1 = [...result.errors.tagLevel1, ...errors])
+    validateTag(data.tag_level_2, (errors) => result.errors.tagLevel2 = [...result.errors.tagLevel2, ...errors])
+    validateTag(data.tag_level_3, (errors) => result.errors.tagLevel3 = [...result.errors.tagLevel3, ...errors])
+    validateTagLevel1(data, (errors) => result.errors.tagLevel1 = [...result.errors.tagLevel1, ...errors])
 
+    result.data = autoAppendLevel2Tags(result.data,
+        (errors) => result.errors.tagLevel2 = [...result.errors.tagLevel2, ...errors],
+        (warnings) => result.warnings.tagLevel2 = [...result.warnings.tagLevel2, ...warnings]
+    )
 
     result.valid = result.valid && result.errors.emptyRows.length == 0
-    result.valid = result.valid && result.errors.invalidTagLevel1.length == 0
-    result.valid = result.valid && result.errors.invalidTagLevel2.length == 0
-    result.valid = result.valid && result.errors.invalidTagLevel3.length == 0
-    result.valid = result.valid && result.errors.invalidExtId.length == 0
+    result.valid = result.valid && result.errors.tagLevel1.length == 0
+    result.valid = result.valid && result.errors.tagLevel2.length == 0
+    result.valid = result.valid && result.errors.tagLevel3.length == 0
+    result.valid = result.valid && result.errors.extId.length == 0
 
     return result
 }

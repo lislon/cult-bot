@@ -1,6 +1,7 @@
-import { cardFormat, escapeWithPrice } from '../../../src/scenes/shared/card-format'
+import { cardFormat } from '../../../src/scenes/shared/card-format'
 import { Event } from '../../../src/interfaces/app-interfaces'
 import path from 'path'
+import { formatPrice, parsePrice } from '../../../src/lib/price-parser'
 
 const fs = require('fs');
 const util = require('util');
@@ -22,7 +23,7 @@ const defaultEvent: Event = {
     category: undefined,
     address: '',
     tag_level_1: ['#level1'],
-    tag_level_2: ['#level2'],
+    tag_level_2: ['#level2', '#_служебный_тег'],
     tag_level_3: ['#level3'],
     rating: 15,
     geotag: '',
@@ -100,6 +101,6 @@ describe('rouble formatting', () => {
         ['350 руб, билет на два дня 500 руб', '350 ₽, билет на два дня 500 ₽'],
         ['350 руб', '350 ₽'],
     ])('%s', (old: string, expected: string) => {
-        expect(escapeWithPrice(old)).toEqual(expected)
+        expect(formatPrice(parsePrice(old))).toEqual(expected)
     })
 })

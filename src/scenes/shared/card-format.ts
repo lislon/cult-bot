@@ -5,14 +5,10 @@ import { cleanTagLevel1 } from '../../util/tag-level1-encoder'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/filed-utils'
 import { i18n } from '../../util/i18n'
 import { EventWithOldVersion } from '../../database/db-admin'
-import { getCurEventIndex, getEventsCount } from '../packs/packs-common'
+import { formatPrice, parsePrice } from '../../lib/price-parser'
 
 function addHtmlNiceUrls(text: string) {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
-}
-
-export function escapeWithPrice(text: string) {
-    return text.replace(/\s*(руб|рублей|р\.|руб\.)(\s|$|,)/g, ' ₽$2')
 }
 
 function formatUrl(text: string) {
@@ -50,6 +46,10 @@ function getWhereEmoji(row: Event) {
 export interface CardOptions {
     showAdminInfo: boolean
     packs?: boolean
+}
+
+function filterTagLevel2(row: Event | EventWithOldVersion) {
+    return row.tag_level_2.filter(t => !t.startsWith('#_'))
 }
 
 export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions = { showAdminInfo: false }) {
@@ -95,7 +95,7 @@ export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions 
         text += `🕐 ${escapeHTML(row.duration)}\n`
     }
     if (!fieldIsQuestionMarkOrEmpty(row.price)) {
-        text += `💳 ${addHtmlNiceUrls(escapeHTML(escapeWithPrice(row.price)))}\n`
+        text += `💳 ${addHtmlNiceUrls(escapeHTML(formatPrice(parsePrice((row.price)))))}\n`
     }
     if (!fieldIsQuestionMarkOrEmpty(row.notes)) {
         text += `<b>Особенности:</b>  ${addHtmlNiceUrls(escapeHTML(row.notes))}\n`
@@ -104,7 +104,7 @@ export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions 
         text += `${formatUrl(escapeHTML(row.url))}\n`
     }
     text += '\n'
-    text += `${escapeHTML([...row.tag_level_3, ...row.tag_level_2].join(' '))}\n`
+    text += `${escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' '))}\n`
     if (options.showAdminInfo) {
         text += `<i>${row.ext_id}, ${row.reviewer}, оценка ${row.rating}</i>\n`
     }

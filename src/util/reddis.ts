@@ -5,7 +5,7 @@ import { TelegrafContext } from 'telegraf/typings/context'
 import { RedisClient } from 'redis'
 
 
-interface MyRedisSession {
+export interface MyRedisSession {
     middleware(): (ctx: any, next?: (() => any) | undefined) => any
 
     getSession(key: Context): string
@@ -13,9 +13,13 @@ interface MyRedisSession {
     saveSession(key: string, session: object): object
 
     client: RedisClient
+
+    options: {
+        getSessionKey: (ctx: TelegrafContext) => string
+    }
 }
 
-function getRedis() {
+function getRedis(): MyRedisSession {
     if (botConfig.NODE_ENV === 'test') {
         const redis = require('redis-mock'),
             client = redis.createClient();
@@ -31,6 +35,11 @@ function getRedis() {
             saveSession(key: string, session: object): object {
                 return undefined;
             },
+            get options() {
+                return {
+                    getSessionKey: (ctx: TelegrafContext) => 'mock'
+                }
+            },
             client
         }
     } else {
@@ -40,7 +49,7 @@ function getRedis() {
                 port: undefined,
                 url: botConfig.REDIS_URL
             }
-        })
+        }) as unknown as MyRedisSession
     }
 }
 

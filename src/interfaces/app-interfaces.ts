@@ -25,11 +25,12 @@ export type TagLevel2 = '#сдетьми0+'
     | '#сдетьми16+'
     | '#ЗОЖ'
     | '#комфорт'
-    | 'премьера'
+    | '#премьера'
     | '#доступноподеньгам'
     | '#бесплатно'
+    | '#_недешево'
 
-
+export const moneyTags: TagLevel2[] = ['#доступноподеньгам', '#бесплатно', '#_недешево']
 export const chidrensTags: TagLevel2[] = ['#сдетьми0+', '#сдетьми6+', '#сдетьми12+', '#сдетьми16+']
 export type EventFormat = 'online' | 'outdoor' | undefined
 
@@ -87,3 +88,4 @@ export type MyInterval = {
 }
 
 export type I18MsgFunction = (ctx: ContextMessageUpdate, id: string, tplData?: object, byDefault?: string | null) => string
+export const CHEAP_PRICE_THRESHOLD = 500

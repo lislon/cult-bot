@@ -46,7 +46,7 @@ function validateUnique(excelRows: ExcelRowResult[]) {
     const uniqueId = countBy(excelRows, (e) => e.data.ext_id)
     excelRows.forEach(row => {
         if (uniqueId[row.data.ext_id] !== 1) {
-            row.errors.invalidExtId = [...row.errors.invalidExtId, 'ID не уникальный (глобально)']
+            row.errors.extId = [...row.errors.extId, 'ID не уникальный (глобально)']
             row.valid = false
         }
     })
@@ -131,6 +131,41 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
 
             if (mapped.publish) {
 
+                if (mapped.errors.timetable && !mapped.data.timetable.includes('???')) {
+                    excelUpdater.annotateCell(sheetId, 'timetable', rowNo, mapped.errors.timetable.join('\n'))
+                    excelUpdater.colorCell(sheetId, 'timetable', rowNo, 'red')
+                } else {
+                    excelUpdater.annotateCell(sheetId, 'timetable', rowNo, '')
+                }
+
+                for (const mappedElement of mapped.errors.emptyRows) {
+                    excelUpdater.colorCell(sheetId, mappedElement, rowNo, 'red')
+                }
+
+                if (mapped.errors.extId.length > 0) {
+                    excelUpdater.annotateCell(sheetId, 'ext_id', rowNo, mapped.errors.extId.join('\n'))
+                    excelUpdater.colorCell(sheetId, 'ext_id', rowNo, 'red')
+                } else {
+                    excelUpdater.annotateCell(sheetId, 'ext_id', rowNo, '')
+                }
+
+                if (mapped.errors.tagLevel1.length > 0) {
+                    excelUpdater.annotateCell(sheetId, 'tag_level_1', rowNo, mapped.errors.tagLevel1.join('\n'))
+                    excelUpdater.colorCell(sheetId, 'tag_level_1', rowNo, 'red')
+                } else {
+                    excelUpdater.annotateCell(sheetId, 'tag_level_1', rowNo, '')
+                }
+                if (mapped.errors.tagLevel2.length > 0) {
+                    excelUpdater.colorCell(sheetId, 'tag_level_2', rowNo, 'red')
+                    excelUpdater.annotateCell(sheetId, 'tag_level_2', rowNo, mapped.errors.tagLevel2.join('\n'))
+                } else if (mapped.warnings.tagLevel2.length > 0) {
+                    excelUpdater.colorCell(sheetId, 'tag_level_2', rowNo, 'orange')
+                    excelUpdater.annotateCell(sheetId, 'tag_level_2', rowNo, mapped.warnings.tagLevel2.join('\n'))
+                }
+                if (mapped.errors.tagLevel3.length > 0) {
+                    excelUpdater.colorCell(sheetId, 'tag_level_3', rowNo, 'red')
+                }
+
                 if (mapped.valid) {
                     rawEvents.push({
                         primaryData: mapped.data,
@@ -145,37 +180,6 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
                     erroredExtIds.push(mapped.data.ext_id)
 
                     // rows.push(mapped.data);
-                    if (mapped.errors.timetable && !mapped.data.timetable.includes('???')) {
-                        excelUpdater.annotateCell(sheetId, 'timetable', rowNo, mapped.errors.timetable.join('\n'))
-                        excelUpdater.colorCell(sheetId, 'timetable', rowNo, 'red')
-                    } else {
-                        excelUpdater.annotateCell(sheetId, 'timetable', rowNo, '')
-                    }
-
-                    for (const mappedElement of mapped.errors.emptyRows) {
-                        excelUpdater.colorCell(sheetId, mappedElement, rowNo, 'red')
-                    }
-
-                    if (mapped.errors.invalidExtId.length > 0) {
-                        excelUpdater.annotateCell(sheetId, 'ext_id', rowNo, mapped.errors.invalidExtId.join('\n'))
-                        excelUpdater.colorCell(sheetId, 'ext_id', rowNo, 'red')
-                    } else {
-                        excelUpdater.annotateCell(sheetId, 'ext_id', rowNo, '')
-                    }
-
-                    if (mapped.errors.invalidTagLevel1.length > 0) {
-                        excelUpdater.annotateCell(sheetId, 'tag_level_1', rowNo, mapped.errors.invalidTagLevel1.join('\n'))
-                        excelUpdater.colorCell(sheetId, 'tag_level_1', rowNo, 'red')
-                    } else {
-                        excelUpdater.annotateCell(sheetId, 'tag_level_1', rowNo, '')
-                    }
-                    if (mapped.errors.invalidTagLevel2.length > 0) {
-                        excelUpdater.colorCell(sheetId, 'tag_level_2', rowNo, 'red')
-                    }
-                    if (mapped.errors.invalidTagLevel3.length > 0) {
-                        excelUpdater.colorCell(sheetId, 'tag_level_3', rowNo, 'red')
-                    }
-
                     excelUpdater.colorCell(sheetId, 'publish', rowNo, 'lightred')
                 }
             }
