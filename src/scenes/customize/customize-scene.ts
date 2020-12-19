@@ -247,8 +247,7 @@ async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
             Markup.button(i18Btn(ctx, 'reset_filter')),
             Markup.button(i18Btn(ctx, 'show_personalized_events', {count: await countFilteredEvents(ctx)}))
         ],
-        [Markup.button(i18SharedBtn(ctx, 'back'))],
-        [Markup.button(i18Btn(ctx, 'go_back_to_main'))]
+        [Markup.button(i18SharedBtn(ctx, 'back'))]
     ]).resize()
 }
 

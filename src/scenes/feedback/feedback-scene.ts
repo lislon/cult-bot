@@ -46,7 +46,7 @@ scene
         prepareSessionStateIfNeeded(ctx)
 
         const buttons = Markup.keyboard([
-            [Markup.button(i18Btn(ctx, 'go_back_to_main'))]
+            [Markup.button(i18Btn(ctx, 'go_back'))]
         ]).resize()
 
         await ctx.replyWithMarkdown(i18Msg(ctx, 'welcome'), Extra.HTML().markup(buttons))
@@ -108,7 +108,7 @@ scene
         await next()
     })
     .use(menuMiddleware)
-    .hears(i18nModuleBtnName('go_back_to_main'), async (ctx: ContextMessageUpdate) => {
+    .hears(i18nModuleBtnName('go_back'), async (ctx: ContextMessageUpdate) => {
         await ctx.scene.enter('main_scene')
     })
     .hears(/^[^/].*$/, async (ctx: ContextMessageUpdate) => {

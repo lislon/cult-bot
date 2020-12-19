@@ -109,7 +109,7 @@ bot
     })
 
 i18n.resourceKeys('ru')
-    .filter((id: string) => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.](back|go_back_to_main)$/))
+    .filter((id: string) => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.](back)$/))
     .forEach((id: string) => {
         bot.hears(match(id), async (ctx) => {
             logger.debug('main catch: %s', id)
