@@ -590,6 +590,7 @@ scene
         await putOrRefreshCounterMessage(ctx)
     })
     .action(actionName('last_event_back'), async (ctx: ContextMessageUpdate) => {
+        await ctx.answerCbQuery()
         await resetSessionIfProblem(ctx, async () => {
             prepareSessionStateIfNeeded(ctx)
             await goBackToCustomize(ctx)

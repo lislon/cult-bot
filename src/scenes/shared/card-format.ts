@@ -22,7 +22,7 @@ function formatUrl(text: string) {
 function formatTimetable(event: Event) {
     const humanTimetable = getOnlyHumanTimetable(event.timetable);
 
-    function formatCinimaUrls(humanTimetable: string) {
+    function formatCinemaUrls(humanTimetable: string) {
         const lines = humanTimetable.split(/[\n\r]+/)
         return lines
             .map(l => l.trim())
@@ -36,7 +36,7 @@ function formatTimetable(event: Event) {
         return humanTimetable.replace(/^\d+ [а-яА-Я]+(\s+\d+)?\s*-\s*/g, 'до ')
     }
 
-    return formatCinimaUrls(cutYear(humanTimetable))
+    return formatCinemaUrls(cutYear(humanTimetable))
 }
 
 function formatEventDuration(text: string) {
