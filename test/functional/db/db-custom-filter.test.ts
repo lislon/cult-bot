@@ -1,4 +1,4 @@
-import { cleanDb, expectedTitles, getMockEvent, MockEvent, syncDatabase4Test } from './db-test-utils'
+import { cleanDb, expectedTitles, getMockEvent, MockEvent, syncEventsDb4Test } from './db-test-utils'
 import { db, dbCfg } from '../../../src/database/db'
 import { date, mkInterval } from '../../lib/timetable/test-utils'
 
@@ -17,7 +17,7 @@ describe('Filtering', () => {
     })
 
     test('search only by oblasti works', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
             getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_1: ['#A', '#B', '#C']}),
             getMockEvent({title: 'B', category: 'theaters', eventTime, tag_level_1: ['#A', '#B']}),
             getMockEvent({title: 'C', category: 'theaters', eventTime, tag_level_1: ['#A']})
@@ -27,7 +27,7 @@ describe('Filtering', () => {
     }, 1000000)
 
     test('no oblasti means all oblasti', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
             getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_1: ['#A', '#B', '#C']}),
             getMockEvent({title: 'B', category: 'theaters', eventTime, tag_level_1: ['#A', '#B']}),
             getMockEvent({title: 'C', category: 'theaters', eventTime, tag_level_1: ['#A']})
@@ -37,7 +37,7 @@ describe('Filtering', () => {
     }, 1000000)
 
     test('search only by cennosti works', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
             getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_2: ['#ЗОЖ', '#комфорт', 'премьера']}),
             getMockEvent({title: 'B', category: 'theaters', eventTime, tag_level_2: ['#ЗОЖ', '#комфорт']}),
             getMockEvent({title: 'C', category: 'concerts', eventTime, tag_level_2: ['#ЗОЖ']})
@@ -48,7 +48,7 @@ describe('Filtering', () => {
 
 
     test('search without tags works', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
             getMockEvent({title: 'A', category: 'theaters', eventTime}),
             getMockEvent({title: 'B', category: 'concerts', eventTime, tag_level_2: ['#ЗОЖ']})
         ])
@@ -57,7 +57,7 @@ describe('Filtering', () => {
     }, 1000000)
 
     test('search filters out of interval', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
             getMockEvent({title: 'A', eventTime: outOfIntervalEventTime}),
             getMockEvent({title: 'B', eventTime})
         ])
@@ -66,7 +66,7 @@ describe('Filtering', () => {
     }, 1000000)
 
     test('search only all except online', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
             getMockEvent({title: 'A', eventTime, address: 'онлайн'}),
             getMockEvent({title: 'B', eventTime, address: ''}),
         ])
@@ -77,7 +77,7 @@ describe('Filtering', () => {
     }, 1000000)
 
     test('search by many intervals', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
             getMockEvent({title: 'A10', eventTime: [[date('2020-01-01 10:00'), date('2020-01-01 11:00')]]}),
             getMockEvent({title: 'A11', eventTime: [[date('2020-01-01 11:00'), date('2020-01-01 12:00')]]}),
             getMockEvent({title: 'A12', eventTime: [[date('2020-01-01 12:00'), date('2020-01-01 13:00')]]}),
@@ -98,7 +98,7 @@ describe('Filtering', () => {
 
 describe('Логика с детьми', () => {
     beforeEach(async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
             getMockEvent({title: 'D0', eventTime, tag_level_2: ['#сдетьми0+']}),
             getMockEvent({title: 'D6', eventTime, tag_level_2: ['#сдетьми6+']}),
             getMockEvent({title: 'D12', eventTime, tag_level_2: ['#сдетьми12+']}),
@@ -137,7 +137,7 @@ describe('Sorting & Paging', () => {
 
     beforeEach(async () => {
         const pseudoRandom = [...goodOrder].reverse()
-        await syncDatabase4Test(pseudoRandom.map(r => getMockEvent(r)))
+        await syncEventsDb4Test(pseudoRandom.map(r => getMockEvent(r)))
     })
 
     test('Sorting', async () => {

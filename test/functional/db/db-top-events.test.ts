@@ -1,4 +1,4 @@
-import { cleanDb, expectedTitlesStrict, getMockEvent, syncDatabase4Test } from './db-test-utils'
+import { cleanDb, expectedTitlesStrict, getMockEvent, syncEventsDb4Test } from './db-test-utils'
 import { db, dbCfg } from '../../../src/database/db'
 import { date, mkInterval } from '../../lib/timetable/test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
@@ -19,7 +19,7 @@ describe('Top events', () => {
     })
 
     test('single event', async () => {
-        await syncDatabase4Test([getMockEvent({
+        await syncEventsDb4Test([getMockEvent({
             title: 'A',
             eventTime: [
                 date('2020-01-02 15:00'),
@@ -33,7 +33,7 @@ describe('Top events', () => {
     })
 
     test('do not show exhibition when less then 1 hours before close', async () => {
-        await syncDatabase4Test([getMockEvent({
+        await syncEventsDb4Test([getMockEvent({
             eventTime: [
                 [date('2020-01-01 15:00'), date('2020-01-01 20:00')]
             ],
@@ -52,7 +52,7 @@ describe('Top events', () => {
     })
 
     test('exhibitions subcategory', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
             getMockEvent({
                 title: 'A',
                 eventTime: [
@@ -78,7 +78,7 @@ describe('Top events', () => {
     })
 
     test('include anytime events when no primary results', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
             getMockEvent({
                 title: 'PRIMARY',
                 eventTime: [
@@ -105,7 +105,7 @@ describe('Top events', () => {
         const timeIntervals = [
             [date('2020-01-01 15:00'), date('2020-01-01 20:00')]
         ]
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
                 getMockEvent({
                     title: '1. NOT SO GOOD',
                     eventTime: timeIntervals,
@@ -132,7 +132,7 @@ describe('Top events', () => {
         const eventTime = [
             [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-01 20:00')]
         ]
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
                 getMockEvent({
                     title: 'A - timed',
                     eventTime,
@@ -163,7 +163,7 @@ describe('Top events', () => {
     })
 
     test('even with is_anytime = true we should intersect intervals', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
                 getMockEvent({
                     title: 'A',
                     eventTime: [date('2020-01-01 00:00'), date('2020-01-01 10:00')],
@@ -189,7 +189,7 @@ describe('Search intervals - SINGLE_INTERVAL [restriction]', () => {
     })
 
     beforeEach(async () => {
-        await syncDatabase4Test([getMockEvent({
+        await syncEventsDb4Test([getMockEvent({
             eventTime: [
                 date('2020-01-02 15:00')
             ]
@@ -221,7 +221,7 @@ describe('Search intervals -  (range). [restriction]', () => {
     })
 
     beforeEach(async () => {
-        await syncDatabase4Test([getMockEvent({
+        await syncEventsDb4Test([getMockEvent({
             eventTime: [[
                 date('2020-01-01 12:00'),
                 date('2020-01-01 18:00')],

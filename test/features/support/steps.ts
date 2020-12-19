@@ -6,7 +6,7 @@ import { mskMoment } from '../../../src/util/moment-msk'
 import { AnyTypeOfKeyboard, MarkupHelper } from '../lib/MarkupHelper'
 import { BotReply } from '../lib/TelegramMockServer'
 import emojiRegex from 'emoji-regex'
-import { getMockEvent, syncDatabase4Test } from '../../functional/db/db-test-utils'
+import { getMockEvent, MockPackForSave, syncEventsDb4Test, syncPacksDb4Test } from '../../functional/db/db-test-utils'
 import { parseAndPredictTimetable } from '../../../src/lib/timetable/timetable-utils'
 import { allCategories, ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
@@ -78,9 +78,23 @@ Given(/^there is events:$/, async function (table: DataTable) {
         return getMockEvent({...row, eventTime: timetableResult.timeIntervals})
     })
 
-    await syncDatabase4Test(mockEvents)
+    await syncEventsDb4Test(mockEvents)
 })
 
+Given(/^there is packs:$/, async function (table: DataTable) {
+
+    const mockPacks = table.hashes().map((row: any) => {
+        return {
+            title: row.title,
+            author: row.author || 'Test',
+            description: row.desc || 'pack desc',
+            eventTitles: row.events.split(/[\s,]+/),
+            weight: row.weight || 0
+        } as MockPackForSave
+    })
+
+    await syncPacksDb4Test(mockPacks)
+})
 
 Given(/^Scene is '(.+)'$/, async function (scene: string) {
     drainEvents.call(this)
@@ -107,31 +121,34 @@ Then(/^Bot responds '(.+)'$/, function (expected: string) {
     expectTextMatches(nextReply, expected)
 })
 
-function expectReplyText(nextReply: BotReply, expected: string) {
-    if (nextReply === undefined) {
-        expect('').toEqual('No new messages from bot, but expected')
-    }
-    expect(nextReply.text).toEqual(expected)
-}
-
 Then(/^Bot responds:$/, function (expected: string) {
     const nextReply = this.getNextMsg() as BotReply
-    expectReplyText(nextReply, expected)
+    expectTextMatches(nextReply, expected)
 })
 
 Then(/^Bot responds '(.+)' with markup buttons:$/, function (expected: string, buttonsLayout: string) {
     const nextReply = this.getNextMsg() as BotReply
-    expectReplyText(nextReply, expected)
+    expectTextMatches(nextReply, expected)
     expect(MarkupHelper.getKeyboardType(nextReply)).toEqual('markup')
     expectLayoutsSame(buttonsLayout, nextReply.extra.reply_markup)
 })
 
 Then(/^Bot responds '(.+)' with inline buttons:$/, function (expected: string, buttonsLayout: string) {
     const nextReply = this.getNextMsg() as BotReply
-    expectReplyText(nextReply, expected)
+    expectTextMatches(nextReply, expected)
     expect(MarkupHelper.getKeyboardType(nextReply)).toEqual('inline')
 
     expectLayoutsSame(buttonsLayout, nextReply.extra.reply_markup)
+})
+
+Then(/^Bot edits text '(.+)'$/, function (expected: string) {
+    const editedReply = this.getLastEditedInline() as BotReply
+    expectTextMatches(editedReply, expected)
+})
+
+Then(/^Bot edits text:$/, function (expected: string) {
+    const editedReply = this.getLastEditedInline() as BotReply
+    expectTextMatches(editedReply, expected)
 })
 
 Then(/^Bot edits inline buttons:$/, function (buttonsLayout: string) {
@@ -139,7 +156,7 @@ Then(/^Bot edits inline buttons:$/, function (buttonsLayout: string) {
     if (markup === undefined) {
         fail('Expected edited markup but none')
     }
-    expectLayoutsSame(buttonsLayout, markup.message.reply_markup)
+    expectLayoutsSame(buttonsLayout, markup.extra.reply_markup)
 })
 
 Then(/^Bot responds with event '(.+)'/, function (eventTitle: string) {
@@ -151,10 +168,14 @@ Then(/^Bot responds with event '(.+)'/, function (eventTitle: string) {
 })
 
 Then(/^Bot responds something$/, function () {
-    const msg = this.getNextMsg()
+    this.getNextMsg()
 });
 
 function expectTextMatches(reply: BotReply, expectedText: string) {
+    if (reply === undefined) {
+        expect('').toEqual('No new messages from bot, but expected')
+    }
+
     if (expectedText.startsWith('*') && expectedText.endsWith('*')) {
         expect(reply.text).toContain(expectedText.substring(1, expectedText.length - 1))
     } else {
@@ -172,9 +193,17 @@ Then(/^I will be on scene '(.+)'$/, function (expectedScene: string) {
     expect(this.ctx()?.scene?.current?.id).toEqual(expectedScene)
 });
 
+Then(/^Google analytics pageviews will be:$/, function (table: DataTable) {
+    const expected = table.hashes()
+    const actual = this.analyticsRecorder.getPageViews()
+        .map(({ dp, dt }: { dp: string, dt: string}) => { return { dp, dt } })
+    expect(expected).toEqual(actual)
+});
 
 
-Before(async () => { await syncDatabase4Test([]) })
+
+
+Before(async () => { await syncEventsDb4Test([]) })
 Before(function (testCase: ITestCaseHookParameter) {
     this.initTestCase(testCase)
 })

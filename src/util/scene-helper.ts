@@ -1,6 +1,6 @@
 import { BaseScene, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
-import { StupidTranslit } from '../lib/translit/stupid-translit'
+import { ReversableTranslit } from '../lib/translit/reversable-translit'
 import { i18n } from './i18n'
 import { adminIds, adminUsernames, devUsernames } from './admins-list'
 
@@ -13,8 +13,8 @@ export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id
 
     return {
         backButton: (ctx: ContextMessageUpdate) => Markup.callbackButton(ctx.i18n.t('shared.keyboard.back'), backAction),
-        actionName: (id: string) => `${scene.id}.${StupidTranslit.translit(id)}`,
-        revertActionName: (id: string) => `${StupidTranslit.reverse(id)}`,
+        actionName: (id: string) => `${scene.id}.${ReversableTranslit.translit(id)}`,
+        revertActionName: (id: string) => `${ReversableTranslit.reverse(id)}`,
         pushEnterScene,
 
         i18Btn: (ctx: ContextMessageUpdate, id: string, tplData: object = undefined) =>

@@ -1,4 +1,4 @@
-import { StupidTranslit } from '../../../src/lib/translit/stupid-translit'
+import { ReversableTranslit } from '../../../src/lib/translit/reversable-translit'
 
 describe('translit', () => {
     test.each([
@@ -7,8 +7,8 @@ describe('translit', () => {
         '123456789',
         '#ЗОЖ'
     ])('%s', (text: string) => {
-        const translit = StupidTranslit.translit(text)
-        const back = StupidTranslit.reverse(translit)
+        const translit = ReversableTranslit.translit(text)
+        const back = ReversableTranslit.reverse(translit)
         expect(back).toEqual(text)
     })
 })

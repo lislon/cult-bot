@@ -15,6 +15,7 @@ import {
     updateMenu
 } from './packs-common'
 import { cardFormat } from '../shared/card-format'
+import slugify from 'slugify'
 
 
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
@@ -23,6 +24,7 @@ const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} =
 export async function displayMainMenu(ctx: ContextMessageUpdate) {
     const packs = await getPacksList(ctx)
     resetPackIndex(ctx)
+    ctx.ua.pv({dp: `/packs/`, dt: `Подборки`})
 
     const buttons = [
         ...packs.map(({id, title}, idx) => {
@@ -39,9 +41,18 @@ export async function displayMainMenu(ctx: ContextMessageUpdate) {
     })
 }
 
+export function mySlugify(text: string) {
+    return slugify(text, {
+        lower: true,
+        strict: true
+    })
+}
+
 export async function displayPackMenu(ctx: ContextMessageUpdate) {
     const pack = await getPackSelected(ctx)
     resetEventIndex(ctx)
+
+    ctx.ua.pv({dp: `/packs/${mySlugify(pack.title)}/`, dt: `Подборки > ${pack.title}`})
 
     const text = i18Msg(ctx, 'pack_card', {
         title: pack.title,
@@ -74,11 +85,11 @@ export async function displayPackMenu(ctx: ContextMessageUpdate) {
     })
 }
 
-
-
 export async function displayEventsMenu(ctx: ContextMessageUpdate) {
     const pack = await getPackSelected(ctx)
     const event = await getEventSelected(ctx)
+
+    ctx.ua.pv({dp: `/packs/${mySlugify(pack.title)}/${mySlugify(event.ext_id)}`, dt: `Подборки > ${pack.title} > ${event.title}`})
 
     const buttons = [
         [

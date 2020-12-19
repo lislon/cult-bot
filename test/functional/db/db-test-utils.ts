@@ -3,6 +3,7 @@ import { MomentIntervals } from '../../../src/lib/timetable/intervals'
 import { Event, EventCategory, TagLevel2 } from '../../../src/interfaces/app-interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
 import { SyncDiff } from '../../../src/database/db-sync-repository'
+import { EventPackForSave } from '../../../src/database/db-packs'
 
 export async function cleanDb() {
     await db.none('TRUNCATE cb_events_entrance_times, cb_events, cb_events_packs RESTART identity')
@@ -21,6 +22,15 @@ export interface MockEvent {
     order_rnd?: number
     reviewer: string
 }
+
+export interface MockPackForSave {
+    title: string
+    description: string
+    author: string
+    eventTitles: string[]
+    weight: number
+}
+
 
 export function getMockEvent({
         ext_id = '',
@@ -67,6 +77,24 @@ export function getMockEvent({
     }
 }
 
+export function getMockPack({
+                                title = 'Event title',
+                                description = 'desc',
+                                author = 'author',
+                                weight = 0,
+                                eventIds = [1],
+                            }: Partial<EventPackForSave> = {}
+): EventPackForSave {
+    return {
+        title,
+        description,
+        author,
+        weight,
+        eventIds,
+    }
+}
+
+
 export function expectedTitles(titles: string[], events: Pick<Event, 'title'>[]) {
     expect(events.map(t => t.title).sort()).toEqual(titles.sort())
 }
@@ -75,7 +103,7 @@ export function expectedTitlesStrict(titles: string[], events: Pick<Event, 'titl
     expect(events.map(t => t.title)).toEqual(titles)
 }
 
-export async function syncDatabase4Test(events: EventToSave[]): Promise<SyncDiff> {
+export async function syncEventsDb4Test(events: EventToSave[]): Promise<SyncDiff> {
     events.forEach((e, i) => {
         if (e.primaryData.ext_id === '') {
             e.primaryData.ext_id = 'TEST-' + i
@@ -103,3 +131,32 @@ export async function syncDatabase4Test(events: EventToSave[]): Promise<SyncDiff
     }
 }
 
+export async function syncPacksDb4Test(mockPacks: MockPackForSave[]): Promise<number[]> {
+    return await db.task(async (dbTask) => {
+        const tilesAndIds = await dbTask.many(`SELECT title, id FROM cb_events WHERE title IN ($(titles:csv))`, {
+            titles: mockPacks.flatMap(p => p.eventTitles)
+        })
+
+        const packs = mockPacks.map(p => {
+            return {
+                ...p,
+                eventIds: p.eventTitles
+                    .map(eventTitle => {
+                        const eventId = tilesAndIds
+                            .filter(tAndId => tAndId.title === eventTitle)
+                            .map(tAndId => tAndId.id)
+                        if (!eventId) {
+                            throw new Error(`Cant find event by ${eventTitle}`)
+                        }
+                        return +eventId
+                    }),
+            }
+        })
+
+        return await db.repoPacks.sync(packs, dbTask)
+    })
+}
+
+export function expectedPacksTitle(titles: string[], packs: any[]) {
+    expect(packs.map(t => t.title)).toEqual(titles)
+}

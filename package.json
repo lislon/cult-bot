@@ -41,6 +41,7 @@
     "redis-cli": "^2.0.0",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
+    "slugify": "^1.4.6",
     "source-map-support": "^0.5.19",
     "telegraf": "^3.38.0",
     "telegraf-i18n": "^6.6.0",

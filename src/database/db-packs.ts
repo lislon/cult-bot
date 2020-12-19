@@ -58,7 +58,7 @@ export class PacksRepository {
 
     public async sync(packs: EventPackForSave[], outerDbTx: IBaseProtocol<{}> = db): Promise<number[]> {
         return await outerDbTx.txIf({ reusable: true }, async (dbTx: ITask<IExtensions> & IExtensions) => {
-            await dbTx.none('DELETE FROM cb_events_packs')
+            await dbTx.none('TRUNCATE cb_events_packs')
             if (packs.length > 0) {
                 const s = this.pgp.helpers.insert(packs.map(p => {
                     return {
@@ -96,7 +96,7 @@ export class PacksRepository {
                     GROUP by cbet.event_id
                 ) cbet
                 JOIN cb_events cb ON cb.id = cbet.event_id
-                ORDER BY cb.is_anytime ASC, cbet.first_entrance ASC, cb.rating DESC
+                ORDER BY cb.is_anytime ASC, cbet.first_entrance ASC, cb.rating DESC, cb.title ASC
             ) pe on (pe.id = any(p.event_ids))
             GROUP BY p.id
             ORDER BY p.weight ASC, p.title ASC

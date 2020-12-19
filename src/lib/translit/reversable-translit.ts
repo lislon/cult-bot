@@ -1,6 +1,6 @@
 import { TwoWayMap } from './two-way-map'
 
-export class StupidTranslit {
+export class ReversableTranslit {
     static dict = new TwoWayMap([
         ['а', 'a'],
         ['б', 'b'],
@@ -48,8 +48,8 @@ export class StupidTranslit {
         return Array.from(str)
             .reduce((s, l) =>
                 s + (
-                    StupidTranslit.dict.get(l)
-                    || StupidTranslit.dict.get(l) === undefined && l
+                    ReversableTranslit.dict.get(l)
+                    || ReversableTranslit.dict.get(l) === undefined && l
                 ), '');
     }
 
@@ -60,8 +60,8 @@ export class StupidTranslit {
         return Array.from(str)
             .reduce((s, l) =>
                 s + (
-                    StupidTranslit.dict.revGet(l)
-                    || StupidTranslit.dict.revGet(l) === undefined && l
+                    ReversableTranslit.dict.revGet(l)
+                    || ReversableTranslit.dict.revGet(l) === undefined && l
                 ), '');
     }
 }

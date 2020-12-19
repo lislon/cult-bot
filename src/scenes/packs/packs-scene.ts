@@ -15,7 +15,6 @@ function loop(index: number|undefined, count: number, dir: string) {
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
-        ctx.ua.pv({dp: '/packs/', dt: 'Подборки на неделю'})
         await ctx.replyWithMarkdown(
             i18Msg(ctx, 'header'),
             Extra.HTML(true).markup(Markup.keyboard([backButton(ctx)]).resize())

@@ -14,7 +14,10 @@ debug `npm dev` with `-r dotenv/config` node options.
 
 #### Run only cucumber
 
- Run tests `npm run test-cucumber`
+Run tests `npm run test-cucumber`
+
+Or single test `npm run test-cucumber -- --name "Regex"`
+
 
 ## Sync
 

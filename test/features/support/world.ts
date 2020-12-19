@@ -10,9 +10,10 @@ import { MiddlewareFn } from 'telegraf/typings/composer'
 import { feedbackScene } from '../../../src/scenes/feedback/feedback-scene'
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
 import { mainScene } from '../../../src/scenes/main/main-scene'
+import { packsScene } from '../../../src/scenes/packs/packs-scene'
+import { AnalyticsRecorder } from './AnalyticsRecorder'
 
 const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
-
 
 function isUselessMessage(next: IteratorYieldResult<BotReply> | IteratorReturnResult<any>) {
     return next?.value?.text && next.value.text.indexOf('Дата переопределена') !== -1
@@ -24,10 +25,10 @@ class CustomWorld {
     private now: Date = new Date()
     private server = new TelegramMockServer()
     private middlewaresBeforeScenes: MiddlewareFn<ContextMessageUpdate>[] = []
+    private analyticsRecorder = new AnalyticsRecorder()
 
     constructor() {
-        const stage = new Stage([], {
-        })
+        const stage = new Stage([], {})
 
         this.bot.use(
             middlewares.i18n,
@@ -35,12 +36,19 @@ class CustomWorld {
             // middlewares.logMiddleware('pre_session'),
             middlewares.userSaveMiddleware,
             middlewares.analyticsMiddleware,
+            this.analyticsRecorder.middleware(),
             middlewares.dateTime,
             this.executeFeaturesMiddlewares(),
             stage.middleware()
         )
 
-        myRegisterScene(this.bot, stage, [ mainScene, customizeScene, topsScene, feedbackScene ])
+        myRegisterScene(this.bot, stage, [
+            mainScene,
+            customizeScene,
+            topsScene,
+            feedbackScene,
+            packsScene
+        ])
     }
 
     async initTestCase(testCase: ITestCaseHookParameter) {
@@ -62,7 +70,7 @@ class CustomWorld {
     }
 
     async clickMarkup(buttonText: string) {
-        const { message, buttons } = this.server.getListOfMarkupButtonsFromLastMsg()
+        const {message, buttons} = this.server.getListOfMarkupButtonsFromLastMsg()
         const foundButton = buttons.find(btn => noImg(btn.text) === noImg(buttonText))
         if (foundButton === undefined) {
             throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: '${buttons.map(b => `'${b.text}'`).join(', ')}'`)
@@ -72,7 +80,7 @@ class CustomWorld {
     }
 
     async clickInline(buttonText: string) {
-        const { message, buttons } = this.server.getListOfInlineButtonsFromLastMsg()
+        const {message, buttons} = this.server.getListOfInlineButtonsFromLastMsg()
         const callbackData = buttons.find(btn => noImg(btn.text) === noImg(buttonText))?.callback_data
         if (callbackData === undefined) {
             throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: '${buttons.map(b => `'${b.text}'`).join(', ')}'`)
@@ -81,7 +89,7 @@ class CustomWorld {
         await this.server.clickInline(this.bot.middleware(), callbackData, message)
     }
 
-   async setNow(now: Date) {
+    async setNow(now: Date) {
         this.now = now
         const setDate = async (ctx: ContextMessageUpdate, next: any) => {
             ctx.session.adminScene = {

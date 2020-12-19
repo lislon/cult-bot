@@ -169,7 +169,7 @@ export class TelegramMockServer {
         }
         ctx.answerCbQuery = _ => Promise.resolve(true)
         ctx.editMessageReplyMarkup = async (markup?: tt.InlineKeyboardMarkup): Promise<tt.Message | boolean> => {
-            const lastReply = this.replies.find(reply => reply.message.message_id === this.lastMsg.message_id)
+            const lastReply = this.findLastReply()
 
             if (lastReply === undefined) {
                 return false
@@ -181,6 +181,19 @@ export class TelegramMockServer {
 
             return lastReply.message
         }
+        ctx.editMessageText = async (text: string, extra?: tt.ExtraEditMessage): Promise<tt.Message | boolean> => {
+            const lastReply = this.findLastReply()
+            if (lastReply === undefined) {
+                return false
+            } else {
+                lastReply.text = text
+                lastReply.extra = extra
+            }
+            this.lastEdited = lastReply
+
+            return lastReply.message
+        }
+
         tg.sendMessage = async (chatId: number | string, text: string, extra?: tt.ExtraEditMessage): Promise<tt.Message> => {
             const message: Message = {
                 message_id: this.nextMsgId(),
@@ -196,6 +209,11 @@ export class TelegramMockServer {
         }
 
         return ctx
+    }
+
+    private findLastReply() {
+        const lastReply = this.replies.find(reply => reply.message.message_id === this.lastMsg.message_id)
+        return lastReply
     }
 
     async generateAnswerAfterReply(): Promise<Message> {

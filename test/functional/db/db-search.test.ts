@@ -1,4 +1,4 @@
-import { cleanDb, expectedTitles, getMockEvent, syncDatabase4Test } from './db-test-utils'
+import { cleanDb, expectedTitles, getMockEvent, syncEventsDb4Test } from './db-test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { db, dbCfg } from '../../../src/database/db'
 import { mkInterval } from '../../lib/timetable/test-utils'
@@ -14,7 +14,7 @@ describe('Search', () => {
     const yearRange = mkInterval('[2020-01-01 00:00, 2021-01-02 00:00)')
 
     test('search by title works', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
                 getMockEvent({title: 'event dog 5', eventTime, category: 'movies', rating: 5}),
                 getMockEvent({title: 'event cat 5', eventTime, category: 'movies', rating: 5}),
                 getMockEvent({title: 'event cat 15', eventTime, category: 'movies', rating: 15})
@@ -32,7 +32,7 @@ describe('Search', () => {
         const eventSun = [mskMoment('2020-01-05 23:00')]
         const eventNextSat = [mskMoment('2020-01-11 12:00')]
 
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
                 getMockEvent({title: 'event sat', eventTime: eventSat, category: 'movies', rating: 5}),
                 getMockEvent({title: 'event sun', eventTime: eventSun, category: 'movies', rating: 5}),
                 getMockEvent({title: 'event next sat', eventTime: eventNextSat, category: 'movies', rating: 15})
@@ -45,7 +45,7 @@ describe('Search', () => {
     })
 
     test('search by ext_id works', async () => {
-        await syncDatabase4Test([
+        await syncEventsDb4Test([
                 getMockEvent({ext_id: 'ABC', title: 'event dog 5', eventTime, category: 'movies', rating: 5}),
             ]
         )
