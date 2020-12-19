@@ -63,7 +63,7 @@ Feature: Customize time
       [🏙 19:00-22:00 ]
       [🌃 22:00-24:00 ✔]
       """
-    When I click markup [Назад [К другим фильтрам]]
+    When I click markup [Назад [К фильтрам]]
     Then Bot responds:
     """
     Вы выбрали фильтр:
@@ -79,7 +79,7 @@ Feature: Customize time
     * I click inline [➕ Суббота (04.01)]
     * I click inline [🌃 22:00-24:00]
     * now is 2020-01-05 12:00
-    * I click markup [Назад [К другим фильтрам]]
+    * I click markup [Назад [К фильтрам]]
     Then Bot responds 'Настройте фильтры по Вашим предпочтениям'
 
   Scenario: I don't want to see buttons with time in past
@@ -100,7 +100,7 @@ Feature: Customize time
     * I click inline [🌅 06:00-12:00]
     * I click inline [🏞 12:00-15:00]
     * now is 2020-01-05 13:00
-    * I click markup [Назад [К другим фильтрам]]
+    * I click markup [Назад [К фильтрам]]
     Then Bot responds:
       """
       Вы выбрали фильтр:

@@ -57,7 +57,7 @@ Feature: Customize time
       [➕ Мероприятия ]
       [➕ Прогулка ]
       """
-    When I click markup [Назад [К другим фильтрам]]
+    When I click markup [Назад [К фильтрам]]
     Then Bot responds:
     """
     Вы выбрали фильтр:
@@ -77,7 +77,7 @@ Feature: Customize time
     When I click markup [Области]
     When I click inline [Постоянные коллекции]
     When I click inline [Научно-технические]
-    When I click markup [Назад [К другим фильтрам]]
+    When I click markup [Назад [К фильтрам]]
     Then Bot responds:
     """
     Вы выбрали фильтр:

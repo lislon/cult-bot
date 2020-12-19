@@ -220,10 +220,11 @@
         "priorities": "⚖️ Приоритеты",
         "format": "💻 Формат",
         "selected_filter_postfix": "✔",
-        "show_more": "Показать еще",
+        "show_more": "Показать еще (${countLeft})",
         "menu_open": "➖ ${title}${checkbox}",
         "menu_closed": "➕ ${title}${checkbox}",
-        "back_to_filters": "◀️ Назад [К другим фильтрам]",
+        "last_event_back": "◀️ Назад [К фильтрам]",
+        "back_to_filters": "◀️ Назад [К фильтрам]",
 
         "cennosti_section": {
           "menu_childrens": "С детьми",

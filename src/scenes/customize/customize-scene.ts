@@ -289,15 +289,34 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
 
     const totalCount = await countFilteredEvents(ctx)
 
-    let count = 0
+    let count = 1
     for (const event of events) {
-        const nextBtn = Markup.inlineKeyboard([
-            Markup.callbackButton(i18Btn(ctx, 'show_more'), actionName('show_more'))
-        ])
+        const isLastCardOnPage = count == events.length
+        const isFirstCard = count == 1
+        const isLastCardInTotal = ctx.session.paging.pagingOffset + count == totalCount
+
+        let replyMarkup = undefined
+        if (isLastCardOnPage && !isLastCardInTotal) {
+            replyMarkup = Markup.inlineKeyboard([
+                Markup.callbackButton(i18Btn(ctx, 'show_more', {
+                    countLeft: totalCount - ctx.session.paging.pagingOffset - count
+                }), actionName('show_more'))
+            ])
+        } else if (isLastCardInTotal) {
+            replyMarkup = Markup.inlineKeyboard([
+                Markup.callbackButton(i18Btn(ctx, 'back_to_filters'), actionName('last_event_back'))
+            ])
+        }
+        else if (isFirstCard) {
+            replyMarkup = Markup.keyboard([Markup.button(i18nModuleBtnName('back_to_filters'))]).resize()
+        }
+
         await ctx.replyWithHTML(cardFormat(event), {
-            disable_web_page_preview: true,
-            reply_markup: (++count == events.length && ctx.session.paging.pagingOffset + count != totalCount ? nextBtn : undefined)
-        })
+                    disable_web_page_preview: true,
+                    reply_markup: replyMarkup
+                })
+
+        count++
         await sleep(200)
     }
 
@@ -569,6 +588,12 @@ scene
         await ctx.answerCbQuery(i18Msg(ctx, 'popup_selected',
             {eventPlural: await generateAmountSelectedPlural(ctx)}))
         await putOrRefreshCounterMessage(ctx)
+    })
+    .action(actionName('last_event_back'), async (ctx: ContextMessageUpdate) => {
+        await resetSessionIfProblem(ctx, async () => {
+            prepareSessionStateIfNeeded(ctx)
+            await goBackToCustomize(ctx)
+        })
     })
     .hears(i18nModuleBtnName('back_to_filters'), async (ctx: ContextMessageUpdate) => {
         await resetSessionIfProblem(ctx, async () => {
