@@ -71,14 +71,15 @@ async function countFilteredEvents(ctx: ContextMessageUpdate) {
 }
 
 const content = async (ctx: ContextMessageUpdate) => {
+    const selected = i18Btn(ctx, 'selected_filter_postfix')
     const keyboard = [
         [
-            Markup.button(i18Btn(ctx, 'oblasti')),
-            Markup.button(i18Btn(ctx, 'priorities'))
+            Markup.button(i18Btn(ctx, 'oblasti') + (isEmpty(ctx.session.customize.oblasti) ? '' : ' ' + selected)),
+            Markup.button(i18Btn(ctx, 'priorities') + (isEmpty(ctx.session.customize.cennosti) ? '' : ' ' + selected))
         ],
         [
-            Markup.button(i18Btn(ctx, 'time')),
-            Markup.button(i18Btn(ctx, 'format'))
+            Markup.button(i18Btn(ctx, 'time') + (isEmpty(ctx.session.customize.time) ? '' : ' ' + selected)),
+            Markup.button(i18Btn(ctx, 'format') + (isEmpty(ctx.session.customize.format) ? '' : ' ' + selected))
         ],
         [Markup.button(i18Btn(ctx, 'show_personalized_events'))],
         [backButton(ctx)],
@@ -401,7 +402,7 @@ async function withSubdialog(ctx: ContextMessageUpdate, subStage: CurrentStageTy
 
 function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
-        .hears(i18nModuleBtnName('oblasti'), async (ctx: ContextMessageUpdate) => {
+        .hears(new RegExp(i18nModuleBtnName('oblasti') + '.*'), async (ctx: ContextMessageUpdate) => {
 
             await withSubdialog(ctx, 'oblasti', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_oblasti'), Extra.markup((await getKeyboardOblasti(ctx))))
@@ -409,7 +410,7 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
             })
 
         })
-        .hears(i18nModuleBtnName('priorities'), async (ctx: ContextMessageUpdate) => {
+        .hears(new RegExp(i18nModuleBtnName('priorities') + '.*'), async (ctx: ContextMessageUpdate) => {
 
             await withSubdialog(ctx, 'priorities', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_priorities'), Extra.markup((await getKeyboardCennosti(ctx, ctx.session.customize))))
@@ -417,14 +418,14 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
             })
 
         })
-        .hears(i18nModuleBtnName('time'), async (ctx: ContextMessageUpdate) => {
+        .hears(new RegExp(i18nModuleBtnName('time') + '.*'), async (ctx: ContextMessageUpdate) => {
             await withSubdialog(ctx,  'time', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_time'), Extra.markup((await getKeyboardTime(ctx))))
                 ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под себя / Время`})
             })
 
         })
-        .hears(i18nModuleBtnName('format'), async (ctx: ContextMessageUpdate) => {
+        .hears(new RegExp(i18nModuleBtnName('format') + '.*'), async (ctx: ContextMessageUpdate) => {
             await withSubdialog(ctx, 'format', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_format'), Extra.markup((await getKeyboardFormat(ctx))))
                 ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под себя / Формат`})

@@ -219,6 +219,7 @@
         "oblasti": "📎 Области",
         "priorities": "⚖️ Приоритеты",
         "format": "💻 Формат",
+        "selected_filter_postfix": "✔",
         "show_more": "Показать еще",
         "menu_open": "➖ ${title}${checkbox}",
         "menu_closed": "➕ ${title}${checkbox}",
