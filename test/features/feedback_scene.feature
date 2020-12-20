@@ -9,7 +9,7 @@ Feature: Feedback scene
       """
       [Назад]
       """
-    Then Bot responds 'Напишите здесь всё что вы хотите нам сказать. Также предлагаем пройти короткий опрос, чтобы мы смогли сделать бот более приятным для вас' with inline buttons:
+    Then Bot responds 'Пройдите опрос, оставьте предложения и пожелания' with inline buttons:
       """
       [Написать авторам] [Пройти опрос]
       """
@@ -23,7 +23,7 @@ Feature: Feedback scene
     When I click inline [Да, подобрал]
     When I click inline [Цена]
     When I click inline [Отправить]
-    Then Bot responds '*рады услышать*'
+    Then Bot responds 'Спасибо за ответ! Мы обязательно учтём это в дальнейшей работе'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Цена*'
 
   Scenario: I select positive items in survey with custom answer
@@ -31,7 +31,7 @@ Feature: Feedback scene
     When I click inline [Да, подобрал]
     When I click inline [Цена]
     When I click inline [Свой вариант]
-    Then Bot responds 'Напишите, пожалуйста, что вам важно при выборе событий:'
+    Then Bot responds 'Напишите, что было важно при выборе событий:'
     When I type 'Всё гуд'
     Then Bot responds '*Спасибо*'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Всё гуд*'
@@ -42,7 +42,7 @@ Feature: Feedback scene
     When I click inline [Невнятное описание]
     When I click inline [Ничего не понравилось]
     When I click inline [Отправить]
-    Then Bot responds 'Спасибо за Ваш отклик. Вернитесь к нам через пару недель, мы обязательно станем лучше'
+    Then Bot responds 'Спасибо за отклик. Вернитесь к нам, мы обязательно станем лучше'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Ничего не понравилось*'
 
   Scenario: I select negative items in survey with custom answer
@@ -50,7 +50,7 @@ Feature: Feedback scene
     When I click inline [Нет]
     When I click inline [Ничего не понравилось]
     When I click inline [Свой вариант]
-    Then Bot responds 'Напишите, пожалуйста, что вам не понравилось:'
+    Then Bot responds 'Напишите, что не понравилось:'
     When I type 'Вы ужасны'
     Then Bot responds '*Спасибо*'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Вы ужасны*'

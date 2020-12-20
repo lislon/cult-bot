@@ -13,9 +13,9 @@ Feature: Customize time
     Given Scene is 'customize_scene'
 
   Scenario: I can see number of events when click on time
-    Then Bot responds 'Настройте фильтры по Вашим предпочтениям' with markup buttons:
+    Then Bot responds '*настройте*' with markup buttons:
       """
-      [Области] [Приоритеты]
+      [Рубрики] [Приоритеты]
       [Время] [Формат]
       [Показать события]
       [Назад]
@@ -24,7 +24,7 @@ Feature: Customize time
   Scenario:  I want select to events by time on friday
     Given now is 2020-01-03 12:00
     When I click markup [#️⃣ Время]
-    Then Bot responds 'Здесь можно настроить временные интервалы, в которых искать события' with inline buttons:
+    Then Bot responds 'Выберите дату и время' with inline buttons:
       """
       [➕ Суббота (04.01) ]
       [➕ Воскресенье (05.01) ]
@@ -37,7 +37,7 @@ Feature: Customize time
       | A       | movies    | вс: 21:59      |
       | B       | movies    | вс: 22:00      |
     When I click markup [#️⃣ Время]
-    Then Bot responds 'Здесь можно настроить временные интервалы, в которых искать события' with inline buttons:
+    Then Bot responds 'Выберите дату и время' with inline buttons:
       """
       [➕ Воскресенье (05.01) ]
       """
@@ -63,10 +63,10 @@ Feature: Customize time
       [🏙 19:00-22:00 ]
       [🌃 22:00-24:00 ✔]
       """
-    When I click markup [Назад [К фильтрам]]
+    When I click markup [Назад [к фильтрам]]
     Then Bot responds:
     """
-    Вы выбрали фильтр:
+    Текущая настройка фильтров:
 
     🕒 <b>Время</b>:  ВС (05.01): 22.00-24.00
 
@@ -79,8 +79,8 @@ Feature: Customize time
     * I click inline [➕ Суббота (04.01)]
     * I click inline [🌃 22:00-24:00]
     * now is 2020-01-05 12:00
-    * I click markup [Назад [К фильтрам]]
-    Then Bot responds 'Настройте фильтры по Вашим предпочтениям'
+    * I click markup [Назад [к фильтрам]]
+    Then Bot responds '*настройте*'
 
   Scenario: I don't want to see buttons with time in past
     Given now is 2020-01-05 21:50
@@ -100,10 +100,10 @@ Feature: Customize time
     * I click inline [🌅 06:00-12:00]
     * I click inline [🏞 12:00-15:00]
     * now is 2020-01-05 13:00
-    * I click markup [Назад [К фильтрам]]
+    * I click markup [Назад [к фильтрам]]
     Then Bot responds:
       """
-      Вы выбрали фильтр:
+      Текущая настройка фильтров:
 
       🕒 <b>Время</b>:  ВС (05.01): 12.00-15.00
 

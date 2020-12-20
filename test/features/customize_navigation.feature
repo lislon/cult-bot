@@ -19,12 +19,12 @@ Feature: Customize navigation
     When I click markup [Показать события]
     Then Bot responds '*<b>A</b>*' with inline buttons:
       """
-      [Назад [К фильтрам]]
+      [Назад [к фильтрам]]
       """
-    When I click inline [Назад [К фильтрам]]
-    Then Bot responds 'Настройте фильтры по Вашим предпочтениям' with markup buttons:
+    When I click inline [Назад [к фильтрам]]
+    Then Bot responds '*настройте*' with markup buttons:
       """
-      [Области] [Приоритеты]
+      [Рубрики] [Приоритеты]
       [Время] [Формат]
       [Показать события]
       [Назад]
@@ -47,5 +47,5 @@ Feature: Customize navigation
     When I click inline [Показать еще (1)]
     Then Bot responds '*<b>D</b>*' with inline buttons:
       """
-      [Назад [К фильтрам]]
+      [Назад [к фильтрам]]
       """

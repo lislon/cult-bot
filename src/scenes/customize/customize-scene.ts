@@ -325,7 +325,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
     }
 
     if (ctx.session.paging.pagingOffset === 0) {
-        ctx.ua.pv({dp: `/customize/results/`, dt: `Подобрать под себя / ${totalCount} результатов`})
+        ctx.ua.pv({dp: `/customize/results/`, dt: `Подобрать под мои интересы / ${totalCount} результатов`})
 
         const searchByTags = [
             ...ctx.session.customize.cennosti,
@@ -419,13 +419,13 @@ async function withSubdialog(ctx: ContextMessageUpdate, subStage: CurrentStageTy
     await putOrRefreshCounterMessage(ctx)
 }
 
-function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
-    bot
+function listenMarkupButtonsCategories() {
+    return new Composer()
         .hears(new RegExp(i18nModuleBtnName('oblasti') + '.*'), async (ctx: ContextMessageUpdate) => {
 
             await withSubdialog(ctx, 'oblasti', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_oblasti'), Extra.markup((await getKeyboardOblasti(ctx))))
-                ctx.ua.pv({dp: `/customize/oblasti/`, dt: `Подобрать под себя / Области`})
+                ctx.ua.pv({dp: `/customize/rubrics/`, dt: `Подобрать под мои интересы > Рубрики`})
             })
 
         })
@@ -433,23 +433,28 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
 
             await withSubdialog(ctx, 'priorities', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_priorities'), Extra.markup((await getKeyboardCennosti(ctx, ctx.session.customize))))
-                ctx.ua.pv({dp: `/customize/priorities/`, dt: `Подобрать под себя / Приоритеты`})
+                ctx.ua.pv({dp: `/customize/priorities/`, dt: `Подобрать под мои интересы > Приоритеты`})
             })
 
         })
         .hears(new RegExp(i18nModuleBtnName('time') + '.*'), async (ctx: ContextMessageUpdate) => {
-            await withSubdialog(ctx,  'time', async () => {
+            await withSubdialog(ctx, 'time', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_time'), Extra.markup((await getKeyboardTime(ctx))))
-                ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под себя / Время`})
+                ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под мои интересы > Время`})
             })
 
         })
         .hears(new RegExp(i18nModuleBtnName('format') + '.*'), async (ctx: ContextMessageUpdate) => {
             await withSubdialog(ctx, 'format', async () => {
                 await ctx.replyWithHTML(i18Msg(ctx, 'select_format'), Extra.markup((await getKeyboardFormat(ctx))))
-                ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под себя / Формат`})
+                ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под мои интересы > Формат`})
             })
         })
+}
+
+function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
+    bot
+        .use(listenMarkupButtonsCategories())
         .hears(i18nModuleBtnName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
             await warnAdminIfDateIsOverriden(ctx)
             await showNextPortionOfResults(ctx)
@@ -527,7 +532,7 @@ scene
         const {markup} = await content(ctx)
         await ctx.replyWithMarkdown(i18Msg(ctx, 'welcome'), markup)
 
-        ctx.ua.pv({dp: `/customize/`, dt: `Подобрать под себя`})
+        ctx.ua.pv({dp: `/customize/`, dt: `Подобрать под мои интересы`})
     })
     .leave((ctx: ContextMessageUpdate) => {
         ctx.session.customize = undefined
@@ -538,6 +543,7 @@ scene
             await ctx.editMessageReplyMarkup()
             await showNextPortionOfResults(ctx)
         }))
+    .use(listenMarkupButtonsCategories())
     .action(actionName('show_filtered_events'), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
         await showNextPortionOfResults(ctx)

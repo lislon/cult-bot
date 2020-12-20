@@ -9,7 +9,7 @@ Feature: Tops scene
       | B     | exhibitions | #постоянныеколлекции | пн-вс: 15:00 |
 
   Scenario: I can see 6 categories when i enter customize
-    Then Bot responds 'Пожалуйста, выберите категорию' with markup buttons:
+    Then Bot responds '*Выберите*' with markup buttons:
       """
       [Театры] [Выставки]
       [Кино] [Мероприятия]
@@ -19,7 +19,7 @@ Feature: Tops scene
 
   Scenario: I can see events in category 'temporary exhibitions'
     When I click markup [Выставки]
-    Then Bot responds 'Пожалуйста, выберите категорию' with markup buttons:
+    Then Bot responds '*Выберите*' with markup buttons:
       """
       [Постоянные коллекции] [Временные выставки]
       [Назад]
@@ -36,7 +36,7 @@ Feature: Tops scene
 
   Scenario: I can see events in category 'permanent exhibitions'
     When I click markup [Выставки]
-    Then Bot responds 'Пожалуйста, выберите категорию' with markup buttons:
+    Then Bot responds '*Выберите*' with markup buttons:
       """
       [Постоянные коллекции] [Временные выставки]
       [Назад]
@@ -48,7 +48,7 @@ Feature: Tops scene
   Scenario: When I click back in subcategory I get into tops menu
     When I click markup [Выставки]
     Then I click markup [Назад]
-    Then Bot responds 'Пожалуйста, выберите категорию'
+    Then Bot responds '*Выберите*'
 
   Scenario: When I click back in tops menu i will get to main scene
     Then I click markup [Назад]
