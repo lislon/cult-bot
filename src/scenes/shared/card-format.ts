@@ -51,8 +51,10 @@ function formatEventDuration(text: string) {
     return text
 }
 
-function getWhereEmoji(row: Event) {
-    return i18n.t(`ru`, `shared.category_icons.${row.category}`)
+function getCardHeaderCat(row: Event) {
+    const icon = i18n.t(`ru`, `shared.category_icons.${row.category}`)
+    const title = i18n.t(`ru`, `shared.category_single_title.${row.category}`)
+    return `${icon} <b>${title.toUpperCase()}</b>`
 }
 
 export interface CardOptions {
@@ -85,7 +87,7 @@ export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions 
     // } else {
     //
     // }
-    text += `<b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>`
+    text += `${getCardHeaderCat(row)} <b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>`
     text += '\n'
     text += '\n'
     text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`
@@ -96,7 +98,7 @@ export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions 
     text += '\n'
 
     if (!fieldIsQuestionMarkOrEmpty(row.place)) {
-        text += `${getWhereEmoji(row)} ${addHtmlNiceUrls(escapeHTML(row.place))}\n`
+        text += `🌐 ${addHtmlNiceUrls(escapeHTML(row.place))}\n`
     }
     const map = row.geotag != '' ? ` <a href="${escapeHTML(row.geotag)}">(Я.Карта)</a>` : ``
     if (!fieldIsQuestionMarkOrEmpty(row.address)) {

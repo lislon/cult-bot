@@ -15,12 +15,12 @@ async function readCard(card: string) {
 const defaultEvent: Event = {
     ext_id: '',
     title: 'A',
+    category: 'theaters',
     description: 'описание',
     timetable: `17 октября: 11:30 - 23:45`,
     notes: 'notes',
     price: '100 руб',
     duration: '2 часа',
-    category: undefined,
     address: '',
     tag_level_1: ['#level1'],
     tag_level_2: ['#level2', '#_служебный_тег'],

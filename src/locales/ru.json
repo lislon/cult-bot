@@ -425,6 +425,14 @@
       "events": "👓",
       "walks": "☂️",
       "concerts": "🎵"
+    },
+    "category_single_title": {
+      "theaters": "Театр",
+      "exhibitions": "Выставка",
+      "concerts": "Концерт",
+      "events": "Мероприятие",
+      "movies": "Кино",
+      "walks": "Прогулка"
     }
   },
   "keyboards": {
