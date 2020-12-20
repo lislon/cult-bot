@@ -19,7 +19,7 @@ Feature: Customize time
     When I click markup [Рубрики]
     Then Bot responds 'Выберите рубрики' with inline buttons:
       """
-      [➕ Кино ]:kj
+      [➕ Кино ]
       [➕ Концерты ]
       [➕ Временные выставки ]
       [➕ Постоянные коллекции ]
