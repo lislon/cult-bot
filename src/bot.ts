@@ -87,6 +87,22 @@ bot
         await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.welcome3')});
         if (!quick) await sleep(1000)
         await ctx.replyWithHTML(ctx.i18n.t('root.welcome4'), {disable_notification: true})
+
+        function getSourceTitle(sourceCode: string) {
+            switch (sourceCode) {
+                case 'i': return 'Instagram'
+                case 'f': return 'Facebook'
+                case 'v': return 'Вконтакте'
+                case 'o': return 'Другое'
+                default: return sourceCode
+            }
+        }
+
+        if (ctx.startPayload !== '') {
+            ctx.ua.set('cm', 'ny_2021')
+            ctx.ua.set('cs', getSourceTitle(ctx.startPayload))
+        }
+        ctx.ua.pv({dp: `/start`, dt: `Старт`})
     })
     .command('menu', async (ctx: ContextMessageUpdate) => {
         await ctx.scene.enter('main_scene');
@@ -101,7 +117,6 @@ bot
             await ctx.replyWithHTML(JSON.stringify(ctx.session, undefined, 2))
         }
     })
-    .start((ctx) => ctx.reply('Welcome!'))
     .on('sticker', (ctx) => ctx.reply('👍'))
     .hears('hi', (ctx) => ctx.reply('Hey there'))
     .hears(/.+/, async (ctx) => {

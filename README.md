@@ -79,13 +79,32 @@ heroku config:set NPM_CONFIG_PRODUCTION=true YARN_PRODUCTION=true
 
 ### Backup
 ```
-heroku pg:backup -a <app name>
+heroku pg:backups -a cult-hub-bot-<env>
+heroku pg:backups:capture -a cult-hub-bot-<env>
+```
+
+### Release
+```
+heroku pg:backups:capture -a cult-hub-bot-<env>
 ```
 
 ### Rollback to previous release
+
+#### Option A: With restoration of database (Easy, new data will be lost)
+
 ```
-heroku releases:rollback -a <app name> 
+heroku releases:rollback -a cult-hub-bot-<env>
+heroku pg:backups:restore -a cult-hub-bot-<env>
 ```
+
+#### Option B: With restoration with rollback (Harder, data will be saved)
+```
+heroku releases:rollback -a cult-hub-bot-<env>
+heroku run -- yarn db:down -a cult-hub-bot-<env>
+```
+
+heroku container:run web bash
+
 
 ### Cron setup
 ```

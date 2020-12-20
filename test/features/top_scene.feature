@@ -27,6 +27,12 @@ Feature: Tops scene
     Then I click markup [Временные выставки]
     Then Bot responds '<b>Временные выставки</b> на предстоящие выходные 04-05 января:'
     Then Bot responds with event 'A'
+    Then Google analytics pageviews will be:
+      | dp                      | dt                               |
+      | /top/                   | Рубрики                          |
+      | /top/exhibitions/       | Рубрики > Выставки               |
+      | /top/exhibitions/temp/  | Рубрики > Выставки > Временные   |
+
 
   Scenario: I can see events in category 'permanent exhibitions'
     When I click markup [Выставки]

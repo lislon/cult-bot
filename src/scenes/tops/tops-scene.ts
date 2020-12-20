@@ -1,5 +1,5 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
-import { ContextMessageUpdate, Event, EventCategory, MyInterval } from '../../interfaces/app-interfaces'
+import { CAT_NAMES, ContextMessageUpdate, Event, EventCategory, MyInterval } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
 import * as events from 'events'
@@ -102,7 +102,7 @@ scene
         ctx.session.topsScene.isInSubMenu = false
 
         await ctx.replyWithMarkdown(msg, markupMainMenu)
-        ctx.ua.pv({ dp: '/top/', dt: 'Подборки' })
+        ctx.ua.pv({ dp: '/top/', dt: 'Рубрики' })
     })
     .leave(async (ctx) => {
         ctx.session.topsScene = undefined
@@ -186,8 +186,6 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
             Extra.HTML(true).markup(backMarkup(ctx))
         )
     }
-
-    ctx.ua.pv({ dp: `/top/${ctx.session.topsScene.cat}`, dt: `Подборки (${ctx.session.topsScene.cat})` })
 }
 async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event[]) {
     const nextBtn = Markup.inlineKeyboard([
@@ -227,6 +225,22 @@ scene.hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpda
     }
 });
 
+function trackUa(ctx: ContextMessageUpdate) {
+    const rubName = {
+        'exhibitions_temp': 'Временные',
+        'exhibitions_perm': 'Постояннные',
+    }
+
+    if (ctx.session.topsScene.submenuSelected !== undefined) {
+        ctx.ua.pv({
+            dp: `/top/${ctx.session.topsScene.cat}/${ctx.session.topsScene.submenuSelected.replace('exhibitions_', '')}/`,
+            dt: `Рубрики > ${CAT_NAMES[ctx.session.topsScene.cat]} > ${rubName[ctx.session.topsScene.submenuSelected]}`
+        })
+    } else {
+        ctx.ua.pv({ dp: `/top/${ctx.session.topsScene.cat}/`, dt: `Рубрики > ${CAT_NAMES[ctx.session.topsScene.cat]}` })
+    }
+}
+
 function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
 
     for (const cat of ['theaters', 'movies', 'events', 'walks', 'concerts', 'exhibitions_temp', 'exhibitions_perm']) {
@@ -237,18 +251,20 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
                 ctx.session.topsScene.submenuSelected = cat
             } else {
                 ctx.session.topsScene.cat = cat as EventCategory;
+                ctx.session.topsScene.submenuSelected = undefined
             }
             ctx.session.topsScene.isWatchingEvents = true
             ctx.session.topsScene.isInSubMenu = false
             await showEventsFirstTime(ctx)
+            trackUa(ctx)
         });
     }
     bot.hears(i18nModuleBtnName('exhibitions'), async (ctx: ContextMessageUpdate) => {
         await prepareSessionStateIfNeeded(ctx)
-
         ctx.session.topsScene.isInSubMenu = true
         ctx.session.topsScene.cat = 'exhibitions';
         await showExhibitionsSubMenu(ctx)
+        trackUa(ctx)
     });
 }
 

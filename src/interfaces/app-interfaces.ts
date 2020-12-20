@@ -89,3 +89,12 @@ export type MyInterval = {
 
 export type I18MsgFunction = (ctx: ContextMessageUpdate, id: string, tplData?: object, byDefault?: string | null) => string
 export const CHEAP_PRICE_THRESHOLD = 500
+
+export const CAT_NAMES = {
+    'theaters': 'Театр',
+    'exhibitions': 'Выставки',
+    'concerts': 'Концерты',
+    'events': 'Мероприятия',
+    'movies': 'Кино',
+    'walks': 'Прогулки'
+}
