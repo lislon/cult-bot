@@ -391,9 +391,24 @@ function findExistingButtonRow(ctx: ContextMessageUpdate, predicate: (btn: Callb
     return existingKeyboard?.find(btns => btns.find(predicate) !== undefined)
 }
 
+function findButton(ctx: ContextMessageUpdate, predicate: (btn: CallbackButton) => boolean): CallbackButton {
+    const existingKeyboard = (ctx as any).update?.callback_query?.message?.reply_markup?.inline_keyboard as CallbackButton[][]
+    return existingKeyboard?.flatMap(rows => rows).find(predicate)
+}
+
+function isCurrentButtonAlreadySelected(ctx: ContextMessageUpdate, version: 'current' | 'snapshot') {
+    const currentStateBtn = findButton(ctx, btn => btn.callback_data.includes(version))
+    const icon = i18Btn(ctx, `${version}_active_icon`)
+    return currentStateBtn?.text.includes(icon)
+}
+
 async function switchCard(ctx: ContextMessageUpdate, version: 'current' | 'snapshot') {
     const extId = ctx.match[1].toUpperCase()
     await ctx.answerCbQuery()
+    if (isCurrentButtonAlreadySelected(ctx, version)) {
+        return
+    }
+
     const event = await db.repoAdmin.findSnapshotEvent(extId, version)
     const existingKeyboard = findExistingButtonRow(ctx, btn => btn.callback_data === actionName('show_more'))
     const buttons = [getButtonsSwitch(ctx, extId, version), ...(existingKeyboard ? [existingKeyboard] : [])]
