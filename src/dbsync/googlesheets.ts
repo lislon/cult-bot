@@ -139,7 +139,8 @@ export function mkAnnotateCell(sheetId: number, text: string, column: number, ro
 const GOOGLE_BASE_DATE = parseISO('1899-12-29T23:30:17')
 
 export function mkEditCellDate(sheetId: number, date: Date, column: number, row: number): Schema$Request {
-    const diffInDays = differenceInSeconds(date, GOOGLE_BASE_DATE) / (3600 * 24)
+    const diffInDays = +(differenceInSeconds(date, GOOGLE_BASE_DATE) / (3600 * 24)).toFixed(5)
+    // console.log(sheetId, diffInDays)
     return {
         updateCells: {
             range: {
@@ -149,18 +150,18 @@ export function mkEditCellDate(sheetId: number, date: Date, column: number, row:
                 startColumnIndex: column - 1,
                 endColumnIndex: column
             },
-            fields: '*',
+            fields: 'userEnteredValue,userEnteredFormat',
             rows: [
                 {
                     values: [
                         {
                             userEnteredValue: {
-                                stringValue: diffInDays.toPrecision(5)
+                                numberValue: diffInDays
                             },
                             userEnteredFormat: {
                                 numberFormat: {
                                     type: 'DATE',
-                                    pattern: 'yyyy-mm-dd hh:mm:ss'
+                                    // pattern: 'yyyy-mm-dd hh:mm:ss'
                                 }
                             }
                         },
