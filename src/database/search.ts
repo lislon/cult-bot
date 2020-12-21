@@ -27,7 +27,11 @@ export class SearchRepository {
                     setweight(to_tsvector('russian', coalesce(description,'')), 'D') ||
                     setweight(to_tsvector('russian', coalesce(place,'')), 'D') ||
                     setweight(to_tsvector('russian',
-                            REGEXP_REPLACE( REPLACE(cb_join_arr(tag_level_3), '#', ''), '(?<=[а-яa-z])([А-ЯA-Z])', ' \\1', 'g')), 'B')
+                            REGEXP_REPLACE(REPLACE(cb_join_arr(tag_level_1), '#', ''), '(?<=[а-яa-z])([А-ЯA-Z])', ' \\1', 'g')), 'D') ||
+                    setweight(to_tsvector('russian',
+                            REGEXP_REPLACE(REPLACE(cb_join_arr(tag_level_2), '#', ''), '(?<=[а-яa-z])([А-ЯA-Z])', ' \\1', 'g')), 'D') ||
+                    setweight(to_tsvector('russian',
+                            REGEXP_REPLACE(REPLACE(cb_join_arr(tag_level_3), '#', ''), '(?<=[а-яa-z])([А-ЯA-Z])', ' \\1', 'g')), 'B')
                 )`
         const finalQuery = `
             SELECT cb.*, ts_rank_cd(${fts}, query) AS rank
