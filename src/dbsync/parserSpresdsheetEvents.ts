@@ -51,12 +51,6 @@ function validateUnique(excelRows: ExcelRowResult[]) {
         }
     })
 }
-
-export interface ExcelSheetError {
-    sheetName: string,
-    extIds: string[]
-}
-
 const OLD_DATE = parseISO('1999-01-01T00:00:00Z')
 const FUTURE_DATE = parseISO('3000-01-01 00:00:00')
 

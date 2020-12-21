@@ -15,6 +15,7 @@ const VERTICAL_ORDER = {
     isPublish: 'Опубликована:',
     author: 'Куратор',
     description: 'Описание',
+    weight: 'Вес',
     events: 'События'
 } as const
 
