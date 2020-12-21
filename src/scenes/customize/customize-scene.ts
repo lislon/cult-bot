@@ -271,10 +271,15 @@ function resetOpenMenus(ctx: ContextMessageUpdate) {
 
 async function resetFilter(ctx: ContextMessageUpdate) {
     resetPaging(ctx)
-    ctx.session.customize.oblasti = []
-    ctx.session.customize.cennosti = []
-    ctx.session.customize.time = []
-    ctx.session.customize.format = []
+    if (ctx.session.customize.currentStage === 'oblasti') {
+        ctx.session.customize.oblasti = []
+    } else if (ctx.session.customize.currentStage === 'priorities') {
+        ctx.session.customize.cennosti = []
+    } else if (ctx.session.customize.currentStage === 'time') {
+        ctx.session.customize.time = []
+    } else if (ctx.session.customize.currentStage === 'format') {
+        ctx.session.customize.format = []
+    }
 }
 
 async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
