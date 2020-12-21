@@ -5,7 +5,7 @@ import { cardFormat } from '../shared/card-format'
 import * as events from 'events'
 import { i18n } from '../../util/i18n'
 import { Paging } from '../shared/paging'
-import { getNextWeekEndRange, limitEventsToPage, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { getNextWeekendRange, limitEventsToPage, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { subSeconds } from 'date-fns/fp'
 import { getISODay, isSameMonth, startOfDay } from 'date-fns'
 import { SceneRegister } from '../../middleware-utils'
@@ -34,7 +34,7 @@ function getOblasti(ctx: ContextMessageUpdate) {
 
 //     cat: EventCategory, fromDate: Date, offset: number = 0
 async function getTopEvents(ctx: ContextMessageUpdate): Promise<{range: MyInterval, events: Event[]}> {
-    const range = getNextWeekEndRange(ctx.now())
+    const range = getNextWeekendRange(ctx.now())
     const events = await db.repoTopEvents.getTop({
         category: ctx.session.topsScene.cat,
         interval: range,
@@ -132,7 +132,8 @@ function intervalTemplateParams(range: MyInterval) {
 
 async function showExhibitionsSubMenu(ctx: ContextMessageUpdate) {
     const subMenu = [
-        ['exhibitions_perm', 'exhibitions_temp'],
+        ['exhibitions_perm'],
+        ['exhibitions_temp'],
         ['back'],
     ]
 

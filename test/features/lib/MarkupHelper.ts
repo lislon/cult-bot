@@ -7,6 +7,7 @@ import {
     ReplyKeyboardRemove
 } from 'telegram-typings'
 import { BotReply } from './TelegramMockServer'
+import { i18n } from '../../../src/util/i18n'
 
 export type AnyTypeOfKeyboard = InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 
@@ -19,21 +20,39 @@ export class MarkupHelper {
         }
     }
 
-    static trimLeft(str: string) {
-        return str.replace(/^\s*/mg, '').trim()
+    static prepareExpectedLayout(str: string) {
+        const replacedI18N = this.replaceI18nBtns(str)
+        return replacedI18N.replace(/^\s*/mg, '').trim()
     }
 
 
+    static replaceI18nBtnsWithoutBraces(str: string) {
+        const s = MarkupHelper.replaceI18nBtns(`[${str}]`)
+        return s.substring(1, s.length - 1)
+    }
+
+    static replaceI18nBtns(str: string) {
+        return str.replace(/\[~([^.]+)\.([^\]]+)\]/g, (match, sceneName, btnName) => {
+                const id = `scenes.${sceneName}.keyboard.${btnName}`
+                const str = i18n.t('ru', id)
+                if (str === undefined) {
+                    throw new Error(`Cant resolve btn [${match}] (Tried to find by ${id})`)
+                }
+                return `[${str}]`;
+            }
+        )
+    }
+
     static toLayout(replyMarkup: AnyTypeOfKeyboard): string {
         if (MarkupHelper.isMarkupKeyboard(replyMarkup)) {
-            return MarkupHelper.trimLeft(
+            return MarkupHelper.prepareExpectedLayout(
                 replyMarkup.keyboard.map((line: KeyboardButton[]) => {
                     return line.map((button: KeyboardButton) => `[${button.text}]`).join(' ')
                 }).join('\n')
             )
 
         } else if (MarkupHelper.isInlineKeyboard(replyMarkup)) {
-            return MarkupHelper.trimLeft(
+            return MarkupHelper.prepareExpectedLayout(
                 replyMarkup.inline_keyboard.map((line: KeyboardButton[]) => {
                     return line.map((button: KeyboardButton) => `[${button.text}]`).join(' ')
                 }).join('\n')

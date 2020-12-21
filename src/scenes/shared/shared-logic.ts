@@ -5,8 +5,9 @@ import flow from 'lodash/fp/flow'
 import { ru } from 'date-fns/locale'
 import { i18n } from '../../util/i18n'
 import { botConfig } from '../../util/bot-config'
+import plural from "plural-ru"
 
-export function getNextWeekEndRange(now: Date): MyInterval {
+export function getNextWeekendRange(now: Date): MyInterval {
     return {
         start: max([now, (flow(startOfISOWeek, startOfDay, addDays(5))(now))]),
         end: flow(startOfISOWeek, startOfDay, addDays(7))(now)
@@ -74,4 +75,12 @@ export async function warnAdminIfDateIsOverriden(ctx: ContextMessageUpdate) {
 
 export function checkboxi18nBtnId(ctx: ContextMessageUpdate, isSelected: boolean): string {
     return ctx.i18n.t(`shared.keyboard.checkbox_${isSelected ? 'on' : 'off'}`)
+}
+
+export function generatePluralEventMsg(ctx: ContextMessageUpdate, count: number) {
+    function t(n: 'one'|'two'|'many') {
+        return ctx.i18n.t(`shared.plural.event.${n}`)
+    }
+
+    return plural(count, t('one'), t('two'), t('many'))
 }

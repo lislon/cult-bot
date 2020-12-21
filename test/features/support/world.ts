@@ -12,6 +12,9 @@ import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_libr
 import { mainScene } from '../../../src/scenes/main/main-scene'
 import { packsScene } from '../../../src/scenes/packs/packs-scene'
 import { AnalyticsRecorder } from './AnalyticsRecorder'
+import { tailScene } from '../../../src/scenes/tail/tail-scene'
+import { MarkupHelper } from '../lib/MarkupHelper'
+import { searchScene } from '../../../src/scenes/search/search-scene'
 
 const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
 
@@ -47,7 +50,9 @@ class CustomWorld {
             customizeScene,
             topsScene,
             feedbackScene,
-            packsScene
+            packsScene,
+            searchScene,
+            tailScene
         ])
     }
 
@@ -69,11 +74,17 @@ class CustomWorld {
         await this.server.sendMessage(this.bot.middleware(), text)
     }
 
+    async start(payload: string) {
+        await this.server.start(this.bot.middleware(), payload)
+    }
+
     async clickMarkup(buttonText: string) {
         const {message, buttons} = this.server.getListOfMarkupButtonsFromLastMsg()
-        const foundButton = buttons.find(btn => noImg(btn.text) === noImg(buttonText))
+
+        const btnTextTransformed = MarkupHelper.replaceI18nBtnsWithoutBraces(buttonText)
+        const foundButton = buttons.find(btn => noImg(btn.text) === noImg(btnTextTransformed))
         if (foundButton === undefined) {
-            throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: '${buttons.map(b => `'${b.text}'`).join(', ')}'`)
+            throw new Error(`Cant find '${buttonText}' markup buttons. List of good buttons: ${buttons.map(b => `'${b.text}'`).join(', ')}`)
         }
 
         await this.server.sendMessage(this.bot.middleware(), foundButton.text)
@@ -81,9 +92,9 @@ class CustomWorld {
 
     async clickInline(buttonText: string) {
         const {message, buttons} = this.server.getListOfInlineButtonsFromLastMsg()
-        const callbackData = buttons.find(btn => noImg(btn.text) === noImg(buttonText))?.callback_data
+        const callbackData = buttons.find(btn => noImg(btn.text) === noImg(MarkupHelper.replaceI18nBtnsWithoutBraces(buttonText)))?.callback_data
         if (callbackData === undefined) {
-            throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: '${buttons.map(b => `'${b.text}'`).join(', ')}'`)
+            throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: ${buttons.map(b => `'${b.text}'`).join(', ')}`)
         }
 
         await this.server.clickInline(this.bot.middleware(), callbackData, message)

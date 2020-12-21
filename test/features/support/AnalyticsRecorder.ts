@@ -10,6 +10,7 @@ export interface AnalyticsEvent {
 export interface AnalyticsPageView {
     dp: string
     dt: string
+    cs?: string
 }
 
 export class AnalyticsRecorder {

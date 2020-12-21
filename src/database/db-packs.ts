@@ -4,14 +4,6 @@ import { ColumnSet, IBaseProtocol, IDatabase, IMain, ITask } from 'pg-promise'
 import { db, IExtensions } from './db'
 import { zip } from 'lodash'
 
-// export interface TopEventsQuery {
-//     category: EventCategory
-//     interval: MyInterval
-//     oblasti?: string[]
-//     limit?: number
-//     offset?: number
-// }
-
 export interface EventPackForSave {
     title: string
     description: string
@@ -31,14 +23,6 @@ export interface PackEventSummary {
     id: number
     title: string
 }
-
-export interface PackWithEvents {
-    id: number
-    title: string
-    description: string
-    events: PackEventSummary[]
-}
-
 export interface PacksQuery {
     interval: MyInterval
 }
@@ -132,14 +116,6 @@ export class PacksRepository {
             WHERE p.id = $1
         `, packId)
         return Buffer.from(img.image)
-    }
-
-    public async fetchAlreadyLoadedImages(): Promise<string[]> {
-        return []
-        // return await this.db.map(`
-        //     SELECT image_src
-        //     FROM cb_events_packs p
-        // `, {}, r => r.image_src)
     }
 
     public async fetchAllIdsExtIds(): Promise<{ id: number; extId: string }[]> {

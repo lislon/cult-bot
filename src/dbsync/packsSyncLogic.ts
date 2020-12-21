@@ -1,10 +1,7 @@
-import imageType = require('image-type')
 import { EventPackForSave } from '../database/db-packs'
 import { EventInPackExcel, EventPackExcel, fetchAndParsePacks, saveValidationErrors } from './parserSpredsheetPacks'
 import { Dictionary, keyBy } from 'lodash'
 import { db } from '../database/db'
-import { logger } from '../util/logger'
-import fetch from 'node-fetch'
 import { sheets_v4 } from 'googleapis'
 
 export interface EventPackValidated {
@@ -25,22 +22,7 @@ interface BadEvent {
     error: string
 }
 
-async function downloadImage(url: string): Promise<Buffer> {
-    if (!url) {
-        return Buffer.from('')
-    }
-    logger.debug(`Downloading '${url}'...`)
-    const response = await fetch(url);
-    const buffer = await response.buffer();
-
-    if (!imageType(buffer)) {
-        throw Error(`По ссылке '${url}' ожидалось изображение (jpg/png/gif), но получили что-то непонятное размером ${buffer.length} байт`)
-    }
-
-    return buffer
-}
-
-async function processPack(p: EventPackExcel, listOfLoadedImages: string[], idByExtId: Dictionary<{ id: number }>): Promise<EventPackValidated> {
+async function processPack(p: EventPackExcel, idByExtId: Dictionary<{ id: number }>): Promise<EventPackValidated> {
     const errors: EventPackValidated['errors'] = {
         imageUrl: undefined,
         title: undefined,
@@ -76,13 +58,12 @@ async function processPack(p: EventPackExcel, listOfLoadedImages: string[], idBy
 
 export async function prepareForPacksSync(excel: sheets_v4.Sheets): Promise<EventPackValidated[]> {
     const packsSyncResult = await fetchAndParsePacks(excel)
-    const loadedImages = await db.repoPacks.fetchAlreadyLoadedImages()
 
     const existingIds = await db.repoPacks.fetchAllIdsExtIds()
 
     const idByExtId: Dictionary<{ id: number }> = keyBy(existingIds, 'extId')
 
-    const validationResult = await Promise.all(packsSyncResult.packs.map(p => processPack(p, loadedImages, idByExtId)))
+    const validationResult = await Promise.all(packsSyncResult.packs.map(p => processPack(p, idByExtId)))
 
 
     await saveValidationErrors(excel, validationResult)

@@ -1,5 +1,4 @@
 import { Telegraf } from 'telegraf'
-import { rawBot } from './bot'
 import { getGoogleSpreadSheetURL } from './scenes/shared/shared-logic'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import rp from 'request-promise'
@@ -8,6 +7,7 @@ import { botConfig } from './util/bot-config'
 import { logger } from './util/logger'
 import { db } from './database/db'
 import { i18n } from './util/i18n'
+import { rawBot } from './bot'
 
 const app = express()
 

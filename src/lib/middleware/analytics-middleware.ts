@@ -35,6 +35,7 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
         ctx.session.uaUuid = generateUuid()
     }
     ctx.ua = ua(botConfig.GOOGLE_ANALYTICS_ID, ctx.session.uaUuid);
+    ctx.ua.set('ds', 'app')
 
     prepareSessionStateIfNeeded(ctx)
     if (ctx.updateType === 'message' && ctx.updateSubTypes.includes('text')) {

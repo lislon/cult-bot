@@ -4,7 +4,7 @@ import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
 import {
     getGoogleSpreadSheetURL,
-    getNextWeekEndRange,
+    getNextWeekendRange,
     ruFormat,
     showBotVersion,
     warnAdminIfDateIsOverriden
@@ -303,7 +303,7 @@ menuCats.flatMap(m => m).forEach(menuItem => {
 })
 
 async function getSearchedEvents(ctx: ContextMessageUpdate) {
-    const nextWeekEndRange = getNextWeekEndRange(ctx.now())
+    const nextWeekEndRange = getNextWeekendRange(ctx.now())
     if (ctx.session.adminScene.cat !== undefined) {
         const stats: StatByCat[] = await db.repoAdmin.findChangedEventsByCatStats(nextWeekEndRange)
         const total = stats.find(r => r.category === ctx.session.adminScene.cat)?.count || 0

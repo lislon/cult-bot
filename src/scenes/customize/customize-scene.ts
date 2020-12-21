@@ -4,13 +4,13 @@ import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
 import {
     checkboxi18nBtnId,
-    getNextWeekEndRange,
+    generatePluralEventMsg,
+    getNextWeekendRange,
     limitEventsToPage,
     SessionEnforcer,
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
-import plural from 'plural-ru'
 import {
     filterPastIntervals,
     formatExplainCennosti,
@@ -54,8 +54,8 @@ function cleanOblastiTag(ctx: ContextMessageUpdate) {
 
 function prepareRepositoryQuery(ctx: ContextMessageUpdate) {
     return {
-        timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekEndRange(ctx.now())),
-        weekendRange: getNextWeekEndRange(ctx.now()),
+        timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekendRange(ctx.now())),
+        weekendRange: getNextWeekendRange(ctx.now()),
         cennosti: ctx.session.customize.cennosti,
         oblasti: cleanOblastiTag(ctx),
         format: mapFormatToDbQuery(ctx.session.customize.format)
@@ -227,7 +227,7 @@ function generateDropdownTimes(weekday: 'saturday'|'sunday', now: Date) {
 async function getKeyboardTime(ctx: ContextMessageUpdate) {
     const menu = new Menu(ctx, ctx.session.customize.time, ctx.session.customize.openedMenus, 'time_section')
     const weekdays = [0, 1]
-        .map(i => addDays(i)(getNextWeekEndRange(startOfISOWeek(ctx.now())).start))
+        .map(i => addDays(i)(getNextWeekendRange(startOfISOWeek(ctx.now())).start))
         .map(d => format('dd.MM', d))
 
     let buttons: InlineKeyboardButton[][] = []
@@ -338,7 +338,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
 
 async function generateAmountSelectedPlural(ctx: ContextMessageUpdate) {
     const count = await countFilteredEvents(ctx)
-    return plural(count, i18Msg(ctx, 'plural.event.one'), i18Msg(ctx, 'plural.event.two'), i18Msg(ctx, 'plural.event.many'))
+    return generatePluralEventMsg(ctx, count)
 }
 
 function isFilterEmpty(ctx: ContextMessageUpdate) {
@@ -401,7 +401,7 @@ export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<st
 
     if (body !== '') {
         const count = await countFilteredEvents(ctx)
-        const eventPlural = plural(count, i18Msg(ctx, 'plural.event.one'), i18Msg(ctx, 'plural.event.two'), i18Msg(ctx, 'plural.event.many'))
+        const eventPlural = generatePluralEventMsg(ctx, count)
         return i18Msg(ctx, 'explain_filter.layout', {body, eventPlural})
     }
     return undefined

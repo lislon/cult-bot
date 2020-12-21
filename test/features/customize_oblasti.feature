@@ -25,7 +25,7 @@ Feature: Customize time
       [➕ Постоянные коллекции ]
       [➕ Театр ]
       [➕ Мероприятия ]
-      [➕ Прогулка ]
+      [➕ Прогулки ]
       """
     When I click inline [Постоянные коллекции]
     Then Bot edits inline buttons:
@@ -40,7 +40,7 @@ Feature: Customize time
       [Дом-музей ]
       [➕ Театр ]
       [➕ Мероприятия ]
-      [➕ Прогулка ]
+      [➕ Прогулки ]
       """
     When I click inline [Дом-музей]
     Then Bot edits inline buttons:
@@ -55,7 +55,7 @@ Feature: Customize time
       [Дом-музей ✔]
       [➕ Театр ]
       [➕ Мероприятия ]
-      [➕ Прогулка ]
+      [➕ Прогулки ]
       """
     When I click markup [Назад [к фильтрам]]
     Then Bot responds:

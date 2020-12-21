@@ -13,6 +13,7 @@ import pgMonitor from 'pg-monitor'
 import { SnapshotRepository } from './db-snapshot'
 import { EventsSyncRepository } from './db-sync-repository'
 import { PacksRepository } from './db-packs'
+import { EventsCommonRepository } from './db-events-common'
 
 export interface IExtensions {
     repoSync: EventsSyncRepository,
@@ -24,6 +25,7 @@ export interface IExtensions {
     userRepo: UserRepository
     repoFeedback: FeedbackRepository
     repoPacks: PacksRepository
+    repoEventsCommon: EventsCommonRepository
 }
 
 export type BotDb = IDatabase<IExtensions> & IExtensions;
@@ -40,6 +42,7 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoFeedback = new FeedbackRepository(dbEx, pgp)
         dbEx.repoSnapshot = new SnapshotRepository(dbEx, pgp)
         dbEx.repoPacks = new PacksRepository(dbEx, pgp)
+        dbEx.repoEventsCommon = new EventsCommonRepository(dbEx, pgp)
     },
 
     query(e) {

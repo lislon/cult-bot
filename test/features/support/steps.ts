@@ -11,6 +11,7 @@ import { parseAndPredictTimetable } from '../../../src/lib/timetable/timetable-u
 import { allCategories, ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
 import { botConfig } from '../../../src/util/bot-config'
+import { last } from 'lodash'
 
 function clean(str: string) {
     return str
@@ -33,7 +34,7 @@ function assertEqualsWithEmojyRespect(expected: string, actual: string) {
 
 function expectLayoutsSame(expectedLayout: string, actualLayout: AnyTypeOfKeyboard) {
     const actual = MarkupHelper.toLayout(actualLayout)
-    const expected = MarkupHelper.trimLeft(expectedLayout)
+    const expected = MarkupHelper.prepareExpectedLayout(expectedLayout)
 
     assertEqualsWithEmojyRespect(expected, actual)
 }
@@ -116,6 +117,13 @@ When(/^I click inline \[(.+)]$/, async function (buttonText: string) {
     await this.clickInline(buttonText)
 })
 
+When(/^I start bot with payload '(.+)'$/, async function (payload: string) {
+    drainEvents.call(this)
+    await this.start(payload)
+})
+
+
+
 Then(/^Bot responds '(.+)'$/, function (expected: string) {
     const nextReply = this.getNextMsg() as BotReply
     expectTextMatches(nextReply, expected)
@@ -197,9 +205,16 @@ Then(/^Google analytics pageviews will be:$/, function (table: DataTable) {
     const expected = table.hashes()
     const actual = this.analyticsRecorder.getPageViews()
         .map(({ dp, dt }: { dp: string, dt: string}) => { return { dp, dt } })
-    expect(expected).toEqual(actual)
+    expect(actual).toEqual(expected)
 });
 
+Then(/^Google analytics params will be:$/, function (table: DataTable) {
+    const lastMsg = last(this.analyticsRecorder.getPageViews()) as any
+
+    table.hashes().forEach(({ key, value }) => {
+        expect(lastMsg[key]).toEqual(value)
+    })
+})
 
 
 

@@ -1,5 +1,6 @@
 import { Context, Telegram } from 'telegraf'
 import * as tt from 'telegraf/typings/telegram-types'
+import { Update } from 'telegraf/typings/telegram-types'
 import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, Message } from 'telegram-typings'
 import { MiddlewareFn } from 'telegraf/typings/composer'
@@ -21,14 +22,14 @@ function makeFrom() {
     return {
         from: {
             id: FROM_ID,
-            first_name: 'Cucu',
+            first_name: 'TestFirstName',
             last_name: 'Ber',
             is_bot: false
         }
     }
 }
 
-function makeMessage(text: string = undefined) {
+function makeMessage(text: string = undefined, override: Partial<Message> = {}): { message: Message } {
     return {
         message: {
             ...makeFrom(),
@@ -36,11 +37,24 @@ function makeMessage(text: string = undefined) {
             message_id: 0,
             text: text,
             chat: CHAT,
+            ...override
         }
     }
 }
 
-const makeDefaultEvent = (content: any) => {
+function makeCommand(command: string, payload: string = ''): { message: Message } {
+    return {
+        ...makeMessage([command, payload].join(' '), {
+            entities: [ {
+                offset: 0,
+                type: 'bot_command',
+                length: command.length
+            } ]
+        })
+    }
+}
+
+const makeDefaultEvent = (content: Partial<Update>) => {
     return {
         ...content,
         update_id: 0
@@ -108,7 +122,11 @@ export class TelegramMockServer {
 
 
     async sendMessage(middleware: MiddlewareFn<ContextMessageUpdate>, text: string) {
-        this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage(text)}))
+        if (text.startsWith('/')) {
+            this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeCommand(text)}))
+        } else {
+            this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage(text)}))
+        }
         await middleware(this.lastCtx, undefined)
     }
 
@@ -123,6 +141,11 @@ export class TelegramMockServer {
             }
         }))
 
+        await middleware(this.lastCtx, undefined)
+    }
+
+    async start(middleware: MiddlewareFn<ContextMessageUpdate>, payload: string) {
+        this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent(makeCommand('/start', payload)))
         await middleware(this.lastCtx, undefined)
     }
 

@@ -1,7 +1,7 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
-import { getNextWeekEndRange, limitEventsToPage, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { getNextWeekendRange, limitEventsToPage, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import { Paging } from '../shared/paging'
 import { SceneRegister } from '../../middleware-utils'
@@ -38,7 +38,7 @@ const content = (ctx: ContextMessageUpdate) => {
 }
 
 async function showSearchResults(ctx: ContextMessageUpdate) {
-    const range = getNextWeekEndRange(ctx.now())
+    const range = getNextWeekendRange(ctx.now())
 
     const events = await db.repoSearch.search({
         query: ctx.session.search.request,

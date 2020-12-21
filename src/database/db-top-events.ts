@@ -82,13 +82,5 @@ export class TopEventsRepository {
             ' WHERE t.category = $1' +
             ' ORDER BY t.name', [cat], (row) => row.name) as string[];
     }
-
-    public async loadAllPriorities(): Promise<string[]> {
-        return await this.loadTags('tag_level_2')
-    }
-
-    public async loadAllOblasti(): Promise<string[]> {
-        return await this.loadTags('tag_level_1')
-    }
 }
 

@@ -21,7 +21,8 @@ Feature: Tops scene
     When I click markup [Выставки]
     Then Bot responds '*Выберите*' with markup buttons:
       """
-      [Постоянные коллекции] [Временные выставки]
+      [Постоянные коллекции]
+      [Временные выставки]
       [Назад]
       """
     Then I click markup [Временные выставки]
@@ -38,7 +39,8 @@ Feature: Tops scene
     When I click markup [Выставки]
     Then Bot responds '*Выберите*' with markup buttons:
       """
-      [Постоянные коллекции] [Временные выставки]
+      [Постоянные коллекции]
+      [Временные выставки]
       [Назад]
       """
     Then I click markup [Постоянные коллекции]

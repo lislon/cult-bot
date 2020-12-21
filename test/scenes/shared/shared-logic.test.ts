@@ -1,4 +1,4 @@
-import { getNextWeekEndRange } from '../../../src/scenes/shared/shared-logic'
+import { getNextWeekendRange } from '../../../src/scenes/shared/shared-logic'
 import { date, mkInterval } from '../../lib/timetable/test-utils'
 
 
@@ -17,6 +17,6 @@ describe('getNextWeekEndRange', () => {
         [(date('2020-01-05 15:00')), mkInterval('[2020-01-05 15:00, 2020-01-06 00:00)')],
         [(date('2020-01-06 00:00')), mkInterval('[2020-01-11 00:00, 2020-01-13 00:00)')],
     ])('Now is %s', (now: Date, expected: Interval) => {
-        expect(getNextWeekEndRange(now)).toEqual(expected)
+        expect(getNextWeekendRange(now)).toEqual(expected)
     })
 })

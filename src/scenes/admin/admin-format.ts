@@ -3,7 +3,7 @@ import { BaseScene, Extra, Markup } from 'telegraf'
 import { allCategories, ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { StatByCat, StatByReviewer } from '../../database/db-admin'
 import { CallbackButton } from 'telegraf/typings/markup'
-import { getNextWeekEndRange, ruFormat } from '../shared/shared-logic'
+import { getNextWeekendRange, ruFormat } from '../shared/shared-logic'
 import { db } from '../../database/db'
 import { subSeconds } from 'date-fns'
 import { SyncDiff } from '../../database/db-sync-repository'
@@ -38,7 +38,7 @@ function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessage
 }
 
 export const formatMainAdminMenu = async (ctx: ContextMessageUpdate) => {
-    const dateRanges = getNextWeekEndRange(ctx.now())
+    const dateRanges = getNextWeekendRange(ctx.now())
 
     return await db.task(async (dbTask) => {
         const statsByName: StatByCat[] = await dbTask.repoAdmin.findChangedEventsByCatStats(dateRanges)
