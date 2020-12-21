@@ -6,6 +6,7 @@ import { SceneRegister } from '../../middleware-utils'
 import { displayEventsMenu, displayMainMenu, displayPackMenu } from './packs-menu'
 import { getEventsCount, getPacksCount, prepareSessionStateIfNeeded, scene } from './packs-common'
 import { logger } from '../../util/logger'
+import { warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
 
@@ -15,6 +16,7 @@ function loop(index: number|undefined, count: number, dir: string) {
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
+        await warnAdminIfDateIsOverriden(ctx)
         await ctx.replyWithMarkdown(
             i18Msg(ctx, 'header'),
             Extra.HTML(true).markup(Markup.keyboard([backButton(ctx)]).resize())
