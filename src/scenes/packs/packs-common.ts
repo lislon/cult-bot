@@ -1,11 +1,14 @@
-import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, Event, MyInterval } from '../../interfaces/app-interfaces'
 import { BaseScene, Extra, Markup } from 'telegraf'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { logger } from '../../util/logger'
 import { ScenePack } from '../../database/db-packs'
-import { getNextWeekRange, SessionEnforcer } from '../shared/shared-logic'
+import { SessionEnforcer } from '../shared/shared-logic'
 import { db } from '../../database/db'
+import { addDays, max, startOfDay, startOfISOWeek } from 'date-fns/fp'
+import flow from 'lodash/fp/flow'
+import addMonths from 'date-fns/fp/addMonths'
 
 export const scene = new BaseScene<ContextMessageUpdate>('packs_scene');
 
@@ -23,6 +26,13 @@ export interface PacksSceneState {
 export interface UpdateMenu {
     text: string,
     buttons: CallbackButton[][]
+}
+
+export function getNextRangeForPacks(now: Date): MyInterval {
+    return {
+        start: max([now, (flow(startOfISOWeek, startOfDay, addDays(0))(now))]),
+        end: flow(startOfISOWeek, startOfDay, addMonths(1))(now)
+    }
 }
 
 export async function updateMenu(ctx: ContextMessageUpdate, upd: UpdateMenu) {
@@ -57,7 +67,7 @@ export async function getPacksList(ctx: ContextMessageUpdate): Promise<ScenePack
 
     if (!ctx.session.packsScene?.packs) {
         ctx.session.packsScene.packs = await db.repoPacks.listPacks({
-            interval: getNextWeekRange(ctx.now())
+            interval: getNextRangeForPacks(ctx.now())
         })
     }
     return ctx.session.packsScene.packs;
