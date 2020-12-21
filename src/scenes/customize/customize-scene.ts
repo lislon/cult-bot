@@ -4,7 +4,7 @@ import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
 import {
     checkboxi18nBtnId,
-    generatePluralEventMsg,
+    generatePlural,
     getNextWeekendRange,
     limitEventsToPage,
     SessionEnforcer,
@@ -338,7 +338,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
 
 async function generateAmountSelectedPlural(ctx: ContextMessageUpdate) {
     const count = await countFilteredEvents(ctx)
-    return generatePluralEventMsg(ctx, count)
+    return generatePlural(ctx, 'event', count)
 }
 
 function isFilterEmpty(ctx: ContextMessageUpdate) {
@@ -401,7 +401,7 @@ export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<st
 
     if (body !== '') {
         const count = await countFilteredEvents(ctx)
-        const eventPlural = generatePluralEventMsg(ctx, count)
+        const eventPlural = generatePlural(ctx, 'event', count)
         return i18Msg(ctx, 'explain_filter.layout', {body, eventPlural})
     }
     return undefined
@@ -452,7 +452,7 @@ function listenMarkupButtonsCategories() {
         })
 }
 
-function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
         .use(listenMarkupButtonsCategories())
         .hears(i18nModuleBtnName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
@@ -668,7 +668,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
 export const customizeScene = {
     scene,
-    globalActionsFn
+    postStageActionsFn
 } as SceneRegister
 
 type CurrentStageType = 'root' | 'time' | 'oblasti' | 'priorities' | 'format'

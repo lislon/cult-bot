@@ -401,7 +401,7 @@ async function switchCard(ctx: ContextMessageUpdate, version: 'current' | 'snaps
         Extra.HTML().markup(Markup.inlineKeyboard(buttons)).webPreview(false))
 }
 
-function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     const adminGlobalCommands = new Composer<ContextMessageUpdate>()
         .command('adminGlobalCommands', async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('admin_scene');
@@ -481,5 +481,5 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
 
 export const adminScene = {
     scene,
-    globalActionsFn
+    postStageActionsFn
 } as SceneRegister

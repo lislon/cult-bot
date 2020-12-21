@@ -12,7 +12,7 @@ import { countInteractions } from '../../lib/middleware/analytics-middleware'
 const scene = new BaseScene<ContextMessageUpdate>('feedback_scene');
 const {actionName, i18nModuleBtnName, scanKeys, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
-function globalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>) {
     // bot
     // .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {
     //     await goBackToCustomize(ctx)
@@ -248,7 +248,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
 export const feedbackScene = {
     scene,
-    globalActionsFn
+    postStageActionsFn
 } as SceneRegister
 
 export type IsListening = 'like' | 'dislike' | 'text'

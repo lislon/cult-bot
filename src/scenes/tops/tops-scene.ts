@@ -242,7 +242,7 @@ function trackUa(ctx: ContextMessageUpdate) {
     }
 }
 
-function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
 
     for (const cat of ['theaters', 'movies', 'events', 'walks', 'concerts', 'exhibitions_temp', 'exhibitions_perm']) {
         bot.hears(i18nModuleBtnName(cat), async (ctx: ContextMessageUpdate) => {
@@ -271,5 +271,5 @@ function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
 
 export const topsScene = {
     scene,
-    globalActionsFn
+    postStageActionsFn
 } as SceneRegister

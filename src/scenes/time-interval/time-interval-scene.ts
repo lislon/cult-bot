@@ -101,5 +101,5 @@ scene.action(/time_interval[.]slot_(\d+|all_day)/, async (ctx: ContextMessageUpd
 
 export const timeIntervalScene = {
     scene,
-    globalActionsFn: function () { }
+    postStageActionsFn: function () { }
 } as SceneRegister

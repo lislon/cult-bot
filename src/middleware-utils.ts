@@ -87,7 +87,8 @@ export type SceneGlobalActionsFn = (bot: Composer<ContextMessageUpdate>) => void
 
 export interface SceneRegister {
     scene?: Scene<ContextMessageUpdate>
-    globalActionsFn: SceneGlobalActionsFn
+    postStageActionsFn: SceneGlobalActionsFn
+    preStageGlobalActionsFn?: SceneGlobalActionsFn
     preSceneGlobalActionsFn?: SceneGlobalActionsFn
 }
 
@@ -102,12 +103,15 @@ export const myRegisterScene = (bot: Composer<ContextMessageUpdate>,
     bot.use(logMiddleware('stage.middleware()'))
     bot.use(stage.middleware())
     scenesReg.map(scene => {
+        if (scene.preStageGlobalActionsFn) {
+            scene.preStageGlobalActionsFn(bot)
+        }
         if (scene.scene !== undefined) {
             stage.register(scene.scene)
         }
-        // all middlewares registered inside scene.globalActionsFn will have correct ctx.i18nScene
+        // all middlewares registered inside scene.postStageActionsFn will have correct ctx.i18nScene
         // This is needed for ctx.i18nMsg functions
-        scene.globalActionsFn(bot)
+        scene.postStageActionsFn(bot)
     })
     return stage
 }

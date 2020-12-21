@@ -50,11 +50,11 @@ tail
         return await next()
     })
 
-function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot.use(tail)
 }
 
 export const tailScene = {
     scene: undefined,
-    globalActionsFn
+    postStageActionsFn
 } as SceneRegister

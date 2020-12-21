@@ -5,7 +5,7 @@ import flow from 'lodash/fp/flow'
 import { ru } from 'date-fns/locale'
 import { i18n } from '../../util/i18n'
 import { botConfig } from '../../util/bot-config'
-import plural from "plural-ru"
+import plural from 'plural-ru'
 
 export function getNextWeekendRange(now: Date): MyInterval {
     return {
@@ -77,9 +77,9 @@ export function checkboxi18nBtnId(ctx: ContextMessageUpdate, isSelected: boolean
     return ctx.i18n.t(`shared.keyboard.checkbox_${isSelected ? 'on' : 'off'}`)
 }
 
-export function generatePluralEventMsg(ctx: ContextMessageUpdate, count: number) {
+export function generatePlural(ctx: ContextMessageUpdate, word: string, count: number) {
     function t(n: 'one'|'two'|'many') {
-        return ctx.i18n.t(`shared.plural.event.${n}`)
+        return ctx.i18n.t(`shared.plural.${word}.${n}`)
     }
 
     return plural(count, t('one'), t('two'), t('many'))

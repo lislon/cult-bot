@@ -5,7 +5,7 @@ import middlewares, { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
 import { db } from '../../database/db'
-import { generatePluralEventMsg, getNextWeekendRange } from '../shared/shared-logic'
+import { generatePlural, getNextWeekendRange } from '../shared/shared-logic'
 import { logger } from '../../util/logger'
 
 const scene = new BaseScene<ContextMessageUpdate>('main_scene');
@@ -60,9 +60,9 @@ scene
         ctx.ua.pv({dp: '/', dt: 'Главное меню'})
     })
 
-function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
-        .use(middlewares.logMiddleware('globalActionsFn scene: ' + scene.id))
+        .use(middlewares.logMiddleware('postStageActionsFn scene: ' + scene.id))
         .hears(i18nModuleBtnName('tops'), async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('tops_scene')
         })
@@ -120,7 +120,7 @@ function googleAnalyticsSource(ctx: ContextMessageUpdate & { startPayload: strin
     }
 }
 
-function preSceneGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
+function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }) => {
         console.log([
             `/start`,
@@ -142,7 +142,7 @@ function preSceneGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
             })
             await ctx.replyWithHTML(ctx.i18n.t('root.welcome1', {
                 name: name,
-                eventPlural: generatePluralEventMsg(ctx, count)
+                eventPlural: generatePlural(ctx, 'event_prepositional', count)
             }))
         } catch (e) {
             logger.error(e)
@@ -161,6 +161,6 @@ function preSceneGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
 
 export const mainScene = {
     scene,
-    preSceneGlobalActionsFn,
-    globalActionsFn
+    preStageGlobalActionsFn,
+    postStageActionsFn
 } as SceneRegister

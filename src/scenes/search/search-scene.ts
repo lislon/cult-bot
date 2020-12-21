@@ -108,10 +108,10 @@ scene
         await showSearchResults(ctx)
     })
 
-function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
 }
 
 export const searchScene = {
     scene,
-    globalActionsFn
+    postStageActionsFn
 } as SceneRegister

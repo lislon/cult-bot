@@ -108,6 +108,6 @@ export interface TimetableSceneState {
 
 export const timeTableScene = {
     scene,
-    globalActionsFn: () => {
+    postStageActionsFn: () => {
     }
 } as SceneRegister

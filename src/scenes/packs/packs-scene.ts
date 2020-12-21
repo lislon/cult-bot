@@ -78,12 +78,12 @@ scene
         }
     })
 
-function globalActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
 
 
 }
 
 export const packsScene = {
     scene,
-    globalActionsFn
+    postStageActionsFn
 } as SceneRegister

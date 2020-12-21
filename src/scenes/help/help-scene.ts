@@ -14,9 +14,9 @@ const {i18Msg} = i18nSceneHelper(scene)
 
 let cached_help_file_id = ''
 
-function globalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>) {
     bot
-        .use(middlewares.logMiddleware('globalActionsFn scene: ' + scene.id))
+        .use(middlewares.logMiddleware('postStageActionsFn scene: ' + scene.id))
         .help(async (ctx) => {
             ctx.ua.pv({dp: '/help', dt: 'Помощь'})
 
@@ -125,6 +125,6 @@ export class HelpSceneState {
 
 export const helpScene = {
     scene,
-    globalActionsFn,
+    postStageActionsFn,
     preSceneGlobalActionsFn
 } as SceneRegister
