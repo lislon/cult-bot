@@ -16,6 +16,7 @@ import {
 } from './packs-common'
 import { cardFormat } from '../shared/card-format'
 import slugify from 'slugify'
+import { generatePlural } from '../shared/shared-logic'
 
 
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
@@ -57,9 +58,7 @@ export async function displayPackMenu(ctx: ContextMessageUpdate) {
     const text = i18Msg(ctx, 'pack_card', {
         title: pack.title,
         description: pack.description,
-        listOfEvents: pack.events
-            .map(({title}) => i18Msg(ctx, 'pack_card_event', {title}))
-            .join('\n')
+        eventsPlural: generatePlural(ctx, 'event', pack.events.length)
     })
 
     const buttons = [

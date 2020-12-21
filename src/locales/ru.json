@@ -39,8 +39,7 @@
     "packs_scene": {
       "welcome": "Тут подборки на неделю",
       "header": "\uD83D\uDC47",
-      "pack_card": "<b>${title}</b>\n\n${description}\n\nСобытия:\n${listOfEvents}",
-      "pack_card_event": " - ${title}",
+      "pack_card": "<b>${title}</b>\n\n${description}\n\nВ подборке ${eventsPlural}",
       "event_curr_tip": "Используйте кнопки « и » для навигации между событиями",
       "keyboard": {
         "single_pack": "${title}",
