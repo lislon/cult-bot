@@ -1,5 +1,5 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
-import { chidrensTags, ContextMessageUpdate, EventFormat, TagLevel2 } from '../../interfaces/app-interfaces'
+import { chidrensTags, ContextMessageUpdate, EventFormat, MyInterval, TagLevel2 } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { InlineKeyboardButton } from 'telegraf/typings/markup'
 import {
@@ -54,8 +54,8 @@ function cleanOblastiTag(ctx: ContextMessageUpdate) {
 
 function prepareRepositoryQuery(ctx: ContextMessageUpdate) {
     return {
-        timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekendRange(ctx.now())),
-        weekendRange: getNextWeekendRange(ctx.now()),
+        timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekendRangeForCustom(ctx.now())),
+        weekendRange: getNextWeekendRangeForCustom(ctx.now()),
         cennosti: ctx.session.customize.cennosti,
         oblasti: cleanOblastiTag(ctx),
         format: mapFormatToDbQuery(ctx.session.customize.format)
@@ -224,10 +224,14 @@ function generateDropdownTimes(weekday: 'saturday'|'sunday', now: Date) {
     ).map(i => [i])
 }
 
+function getNextWeekendRangeForCustom(now: Date): MyInterval {
+    return getNextWeekendRange(now, '2weekends_only')
+}
+
 async function getKeyboardTime(ctx: ContextMessageUpdate) {
     const menu = new Menu(ctx, ctx.session.customize.time, ctx.session.customize.openedMenus, 'time_section')
     const weekdays = [0, 1]
-        .map(i => addDays(i)(getNextWeekendRange(startOfISOWeek(ctx.now())).start))
+        .map(i => addDays(i)(getNextWeekendRangeForCustom(startOfISOWeek(ctx.now())).start))
         .map(d => format('dd.MM', d))
 
     let buttons: InlineKeyboardButton[][] = []

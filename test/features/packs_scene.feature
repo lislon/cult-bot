@@ -30,9 +30,7 @@ Feature: Packs scene
 
       P1 desc
 
-      События:
-       - A
-       - B
+      В подборке 2 события
       """
     Then Bot edits inline buttons:
       """

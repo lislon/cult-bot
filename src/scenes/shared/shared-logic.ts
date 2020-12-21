@@ -1,13 +1,26 @@
 import { ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
 import { addDays, max, parseISO, startOfDay, startOfISOWeek } from 'date-fns/fp'
-import { format, formatDistanceToNow, Locale } from 'date-fns'
+import { format, formatDistanceToNow, isAfter, isBefore, Locale } from 'date-fns'
 import flow from 'lodash/fp/flow'
 import { ru } from 'date-fns/locale'
 import { i18n } from '../../util/i18n'
 import { botConfig } from '../../util/bot-config'
 import plural from 'plural-ru'
 
-export function getNextWeekendRange(now: Date): MyInterval {
+const YEAR_2020_WEEKENDS = [parseISO('2021-01-01 00:00:00'), parseISO('2021-01-11 00:00:00')]
+const START_SHOW_WEEKENDS_FROM = parseISO('2020-12-28 00:00:00')
+
+type Range = '2weekends_only'
+
+export function getNextWeekendRange(now: Date, range: Range = undefined): MyInterval {
+    if (range !== '2weekends_only') {
+        if (isAfter(now, START_SHOW_WEEKENDS_FROM) && isBefore(now, YEAR_2020_WEEKENDS[1])) {
+            return {
+                start: max([now, YEAR_2020_WEEKENDS[0]]),
+                end: YEAR_2020_WEEKENDS[1]
+            }
+        }
+    }
     return {
         start: max([now, (flow(startOfISOWeek, startOfDay, addDays(5))(now))]),
         end: flow(startOfISOWeek, startOfDay, addDays(7))(now)
