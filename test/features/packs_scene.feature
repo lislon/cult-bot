@@ -17,7 +17,7 @@ Feature: Packs scene
 
   Scenario: I can see 2 events in first pack
     Then Bot responds '👇'
-    Then Bot responds 'Тут подборки на неделю' with inline buttons:
+    Then Bot responds 'Узнайте больше о тематических коллекциях событий в подборках и следите за их пополнением' with inline buttons:
       """
       [P2]
       [P1]

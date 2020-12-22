@@ -23,7 +23,7 @@ Feature: Feedback scene
     When I click inline [Да, подобрал]
     When I click inline [Цена]
     When I click inline [Отправить]
-    Then Bot responds 'Спасибо за ответ! Мы обязательно учтём это в дальнейшей работе'
+    Then Bot responds 'Спасибо за ответ! Мы обязательно учтём это в дальнейшей работе 💪🏻'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Цена*'
 
   Scenario: I select positive items in survey with custom answer
@@ -40,15 +40,15 @@ Feature: Feedback scene
     When I click inline [Пройти опрос]
     When I click inline [Нет]
     When I click inline [Невнятное описание]
-    When I click inline [Ничего не понравилось]
+    When I click inline [Ничего не заинтересовало]
     When I click inline [Отправить]
-    Then Bot responds 'Спасибо за отклик. Вернитесь к нам, мы обязательно станем лучше'
-    Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Ничего не понравилось*'
+    Then Bot responds 'Спасибо за отклик. Вернитесь к нам, мы обязательно станем лучше 💪🏻'
+    Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Ничего не заинтересовало*'
 
   Scenario: I select negative items in survey with custom answer
     When I click inline [Пройти опрос]
     When I click inline [Нет]
-    When I click inline [Ничего не понравилось]
+    When I click inline [Ничего не заинтересовало]
     When I click inline [Свой вариант]
     Then Bot responds 'Напишите, что не понравилось:'
     When I type 'Вы ужасны'
