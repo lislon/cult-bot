@@ -1,5 +1,5 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
-import { ContextMessageUpdate, EventCategory } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, EventCategory, ExtIdAndId } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
 import {
@@ -29,8 +29,13 @@ import { SyncDiff } from '../../database/db-sync-repository'
 import { ITask } from 'pg-promise'
 import { parseAndValidateGoogleSpreadsheets } from '../../dbsync/parserSpresdsheetEvents'
 import { authToExcel } from '../../dbsync/googlesheets'
-import { getOnlyValid, prepareForPacksSync } from '../../dbsync/packsSyncLogic'
-import { EventPackForSave } from '../../database/db-packs'
+import {
+    EventPackForSavePrepared,
+    eventPacksEnrichWithids,
+    getOnlyValid,
+    prepareForPacksSync
+} from '../../dbsync/packsSyncLogic'
+import { Dictionary, keyBy } from 'lodash'
 import Timeout = NodeJS.Timeout
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
@@ -69,6 +74,16 @@ function getHumanReadableUsername(user: User): string {
     return user.first_name || user.last_name || user.username || user.id + ''
 }
 
+function getExistingIdsFrom(dbDiff: SyncDiff): Dictionary<ExtIdAndId> {
+    const existingIds = [...dbDiff.insertedEvents, ...dbDiff.updatedEvents, ...dbDiff.notChangedEvents].map(i => {
+        return {
+            id: i.primaryData.id ? +i.primaryData.id : undefined,
+            extId: i.primaryData.ext_id
+        }
+    })
+    return keyBy(existingIds, 'extId')
+}
+
 export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
     const oldUser = GLOBAL_SYNC_STATE.lockOnSync(ctx)
     if (oldUser !== undefined) {
@@ -91,7 +106,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 
             const dbDiff = await dbTx.repoSync.prepareDiffForSync(syncResult.rawEvents, dbTx)
 
-            const eventPacks = await prepareForPacksSync(excel)
+            const eventPacks = await prepareForPacksSync(excel, getExistingIdsFrom(dbDiff))
 
             GLOBAL_SYNC_STATE.chargeEventsSync(dbDiff, getOnlyValid(eventPacks))
 
@@ -152,7 +167,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 class GlobalSync {
     private timeoutId: Timeout
     private syncDiff: SyncDiff
-    private eventPacks: EventPackForSave[]
+    private eventPacks: EventPackForSavePrepared[]
     private confirmIdMsg: Message
     private user: User
 
@@ -162,8 +177,8 @@ class GlobalSync {
         try {
             logger.debug('hasData?', this.syncDiff !== undefined)
             await dbTx.repoSync.syncDiff(this.syncDiff, dbTx)
-
-            await db.repoPacks.sync(this.eventPacks)
+            const eventPackForSaves = eventPacksEnrichWithids(this.eventPacks, getExistingIdsFrom(this.syncDiff))
+            await dbTx.repoPacks.sync(eventPackForSaves)
 
             logger.debug('Sync done')
         } finally {
@@ -219,7 +234,7 @@ class GlobalSync {
         return this.user
     }
 
-    chargeEventsSync(dbDiff: SyncDiff, eventPacks: EventPackForSave[]) {
+    chargeEventsSync(dbDiff: SyncDiff, eventPacks: EventPackForSavePrepared[]) {
         logger.debug('Charge')
         this.syncDiff = dbDiff
         this.eventPacks = eventPacks

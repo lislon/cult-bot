@@ -84,8 +84,8 @@
       "sync_stats_cat_item_updated": "〰️ ${title}, <i>${ext_id}</i>",
       "sync_stats_cat_item_deleted": "<s>✖️ ${title}, <i>${ext_id}</i></s>",
 
-      "sync_packs_status_good": "\uD83D\uDFE2 Подборки: ${countGood} успешно импортировано",
-      "sync_packs_status_bad": "\uD83D\uDD34 Подборки: ${countGood} успешно импортировано, ${countBad} с ошибками",
+      "sync_packs_status_good": "\uD83D\uDFE2 Подборки: ${countGood} валидны",
+      "sync_packs_status_bad": "\uD83D\uDD34 Подборки: ${countGood} валидны, ${countBad} с ошибками",
 
       "sync_error_title": "\n\uD83C\uDF77 Я отметила ошибки красненьким в файлике (${totalErrors} шт):\n${errors}\n",
       "sync_error_row": " - ${sheetName}: ${extIds}",

@@ -98,3 +98,7 @@ export const CAT_NAMES = {
     'movies': 'Кино',
     'walks': 'Прогулки'
 }
+
+export type ExtIdAndId = { id: number; extId: string }
+
+export type ExtIdAndMaybeId = { id?: number; extId: string }

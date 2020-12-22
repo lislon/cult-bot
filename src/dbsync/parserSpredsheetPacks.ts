@@ -43,7 +43,7 @@ export interface ExcelPacksSyncResult {
 const PACKS_SHEET_NAME = 'Подборки'
 
 function getEventExtId(rowValue: string) {
-    const match = rowValue.match(/^\[(.\d+.?)\]/)
+    const match = rowValue.match(/^(.\d+[A-Z]?)/)
     if (match) return match[1]
 }
 

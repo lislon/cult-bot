@@ -1,4 +1,4 @@
-import { Event, MyInterval } from '../interfaces/app-interfaces'
+import { Event, ExtIdAndId, MyInterval } from '../interfaces/app-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { ColumnSet, IBaseProtocol, IDatabase, IMain, ITask } from 'pg-promise'
 import { db, IExtensions } from './db'
@@ -118,7 +118,7 @@ export class PacksRepository {
         return Buffer.from(img.image)
     }
 
-    public async fetchAllIdsExtIds(): Promise<{ id: number; extId: string }[]> {
+    public async fetchAllIdsExtIds(): Promise<ExtIdAndId[]> {
         return await this.db.map(`
             SELECT e.id, e.ext_id
             FROM cb_events e
