@@ -66,7 +66,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         .hears(i18nModuleBtnName('tops'), async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('tops_scene')
         })
-        .hears(/.{1,4}Готовые подборки$/, async (ctx: ContextMessageUpdate) => {
+        .hears(/.{1,4}Подборки$/, async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('packs_scene')
         })
         .hears(i18nModuleBtnName('search'), async (ctx: ContextMessageUpdate) => {

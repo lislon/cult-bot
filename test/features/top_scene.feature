@@ -11,21 +11,21 @@ Feature: Tops scene
   Scenario: I can see 6 categories when i enter customize
     Then Bot responds '*Выберите*' with markup buttons:
       """
-      [Театры] [Выставки]
-      [Кино] [Мероприятия]
-      [Прогулки] [Концерты]
-      [Назад]
+      [~tops_scene.theaters] [~tops_scene.exhibitions]
+      [~tops_scene.movies] [~tops_scene.events]
+      [~tops_scene.walks] [~tops_scene.concerts]
+      [~tops_scene.back]
       """
 
   Scenario: I can see events in category 'temporary exhibitions'
     When I click markup [Выставки]
     Then Bot responds '*Выберите*' with markup buttons:
       """
-      [Постоянные коллекции]
-      [Временные выставки]
-      [Назад]
+      [~tops_scene.exhibitions_perm]
+      [~tops_scene.exhibitions_temp]
+      [~tops_scene.back]
       """
-    Then I click markup [Временные выставки]
+    Then I click markup [~tops_scene.exhibitions_temp]
     Then Bot responds '<b>Временные выставки</b> на предстоящие выходные 04-05 января:'
     Then Bot responds with event 'A'
     Then Google analytics pageviews will be:
@@ -39,11 +39,11 @@ Feature: Tops scene
     When I click markup [Выставки]
     Then Bot responds '*Выберите*' with markup buttons:
       """
-      [Постоянные коллекции]
-      [Временные выставки]
-      [Назад]
+      [~tops_scene.exhibitions_perm]
+      [~tops_scene.exhibitions_temp]
+      [~tops_scene.back]
       """
-    Then I click markup [Постоянные коллекции]
+    Then I click markup [~tops_scene.exhibitions_perm]
     Then Bot responds '<b>Постоянные коллекции</b> на предстоящие выходные 04-05 января:'
     Then Bot responds with event 'B'
 
