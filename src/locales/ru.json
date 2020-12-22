@@ -13,6 +13,7 @@
     },
     "tops_scene": {
       "select_category": "Выберите рубрику. Особо рекомендуем первые события в выдаче",
+      "select_exhibition": "Выберите между двумя вариантами",
       "nothing_found_in_interval": "На ближайшие выходные по вашему запросу ничего не найдено. Воспользуйтесь командой /menu, чтобы вернуться к дальнейшему выбору",
       "let_me_show_this_weekend_sat": "<b>${cat}</b> на сегодня и завтра:",
       "let_me_show_this_weekend_sun": "<b>${cat}</b> на сегодня:",
@@ -375,6 +376,7 @@
             "opt_poor_description": "Невнятное описание",
             "opt_everything_bad": "Ничего не заинтересовало",
             "opt_bad_time": "Неудобное время",
+            "opt_bad_price": "Не подошла цена",
             "comment": "\uD83D\uDCDD Свой вариант"
           },
           "q_what_is_important": {

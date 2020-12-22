@@ -19,7 +19,7 @@ Feature: Tops scene
 
   Scenario: I can see events in category 'temporary exhibitions'
     When I click markup [Выставки]
-    Then Bot responds '*Выберите*' with markup buttons:
+    Then Bot responds 'Выберите между двумя вариантами' with markup buttons:
       """
       [~tops_scene.exhibitions_perm]
       [~tops_scene.exhibitions_temp]

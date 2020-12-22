@@ -143,7 +143,7 @@ async function showExhibitionsSubMenu(ctx: ContextMessageUpdate) {
         })
     )
 
-    await ctx.reply(i18Msg(ctx, 'select_category'),
+    await ctx.reply(i18Msg(ctx, 'select_exhibition'),
         Extra.HTML().markup(Markup.keyboard(buttons).resize())
     )
 }
