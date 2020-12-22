@@ -1,5 +1,5 @@
 import { DbEvent, EventToSave } from '../interfaces/db-interfaces'
-import { decodeTagsLevel1, encodeTagsLevel1 } from '../util/tag-level1-encoder'
+import { encodeTagsLevel1 } from '../util/tag-level1-encoder'
 import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise';
 import { db } from './db'
 import md5 from 'md5'
@@ -18,14 +18,10 @@ export interface DeletedEvent {
     title: string
 }
 
-export interface EventToUpdate extends EventToSave {
-    id: number
-}
-
 export interface SyncDiff {
     insertedEvents: EventToSave[]
-    updatedEvents: EventToUpdate[]
-    notChangedEvents: EventToUpdate[]
+    updatedEvents: EventToSave[]
+    notChangedEvents: EventToSave[]
     deletedEvents: DeletedEvent[]
 }
 
@@ -155,10 +151,9 @@ export class EventsSyncRepository {
                 if (existingMd5 === undefined) {
                     result.insertedEvents.push(newEvent)
                 } else if (existingMd5 != md5(postgresConcat(newRow))) {
-                    result.updatedEvents.push({
-                        ...newEvent,
-                        id: +extIdToId.get(newEvent.primaryData.ext_id)
-                    })
+                    const e = { ...newEvent }
+                    e.primaryData.id = +extIdToId.get(newEvent.primaryData.ext_id)
+                    result.updatedEvents.push(e)
 
                     const old = existingIdsRaw.find(e => e['extid'] === newEvent.primaryData.ext_id)['md5text']
                     const new2 = postgresConcat(newRow)
@@ -167,10 +162,9 @@ export class EventsSyncRepository {
                     logger.silly(new2)
 
                 } else {
-                    result.notChangedEvents.push({
-                        ...newEvent,
-                        id: existingIdsRaw.find(e => e['extid'] === newEvent.primaryData.ext_id).id
-                    })
+                    const e = { ...newEvent }
+                    e.primaryData.id =  existingIdsRaw.find(e => e['extid'] === newEvent.primaryData.ext_id).id
+                    result.notChangedEvents.push(e)
                 }
                 removedEventExtIds.delete(newEvent.primaryData.ext_id)
             })
@@ -185,10 +179,10 @@ export class EventsSyncRepository {
     public async syncDiff(syncDiff: SyncDiff, db: ITask<{}>): Promise<void> {
         const newDbRows = syncDiff.insertedEvents.map(EventsSyncRepository.mapToDb)
         const updateDbRows: (DbEvent & { id: number })[] = syncDiff.updatedEvents.map(e => {
-            return {...EventsSyncRepository.mapToDb(e), id: e.id}
+            return {...EventsSyncRepository.mapToDb(e), id: e.primaryData.id}
         })
         const eventsIntervalToSync: EventIntervalForSave[] = syncDiff.updatedEvents
-            .map(({ id, timeIntervals }) => { return { eventId: id, timeIntervals } })
+            .map(({ primaryData, timeIntervals }) => { return { eventId: primaryData.id, timeIntervals } })
 
         await db.txIf({ reusable: true }, async (dbTx: ITask<{}> & {}) => {
 
@@ -264,12 +258,6 @@ export class EventsSyncRepository {
             is_anytime: event.is_anytime,
             order_rnd: event.order_rnd !== undefined ? event.order_rnd : generateRandomOrder()
         };
-    }
-
-    private static mapFromDb(dbEvent: DbEvent) {
-        const d = { ... dbEvent }
-        d.tag_level_1 = decodeTagsLevel1(dbEvent.tag_level_1)
-        return d
     }
 
     private static convertToIntervals(eventsIntervals: EventIntervalForSave[]): DbEventEntranceRow[] {

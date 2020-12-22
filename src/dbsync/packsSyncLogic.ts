@@ -1,12 +1,21 @@
-import { EventPackForSave } from '../database/db-packs'
 import { EventInPackExcel, EventPackExcel, fetchAndParsePacks, saveValidationErrors } from './parserSpredsheetPacks'
-import { Dictionary, keyBy } from 'lodash'
-import { db } from '../database/db'
+import { Dictionary } from 'lodash'
 import { sheets_v4 } from 'googleapis'
+import { ExtIdAndId, ExtIdAndMaybeId } from '../interfaces/app-interfaces'
+import { EventPackForSave } from '../database/db-packs'
+
+
+export interface EventPackForSavePrepared {
+    title: string
+    description: string
+    author: string
+    events: ExtIdAndMaybeId[]
+    weight: number
+}
 
 export interface EventPackValidated {
     published: boolean
-    pack: EventPackForSave
+    pack: EventPackForSavePrepared
     raw: EventPackExcel
     errors: {
         imageUrl: string
@@ -22,7 +31,7 @@ interface BadEvent {
     error: string
 }
 
-async function processPack(p: EventPackExcel, idByExtId: Dictionary<{ id: number }>): Promise<EventPackValidated> {
+async function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>): Promise<EventPackValidated> {
     const errors: EventPackValidated['errors'] = {
         imageUrl: undefined,
         title: undefined,
@@ -39,13 +48,12 @@ async function processPack(p: EventPackExcel, idByExtId: Dictionary<{ id: number
             }
         })
 
-    const eventIds = p.events.map(e => idByExtId[e.extId]).filter(Boolean).map(e => e.id)
     return {
         published: p.isPublish,
         raw: p,
         pack: {
             title: p.title,
-            eventIds: eventIds,
+            events: p.events.map(e => idByExtId[e.extId]).filter(Boolean),
             author: p.author,
             description: p.description,
             weight: p.weight,
@@ -55,22 +63,26 @@ async function processPack(p: EventPackExcel, idByExtId: Dictionary<{ id: number
     }
 }
 
+export function eventPacksEnrichWithids(eventPacks: EventPackForSavePrepared[], idByExtId: Dictionary<ExtIdAndId>): EventPackForSave[] {
+    return eventPacks.map(pack => {
+        return {
+            title: pack.title,
+            weight: pack.weight,
+            author: pack.author,
+            description: pack.description,
+            eventIds: pack.events.map(({ extId }) => idByExtId[extId].id)
+        }
+    })
+}
 
-export async function prepareForPacksSync(excel: sheets_v4.Sheets): Promise<EventPackValidated[]> {
+export async function prepareForPacksSync(excel: sheets_v4.Sheets, idByExtId: Dictionary<ExtIdAndMaybeId>): Promise<EventPackValidated[]> {
     const packsSyncResult = await fetchAndParsePacks(excel)
-
-    const existingIds = await db.repoPacks.fetchAllIdsExtIds()
-
-    const idByExtId: Dictionary<{ id: number }> = keyBy(existingIds, 'extId')
-
     const validationResult = await Promise.all(packsSyncResult.packs.map(p => processPack(p, idByExtId)))
-
-
     await saveValidationErrors(excel, validationResult)
     return validationResult
 }
 
-export function getOnlyValid(all: EventPackValidated[]): EventPackForSave[] {
+export function getOnlyValid(all: EventPackValidated[]): EventPackForSavePrepared[] {
     return all.filter(vr => vr.isValid && vr.published).map(vr => vr.pack)
 }
 
