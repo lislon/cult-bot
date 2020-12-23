@@ -31,7 +31,7 @@ import { parseAndValidateGoogleSpreadsheets } from '../../dbsync/parserSpresdshe
 import { authToExcel } from '../../dbsync/googlesheets'
 import {
     EventPackForSavePrepared,
-    eventPacksEnrichWithids,
+    eventPacksEnrichWithIds,
     getOnlyValid,
     prepareForPacksSync
 } from '../../dbsync/packsSyncLogic'
@@ -177,7 +177,7 @@ class GlobalSync {
         try {
             logger.debug('hasData?', this.syncDiff !== undefined)
             await dbTx.repoSync.syncDiff(this.syncDiff, dbTx)
-            const eventPackForSaves = eventPacksEnrichWithids(this.eventPacks, getExistingIdsFrom(this.syncDiff))
+            const eventPackForSaves = eventPacksEnrichWithIds(this.eventPacks, getExistingIdsFrom(this.syncDiff))
             await dbTx.repoPacks.sync(eventPackForSaves)
 
             logger.debug('Sync done')

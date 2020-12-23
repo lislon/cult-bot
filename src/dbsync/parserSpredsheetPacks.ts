@@ -47,14 +47,17 @@ function getEventExtId(rowValue: string) {
     if (match) return match[1]
 }
 
-function getRowNumber({ rowNumber }: EventPackExcel, field: keyof typeof VERTICAL_ORDER) {
-    return rowNumber + Object.keys(VERTICAL_ORDER).indexOf(field)
-}
-
 export async function saveValidationErrors(excel: Sheets, validatedEvents: EventPackValidated[]): Promise<void> {
     const excelUpdater = new ExcelUpdater(excel, EXCEL_COLUMNS_PACKS)
 
+
     validatedEvents.forEach(({ raw, errors }) => {
+
+        function markRow(rowName: keyof typeof VERTICAL_ORDER, errorText: string) {
+            const rowNumber = raw.rowNumber + Object.keys(VERTICAL_ORDER).indexOf(rowName)
+            excelUpdater.colorCell(raw.sheetId, 'values', rowNumber, 'red')
+            excelUpdater.annotateCell(raw.sheetId, 'values', rowNumber, errorText)
+        }
 
         excelUpdater.clearColumnFormat(raw.sheetId, 'values', raw.rowNumber, Object.keys(VERTICAL_ORDER).length + raw.events.length - 1)
 
@@ -62,6 +65,15 @@ export async function saveValidationErrors(excel: Sheets, validatedEvents: Event
             excelUpdater.colorCell(raw.sheetId, 'values', rawEvent.rowNumber, 'red')
             excelUpdater.annotateCell(raw.sheetId, 'values', rawEvent.rowNumber, error)
         })
+        if (errors.description) {
+            markRow('description', errors.description)
+        }
+        if (errors.title) {
+            markRow('title', errors.title)
+        }
+        if (errors.weight) {
+            markRow('weight', errors.weight)
+        }
     })
 
     await excelUpdater.update(botConfig.GOOGLE_DOCS_ID)
@@ -90,9 +102,9 @@ export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncR
                 packs.push(currentPack)
             }
             currentPack = {
-                title: rowValue,
+                title: rowValue || undefined,
                 events: [],
-                description: '',
+                description: undefined,
                 author: '',
                 weight: 0,
                 isPublish: undefined,

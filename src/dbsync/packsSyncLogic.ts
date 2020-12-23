@@ -18,8 +18,8 @@ export interface EventPackValidated {
     pack: EventPackForSavePrepared
     raw: EventPackExcel
     errors: {
-        imageUrl: string
         title: string
+        weight: string
         description: string
         badEvents: BadEvent[]
     }
@@ -33,8 +33,8 @@ interface BadEvent {
 
 async function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>): Promise<EventPackValidated> {
     const errors: EventPackValidated['errors'] = {
-        imageUrl: undefined,
         title: undefined,
+        weight: undefined,
         description: undefined,
         badEvents: []
     }
@@ -47,6 +47,15 @@ async function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMayb
                 error: `Событие '${raw.extId}' не найдено в боте или оно не валидное`
             }
         })
+    if (p.description === undefined) {
+        errors.description = 'Пустое поле description'
+    }
+    if (p.title === undefined) {
+        errors.title = 'Пустое поле title'
+    }
+    if (p.weight === undefined || isNaN(p.weight)) {
+        errors.weight = 'Пустое поле weight'
+    }
 
     return {
         published: p.isPublish,
@@ -59,11 +68,11 @@ async function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMayb
             weight: p.weight,
         },
         errors,
-        isValid: errors.title === undefined && errors.description === undefined && errors.badEvents.length == 0 && errors.imageUrl === undefined
+        isValid: errors.title === undefined && errors.description === undefined && errors.badEvents.length == 0 && errors.weight === undefined
     }
 }
 
-export function eventPacksEnrichWithids(eventPacks: EventPackForSavePrepared[], idByExtId: Dictionary<ExtIdAndId>): EventPackForSave[] {
+export function eventPacksEnrichWithIds(eventPacks: EventPackForSavePrepared[], idByExtId: Dictionary<ExtIdAndId>): EventPackForSave[] {
     return eventPacks.map(pack => {
         return {
             title: pack.title,
