@@ -42,7 +42,7 @@ Feature: Feedback scene
     When I click inline [Невнятное описание]
     When I click inline [Ничего не заинтересовало]
     When I click inline [Отправить]
-    Then Bot responds 'Спасибо за отклик. Вернитесь к нам, мы обязательно станем лучше 💪🏻'
+    Then Bot responds 'Спасибо за ответ! Мы обязательно учтём это в дальнейшей работе 💪🏻'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Ничего не заинтересовало*'
 
   Scenario: I select negative items in survey with custom answer
