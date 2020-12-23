@@ -169,8 +169,8 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
 
         let templateName
 
-        if (isSameDay(ctx.now(), range.end)) {
-            templateName = 'let_me_show_this_weekend_last';
+        if (isSameDay(ctx.now(), rangeN.end)) {
+            templateName = 'let_me_show_today';
         } else {
             templateName = 'let_me_show_next_weekend';
         }

@@ -18,7 +18,7 @@ Feature: Tops scene
       """
 
   Scenario: I can see events in category 'temporary exhibitions'
-    When I click markup [Выставки]
+    When I click markup [~tops_scene.exhibitions]
     Then Bot responds 'Выберите между двумя вариантами' with markup buttons:
       """
       [~tops_scene.exhibitions_perm]
@@ -36,7 +36,7 @@ Feature: Tops scene
 
 
   Scenario: I can see events in category 'permanent exhibitions'
-    When I click markup [Выставки]
+    When I click markup [~tops_scene.exhibitions]
     Then Bot responds '*Выберите*' with markup buttons:
       """
       [~tops_scene.exhibitions_perm]
@@ -48,10 +48,16 @@ Feature: Tops scene
     Then Bot responds with event 'B'
 
   Scenario: When I click back in subcategory I get into tops menu
-    When I click markup [Выставки]
+    When I click markup [~tops_scene.exhibitions]
     Then I click markup [Назад]
     Then Bot responds '*Выберите*'
 
   Scenario: When I click back in tops menu i will get to main scene
     Then I click markup [Назад]
     Then I will be on scene 'main_scene'
+
+  Scenario: I see today message on last day of weekend
+    Given now is 2020-01-05 12:00
+    When I click markup [~tops_scene.exhibitions]
+    Then I click markup [~tops_scene.exhibitions_perm]
+    Then Bot responds '*сегодня*'
