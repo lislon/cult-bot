@@ -7,7 +7,7 @@ import { i18n } from '../../util/i18n'
 import { Paging } from '../shared/paging'
 import { getNextWeekendRange, limitEventsToPage, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { subSeconds } from 'date-fns/fp'
-import { getISODay, isSameMonth, startOfDay } from 'date-fns'
+import { isSameDay, isSameMonth, startOfDay } from 'date-fns'
 import { SceneRegister } from '../../middleware-utils'
 import { db } from '../../database/db'
 import { encodeTagsLevel1 } from '../../util/tag-level1-encoder'
@@ -116,7 +116,7 @@ scene
         }))
 
 
-function intervalTemplateNormalize(range: MyInterval): MyInterval {
+function removeLastSecond(range: MyInterval): MyInterval {
     return {
         start: range.start,
         end: startOfDay(range.end).getTime() === range.end.getTime() ? subSeconds(1)(range.end) : range.end
@@ -153,7 +153,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
 
     await warnAdminIfDateIsOverriden(ctx)
 
-    const rangeN = intervalTemplateNormalize(range)
+    const rangeN = removeLastSecond(range)
 
     if (events.length > 0) {
         const tplData = {
@@ -169,10 +169,8 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
 
         let templateName
 
-        if (getISODay(ctx.now()) === 6) {
-            templateName = 'let_me_show_this_weekend_sat';
-        } else if (getISODay(ctx.now()) === 7) {
-            templateName = 'let_me_show_this_weekend_sun';
+        if (isSameDay(ctx.now(), range.end)) {
+            templateName = 'let_me_show_this_weekend_last';
         } else {
             templateName = 'let_me_show_next_weekend';
         }
