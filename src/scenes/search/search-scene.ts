@@ -6,6 +6,7 @@ import { cardFormat } from '../shared/card-format'
 import { Paging } from '../shared/paging'
 import { SceneRegister } from '../../middleware-utils'
 import { db } from '../../database/db'
+import { logger } from '../../util/logger'
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene');
 
@@ -48,7 +49,7 @@ async function showSearchResults(ctx: ContextMessageUpdate) {
         allowSearchById: isAdmin(ctx)
     })
 
-    console.log(`Search: '${ctx.session.search.request}' offset=${ctx.session.paging.pagingOffset} found=${events.length}`)
+    logger.debug(`Search: '${ctx.session.search.request}' offset=${ctx.session.paging.pagingOffset} found=${events.length}`)
     const {i18Btn, i18Msg} = sceneHelper(ctx)
 
     const nextBtn = Markup.inlineKeyboard([

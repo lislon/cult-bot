@@ -8,6 +8,7 @@ Feature: Main scene
       [~main_scene.customize]
       [~main_scene.tops] [~main_scene.packs]
       [~main_scene.search]
+      [~main_scene.feedback]
       """
 
     Then Google analytics pageviews will be:

@@ -3,7 +3,6 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, ifAdmin, isAdmin, sleep } from '../../util/scene-helper'
 import middlewares, { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
-import { countInteractions } from '../../lib/middleware/analytics-middleware'
 import { db } from '../../database/db'
 import { generatePlural, getNextWeekendRange } from '../shared/shared-logic'
 import { logger } from '../../util/logger'
@@ -13,29 +12,14 @@ const scene = new BaseScene<ContextMessageUpdate>('main_scene');
 const {i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 const quick = botConfig.NODE_ENV === 'development' || botConfig.NODE_ENV === 'test'
-
-function isTimeToShowFeedback(ctx: ContextMessageUpdate) {
-    const CLICKS_TO_TAKE_FEEDBACK = 15
-    return botConfig.SUPPORT_FEEDBACK_CHAT_ID !== undefined &&
-        (countInteractions(ctx) > CLICKS_TO_TAKE_FEEDBACK) || isAdmin(ctx)
-}
-
 export type MainSceneEnterState = { override_main_scene_msg?: string }
 
-function isDevEnv() {
-    const isProdOrUat = botConfig.HEROKU_APP_NAME === 'cult-hub-bot-uat' ||
-        botConfig.HEROKU_APP_NAME === 'cult-hub-bot-prod'
-    return !isProdOrUat
-}
-
 const content = (ctx: ContextMessageUpdate) => {
-    const feedbackBtn = isTimeToShowFeedback(ctx) ? ['feedback'] : []
-
     const menu = [
         ['customize'],
         ['tops', 'packs'],
         ['search'],
-        ...[(isAdmin(ctx) ? ['admin', ...feedbackBtn] : feedbackBtn)]
+        ...[(isAdmin(ctx) ? ['admin', 'feedback'] : ['feedback'])]
     ]
 
     const mainButtons = menu.map(row =>
@@ -123,7 +107,7 @@ function googleAnalyticsSource(ctx: ContextMessageUpdate & { startPayload: strin
 
 function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }) => {
-        console.log([
+        logger.info([
             `/start`,
             `id=${ctx.from.id}`,
             `first_name=${ctx.from.first_name}`,
