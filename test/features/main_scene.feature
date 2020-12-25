@@ -13,7 +13,6 @@ Feature: Main scene
 
     Then Google analytics pageviews will be:
       | dp                | dt                |
-      | /start            | Старт             |
       | /                 | Главное меню      |
 
     Then Google analytics params will be:

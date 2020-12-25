@@ -138,8 +138,6 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
         // await ctx.replyWithHTML(ctx.i18n.t('root.welcome4'), {disable_notification: true})
 
         googleAnalyticsSource(ctx)
-        ctx.ua.pv({dp: `/start`, dt: `Старт`})
-
         await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.welcome2')});
     })
 }
