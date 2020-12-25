@@ -129,6 +129,13 @@ Create new migration:
 db-migrate create <name-of-migration>
 ```
 
+### Troubleshooting
+
+```
+heroku pg:diagnose -a cult-hub-bot-prod
+```
+
+
 ### Tests:
 
 1. Run `cd .jest && composer up -v`
@@ -137,8 +144,8 @@ db-migrate create <name-of-migration>
 
 ### Restart app
 ```
-heroku -a cult-hub-bot-dev scale web:0
-heroku -a cult-hub-bot-dev scale web:1
+heroku scale web=0 -a cult-hub-bot-dev
+heroku scale web=1 -a cult-hub-bot-dev
 
 ```
 ### Backups

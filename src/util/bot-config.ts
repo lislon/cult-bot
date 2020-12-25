@@ -4,6 +4,7 @@ type Envs = 'development' | 'production' | 'test'
 
 export class BotConfig {
     public readonly DATABASE_URL: string
+    public readonly DATABASE_MAX_POOL: number
     public readonly GOOGLE_ANALYTICS_ID: string | undefined
     public readonly GOOGLE_ANALYTICS_COUNT_ADMINS: boolean
     public readonly GOOGLE_DOCS_ID: string
@@ -31,6 +32,8 @@ export class BotConfig {
     constructor() {
         config()
         this.DATABASE_URL = process.env.DATABASE_URL
+        this.DATABASE_MAX_POOL = process.env.DATABASE_MAX_POOL === undefined ? 18 : +process.env.DATABASE_MAX_POOL
+
         this.GOOGLE_ANALYTICS_ID = process.env.GOOGLE_ANALYTICS_ID
         this.GOOGLE_ANALYTICS_COUNT_ADMINS = !!process.env.GOOGLE_ANALYTICS_COUNT_ADMINS || false
         this.GOOGLE_DOCS_ID = process.env.GOOGLE_DOCS_ID
