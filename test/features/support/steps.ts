@@ -102,6 +102,12 @@ Given(/^Scene is '(.+)'$/, async function (scene: string) {
     await this.enterScene(scene)
 })
 
+Given(/^I blocked the bot$/, async function () {
+    drainEvents.call(this)
+    await this.blockBotByUser()
+})
+
+
 When(/^I type '(.+)'$/, async function (text: string) {
     drainEvents.call(this)
     await this.sendMessage(text)

@@ -1,6 +1,6 @@
 import { CHEAP_PRICE_THRESHOLD, Event, EventCategory, TagLevel2 } from '../interfaces/app-interfaces'
 import { EventTimetable, MomentOrInterval } from '../lib/timetable/intervals'
-import { fieldIsQuestionMarkOrEmpty } from '../util/filed-utils'
+import { fieldIsQuestionMarkOrEmpty } from '../util/misc-utils'
 import { parseAndPredictTimetable } from '../lib/timetable/timetable-utils'
 import { i18n } from '../util/i18n'
 import { parseISO } from 'date-fns'

@@ -48,3 +48,9 @@ Feature: Main scene
     Given Scene is 'main_scene'
     When I type 'Бред'
     Then Bot responds '*/menu*'
+
+  Scenario: When I block bot it not attacks telegram infititely
+    Given Scene is 'main_scene'
+    Given I blocked the bot
+    When I type 'Бред'
+    Then Bot responds '*/menu*'

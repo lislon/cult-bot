@@ -6,6 +6,9 @@ import { InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, Message } f
 import { MiddlewareFn } from 'telegraf/typings/composer'
 import { MarkupHelper } from './MarkupHelper'
 
+const TelegramError = require('telegraf/core/network/error') as any
+
+
 const CHAT_ID = 1234
 const FROM_ID = 7777
 
@@ -70,6 +73,7 @@ export class TelegramMockServer {
     private lastEdited: BotReply
     private lastMsgId = 0;
     private lastCtx: ContextMessageUpdate
+    private botIsBlocked = false
 
     ctx(): ContextMessageUpdate {
         return this.lastCtx
@@ -175,23 +179,38 @@ export class TelegramMockServer {
 
     private prepareCtxFromServer(update: tt.Update): ContextMessageUpdate {
         const tg = new Telegram('', {})
-        tg.callApi = (method: any, data: any): any => {
-            // console.log(`mocked tg callApi ${method}`, data)
+        tg.callApi = async (method: any, data: { chat_id: number }): Promise<any> => {
+            if (this.botIsBlocked) {
+                const telegramError = TelegramError
+                throw new telegramError({
+                    error_code: 403,
+                    description: 'bot was blocked by the user'
+                })
+            }
         }
 
         const ctx: ContextMessageUpdate = new Context(update, tg, {}) as ContextMessageUpdate
 
+        async function touchApiMock() {
+            await ctx.telegram.callApi('mock', {chat_id: 0})
+        }
+
         ctx.reply = async (message: string, extra: tt.ExtraReplyMessage = undefined): Promise<tt.Message> => {
             this.lastMsg = await this.generateAnswerAfterReply()
+            await touchApiMock()
             if (MarkupHelper.isInlineKeyboard(extra?.reply_markup)) {
                 this.lastMsg.reply_markup = extra.reply_markup
-            }
 
+            }
             this.replies = [...this.replies, {text: message, extra, message: this.lastMsg}]
             return this.lastMsg
         }
-        ctx.answerCbQuery = _ => Promise.resolve(true)
+        ctx.answerCbQuery = async (_) => {
+            await touchApiMock()
+            return Promise.resolve(true)
+        }
         ctx.editMessageReplyMarkup = async (markup?: tt.InlineKeyboardMarkup): Promise<tt.Message | boolean> => {
+            await touchApiMock()
             const lastReply = this.findLastReply()
 
             if (lastReply === undefined) {
@@ -205,6 +224,7 @@ export class TelegramMockServer {
             return lastReply.message
         }
         ctx.editMessageText = async (text: string, extra?: tt.ExtraEditMessage): Promise<tt.Message | boolean> => {
+            await touchApiMock()
             const lastReply = this.findLastReply()
             if (lastReply === undefined) {
                 return false
@@ -218,6 +238,7 @@ export class TelegramMockServer {
         }
 
         tg.sendMessage = async (chatId: number | string, text: string, extra?: tt.ExtraEditMessage): Promise<tt.Message> => {
+            await ctx.telegram.callApi('mock', {})
             const message: Message = {
                 message_id: this.nextMsgId(),
                 chat: {
@@ -249,6 +270,10 @@ export class TelegramMockServer {
 
     private nextMsgId() {
         return this.lastMsgId++
+    }
+
+    blockBotByUser() {
+        this.botIsBlocked = true
     }
 }
 

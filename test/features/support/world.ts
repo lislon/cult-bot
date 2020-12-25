@@ -35,6 +35,16 @@ class CustomWorld {
 
         this.bot.use(
             middlewares.i18n,
+            middlewares.telegrafThrottler({
+                in: {
+                    maxConcurrent: undefined,
+                    highWater: undefined,
+                },
+                out: {
+                    maxConcurrent: undefined,
+                    highWater: undefined,
+                }
+            }),
             session(),
             // middlewares.logMiddleware('pre_session'),
             middlewares.userSaveMiddleware,
@@ -135,6 +145,10 @@ class CustomWorld {
 
     ctx(): ContextMessageUpdate {
         return this.server.ctx()
+    }
+
+    blockBotByUser() {
+        this.server.blockBotByUser()
     }
 
     private compose(middleware: Middleware<ContextMessageUpdate>) {

@@ -8,6 +8,7 @@ import { SessionEnforcer } from '../shared/shared-logic'
 import { menuMiddleware } from './survey'
 import * as tt from 'telegraf/typings/telegram-types'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
+import { formatUserName } from '../../util/misc-utils'
 
 const scene = new BaseScene<ContextMessageUpdate>('feedback_scene');
 const {actionName, i18nModuleBtnName, scanKeys, i18Btn, i18Msg} = i18nSceneHelper(scene)
@@ -117,26 +118,6 @@ scene
     .on(['voice', 'sticker', 'document', 'photo', 'animation'], async (ctx: ContextMessageUpdate) => {
         await sendFeedbackIfListening(ctx)
     })
-
-function formatUserName(ctx: ContextMessageUpdate) {
-    const from = ctx.from
-
-    const result: string[] = []
-    if (from.first_name) {
-        result.push(from.first_name)
-    }
-    if (from.last_name) {
-        result.push(from.last_name)
-    }
-    if (from.username) {
-        result.push(`@${from.username}`)
-    }
-    if (result.length === 0) {
-        result.push(`Аноним (id=${ctx.from.id})`)
-    }
-
-    return result.join(' ')
-}
 
 function userSelected(ctx: ContextMessageUpdate, selected: string[], question: 'q_why_not_like' | 'q_what_is_important') {
     const selections = selected
