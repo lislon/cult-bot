@@ -17,9 +17,10 @@ import {
 import { cardFormat } from '../shared/card-format'
 import slugify from 'slugify'
 import { generatePlural } from '../shared/shared-logic'
+import emojiRegex from 'emoji-regex'
 
 
-const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
+const {actionName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
 
 
 export async function displayMainMenu(ctx: ContextMessageUpdate) {
@@ -88,7 +89,9 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
     const pack = await getPackSelected(ctx)
     const event = await getEventSelected(ctx)
 
-    ctx.ua.pv({dp: `/packs/${mySlugify(pack.title)}/${mySlugify(event.ext_id)}`, dt: `Подборки > ${pack.title} > ${event.title}`})
+    const packTitleNoEmoji =  pack.title.replace(emojiRegex(), '').trim()
+
+    ctx.ua.pv({dp: `/packs/${mySlugify(packTitleNoEmoji)}/${mySlugify(event.ext_id)}`, dt: `Подборки > ${packTitleNoEmoji} > ${event.title}`})
 
     const buttons = [
         [
@@ -101,7 +104,7 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
         ],
         [
             Markup.callbackButton(i18Btn(ctx, 'event_back', {
-                packTitle: pack.title
+                packTitle: packTitleNoEmoji
             }), actionName(`event_back`)),
         ]
     ]
