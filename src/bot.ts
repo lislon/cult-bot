@@ -36,7 +36,7 @@ const stage = new Stage([], {
 
 bot.use(performanceMiddleware('total'))
 bot.use(middlewares.i18n)
-bot.use(middlewares.telegrafThrottler)
+bot.use(middlewares.telegrafThrottler())
 bot.use(middlewares.logger)
 bot.use(middlewares.session)
 bot.use(middlewares.logMiddleware('session'))
