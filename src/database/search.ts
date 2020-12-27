@@ -44,6 +44,7 @@ export class SearchRepository {
                 FROM cb_events_entrance_times cbet
                 where $(interval) && cbet.entrance AND cbet.event_id = cb.id
             )
+            AND cb.deleted_at IS NULL
             ORDER BY rank DESC, cb.rating DESC, cb.order_rnd
             limit $(limit) offset $(offset)
         `

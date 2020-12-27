@@ -21,6 +21,7 @@ export interface MockEvent {
     anytime: boolean
     order_rnd?: number
     reviewer: string
+    dateDeleted?: Date
 }
 
 export interface MockPackForSave {
@@ -44,6 +45,7 @@ export function getMockEvent({
         anytime = false,
         order_rnd = undefined,
         reviewer = '',
+        dateDeleted = undefined
     }: Partial<MockEvent> = {}
 ): EventToSave {
     const event: Event = {
@@ -64,7 +66,7 @@ export function getMockEvent({
         tag_level_3: [],
         rating: rating,
         reviewer: reviewer,
-        geotag: '',
+        geotag: ''
     }
     return {
         primaryData: event,
@@ -73,7 +75,8 @@ export function getMockEvent({
         },
         timeIntervals: eventTime,
         is_anytime: anytime,
-        order_rnd: order_rnd
+        order_rnd: order_rnd,
+        dateDeleted: dateDeleted
     }
 }
 
@@ -133,7 +136,10 @@ export async function syncEventsDb4Test(events: EventToSave[]): Promise<SyncDiff
 
 export async function syncPacksDb4Test(mockPacks: MockPackForSave[]): Promise<number[]> {
     return await db.task(async (dbTask) => {
-        const tilesAndIds = await dbTask.many(`SELECT title, id FROM cb_events WHERE title IN ($(titles:csv))`, {
+        const tilesAndIds = await dbTask.many(`
+            SELECT title, id
+            FROM cb_events
+            WHERE title IN ($(titles:csv)) AND deleted_at IS NULL`, {
             titles: mockPacks.flatMap(p => p.eventTitles)
         })
 
@@ -144,11 +150,13 @@ export async function syncPacksDb4Test(mockPacks: MockPackForSave[]): Promise<nu
                     .map(eventTitle => {
                         const eventId = tilesAndIds
                             .filter(tAndId => tAndId.title === eventTitle)
-                            .map(tAndId => tAndId.id)
-                        if (!eventId) {
+                        if (eventId.length === 0) {
                             throw new Error(`Cant find event by ${eventTitle}`)
                         }
-                        return +eventId
+                        if (eventId.length > 1) {
+                            throw new Error(`More then 1 event with ${eventTitle}`)
+                        }
+                        return +eventId[0].id
                     }),
             }
         })

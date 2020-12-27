@@ -14,7 +14,7 @@ export class SnapshotRepository {
         await this.db.tx(async (dbTx: ITask<IExtensions> & IExtensions) => {
             await dbTx.none('TRUNCATE cb_events_snapshot')
             await dbTx.none('TRUNCATE cb_events_snapshot_meta')
-            await dbTx.none('INSERT INTO cb_events_snapshot (SELECT * FROM cb_events)')
+            await dbTx.none('INSERT INTO cb_events_snapshot (SELECT * FROM cb_events cb WHERE cb.deleted_at IS NULL)')
             await dbTx.none(this.pgp.helpers.insert({
                 created_by: createdBy,
                 created_at: date

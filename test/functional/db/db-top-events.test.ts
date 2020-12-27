@@ -179,7 +179,6 @@ describe('Top events', () => {
         const interval = mkInterval('[2020-01-01 00:00, 2020-01-01 10:00)')
         expectedTitlesStrict(['A'], await db.repoTopEvents.getTop({category: 'theaters', interval}))
     })
-
 })
 
 

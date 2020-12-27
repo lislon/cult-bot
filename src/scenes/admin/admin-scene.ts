@@ -25,7 +25,7 @@ import { formatMainAdminMenu, formatMessageForSyncReport } from './admin-format'
 import { menuCats, POSTS_PER_PAGE_ADMIN, SYNC_CONFIRM_TIMEOUT_SECONDS, totalValidationErrors } from './admin-common'
 import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 import { Message, User } from 'telegram-typings'
-import { SyncDiff } from '../../database/db-sync-repository'
+import { EventToRecover, SyncDiff } from '../../database/db-sync-repository'
 import { ITask } from 'pg-promise'
 import { parseAndValidateGoogleSpreadsheets } from '../../dbsync/parserSpresdsheetEvents'
 import { authToExcel } from '../../dbsync/googlesheets'
@@ -75,7 +75,7 @@ function getHumanReadableUsername(user: User): string {
 }
 
 function getExistingIdsFrom(dbDiff: SyncDiff): Dictionary<ExtIdAndId> {
-    const existingIds = [...dbDiff.insertedEvents, ...dbDiff.updatedEvents, ...dbDiff.notChangedEvents].map(i => {
+    const existingIds = [...dbDiff.insertedEvents, ...dbDiff.recoveredEvents, ...dbDiff.updatedEvents, ...dbDiff.notChangedEvents].map(i => {
         return {
             id: i.primaryData.id ? +i.primaryData.id : undefined,
             extId: i.primaryData.ext_id
@@ -110,7 +110,10 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 
             GLOBAL_SYNC_STATE.chargeEventsSync(dbDiff, getOnlyValid(eventPacks))
 
-            const askUserToConfirm = dbDiff.deletedEvents.length > 0
+            const askUserToConfirm = dbDiff.deletedEvents.length
+                + dbDiff.recoveredEvents
+                    .filter((i: EventToRecover) => i.old.title !== i.primaryData.title).length > 0
+
             if (askUserToConfirm === false) {
                 await GLOBAL_SYNC_STATE.executeSync(dbTx)
             }
@@ -135,6 +138,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
                 `Database updated.`,
                 `Insertion done.`,
                 `inserted={${listExtIds(dbDiff.insertedEvents)}}`,
+                `recovered={${listExtIds(dbDiff.recoveredEvents)}}`,
                 `updated={${listExtIds(dbDiff.updatedEvents)}}`,
                 `deleted={${dbDiff.deletedEvents.map(d => d.ext_id).join(',')}}`
             ].join(' '));
@@ -147,6 +151,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
             await replyWithHTMLMaybeChunk(ctx, msg)
 
             const isSomethingChanged = dbDiff.deletedEvents.length
+                + dbDiff.recoveredEvents.length
                 + dbDiff.insertedEvents.length
                 + dbDiff.updatedEvents.length > 0
             if (totalValidationErrors(syncResult.errors) === 0 && isSomethingChanged) {

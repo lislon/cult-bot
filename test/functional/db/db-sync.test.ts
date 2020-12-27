@@ -12,6 +12,7 @@ type ExpectedSyncResults = {
     notChanged: string[]
     updated: string[]
     deleted: string[]
+    recovered: string[]
 }
 
 function expectSyncResult(syncResults: SyncDiff, expected: ExpectedSyncResults) {
@@ -20,6 +21,7 @@ function expectSyncResult(syncResults: SyncDiff, expected: ExpectedSyncResults) 
         notChanged: syncResults.notChangedEvents.map(e => e.primaryData.title),
         updated: syncResults.updatedEvents.map(e => e.primaryData.title),
         deleted: syncResults.deletedEvents.map(e => e.title),
+        recovered: syncResults.recoveredEvents.map(e => e.primaryData.title),
     }
     expect(actual).toStrictEqual(expected)
 }
@@ -47,6 +49,7 @@ describe('db sync test', () => {
                     (upper(cbe.entrance) at time zone 'MSK' || '') as upper
                 FROM cb_events cb
                 LEFT JOIN cb_events_entrance_times cbe on (cbe.event_id = cb.id)
+                WHERE cb.deleted_at IS NULL
                 ORDER BY lower(cbe.entrance) ASC
                 `)
             expect(rows).toEqual([
@@ -62,7 +65,11 @@ describe('db sync test', () => {
                 getMockEvent({tag_level_1: ['#A', '#B'], category: 'theaters'}),
                 getMockEvent({tag_level_1: ['#A'], category: 'concerts'})
             ])
-            const row = await db.one(`select SUM(array_length(tag_level_1, 1)) AS count from cb_events ce`)
+            const row = await db.one(`
+            select SUM(array_length(tag_level_1, 1)) AS count
+            from cb_events cb
+            WHERE cb.deleted_at IS NULL
+            `)
             expect(+row.count).toEqual(3)
         }, 100000
     )
@@ -96,12 +103,14 @@ describe('db sync test', () => {
             updated: [],
             notChanged: [],
             deleted: [],
+            recovered: [],
         })
         expectSyncResult(sync2, {
             created: [],
             updated: [],
             notChanged: [stressTestEventA, 'B'],
             deleted: [],
+            recovered: [],
         })
 
         expectedTitlesStrict([stressTestEventA], await db.repoAdmin.findAllChangedEventsByCat('theaters', eventInterval))
@@ -127,8 +136,38 @@ describe('db sync test', () => {
             updated: ['B1'],
             notChanged: ['A'],
             deleted: ['C'],
+            recovered: [],
         })
         expectedTitlesStrict(['A', 'B1', 'D'], await db.repoAdmin.findAllChangedEventsByCat('theaters', eventInterval))
+    }, 100000)
+
+    test('recovering works', async () => {
+        await cleanDb()
+        await syncEventsDb4Test([
+            getMockEvent({ext_id: 'A', title: 'A', eventTime}),
+            getMockEvent({ext_id: 'B', title: 'B', eventTime}),
+            getMockEvent({ext_id: 'C', title: 'C', eventTime}),
+        ])
+
+        await syncEventsDb4Test([
+            getMockEvent({ext_id: 'A', title: 'A', eventTime}),
+            getMockEvent({ext_id: 'C', title: 'C', eventTime}),
+        ])
+
+        const sync = await syncEventsDb4Test([
+            getMockEvent({ext_id: 'A', title: 'A1', eventTime}),
+            getMockEvent({ext_id: 'B', title: 'B1', eventTime}),
+            getMockEvent({ext_id: 'C', title: 'C', eventTime}),
+        ])
+
+        expectSyncResult(sync, {
+            created: [],
+            updated: ['A1'],
+            notChanged: ['C'],
+            deleted: [],
+            recovered: ['B1'],
+        })
+        expectedTitlesStrict(['A1', 'B1', 'C'], await db.repoAdmin.findAllChangedEventsByCat('theaters', eventInterval))
     }, 100000)
 
     test('tags will not be corrupted', async () => {
@@ -140,5 +179,9 @@ describe('db sync test', () => {
             getMockEvent({ext_id: 'A', title: 'A', eventTime, tag_level_1: ['#lisa']}),
         ])
         expect(0).toEqual(syncDiff.updatedEvents.length)
+    })
+
+    test('deleted items will revive', async () => {
+
     })
 })

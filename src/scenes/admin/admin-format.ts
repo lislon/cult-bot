@@ -6,7 +6,7 @@ import { CallbackButton } from 'telegraf/typings/markup'
 import { getNextWeekendRange, ruFormat } from '../shared/shared-logic'
 import { db } from '../../database/db'
 import { subSeconds } from 'date-fns'
-import { SyncDiff } from '../../database/db-sync-repository'
+import { EventToRecover, SyncDiff } from '../../database/db-sync-repository'
 import { EventToSave } from '../../interfaces/db-interfaces'
 import { menuCats, totalValidationErrors } from './admin-common'
 import { SpreadSheetValidationError } from '../../dbsync/parserSpresdsheetEvents'
@@ -106,14 +106,15 @@ export async function formatMessageForSyncReport(errors: SpreadSheetValidationEr
         const categoryRows = allCategories
             .map(cat => {
                 const inserted = syncResult.insertedEvents.filter(e => e.primaryData.category === cat)
+                const recovered = syncResult.recoveredEvents.filter(e => e.primaryData.category === cat)
                 const updated = syncResult.updatedEvents.filter(e => e.primaryData.category === cat)
                 const deleted = syncResult.deletedEvents.filter(e => e.category === cat)
-                return {cat, inserted, updated, deleted}
+                return {cat, inserted, recovered, updated, deleted}
             })
-            .filter(({inserted, updated, deleted}) => {
-                return inserted.length + updated.length + deleted.length > 0
+            .filter(({inserted, recovered, updated, deleted}) => {
+                return inserted.length + recovered.length + updated.length + deleted.length > 0
             })
-            .map(({cat, inserted, updated, deleted}) => {
+            .map(({cat, inserted, updated, recovered, deleted}) => {
                 let rows: string[] = [
                     i18Msg(ctx, `sync_stats_cat_header`, {
                         icon: i18Msg(ctx, 'sync_stats_category_icons.' + cat),
@@ -126,6 +127,23 @@ export async function formatMessageForSyncReport(errors: SpreadSheetValidationEr
                         ext_id: i.primaryData.ext_id,
                         title: i.primaryData.title
                     }))]
+                }
+                if (recovered.length > 0) {
+                    rows = [...rows,
+                        ...recovered
+                            .filter((i: EventToRecover) => i.old.title === i.primaryData.title)
+                            .map((i: EventToRecover) => i18Msg(ctx, 'sync_stats_cat_item_recovered', {
+                                ext_id: i.primaryData.ext_id,
+                                title: i.primaryData.title
+                            })),
+                        ...recovered
+                            .filter((i: EventToRecover) => i.old.title !== i.primaryData.title)
+                            .map((i: EventToRecover) => i18Msg(ctx, 'sync_stats_cat_item_recovered_warn', {
+                                ext_id: i.primaryData.ext_id,
+                                title: i.primaryData.title,
+                                oldTitle: i.old.title
+                            }))
+                    ]
                 }
                 if (updated.length > 0) {
                     rows = [...rows, ...updated.map((i: EventToSave) => i18Msg(ctx, 'sync_stats_cat_item_updated', {

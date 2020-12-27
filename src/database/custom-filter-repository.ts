@@ -73,7 +73,7 @@ function priceTagsAlternativesLogic(cennosti: TagLevel2[]): TagLevel2[] {
 function doQueryCore(customFilter: CustomFilter) {
     const queryBody = `
         FROM cb_events cb
-        WHERE EXISTS
+        WHERE cb.deleted_at IS NULL AND EXISTS
             (
                 SELECT *
                 FROM cb_events_entrance_times cbet

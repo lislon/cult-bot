@@ -80,6 +80,7 @@ export class PacksRepository {
                     GROUP by cbet.event_id
                 ) cbet
                 JOIN cb_events cb ON cb.id = cbet.event_id
+                WHERE cb.deleted_at IS NULL
                 ORDER BY cb.is_anytime ASC, cbet.first_entrance ASC, cb.rating DESC, cb.title ASC
             ) pe on (pe.id = any(p.event_ids))
             GROUP BY p.id
@@ -103,25 +104,18 @@ export class PacksRepository {
             SELECT cb.*
             FROM cb_events cb
             WHERE cb.id = $(eventId)
+                  AND cb.deleted_at IS NULL
         `,
             {
                 eventId
             });
     }
 
-    public async loadImage(packId: number): Promise<Buffer> {
-        const img = await this.db.one(`
-            SELECT image
-            FROM cb_events_packs p
-            WHERE p.id = $1
-        `, packId)
-        return Buffer.from(img.image)
-    }
-
     public async fetchAllIdsExtIds(): Promise<ExtIdAndId[]> {
         return await this.db.map(`
-            SELECT e.id, e.ext_id
-            FROM cb_events e
+            SELECT cb.id, cb.ext_id
+            FROM cb_events cb
+            WHERE cb.deleted_at IS NULL
             `, undefined, ({ id, ext_id}) => {
                 return {id: +id, extId: ext_id}
             })

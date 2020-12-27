@@ -46,6 +46,7 @@ export class AdminRepository {
         LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
         WHERE
             ${this.snapshotWhereQueryPart}
+            AND cb.deleted_at IS NULL
             AND
             EXISTS(
                 select id
@@ -66,6 +67,8 @@ export class AdminRepository {
         SELECT cb.reviewer, COUNT(cb.id)
         FROM cb_events cb
         WHERE
+            cb.deleted_at IS NULL
+            AND
             EXISTS(
                 select id
                 FROM cb_events_entrance_times cbet
@@ -88,8 +91,8 @@ export class AdminRepository {
             LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
             WHERE
                 ${this.snapshotWhereQueryPart}
-                AND
-                EXISTS(
+                AND cb.deleted_at IS NULL
+                AND EXISTS(
                     select id
                     FROM cb_events_entrance_times cbet
                     where $(interval) && cbet.entrance AND cbet.event_id = cb.id
@@ -115,7 +118,8 @@ export class AdminRepository {
             FROM cb_events cb
             LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
             WHERE
-                EXISTS(
+                cb.deleted_at IS NULL
+                AND EXISTS(
                     select id
                     FROM cb_events_entrance_times cbet
                     where $(interval) && cbet.entrance AND cbet.event_id = cb.id
@@ -140,7 +144,7 @@ export class AdminRepository {
         return await db.one(`
             SELECT *, 'updated' AS snapshot_status
             FROM ${table}
-            WHERE ext_id = $1`, extId, AdminRepository.mapToEventWithId)
+            WHERE ext_id = $1 AND deleted_at IS NULL`, extId, AdminRepository.mapToEventWithId)
     }
 
     async countTotalRows(): Promise<number> {

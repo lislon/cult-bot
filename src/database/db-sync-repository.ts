@@ -5,6 +5,7 @@ import { db } from './db'
 import md5 from 'md5'
 import { MomentIntervals } from '../lib/timetable/intervals'
 import { logger } from '../util/logger'
+import { keyBy } from 'lodash';
 
 function generateRandomOrder() {
     return Math.ceil(Math.random() * 1000000)
@@ -18,11 +19,18 @@ export interface DeletedEvent {
     title: string
 }
 
+export interface EventToRecover extends EventToSave {
+    old: {
+        title: string
+    }
+}
+
 export interface SyncDiff {
     insertedEvents: EventToSave[]
     updatedEvents: EventToSave[]
     notChangedEvents: EventToSave[]
     deletedEvents: DeletedEvent[]
+    recoveredEvents: EventToRecover[]
 }
 
 export interface EventForRefresh {
@@ -64,10 +72,12 @@ export function postgresConcat(event: DbEvent) {
     return `[${s}]`;
 }
 
+const MD5_IGNORE: (keyof DbEvent)[] = ['order_rnd', 'updated_at', 'deleted_at']
+
 function getMd5Columns(): (keyof DbEvent)[] {
     const md5Columns = eventColumnsDef
-        .map(c => typeof c === 'string' ? c : c.name)
-        .filter(n => n !== 'order_rnd')
+        .map(c => (typeof c === 'string' ? c : c.name) as keyof DbEvent)
+        .filter(n => !MD5_IGNORE.includes(n))
     return md5Columns as (keyof DbEvent)[]
 }
 
@@ -75,28 +85,64 @@ export function buildPostgresMd5Expression(prefix: string = undefined) {
     return `json_build_array(${(getMd5Columns().map(c => prefix ? prefix + '.' + c : c)).join(',')})`
 }
 
-export const eventColumnsDef = [
-    'category',
-    'title',
-    'place',
-    'address',
-    'geotag',
-    'timetable',
-    'duration',
-    'price',
-    'notes',
-    'description',
-    'url',
-    { name: 'tag_level_1', cast: 'text[]' },
-    { name: 'tag_level_2', cast: 'text[]' },
-    { name: 'tag_level_3', cast: 'text[]' },
-    'rating',
-    'reviewer',
-    'is_anytime',
-    'order_rnd',
-    'ext_id'
-]
 
+// generic way to skip NULL/undefined values for strings:
+function str(column: string) {
+    return {
+        name: column,
+        skip: (c: { value: any }) => c.value === null || c.value === undefined
+    };
+}
+
+// generic way to skip NULL/undefined values for integers,
+// while parsing the type correctly:
+function int(column: string) {
+    return {
+        name: column,
+        skip: (c: { value: any }) => c.value === null || c.value === undefined,
+        init: (c: { value: any }) => +c.value
+    };
+}
+
+function textArray(column: string) {
+    return {
+        name: column,
+        cast: 'text[]',
+        skip: (c: { value: any }) => c.value === null || c.value === undefined
+    };
+}
+
+function timestamptzNullable(column: string) {
+    return {
+        name: column,
+        cast: 'timestamptz',
+        skip: (c: { value: any }) => c.value === undefined
+    };
+}
+
+export const eventColumnsDef = [
+    str('category'),
+    str('title'),
+    str('place'),
+    str('address'),
+    str('geotag'),
+    str('timetable'),
+    str('duration'),
+    str('price'),
+    str('notes'),
+    str('description'),
+    str('url'),
+    textArray('tag_level_1'),
+    textArray('tag_level_2'),
+    textArray('tag_level_3'),
+    int('rating'),
+    str('reviewer'),
+    str('is_anytime'),
+    int('order_rnd'),
+    str('ext_id'),
+    timestamptzNullable('updated_at'),
+    timestamptzNullable('deleted_at')
+]
 
 export class EventsSyncRepository {
     readonly dbColIntervals: ColumnSet
@@ -120,8 +166,10 @@ export class EventsSyncRepository {
             updatedEvents: [],
             insertedEvents: [],
             notChangedEvents: [],
-            deletedEvents: []
+            deletedEvents: [],
+            recoveredEvents: []
         }
+        const now = new Date()
 
         await db.txIf(async (dbTx: ITask<{}> & {}) => {
 
@@ -130,7 +178,9 @@ export class EventsSyncRepository {
                            ext_id AS extid,
                            ${buildPostgresMd5Expression()}::TEXT AS md5text,
                            MD5(${buildPostgresMd5Expression()}::TEXT) AS md5
-                    FROM cb_events`)
+                    FROM cb_events
+                    WHERE deleted_at IS NULL
+                    `)
 
             const extIdToChecksum = new Map()
             const extIdToId = new Map()
@@ -143,13 +193,14 @@ export class EventsSyncRepository {
                 removedEventExtIds.add(extid)
             })
 
+            const maybeInsertedEvents: EventToSave[] = []
 
             newEvents.forEach((newEvent) => {
 
-                const newRow = EventsSyncRepository.mapToDb(newEvent)
+                const newRow = EventsSyncRepository.mapToDb(newEvent, now)
                 const existingMd5 = extIdToChecksum.get(newEvent.primaryData.ext_id)
                 if (existingMd5 === undefined) {
-                    result.insertedEvents.push(newEvent)
+                    maybeInsertedEvents.push(newEvent)
                 } else if (existingMd5 != md5(postgresConcat(newRow))) {
                     const e = { ...newEvent }
                     e.primaryData.id = +extIdToId.get(newEvent.primaryData.ext_id)
@@ -170,25 +221,63 @@ export class EventsSyncRepository {
             })
 
             if (removedEventExtIds.size > 0) {
-                result.deletedEvents = await dbTx.many(`SELECT id, category, title, ext_id FROM cb_events WHERE ext_id IN ($1:csv)`, [Array.from(removedEventExtIds)])
+                result.deletedEvents = await dbTx.many(`
+                SELECT id, category, title, ext_id
+                FROM cb_events
+                WHERE ext_id IN ($1:csv) AND deleted_at IS NULL`, [Array.from(removedEventExtIds)])
+            }
+
+            if (maybeInsertedEvents.length > 0) {
+                const recoveredEvents = await dbTx.map(`
+                        SELECT id,
+                               ext_id AS extid,
+                               title
+                        FROM cb_events
+                        WHERE deleted_at IS NOT NULL AND ext_id IN ($(extIds:csv))
+                        `, {
+                    extIds: maybeInsertedEvents.map(e => e.primaryData.ext_id)
+                }, (({id, extid, title}) => {
+                    return {id: +id, extid, title}
+                }))
+
+                const deletedByExtId = keyBy<{ id: number, title: string }>(recoveredEvents, 'extid')
+
+                maybeInsertedEvents.forEach(e => {
+                    const recoveredEvent = deletedByExtId[e.primaryData.ext_id]
+                    if (recoveredEvent !== undefined) {
+                        const recoveredItem = {
+                            ...e,
+                            old: {
+                                title: recoveredEvent.title
+                            }
+                        }
+                        recoveredItem.primaryData.id = recoveredEvent.id
+                        result.recoveredEvents.push(recoveredItem)
+                    } else {
+                        result.insertedEvents.push(e)
+                    }
+                })
             }
         })
         return result
     }
 
     public async syncDiff(syncDiff: SyncDiff, db: ITask<{}>): Promise<void> {
-        const newDbRows = syncDiff.insertedEvents.map(EventsSyncRepository.mapToDb)
-        const updateDbRows: (DbEvent & { id: number })[] = syncDiff.updatedEvents.map(e => {
-            return {...EventsSyncRepository.mapToDb(e), id: e.primaryData.id}
+        const now = new Date()
+
+        const newDbRows = syncDiff.insertedEvents.map(e => EventsSyncRepository.mapToDb(e, now))
+
+        const updatedAndRecovered = [... syncDiff.updatedEvents, ...syncDiff.recoveredEvents]
+        const updatedAndRecoveredRows: (DbEvent & { id: number })[] = updatedAndRecovered.map(e => {
+            return {...(EventsSyncRepository.mapToDb(e, now)), id: e.primaryData.id}
         })
-        const eventsIntervalToSync: EventIntervalForSave[] = syncDiff.updatedEvents
+
+        const eventsIntervalToSync: EventIntervalForSave[] = updatedAndRecovered
             .map(({ primaryData, timeIntervals }) => { return { eventId: primaryData.id, timeIntervals } })
 
         await db.txIf({ reusable: true }, async (dbTx: ITask<{}> & {}) => {
 
-            if (syncDiff.deletedEvents.length > 0) {
-                await dbTx.none(`DELETE FROM cb_events WHERE id IN ($1:csv)`, [syncDiff.deletedEvents.map(e => e.id)])
-            }
+            await this.deleteEvents(dbTx, syncDiff.deletedEvents, now)
 
             if (newDbRows.length > 0) {
                 const newEventsId = await this.insertNewEvents(dbTx, newDbRows)
@@ -202,8 +291,8 @@ export class EventsSyncRepository {
             }
 
 
-            if (syncDiff.updatedEvents.length > 0) {
-                const s = this.pgp.helpers.update(updateDbRows, this.dbColEvents.merge(['?id'])) + ' WHERE v.id = t.id'
+            if (updatedAndRecoveredRows.length > 0) {
+                const s = this.pgp.helpers.update(updatedAndRecoveredRows, this.dbColEvents.merge(['?id'])) + ' WHERE v.id = t.id'
                 await dbTx.none(s)
             }
 
@@ -212,18 +301,24 @@ export class EventsSyncRepository {
     }
 
     public async shuffle(): Promise<void> {
-        await db.none('update cb_events set order_rnd = CEIL(random() * 1000000)')
+        await db.none(`
+            UPDATE cb_events cb
+            SET cb.order_rnd = CEIL(random() * 1000000)
+            WHERE cb.deleted_at IS NULL
+        `)
     }
 
     public async getLastEventDates(): Promise<EventForRefresh[]> {
         return await db.map(`
             select
-                ce.id,
-                ce.timetable,
+                cb.id,
+                cb.timetable,
                 (SELECT MAX(upper(entrance))
                  FROM cb_events_entrance_times cbet
-                 WHERE cbet.event_id  = ce.id) AS lastdate
-            from cb_events ce`, undefined, ({id, timetable, lastdate}) => {
+                 WHERE cbet.event_id  = cb.id) AS lastdate
+            from cb_events cb
+            WHERE cb.deleted_at IS NULL
+            `, undefined, ({id, timetable, lastdate}) => {
             return {
                 id: +id,
                 timetable,
@@ -243,20 +338,32 @@ export class EventsSyncRepository {
             })
         }
     }
+    private async deleteEvents(dbTx: ITask<{}>, deletedEvents: DeletedEvent[], dateDeleted: Date) {
+        if (deletedEvents.length > 0) {
+            const s = this.pgp.helpers.update({
+                deleted_at: dateDeleted,
+            }, this.dbColEvents) + ' WHERE id IN ($1:csv)'
+            const eventIds = deletedEvents.map(e => e.id)
+            await dbTx.none(s, [eventIds])
+            await dbTx.none(`DELETE FROM cb_events_entrance_times WHERE event_id IN($1:csv)`, [eventIds])
+        }
+    }
 
     private async insertNewEvents(dbTx: ITask<{}>, newDbRows: DbEvent[]) {
         const s = this.pgp.helpers.insert(newDbRows, this.dbColEvents) + ' RETURNING id'
         return await dbTx.map(s, [], r => +r.id)
     }
 
-    private static mapToDb(event: EventToSave): DbEvent {
+    private static mapToDb(event: EventToSave, updatedAt: Date): DbEvent {
         delete event.primaryData.publish
 
         return {
             ...event.primaryData,
             tag_level_1: encodeTagsLevel1(event.primaryData.category, event.primaryData.tag_level_1),
             is_anytime: event.is_anytime,
-            order_rnd: event.order_rnd !== undefined ? event.order_rnd : generateRandomOrder()
+            order_rnd: event.order_rnd !== undefined ? event.order_rnd : generateRandomOrder(),
+            updated_at: updatedAt,
+            deleted_at: event.dateDeleted
         };
     }
 

@@ -38,6 +38,7 @@ export class TopEventsRepository {
                 AND cb.category = $(category)
                 AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
                 AND cb.is_anytime = false
+                AND cb.deleted_at IS NULL
             ORDER BY cb.rating DESC, cb.order_rnd
         `
 
@@ -57,6 +58,7 @@ export class TopEventsRepository {
                     and cb.category =  $(category)
                     AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
                     and cb.is_anytime = true
+                    AND cb.deleted_at IS NULL
                 order by
                     cb.rating desc
                 limit 30 ) as top30

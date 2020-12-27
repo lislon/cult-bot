@@ -21,6 +21,8 @@ export interface DbEvent {
     is_anytime: boolean
     order_rnd: number
     ext_id: string
+    updated_at: Date,
+    deleted_at: Date|null
 }
 
 export interface EventToSave {
@@ -29,6 +31,7 @@ export interface EventToSave {
     timeIntervals: MomentIntervals
     is_anytime: boolean
     order_rnd?: number
+    dateDeleted?: Date|null
 }
 
 export type TagCategory = 'tag_level_1' | 'tag_level_2' | 'tag_level_3'

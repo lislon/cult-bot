@@ -1,6 +1,7 @@
 Feature: Search scene
 
   Background:
+    Given now is 2020-01-01 12:00
     Given Scene is 'search_scene'
     Given there is events:
       | title   | category    | tag_level_1          | timetable    |
