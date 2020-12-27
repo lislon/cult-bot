@@ -10,6 +10,7 @@ Feature: Customize navigation
   27	28	29	30	31
 
   Background:
+    Given now is 2020-01-01 12:00
     Given Scene is 'customize_scene'
 
   Scenario: I can go back from events by inline button
