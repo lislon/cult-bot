@@ -31,11 +31,11 @@ export const userSaveMiddleware = async (ctx: ContextMessageUpdate, next: any) =
                 })
             } else {
                 ctx.session.userId = await dbTx.userRepo.insertUser({
-                    tid: ctx.message.from.id,
-                    username: ctx.message.from.username,
-                    first_name: ctx.message.from.first_name,
-                    last_name: ctx.message.from.last_name,
-                    language_code: ctx.message.from.language_code,
+                    tid: ctx.from.id,
+                    username: ctx.from.username,
+                    first_name: ctx.from.first_name,
+                    last_name: ctx.from.last_name,
+                    language_code: ctx.from.language_code,
                     ua_uuid: ctx.session.uaUuid,
                     chat_id: ctx.chat.id
                 })
