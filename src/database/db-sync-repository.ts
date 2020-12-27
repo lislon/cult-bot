@@ -6,6 +6,7 @@ import md5 from 'md5'
 import { MomentIntervals } from '../lib/timetable/intervals'
 import { logger } from '../util/logger'
 import { keyBy } from 'lodash';
+import { fieldInt, fieldStr, fieldTextArray, fieldTimestamptzNullable } from './db-utils'
 
 function generateRandomOrder() {
     return Math.ceil(Math.random() * 1000000)
@@ -86,62 +87,28 @@ export function buildPostgresMd5Expression(prefix: string = undefined) {
 }
 
 
-// generic way to skip NULL/undefined values for strings:
-function str(column: string) {
-    return {
-        name: column,
-        skip: (c: { value: any }) => c.value === null || c.value === undefined
-    };
-}
-
-// generic way to skip NULL/undefined values for integers,
-// while parsing the type correctly:
-function int(column: string) {
-    return {
-        name: column,
-        skip: (c: { value: any }) => c.value === null || c.value === undefined,
-        init: (c: { value: any }) => +c.value
-    };
-}
-
-function textArray(column: string) {
-    return {
-        name: column,
-        cast: 'text[]',
-        skip: (c: { value: any }) => c.value === null || c.value === undefined
-    };
-}
-
-function timestamptzNullable(column: string) {
-    return {
-        name: column,
-        cast: 'timestamptz',
-        skip: (c: { value: any }) => c.value === undefined
-    };
-}
-
 export const eventColumnsDef = [
-    str('category'),
-    str('title'),
-    str('place'),
-    str('address'),
-    str('geotag'),
-    str('timetable'),
-    str('duration'),
-    str('price'),
-    str('notes'),
-    str('description'),
-    str('url'),
-    textArray('tag_level_1'),
-    textArray('tag_level_2'),
-    textArray('tag_level_3'),
-    int('rating'),
-    str('reviewer'),
-    str('is_anytime'),
-    int('order_rnd'),
-    str('ext_id'),
-    timestamptzNullable('updated_at'),
-    timestamptzNullable('deleted_at')
+    fieldStr('category'),
+    fieldStr('title'),
+    fieldStr('place'),
+    fieldStr('address'),
+    fieldStr('geotag'),
+    fieldStr('timetable'),
+    fieldStr('duration'),
+    fieldStr('price'),
+    fieldStr('notes'),
+    fieldStr('description'),
+    fieldStr('url'),
+    fieldTextArray('tag_level_1'),
+    fieldTextArray('tag_level_2'),
+    fieldTextArray('tag_level_3'),
+    fieldInt('rating'),
+    fieldStr('reviewer'),
+    fieldStr('is_anytime'),
+    fieldInt('order_rnd'),
+    fieldStr('ext_id'),
+    fieldTimestamptzNullable('updated_at'),
+    fieldTimestamptzNullable('deleted_at')
 ]
 
 export class EventsSyncRepository {

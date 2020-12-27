@@ -19,7 +19,7 @@ async function notifyAdminsAboutRestart() {
             commit: botConfig.HEROKU_SLUG_COMMIT?.substring(botConfig.HEROKU_SLUG_COMMIT.length - 7)
         })
         for (const admin of admins) {
-            await rawBot.telegram.sendMessage(admin.chat_id, text, {
+            await rawBot.telegram.sendMessage(admin.id, text, {
                 parse_mode: 'HTML',
                 disable_notification: true
             })

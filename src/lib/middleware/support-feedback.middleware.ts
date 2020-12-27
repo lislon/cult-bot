@@ -154,7 +154,7 @@ supportFeedbackMiddleware
                         `scenes.feedback_scene.admin_response.template`,
                         {text: ctx.message.text})
 
-                    await ctx.telegram.sendMessage(originalUserMessage.chat_id, template, {
+                    await ctx.telegram.sendMessage(originalUserMessage.tid, template, {
                         parse_mode: 'HTML',
                         reply_to_message_id: originalUserMessage.message_id
                     })

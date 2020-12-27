@@ -1,5 +1,6 @@
 import { ColumnSet, IDatabase, IMain } from 'pg-promise'
 import { devUsernames } from '../util/admins-list'
+import { fieldInt, fieldStr, fieldTimestamptzNullable } from './db-utils'
 
 interface UserRow {
     username: string
@@ -17,7 +18,6 @@ export class UserSaveData {
     tid: number
     language_code?: string
     ua_uuid?: string
-    chat_id: number
     active_at?: Date
     blocked_at?: Date|null
 }
@@ -26,25 +26,30 @@ export class UserDb {
     id: number
     tid?: number
     ua_uuid: string
-    chat_id: number
 }
 
 export class UserRepository {
     private readonly columns: ColumnSet
 
     constructor(private db: IDatabase<any>, private pgp: IMain) {
-        this.columns = new pgp.helpers.ColumnSet(
-            'username, first_name, last_name, tid, language_code, ua_uuid, chat_id, blocked_at'.split(/,\s*/),
+        this.columns = new pgp.helpers.ColumnSet([
+            fieldStr('username'),
+            fieldStr('first_name'),
+            fieldStr('last_name'),
+            fieldInt('tid'),
+            fieldStr('language_code'),
+            fieldStr('ua_uuid'),
+            fieldTimestamptzNullable('blocked_at')
+        ],
             {table: 'cb_users'}
         );
     }
 
     public async findUserByTid(tid: number): Promise<UserDb | null> {
-        return this.db.oneOrNone<UserDb>('SELECT id, ua_uuid, chat_id FROM cb_users WHERE tid = $1', tid,
+        return this.db.oneOrNone<UserDb>('SELECT id, ua_uuid FROM cb_users WHERE tid = $1', tid,
             (row: UserDb) => {
                 if (row !== null) {
                     row.id = +row.id;
-                    row.chat_id = +row.chat_id;
                 }
                 return row;
             })
@@ -52,11 +57,10 @@ export class UserRepository {
 
     public async findAllDevs(): Promise<UserDb[] | null> {
         return this.db.manyOrNone<UserDb>(`
-        SELECT id, ua_uuid, chat_id
+        SELECT id, ua_uuid
         FROM cb_users
         WHERE
-         username IN($(devUsernames:csv))
-         AND chat_id > 0`,
+         username IN($(devUsernames:csv))`,
             {
                 devUsernames
             })

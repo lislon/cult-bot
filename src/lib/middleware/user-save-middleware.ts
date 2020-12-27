@@ -26,7 +26,6 @@ export const userSaveMiddleware = async (ctx: ContextMessageUpdate, next: any) =
                 ctx.session.uaUuid = user.ua_uuid
 
                 await dbTx.userRepo.updateUser(user.id, {
-                    chat_id: ctx.chat.id,
                     active_at: new Date(),
                     blocked_at: undefined
                 })
@@ -37,8 +36,7 @@ export const userSaveMiddleware = async (ctx: ContextMessageUpdate, next: any) =
                     first_name: ctx.from.first_name,
                     last_name: ctx.from.last_name,
                     language_code: ctx.from.language_code,
-                    ua_uuid: ctx.session.uaUuid,
-                    chat_id: ctx.chat.id,
+                    ua_uuid: ctx.session.uaUuid
                 })
             }
             ctx.session.userSave = {

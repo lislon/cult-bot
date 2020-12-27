@@ -28,7 +28,7 @@ export interface QueryUserFeedbackMsgId {
 }
 
 export interface ResultUserFeedbackMsgId {
-    chat_id: number
+    tid: number
     message_id: number
 }
 
@@ -63,7 +63,7 @@ export class FeedbackRepository {
 
     public async findFeedbackMessage(query: QueryUserFeedbackMsgId): Promise<ResultUserFeedbackMsgId|null> {
         return await this.db.oneOrNone(`
-            SELECT cu.chat_id, cf.message_id
+            SELECT cu.tid, cf.message_id
             FROM cb_feedbacks cf
             JOIN cb_users cu ON (cu.id = cf.user_id)
             WHERE cf.admin_chat_id = $(admin_chat_id) AND cf.admin_message_id = $(admin_message_id)
