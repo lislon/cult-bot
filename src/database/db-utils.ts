@@ -43,6 +43,14 @@ export function fieldTextArray(column: string) {
     };
 }
 
+export function fieldInt8Array(column: string) {
+    return {
+        name: column,
+        cast: 'int8[]',
+        skip: (c: { value: any }) => c.value === null || c.value === undefined
+    };
+}
+
 export function fieldTimestamptzNullable(column: string) {
     return {
         name: column,

@@ -9,15 +9,15 @@ afterAll(db.$pool.end);
 
 beforeAll(async () => {
     await db.query('DELETE FROM cb_users')
-    TEST_USER_ID_A = await db.userRepo.insertUser({
+    TEST_USER_ID_A = await db.repoUser.insertUser({
         tid: 1,
         ua_uuid: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'
     })
-    TEST_USER_ID_B = await db.userRepo.insertUser({
+    TEST_USER_ID_B = await db.repoUser.insertUser({
         tid: 2,
         ua_uuid: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6a'
     })
-    TEST_USER_ID_C = await db.userRepo.insertUser({
+    TEST_USER_ID_C = await db.repoUser.insertUser({
         tid: 3,
         ua_uuid: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6b'
     })

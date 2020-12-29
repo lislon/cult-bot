@@ -1,7 +1,7 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, ifAdmin, isAdmin, sleep } from '../../util/scene-helper'
-import middlewares, { SceneRegister } from '../../middleware-utils'
+import { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
 import { db } from '../../database/db'
 import { generatePlural, getNextWeekendRange } from '../shared/shared-logic'
@@ -46,7 +46,7 @@ scene
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
-        .use(middlewares.logMiddleware('postStageActionsFn scene: ' + scene.id))
+        // .use(middlewares.logMiddleware('postStageActionsFn scene: ' + scene.id))
         .hears(i18nModuleBtnName('tops'), async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('tops_scene')
         })

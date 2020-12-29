@@ -18,6 +18,7 @@ import { packsScene } from './scenes/packs/packs-scene'
 import { tailScene } from './scenes/tail/tail-scene'
 import { filterOnlyFeedbackChat } from './lib/middleware/support-feedback.middleware'
 import { botErrorHandler } from './util/error-handler'
+import { likesScene } from './scenes/likes/likes-scene'
 
 logger.info(`starting bot...`);
 
@@ -42,11 +43,11 @@ bot
     .use(middlewares.telegrafThrottler())
     .use(middlewares.logger)
     .use(middlewares.session)
-    .use(middlewares.logMiddleware('session'))
+    // .use(middlewares.logMiddleware('session'))
     .use(middlewares.userSaveMiddleware)
     .use(middlewares.dateTime)
     .use(middlewares.analyticsMiddleware)
-    .use(middlewares.logMiddleware('analyticsMiddleware'))
+// .use(middlewares.logMiddleware('analyticsMiddleware'))
 
 myRegisterScene(bot, stage, [
     mainScene,
@@ -59,6 +60,7 @@ myRegisterScene(bot, stage, [
     topsScene,
     searchScene,
     feedbackScene,
+    likesScene,
     tailScene
 ])
 
@@ -70,7 +72,7 @@ const supportChat = new Composer<ContextMessageUpdate>()
     .use(middlewares.telegrafThrottler())
     .use(middlewares.logger)
     .use(middlewares.session)
-    .use(middlewares.logMiddleware('session'))
+    // .use(middlewares.logMiddleware('session'))
     .use(middlewares.supportFeedbackMiddleware)
 
 rawBot

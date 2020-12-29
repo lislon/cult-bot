@@ -1,8 +1,9 @@
 import { db, dbCfg } from '../../../src/database/db'
-import { cleanDb, expectedTitlesStrict, getMockEvent, syncEventsDb4Test } from './db-test-utils'
+import { cleanDb, expectedTitlesStrict, getMockEvent } from './db-test-utils'
 import { date, mkInterval } from '../../lib/timetable/test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { SyncDiff } from '../../../src/database/db-sync-repository'
+import { EventToSave } from '../../../src/interfaces/db-interfaces'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
@@ -26,6 +27,16 @@ function expectSyncResult(syncResults: SyncDiff, expected: ExpectedSyncResults) 
     expect(actual).toStrictEqual(expected)
 }
 
+async function syncEvents4SyncTest(events: EventToSave[]): Promise<SyncDiff> {
+    events.forEach((e, i) => {
+        if (e.primaryData.ext_id === '') {
+            e.primaryData.ext_id = 'TEST-' + i
+        }
+    })
+    return await db.repoSync.syncDatabase(events)
+}
+
+
 describe('db sync test', () => {
 
     const eventTime = [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]
@@ -35,7 +46,7 @@ describe('db sync test', () => {
 
 
     test('sync should save intervals', async () => {
-            await syncEventsDb4Test([getMockEvent({
+            await syncEvents4SyncTest([getMockEvent({
                 eventTime: [
                     [date('2020-01-01 12:00'), date('2020-01-01 18:00')],
                     date('2020-01-02 15:00')
@@ -61,7 +72,7 @@ describe('db sync test', () => {
 
 
     test('sync should save tags', async () => {
-            await syncEventsDb4Test([
+            await syncEvents4SyncTest([
                 getMockEvent({tag_level_1: ['#A', '#B'], category: 'theaters'}),
                 getMockEvent({tag_level_1: ['#A'], category: 'concerts'})
             ])
@@ -76,7 +87,7 @@ describe('db sync test', () => {
 
     test('md5 checksum should work ok', async () => {
         const stressTestEventA = 'Uѡ㵀Ίא粭뒘񓒳𤿉1Gߪ:xŝ<"$󍒉뚅󎦧㰙͢󠀟蘻񪽒⃘碫񴦌ωŇ\\ля\nКакаяСтрока'
-        const sync1 = await syncEventsDb4Test([
+        const sync1 = await syncEvents4SyncTest([
             getMockEvent({
                 title: stressTestEventA,
                 address: 'a b"\'!@#$%^&*',
@@ -87,7 +98,7 @@ describe('db sync test', () => {
             getMockEvent({title: 'B', address: '"c"', tag_level_1: ['#A'], category: 'concerts', eventTime})
         ])
 
-        const sync2 = await syncEventsDb4Test([
+        const sync2 = await syncEvents4SyncTest([
             getMockEvent({
                 title: stressTestEventA,
                 address: 'a b"\'!@#$%^&*',
@@ -120,13 +131,13 @@ describe('db sync test', () => {
 
     test('3 operations', async () => {
         await cleanDb()
-        await syncEventsDb4Test([
+        await syncEvents4SyncTest([
             getMockEvent({ext_id: 'A', title: 'A', eventTime}),
             getMockEvent({ext_id: 'B', title: 'B', eventTime}),
             getMockEvent({ext_id: 'C', title: 'C', eventTime}),
         ])
 
-        const sync = await syncEventsDb4Test([
+        const sync = await syncEvents4SyncTest([
             getMockEvent({ext_id: 'A', title: 'A', eventTime}),
             getMockEvent({ext_id: 'B', title: 'B1', eventTime}),
             getMockEvent({ext_id: 'D', title: 'D', eventTime}),
@@ -143,18 +154,18 @@ describe('db sync test', () => {
 
     test('recovering works', async () => {
         await cleanDb()
-        await syncEventsDb4Test([
+        await syncEvents4SyncTest([
             getMockEvent({ext_id: 'A', title: 'A', eventTime}),
             getMockEvent({ext_id: 'B', title: 'B', eventTime}),
             getMockEvent({ext_id: 'C', title: 'C', eventTime}),
         ])
 
-        await syncEventsDb4Test([
+        await syncEvents4SyncTest([
             getMockEvent({ext_id: 'A', title: 'A', eventTime}),
             getMockEvent({ext_id: 'C', title: 'C', eventTime}),
         ])
 
-        const sync = await syncEventsDb4Test([
+        const sync = await syncEvents4SyncTest([
             getMockEvent({ext_id: 'A', title: 'A1', eventTime}),
             getMockEvent({ext_id: 'B', title: 'B1', eventTime}),
             getMockEvent({ext_id: 'C', title: 'C', eventTime}),
@@ -172,10 +183,10 @@ describe('db sync test', () => {
 
     test('tags will not be corrupted', async () => {
         await cleanDb()
-        await syncEventsDb4Test([
+        await syncEvents4SyncTest([
             getMockEvent({ext_id: 'A', title: 'A', eventTime, tag_level_1: ['#lisa']}),
         ])
-        const syncDiff = await syncEventsDb4Test([
+        const syncDiff = await syncEvents4SyncTest([
             getMockEvent({ext_id: 'A', title: 'A', eventTime, tag_level_1: ['#lisa']}),
         ])
         expect(0).toEqual(syncDiff.updatedEvents.length)

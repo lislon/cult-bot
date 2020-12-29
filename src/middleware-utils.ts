@@ -1,5 +1,5 @@
 import updateLogger from 'telegraf-update-logger'
-import telegrafThrottler from 'telegraf-throttler';
+import telegrafThrottler from 'telegraf-throttler'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { parseISO } from 'date-fns'
 import { userSaveMiddleware } from './lib/middleware/user-save-middleware'
@@ -85,7 +85,7 @@ export const myRegisterScene = (bot: Composer<ContextMessageUpdate>,
             scene.preSceneGlobalActionsFn(bot)
         }
     })
-    bot.use(logMiddleware('stage.middleware()'))
+    // bot.use(logMiddleware('stage.middleware()'))
     bot.use(stage.middleware())
     scenesReg.map(scene => {
         if (scene.preStageGlobalActionsFn) {

@@ -27,11 +27,10 @@ describe('Packs', () => {
     })
 
     test('packs will be filtered by date', async () => {
-        const diff = await syncEventsDb4Test([
+        const [aId, bId] = await syncEventsDb4Test([
             getMockEvent({title: 'A', eventTime}),
             getMockEvent({title: 'B', eventTime: eventTimeOutRange}),
         ])
-        const [aId, bId] = diff.insertedEvents.map(e => e.primaryData.id)
 
         await db.repoPacks.sync([
             getMockPack({ title: 'A pack', eventIds: [ aId ] }),
@@ -47,7 +46,7 @@ describe('Packs', () => {
         const day2 = [mskMoment('2020-01-02 12:00')]
         const day3 = [mskMoment('2020-01-03 12:00')]
 
-        const diff = await syncEventsDb4Test([
+        const eventIds = await syncEventsDb4Test([
             getMockEvent({title: 'B', eventTime: day2}),
             getMockEvent({title: 'E', eventTime: day2, anytime: true, rating: 10}),
             getMockEvent({title: 'D', eventTime: day2, anytime: true, rating: 5}),
@@ -56,7 +55,7 @@ describe('Packs', () => {
         ])
 
         await db.repoPacks.sync([
-            getMockPack({ title: 'A pack', eventIds: diff.insertedEvents.map(e => e.primaryData.id) }),
+            getMockPack({ title: 'A pack', eventIds }),
         ])
 
         const events = await db.repoPacks.listPacks({ interval: yearRange })

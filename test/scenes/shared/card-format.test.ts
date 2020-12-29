@@ -30,7 +30,9 @@ const defaultEvent: Event = {
     publish: '',
     place: '',
     url: '',
-    reviewer: ''
+    reviewer: '',
+    likes: 0,
+    dislikes: 0
 }
 
 const prepare = (str: string) => {

@@ -2,8 +2,8 @@ import { db } from '../../../src/database/db'
 import { MomentIntervals } from '../../../src/lib/timetable/intervals'
 import { Event, EventCategory, TagLevel2 } from '../../../src/interfaces/app-interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
-import { SyncDiff } from '../../../src/database/db-sync-repository'
 import { EventPackForSave } from '../../../src/database/db-packs'
+import { UserSaveData } from '../../../src/database/db-users'
 
 export async function cleanDb() {
     await db.none('TRUNCATE cb_events_entrance_times, cb_events, cb_events_packs RESTART identity')
@@ -66,7 +66,9 @@ export function getMockEvent({
         tag_level_3: [],
         rating: rating,
         reviewer: reviewer,
-        geotag: ''
+        geotag: '',
+        likes: 0,
+        dislikes: 0,
     }
     return {
         primaryData: event,
@@ -97,6 +99,25 @@ export function getMockPack({
     }
 }
 
+export const MOCK_UUID = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'
+
+export function getMockUser({
+                                tid = 1,
+                                ua_uuid = MOCK_UUID,
+                                eventsLiked = [],
+                                eventsDisliked = [],
+                                eventsFavorite = [],
+                             }: Partial<UserSaveData> = {}
+): UserSaveData {
+    return {
+        tid,
+        ua_uuid,
+        eventsLiked,
+        eventsDisliked,
+        eventsFavorite
+    }
+}
+
 
 export function expectedTitles(titles: string[], events: Pick<Event, 'title'>[]) {
     expect(events.map(t => t.title).sort()).toEqual(titles.sort())
@@ -106,32 +127,15 @@ export function expectedTitlesStrict(titles: string[], events: Pick<Event, 'titl
     expect(events.map(t => t.title)).toEqual(titles)
 }
 
-export async function syncEventsDb4Test(events: EventToSave[]): Promise<SyncDiff> {
+export async function syncEventsDb4Test(events: EventToSave[]): Promise<number[]> {
     events.forEach((e, i) => {
         if (e.primaryData.ext_id === '') {
             e.primaryData.ext_id = 'TEST-' + i
         }
     })
-    for (let i = 0; true; i++) {
-        try {
-            return await db.repoSync.syncDatabase(events)
-        } catch (e) {
+    const syncDiff = await db.repoSync.syncDatabase(events)
+    return syncDiff.insertedEvents.map(e => e.primaryData.id)
 
-            const repeatCodes = {
-                '40001': 'could not serialize access due to concurrent delete',
-                '25P02': 'current transaction is aborted, commands ignored until end of transaction block'
-            }
-
-            console.log(e);
-
-            if (Object.keys(repeatCodes).includes(e.code) && i <= 5) {
-                // await sleep(3000 * Math.random())
-            } else {
-                throw e
-            }
-
-        }
-    }
 }
 
 export async function syncPacksDb4Test(mockPacks: MockPackForSave[]): Promise<number[]> {
@@ -162,6 +166,18 @@ export async function syncPacksDb4Test(mockPacks: MockPackForSave[]): Promise<nu
         })
 
         return await db.repoPacks.sync(packs, dbTask)
+    })
+}
+
+export async function givenUsers(users: UserSaveData[]): Promise<number[]> {
+    return await db.task(async (dbTask) => {
+        await dbTask.none(`TRUNCATE cb_feedbacks, cb_survey, cb_users`)
+
+        const userIds = []
+        for (const user of users) {
+            userIds.push(await dbTask.repoUser.insertUser(user))
+        }
+        return userIds
     })
 }
 

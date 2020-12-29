@@ -63,7 +63,7 @@ async function startMailings(telegram: Telegram, mailingId: number) {
     const blockedUsers: number[] = []
     const sentOkUsers: number[] = []
 
-    const users = await db.userRepo.listUsersForMailing(botConfig.MAX_MAILINGS_PER_WEEK);
+    const users = await db.repoUser.listUsersForMailing(botConfig.MAX_MAILINGS_PER_WEEK);
     logger.info(`Starting mailing to ${users.length}`)
 
     for (const user of users) {
@@ -85,8 +85,8 @@ async function startMailings(telegram: Telegram, mailingId: number) {
     logger.info(`Mailing done. Sent=${sentOkUsers.length} Blocked=${blockedUsers.length}`)
     try {
         await db.task(async dbTx => {
-            await dbTx.userRepo.incrementMailingCounter(sentOkUsers)
-            await dbTx.userRepo.markAsBlocked(blockedUsers, new Date())
+            await dbTx.repoUser.incrementMailingCounter(sentOkUsers)
+            await dbTx.repoUser.markAsBlocked(blockedUsers, new Date())
         })
     } catch (e) {
         logger.error(e)
@@ -119,7 +119,7 @@ supportFeedbackMiddleware
             const messageId = ctx.message.reply_to_message.message_id
 
             const messageToSend = await formatMessage(ctx.message.reply_to_message)
-            const users = await db.userRepo.listUsersForMailing(botConfig.MAX_MAILINGS_PER_WEEK);
+            const users = await db.repoUser.listUsersForMailing(botConfig.MAX_MAILINGS_PER_WEEK);
             mailingMessages = { [messageId]:  messageToSend }
 
             await ctx.replyWithHTML(messageToSend.text, Extra.markup(

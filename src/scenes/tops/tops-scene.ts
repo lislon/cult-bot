@@ -11,6 +11,7 @@ import { isSameDay, isSameMonth, startOfDay } from 'date-fns'
 import { SceneRegister } from '../../middleware-utils'
 import { db } from '../../database/db'
 import { encodeTagsLevel1 } from '../../util/tag-level1-encoder'
+import { getLikesRow } from '../likes/likes-common'
 
 type SubMenuVariants = 'exhibitions_temp' | 'exhibitions_perm'
 
@@ -22,7 +23,7 @@ export interface TopsSceneState {
 }
 
 const scene = new BaseScene<ContextMessageUpdate>('tops_scene');
-const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
+const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
 
 
 function getOblasti(ctx: ContextMessageUpdate) {
@@ -186,20 +187,27 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
         )
     }
 }
-async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event[]) {
-    const nextBtn = Markup.inlineKeyboard([
-        Markup.callbackButton(i18Btn(ctx, 'show_more'), actionName('show_more'))
-    ])
 
+async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event[]) {
     const fireRating = 18
     const sortedByRating = events.filter(e => e.rating >= fireRating).sort(e => e.rating)
 
     let count = 0
     for (const event of events) {
+        const isShowMore = (++count === events.length)
+
+        const likeLine = [
+            getLikesRow(ctx, {
+                eventId: event.id,
+                likesCount: event.likes,
+                dislikesCount: event.dislikes,
+            }),
+            ...[isShowMore ? [Markup.callbackButton(i18Btn(ctx, 'show_more'), actionName('show_more'))] : []]
+        ]
 
         await ctx.replyWithHTML(cardFormat(event), {
             disable_web_page_preview: true,
-            reply_markup: (++count === events.length ? nextBtn : undefined)
+            reply_markup: Markup.inlineKeyboard(likeLine)
         })
 
 

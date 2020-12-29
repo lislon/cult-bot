@@ -1,5 +1,6 @@
 import { db, dbCfg } from '../../../src/database/db'
 import { UserSaveData } from '../../../src/database/db-users'
+import { MOCK_UUID } from './db-test-utils'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
@@ -12,13 +13,13 @@ describe('Users', () => {
         language_code: '',
         last_name: 'Last',
         first_name: 'First',
-        ua_uuid: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'
+        ua_uuid: MOCK_UUID
     }
 
     beforeEach(async () => await db.none('DELETE FROM cb_users'))
 
     test('User is saved', async () => {
-        const id = await db.userRepo.insertUser(user)
+        const id = await db.repoUser.insertUser(user)
 
         const dbUser = await db.one('SELECT * FROM cb_users WHERE id = $1', [id])
 
@@ -32,15 +33,15 @@ describe('Users', () => {
     })
 
     test('Null will not be a problem', async () => {
-        await db.userRepo.insertUser({
+        await db.repoUser.insertUser({
             ...user,
             first_name: undefined
         } as any)
     })
 
     test('findUser works', async () => {
-        await db.userRepo.insertUser(user)
-        const userFromDb = await db.userRepo.findUserByTid(user.tid)
+        await db.repoUser.insertUser(user)
+        const userFromDb = await db.repoUser.findUserByTid(user.tid)
         expect(userFromDb.ua_uuid).toEqual(user.ua_uuid)
     })
 

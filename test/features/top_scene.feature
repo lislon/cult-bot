@@ -61,3 +61,22 @@ Feature: Tops scene
     When I click markup [~tops_scene.exhibitions]
     Then I click markup [~tops_scene.exhibitions_perm]
     Then Bot responds '*сегодня*'
+
+  Scenario: Top scene - I can toggle like event
+    Given now is 2020-01-05 12:00
+    When I click markup [~tops_scene.exhibitions]
+    Then I click markup [~tops_scene.exhibitions_temp]
+    Then Bot responds '*сегодня*'
+    Then Bot responds '*<b>A</b>*' with inline buttons:
+      """
+      [👍 0] [👎 0] [⭐]
+      [Показать еще]
+      """
+    When I click inline [👍 0]
+    Then Bot edits inline buttons:
+      """
+      [👍 1] [👎 0] [⭐]
+      [Показать еще]
+      """
+    When I click inline [Показать еще]
+    Then Bot responds '*На этом всё в данной подборке*'

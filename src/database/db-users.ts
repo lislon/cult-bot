@@ -1,6 +1,6 @@
 import { ColumnSet, IDatabase, IMain } from 'pg-promise'
 import { devUsernames } from '../util/admins-list'
-import { fieldInt, fieldStr, fieldTimestamptzNullable } from './db-utils'
+import { fieldInt, fieldInt8Array, fieldStr, fieldTimestamptzNullable } from './db-utils'
 
 interface UserRow {
     username: string
@@ -20,12 +20,25 @@ export class UserSaveData {
     ua_uuid?: string
     active_at?: Date
     blocked_at?: Date|null
+    eventsLiked?: number[]
+    eventsDisliked?: number[]
+    eventsFavorite?: number[]
+    clicks?: number
 }
 
 export class UserDb {
-    id: number
+    id?: number
+    username?: string
+    first_name?: string
+    last_name?: string
+    language_code?: string
     tid?: number
     ua_uuid: string
+    blocked_at?: Date|null
+    events_liked?: number[]
+    events_disliked?: number[]
+    events_favorite?: number[]
+    clicks?: number
 }
 
 export class UserRepository {
@@ -39,17 +52,25 @@ export class UserRepository {
             fieldInt('tid'),
             fieldStr('language_code'),
             fieldStr('ua_uuid'),
-            fieldTimestamptzNullable('blocked_at')
+            fieldTimestamptzNullable('blocked_at'),
+            fieldInt8Array('events_liked'),
+            fieldInt8Array('events_disliked'),
+            fieldInt8Array('events_favorite'),
+            fieldInt('clicks'),
         ],
             {table: 'cb_users'}
         );
     }
 
     public async findUserByTid(tid: number): Promise<UserDb | null> {
-        return this.db.oneOrNone<UserDb>('SELECT id, ua_uuid FROM cb_users WHERE tid = $1', tid,
+        return this.db.oneOrNone<UserDb>('SELECT id, tid, ua_uuid FROM cb_users WHERE tid = $1', tid,
             (row: UserDb) => {
                 if (row !== null) {
-                    row.id = +row.id;
+                    return {
+                        id: +row.id,
+                        tid: +row.tid,
+                        ua_uuid: row.ua_uuid
+                    }
                 }
                 return row;
             })
@@ -68,12 +89,23 @@ export class UserRepository {
 
 
     public async insertUser(user: UserSaveData): Promise<number> {
-        user.first_name = user.first_name || ''
-        user.last_name = user.last_name || ''
-        user.username = user.username || ''
-        user.language_code = user.language_code || ''
-        user.blocked_at = undefined
-        const sql = this.pgp.helpers.insert(user, this.columns) + ' returning id'
+        const rawData: UserDb = {
+            first_name: user.first_name || '',
+            last_name: user.last_name || '',
+            username: user.username || '',
+            language_code: user.language_code || '',
+            tid: user.tid,
+            ua_uuid: user.ua_uuid,
+            clicks: 0,
+            events_liked: [],
+            events_favorite: [],
+            events_disliked: [],
+            blocked_at: undefined
+        }
+        const sql = this.pgp.helpers.insert(rawData, this.columns) + ' returning id'
+        if (sql.length === 3) {
+            console.log(sql)
+        }
         return +(await this.db.one(sql))['id']
     }
 

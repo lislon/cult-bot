@@ -16,6 +16,7 @@ import { tailScene } from '../../../src/scenes/tail/tail-scene'
 import { MarkupHelper } from '../lib/MarkupHelper'
 import { searchScene } from '../../../src/scenes/search/search-scene'
 import { botErrorHandler } from '../../../src/util/error-handler';
+import { likesScene } from '../../../src/scenes/likes/likes-scene'
 
 const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
 
@@ -63,6 +64,7 @@ class CustomWorld {
             feedbackScene,
             packsScene,
             searchScene,
+            likesScene,
             tailScene
         ])
         this.bot.catch(botErrorHandler)

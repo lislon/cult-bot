@@ -205,6 +205,8 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
         'tag_level_3': splitTags(notNull(row.tag_level_3)),
         'rating': forceDigit(row.rating),
         'reviewer': notNull(row.reviewer),
+        'likes': 0,
+        'dislikes': 0
     }
 
     const result: ExcelRowResult = {

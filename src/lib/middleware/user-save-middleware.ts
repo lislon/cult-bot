@@ -20,17 +20,17 @@ export const userSaveMiddleware = async (ctx: ContextMessageUpdate, next: any) =
 
     if (ctx.session.userId === undefined || isTimeToRefreshDb(ctx)) {
         await db.tx(async (dbTx: ITask<IExtensions> & IExtensions) => {
-            const user = await dbTx.userRepo.findUserByTid(ctx.from.id)
+            const user = await dbTx.repoUser.findUserByTid(ctx.from.id)
             if (user !== null) {
                 ctx.session.userId = user.id
                 ctx.session.uaUuid = user.ua_uuid
 
-                await dbTx.userRepo.updateUser(user.id, {
+                await dbTx.repoUser.updateUser(user.id, {
                     active_at: new Date(),
                     blocked_at: undefined
                 })
             } else {
-                ctx.session.userId = await dbTx.userRepo.insertUser({
+                ctx.session.userId = await dbTx.repoUser.insertUser({
                     tid: ctx.from.id,
                     username: ctx.from.username,
                     first_name: ctx.from.first_name,

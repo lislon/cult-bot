@@ -8,7 +8,7 @@
   "scripts": {
     "start": "cross-env TZ=Europe/Moscow node dist/start.js",
     "build": "tsc && yarn run lint && copyfiles -u 1 'src/**/assets/*.png' dist",
-    "dev": "dotenv ts-node-dev -r source-map-support/register  --respawn --ignore-watch node_modules src/start.ts",
+    "dev": "dotenv ts-node-dev -r source-map-support/register --respawn --ignore-watch node_modules src/start.ts --cache-directory dist/ts-node-dev-cache --transpile-only",
     "dev-no-restart": "tsc && nodemon --inspect",
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "test": "cross-env TZ=Europe/Moscow jest && cross-env TZ=Europe/Moscow cucumber-js",

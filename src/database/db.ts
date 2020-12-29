@@ -22,7 +22,7 @@ export interface IExtensions {
     repoAdmin: AdminRepository
     repoSearch: SearchRepository
     repoSnapshot: SnapshotRepository
-    userRepo: UserRepository
+    repoUser: UserRepository
     repoFeedback: FeedbackRepository
     repoPacks: PacksRepository
     repoEventsCommon: EventsCommonRepository
@@ -38,7 +38,7 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoTopEvents = new TopEventsRepository(dbEx, pgp)
         dbEx.repoAdmin = new AdminRepository(dbEx, pgp)
         dbEx.repoSearch = new SearchRepository(dbEx, pgp)
-        dbEx.userRepo = new UserRepository(dbEx, pgp)
+        dbEx.repoUser = new UserRepository(dbEx, pgp)
         dbEx.repoFeedback = new FeedbackRepository(dbEx, pgp)
         dbEx.repoSnapshot = new SnapshotRepository(dbEx, pgp)
         dbEx.repoPacks = new PacksRepository(dbEx, pgp)

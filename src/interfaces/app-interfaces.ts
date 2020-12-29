@@ -80,6 +80,8 @@ export interface Event {
     tag_level_3: string[]
     rating: number
     reviewer: string
+    likes: number
+    dislikes: number
 }
 
 export type MyInterval = {

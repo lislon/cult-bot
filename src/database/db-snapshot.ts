@@ -14,9 +14,29 @@ export class SnapshotRepository {
         await this.db.tx(async (dbTx: ITask<IExtensions> & IExtensions) => {
             await dbTx.none('TRUNCATE cb_events_snapshot')
             await dbTx.none('TRUNCATE cb_events_snapshot_meta')
-            await dbTx.none('INSERT INTO cb_events_snapshot ' +
-                '(id,title,category,place,address,timetable,duration,price,notes,description,url,tag_level_1,tag_level_2,tag_level_3,rating,reviewer,is_anytime,geotag,ext_id,created_at,order_rnd,updated_at)' +
-                '(SELECT id,title,category,place,address,timetable,duration,price,notes,description,url,tag_level_1,tag_level_2,tag_level_3,rating,reviewer,is_anytime,geotag,ext_id,created_at,order_rnd,updated_at FROM cb_events cb WHERE cb.deleted_at IS NULL)')
+            const columns = [
+                'id' +
+                'title',
+                'category',
+                'place',
+                'address',
+                'timetable',
+                'duration',
+                'price',
+                'notes',
+                'description',
+                'url',
+                'tag_level_1',
+                'tag_level_2',
+                'tag_level_3',
+                'rating',
+                'reviewer',
+                'is_anytime',
+                'geotag',
+                'ext_id',
+                'created_at'
+            ]
+            await dbTx.none(`INSERT INTO cb_events_snapshot (${columns.join(', ')}) (SELECT ${columns.join(', ')} FROM cb_events cb WHERE cb.deleted_at IS NULL)`)
             await dbTx.none(this.pgp.helpers.insert({
                 created_by: createdBy,
                 created_at: date

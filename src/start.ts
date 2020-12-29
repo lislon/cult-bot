@@ -13,7 +13,7 @@ const app = express()
 
 async function notifyAdminsAboutRestart() {
     try {
-        const admins = await db.userRepo.findAllDevs()
+        const admins = await db.repoUser.findAllDevs()
         const text = i18n.t('ru', 'scenes.admin_scene.restart_report', {
             version: botConfig.HEROKU_RELEASE_VERSION,
             commit: botConfig.HEROKU_SLUG_COMMIT?.substring(botConfig.HEROKU_SLUG_COMMIT.length - 7)
