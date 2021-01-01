@@ -893,10 +893,10 @@
     "@types/node" "*"
     form-data "^3.0.0"
 
-"@types/node@*", "@types/node@^14.14.11":
-  version "14.14.11"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.11.tgz#fc25a4248a5e8d0837019b1d170146d07334abe0"
-  integrity sha512-BJ97wAUuU3NUiUCp44xzUFquQEvnk1wu7q4CMEUYKJWjdkr0YWYDsm4RFtAvxYsNjLsKcrFt6RvK8r+mnzMbEQ==
+"@types/node@*", "@types/node@^14.14.17":
+  version "14.14.17"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.17.tgz#29fab92f3986c0e379968ad3c2043683d8020dbb"
+  integrity sha512-G0lD1/7qD60TJ/mZmhog76k7NcpLWkPVGgzkRy3CTlnFu4LUQh5v2Wa661z6vnXmD8EQrnALUyf0VRtrACYztw==
 
 "@types/node@^13.7.0":
   version "13.13.32"
@@ -6823,10 +6823,10 @@ telegraf-session-redis@^5.1.0:
     debug "^4.1.1"
     redis "^2.6.0-1"
 
-telegraf-throttler@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/telegraf-throttler/-/telegraf-throttler-0.2.0.tgz#d92969c7cca08fe5a8575c65e01d8422b24d3696"
-  integrity sha512-w44jjb6aLJTGAC/8YDJpmMMG0aafHB4UhrBgj2a1tefS6jpKusK8ngh5w1ZG0zMHDPoRw785ESLrkI6qvARXvA==
+telegraf-throttler@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/telegraf-throttler/-/telegraf-throttler-0.3.0.tgz#61aeb01f54bdc5ca5a22e203a3a0f16cce3cb8d0"
+  integrity sha512-Tv5p/D73TCgS/emH7HeKsbdWOfKO6Tp2BVPuyTzXGaox9Wj7sc1GGt2Le83SBJO+Whl1yZtoU+jr7VE978frQw==
   dependencies:
     bottleneck "^2.19.5"
 

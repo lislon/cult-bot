@@ -18,7 +18,8 @@
     "db:down": "cross-env TZ=Europe/Moscow db-migrate down",
     "db:up-test": "cross-env DATABASE_URL=postgres://cult-test:cult-test@localhost:5434/cult-test db-migrate up",
     "db:down-test": "cross-env DATABASE_URL=postgres://cult-test:cult-test@localhost:5434/cult-test db-migrate down",
-    "cron:refresh-events": "cross-env TZ=Europe/Moscow node dist/cron/run-refresh"
+    "cron:refresh-events": "cross-env TZ=Europe/Moscow node dist/cron/run-refresh",
+    "cron:reset-mailing-counters": "cross-env TZ=Europe/Moscow node dist/cron/reset-mailing-counters"
   },
   "dependencies": {
     "anymatch": "^3.1.1",
@@ -27,6 +28,7 @@
     "db-migrate": "^0.11.11",
     "db-migrate-pg": "^1.2.2",
     "dotenv": "^8.2.0",
+    "emoji-regex": "^9.2.0",
     "express": "^4.17.1",
     "googleapis": "^66.0.0",
     "image-type": "^4.1.0",
@@ -47,10 +49,9 @@
     "telegraf-i18n": "^6.6.0",
     "telegraf-inline-menu": "^5.3.0",
     "telegraf-session-redis": "^5.1.0",
-    "telegraf-throttler": "^0.2.0",
+    "telegraf-throttler": "^0.3.0",
     "telegraf-update-logger": "^1.2.0",
     "universal-analytics": "^0.4.23",
-    "emoji-regex": "^9.2.0",
     "uuid": "^8.3.1",
     "winston": "^3.3.3",
     "xstate": "^4.15.0"
@@ -63,7 +64,7 @@
     "@types/jest": "^26.0.14",
     "@types/lodash": "^4.14.161",
     "@types/md5": "^2.2.1",
-    "@types/node": "^14.14.11",
+    "@types/node": "^14.14.17",
     "@types/node-fetch": "^2.5.7",
     "@types/parsimmon": "^1.10.4",
     "@types/pg": "^7.14.4",
