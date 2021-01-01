@@ -27,7 +27,7 @@ interface FormattedMailedMessages {
 
 async function formatMessage(msg: Message): Promise<FormattedMailedMessages> {
     let text = parseTelegramMessageToHtml(msg)
-    const matchButtonAtEnd = text.match(/\[(.+)\]\s*$/)
+    const matchButtonAtEnd = text.match(/\[\s*(.+)\s*\]\s*$/)
     if (matchButtonAtEnd) {
         const packData = await db.repoPacks.findPackByTitle(matchButtonAtEnd[1])
         if (packData !== undefined) {
