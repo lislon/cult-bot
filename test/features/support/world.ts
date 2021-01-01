@@ -15,6 +15,7 @@ import { AnalyticsRecorder } from './AnalyticsRecorder'
 import { tailScene } from '../../../src/scenes/tail/tail-scene'
 import { MarkupHelper } from '../lib/MarkupHelper'
 import { searchScene } from '../../../src/scenes/search/search-scene'
+import { botErrorHandler } from '../../../src/util/error-handler';
 
 const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
 
@@ -64,6 +65,7 @@ class CustomWorld {
             searchScene,
             tailScene
         ])
+        this.bot.catch(botErrorHandler)
     }
 
     async initTestCase(testCase: ITestCaseHookParameter) {
@@ -77,15 +79,15 @@ class CustomWorld {
     }
 
     async enterScene(scene: string) {
-        await this.server.enterScene(this.bot.middleware(), scene)
+        await this.server.enterScene(this.bot, scene)
     }
 
     async sendMessage(text: string) {
-        await this.server.sendMessage(this.bot.middleware(), text)
+        await this.server.sendMessage(this.bot, text)
     }
 
     async start(payload: string) {
-        await this.server.start(this.bot.middleware(), payload)
+        await this.server.start(this.bot, payload)
     }
 
     async clickMarkup(buttonText: string) {
@@ -97,7 +99,7 @@ class CustomWorld {
             throw new Error(`Cant find '${buttonText}' markup buttons. List of good buttons: ${buttons.map(b => `'${b.text}'`).join(', ')}`)
         }
 
-        await this.server.sendMessage(this.bot.middleware(), foundButton.text)
+        await this.server.sendMessage(this.bot, foundButton.text)
     }
 
     async clickInline(buttonText: string) {
@@ -107,7 +109,7 @@ class CustomWorld {
             throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: ${buttons.map(b => `'${b.text}'`).join(', ')}`)
         }
 
-        await this.server.clickInline(this.bot.middleware(), callbackData, message)
+        await this.server.clickInline(this.bot, callbackData, message)
     }
 
     async setNow(now: Date) {

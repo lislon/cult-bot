@@ -19,10 +19,12 @@ export class UserSaveData {
     ua_uuid?: string
     chat_id: number
     active_at?: Date
+    blocked_at?: Date|null
 }
 
 export class UserDb {
     id: number
+    tid?: number
     ua_uuid: string
     chat_id: number
 }
@@ -32,7 +34,7 @@ export class UserRepository {
 
     constructor(private db: IDatabase<any>, private pgp: IMain) {
         this.columns = new pgp.helpers.ColumnSet(
-            'username, first_name, last_name, tid, language_code, ua_uuid, chat_id'.split(/,\s*/),
+            'username, first_name, last_name, tid, language_code, ua_uuid, chat_id, blocked_at'.split(/,\s*/),
             {table: 'cb_users'}
         );
     }
@@ -66,6 +68,7 @@ export class UserRepository {
         user.last_name = user.last_name || ''
         user.username = user.username || ''
         user.language_code = user.language_code || ''
+        user.blocked_at = undefined
         const sql = this.pgp.helpers.insert(user, this.columns) + ' returning id'
         return +(await this.db.one(sql))['id']
     }
@@ -74,5 +77,41 @@ export class UserRepository {
         const sql = this.pgp.helpers.update(data, undefined, 'cb_users') + this.pgp.as.format(' WHERE id = ${id}')
         await this.db.none(sql, {id})
     }
+
+    public async listUsersForMailing(maxMailingsCount: number): Promise<Pick<UserDb, 'id'|'ua_uuid'|'tid'>[]> {
+        return await this.db.map(`
+                SELECT id, tid, ua_uuid
+                FROM cb_users
+                WHERE blocked_at IS NULL AND mailings_count < $(maxMailingsCount) AND mailings_count >= 0`, {
+            maxMailingsCount,
+        }, (row) => {
+            return {
+                id: +row.id,
+                tid: +row.tid,
+                ua_uuid: row.ua_uuid
+            }
+        })
+    }
+
+    public async markAsBlocked(userIds: number[], date: Date): Promise<void> {
+        if (userIds.length === 0) return
+        await this.db.none('UPDATE cb_users SET blocked_at = $(date) WHERE id IN ($(userIds:csv))', {
+            date,
+            userIds
+        })
+    }
+
+    public async incrementMailingCounter(userIds: number[]): Promise<void> {
+        if (userIds.length === 0) return
+        await this.db.none('UPDATE cb_users SET mailings_count = mailings_count + 1 WHERE id IN ($(userIds:csv))', {
+            userIds
+        })
+    }
+
+    public async resetMailingCounter(): Promise<void> {
+        await this.db.none('UPDATE cb_users SET mailings_count = 0')
+    }
+
+
 }
 

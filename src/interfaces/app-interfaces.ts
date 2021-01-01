@@ -56,7 +56,6 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
     webhookReply: boolean
     ua: Visitor
     perf: PerformanceContext
-    onThrottleErrorProcessed?: boolean
     now(): Date
     isNowOverridden(): boolean
 }

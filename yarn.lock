@@ -6823,10 +6823,10 @@ telegraf-session-redis@^5.1.0:
     debug "^4.1.1"
     redis "^2.6.0-1"
 
-telegraf-throttler@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/telegraf-throttler/-/telegraf-throttler-0.2.0.tgz#d92969c7cca08fe5a8575c65e01d8422b24d3696"
-  integrity sha512-w44jjb6aLJTGAC/8YDJpmMMG0aafHB4UhrBgj2a1tefS6jpKusK8ngh5w1ZG0zMHDPoRw785ESLrkI6qvARXvA==
+telegraf-throttler@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/telegraf-throttler/-/telegraf-throttler-0.3.0.tgz#61aeb01f54bdc5ca5a22e203a3a0f16cce3cb8d0"
+  integrity sha512-Tv5p/D73TCgS/emH7HeKsbdWOfKO6Tp2BVPuyTzXGaox9Wj7sc1GGt2Le83SBJO+Whl1yZtoU+jr7VE978frQw==
   dependencies:
     bottleneck "^2.19.5"
 

@@ -16,6 +16,8 @@ import { logger } from './util/logger'
 import { helpScene } from './scenes/help/help-scene'
 import { packsScene } from './scenes/packs/packs-scene'
 import { tailScene } from './scenes/tail/tail-scene'
+import { filterOnlyFeedbackChat } from './lib/middleware/support-feedback.middleware'
+import { botErrorHandler } from './util/error-handler'
 
 logger.info(`starting bot...`);
 
@@ -34,16 +36,18 @@ const stage = new Stage([], {
 })
 
 
-bot.use(performanceMiddleware('total'))
-bot.use(middlewares.i18n)
-bot.use(middlewares.telegrafThrottler())
-bot.use(middlewares.logger)
-bot.use(middlewares.session)
-bot.use(middlewares.logMiddleware('session'))
-bot.use(middlewares.userSaveMiddleware)
-bot.use(middlewares.dateTime)
-bot.use(middlewares.analyticsMiddleware)
-bot.use(middlewares.logMiddleware('analyticsMiddleware'))
+bot
+    .use(performanceMiddleware('total'))
+    .use(middlewares.i18n)
+    .use(middlewares.telegrafThrottler())
+    .use(middlewares.logger)
+    .use(middlewares.session)
+    .use(middlewares.logMiddleware('session'))
+    .use(middlewares.userSaveMiddleware)
+    .use(middlewares.dateTime)
+    .use(middlewares.analyticsMiddleware)
+    .use(middlewares.logMiddleware('analyticsMiddleware'))
+
 myRegisterScene(bot, stage, [
     mainScene,
     helpScene,
@@ -58,5 +62,18 @@ myRegisterScene(bot, stage, [
     tailScene
 ])
 
-rawBot.use(Composer.privateChat(bot))
-rawBot.use(Composer.groupChat(middlewares.supportFeedbackMiddleware))
+
+
+const supportChat = new Composer<ContextMessageUpdate>()
+    .use(filterOnlyFeedbackChat)
+    .use(middlewares.i18n)
+    .use(middlewares.telegrafThrottler())
+    .use(middlewares.logger)
+    .use(middlewares.session)
+    .use(middlewares.logMiddleware('session'))
+    .use(middlewares.supportFeedbackMiddleware)
+
+rawBot
+    .use(Composer.privateChat(bot))
+    .use(Composer.groupChat(supportChat))
+    .catch(botErrorHandler)

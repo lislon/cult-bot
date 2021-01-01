@@ -1,7 +1,6 @@
 import updateLogger from 'telegraf-update-logger'
 import telegrafThrottler from 'telegraf-throttler';
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
-import { isAdmin } from './util/scene-helper'
 import { parseISO } from 'date-fns'
 import { userSaveMiddleware } from './lib/middleware/user-save-middleware'
 import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
@@ -12,7 +11,6 @@ import { logger } from './util/logger'
 import { i18n } from './util/i18n'
 import { MyRedisSession, redisSession } from './util/reddis'
 import { botConfig } from './util/bot-config'
-import { formatUserName } from './util/misc-utils'
 
 let sessionMechanism: MyRedisSession
 
@@ -57,32 +55,7 @@ export default {
     telegrafThrottler: (opts?: Parameters<typeof telegrafThrottler>[0]) => {
         return telegrafThrottler({
             onThrottlerError: async (ctx: ContextMessageUpdate, next, throttlerName, error: any) => {
-                if (error.message === 'This job has been dropped by Bottleneck') {
-                    logger.debug(`Throttle limit ${throttlerName}: ${error} for user ${ctx.from.username}`)
-                } else if (error.message.includes('query is too old and response timeout expired')) {
-                    logger.debug(error.message)
-                    // ignore
-                } else if (error?.code === 403 && error.message.includes('bot was blocked by the user')) {
-                    logger.debug(`${formatUserName(ctx)}: blocked bot`)
-                    // ignore
-                } else {
-                    logger.error(`Ooops, encountered an error for ${ctx.updateType}`, error)
-                    if (ctx.onThrottleErrorProcessed === true) {
-                        // when user blocks bot, this causes replyWithHTML to throw error, and we get here again
-                        return
-                    }
-                    ctx.onThrottleErrorProcessed = true
-                    if (isAdmin(ctx)) {
-                        await ctx.replyWithHTML(ctx.i18n.t('root.something_went_wrong_admin', {
-                            error: error.toString().substr(0, 4000),
-                            time: (new Date()).toString(),
-                            session: JSON.stringify(ctx.session, undefined, 2)
-                        }))
-                    } else {
-                        await ctx.replyWithHTML(ctx.i18n.t('root.something_went_wrong'))
-                    }
-                }
-                // console.log(throttlerName, error)
+                logger.debug(`Throttle limit ${throttlerName}: ${error} for user ${ctx.from.username}`)
             },
             ...opts,
         })

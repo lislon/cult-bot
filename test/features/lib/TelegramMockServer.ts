@@ -1,4 +1,4 @@
-import { Context, Telegram } from 'telegraf'
+import { Context, Telegraf, Telegram } from 'telegraf'
 import * as tt from 'telegraf/typings/telegram-types'
 import { Update } from 'telegraf/typings/telegram-types'
 import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
@@ -119,22 +119,31 @@ export class TelegramMockServer {
         await middleware(this.lastCtx, undefined)
     }
 
-    async enterScene(middleware: MiddlewareFn<ContextMessageUpdate>, sceneId: string) {
+    async enterScene(bot: Telegraf<ContextMessageUpdate>, sceneId: string) {
         this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage()}))
-        await middleware(this.lastCtx, async () => await this.lastCtx.scene.enter(sceneId))
+        try {
+            await bot.middleware()(this.lastCtx, async () => await this.lastCtx.scene.enter(sceneId))
+        } catch (e) {
+            await (bot as any).handleError(e, this.lastCtx)
+        }
     }
 
 
-    async sendMessage(middleware: MiddlewareFn<ContextMessageUpdate>, text: string) {
+    async sendMessage(bot: Telegraf<ContextMessageUpdate>, text: string) {
         if (text.startsWith('/')) {
             this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeCommand(text)}))
         } else {
             this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage(text)}))
         }
-        await middleware(this.lastCtx, undefined)
+        try {
+            await bot.middleware()(this.lastCtx, undefined)
+        } catch (e) {
+            // await (bot as any).handleError(e, this.lastCtx)
+            console.log('ok')
+        }
     }
 
-    async clickInline(middleware: MiddlewareFn<ContextMessageUpdate>, callbackData: string, message: Message) {
+    async clickInline(bot: Telegraf<ContextMessageUpdate>, callbackData: string, message: Message) {
         this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({
             callback_query: {
                 id: '0',
@@ -145,12 +154,16 @@ export class TelegramMockServer {
             }
         }))
 
-        await middleware(this.lastCtx, undefined)
+        try {
+            await bot.middleware()(this.lastCtx, undefined)
+        } catch (e) {
+            await (bot as any).handleError(e, this.lastCtx)
+        }
     }
 
-    async start(middleware: MiddlewareFn<ContextMessageUpdate>, payload: string) {
+    async start(bot: Telegraf<ContextMessageUpdate>, payload: string) {
         this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent(makeCommand('/start', payload)))
-        await middleware(this.lastCtx, undefined)
+        await bot.middleware()(this.lastCtx, undefined)
     }
 
     getListOfInlineButtonsFromLastMsg(): {message: MessageWithInlineMarkup, buttons: InlineKeyboardButton[]} {
@@ -181,8 +194,7 @@ export class TelegramMockServer {
         const tg = new Telegram('', {})
         tg.callApi = async (method: any, data: { chat_id: number }): Promise<any> => {
             if (this.botIsBlocked) {
-                const telegramError = TelegramError
-                throw new telegramError({
+                throw new TelegramError({
                     error_code: 403,
                     description: 'bot was blocked by the user'
                 })

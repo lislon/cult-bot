@@ -120,5 +120,26 @@ export class PacksRepository {
                 return {id: +id, extId: ext_id}
             })
     }
+
+    public async findPackByTitle(title: string): Promise<{ id: number, title: string }|undefined> {
+        return await this.db.oneOrNone(`
+            SELECT
+                p.id,
+                p.title
+            from cb_events_packs p
+            WHERE p.title = $(title)
+            `, { title }, (row) => {
+            if (row) {
+                return {
+                    id: +row.id,
+                    title: row.title
+                }
+            } else {
+                return undefined
+            }
+        })
+    }
+
+
 }
 

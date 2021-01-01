@@ -4,7 +4,7 @@ import { i18nSceneHelper } from '../../util/scene-helper'
 import { i18n } from '../../util/i18n'
 import { SceneRegister } from '../../middleware-utils'
 import { displayEventsMenu, displayMainMenu, displayPackMenu } from './packs-menu'
-import { getEventsCount, getPacksCount, prepareSessionStateIfNeeded, scene } from './packs-common'
+import { getEventsCount, getPacksCount, getPacksList, prepareSessionStateIfNeeded, scene } from './packs-common'
 import { logger } from '../../util/logger'
 import { warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 
@@ -23,7 +23,6 @@ scene
         )
 
         await displayMainMenu(ctx)
-
     })
     .leave(async (ctx) => {
         ctx.session.packsScene = undefined
@@ -81,8 +80,20 @@ scene
     })
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+    bot
+        .action(/packs_scene.direct_(\d+)/, async (ctx) => {
+            await ctx.answerCbQuery()
+            const packs = await getPacksList(ctx)
+            await ctx.scene.enter('packs_scene', {}, true)
 
-
+            ctx.session.packsScene.packSelectedIdx = packs.findIndex(p => p.id === +ctx.match[1])
+            if (ctx.session.packsScene.packSelectedIdx === -1) {
+                await ctx.replyWithHTML(i18Msg(ctx, 'direct_not_available'))
+                await displayMainMenu(ctx)
+            } else {
+                await displayPackMenu(ctx)
+            }
+        })
 }
 
 export const packsScene = {

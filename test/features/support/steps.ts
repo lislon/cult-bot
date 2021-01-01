@@ -128,6 +128,10 @@ When(/^I start bot with payload '(.+)'$/, async function (payload: string) {
     await this.start(payload)
 })
 
+Then(/^Bot responds nothing$/, function (expected: string) {
+    const nextReply = this.getNextMsg() as BotReply
+    expect(nextReply).toBeUndefined()
+})
 
 
 Then(/^Bot responds '(.+)'$/, function (expected: string) {

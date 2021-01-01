@@ -63,4 +63,11 @@ describe('Packs', () => {
         expectedTitles(['A', 'B', 'C', 'D', 'E'], events[0].events)
     })
 
+    test('find by title works', async () => {
+        const result = await db.repoPacks.findPackByTitle('not existing')
+        expect(result).toBeUndefined()
+    })
+
+
+
 })

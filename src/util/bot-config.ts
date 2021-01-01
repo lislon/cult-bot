@@ -24,6 +24,8 @@ export class BotConfig {
     public readonly BOT_DISABLED: boolean
     public readonly LOG_LEVEL: string
 
+    public readonly MAX_MAILINGS_PER_WEEK: number
+
     /**
      * Chat used to receive user feedback and send reply to it.
      */
@@ -56,8 +58,8 @@ export class BotConfig {
             this.LOG_LEVEL = (this.NODE_ENV === 'production' || this.NODE_ENV === 'test') ? 'info' : 'debug'
         }
 
-
         this.SUPPORT_FEEDBACK_CHAT_ID = +process.env.SUPPORT_FEEDBACK_CHAT_ID || undefined
+        this.MAX_MAILINGS_PER_WEEK = +process.env.MAX_MAILINGS_PER_WEEK || 2
     }
 }
 

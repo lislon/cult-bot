@@ -21,7 +21,7 @@ Feature: Customize time
       [Назад]
       """
 
-  Scenario:  I want select to events by time on friday
+  Scenario: I want select to events by time on friday
     Given now is 2020-01-03 12:00
     When I click markup [#️⃣ Время]
     Then Bot responds 'Выберите дату и время' with inline buttons:
