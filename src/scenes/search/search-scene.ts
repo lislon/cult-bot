@@ -7,6 +7,7 @@ import { Paging } from '../shared/paging'
 import { SceneRegister } from '../../middleware-utils'
 import { db } from '../../database/db'
 import { logger } from '../../util/logger'
+import { getLikesRow } from '../likes/likes-common'
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene');
 
@@ -52,16 +53,23 @@ async function showSearchResults(ctx: ContextMessageUpdate) {
     logger.debug(`Search: '${ctx.session.search.request}' offset=${ctx.session.paging.pagingOffset} found=${events.length}`)
     const {i18Btn, i18Msg} = sceneHelper(ctx)
 
-    const nextBtn = Markup.inlineKeyboard([
-        Markup.callbackButton(i18Btn('show_more'), actionName('show_more'))
-    ])
-
     let count = 0;
     for (const event of events) {
 
+        const isShowMore = ++count === events.length && events.length === limitEventsToPage
+
+        const likeLine = [
+            getLikesRow(ctx, {
+                eventId: event.id,
+                likesCount: event.likes,
+                dislikesCount: event.dislikes,
+            }),
+            ...[isShowMore ? [Markup.callbackButton(i18Btn('show_more'), actionName('show_more'))] : []]
+        ]
+
         await ctx.replyWithHTML(cardFormat(event), {
             disable_web_page_preview: true,
-            reply_markup: (++count === events.length && events.length === limitEventsToPage ? nextBtn : undefined)
+            reply_markup: Markup.inlineKeyboard(likeLine)
         })
 
         await sleep(300)

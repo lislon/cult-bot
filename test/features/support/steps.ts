@@ -228,7 +228,9 @@ Then(/^Google analytics params will be:$/, function (table: DataTable) {
 
 
 
-Before(async () => { await syncEventsDb4Test([]) })
+Before(async () => {
+    await db.none(`TRUNCATE cb_events CASCADE`)
+})
 Before(function (testCase: ITestCaseHookParameter) {
     this.initTestCase(testCase)
 })

@@ -18,6 +18,7 @@ import { cardFormat } from '../shared/card-format'
 import slugify from 'slugify'
 import { generatePlural } from '../shared/shared-logic'
 import emojiRegex from 'emoji-regex'
+import { getLikesRow } from '../likes/likes-common'
 
 
 const {actionName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
@@ -89,18 +90,69 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
     const pack = await getPackSelected(ctx)
     const event = await getEventSelected(ctx)
 
-    const packTitleNoEmoji =  pack.title.replace(emojiRegex(), '').trim()
+    const packTitleNoEmoji = pack.title.replace(emojiRegex(), '').trim()
 
-    ctx.ua.pv({dp: `/packs/${mySlugify(packTitleNoEmoji)}/${mySlugify(event.ext_id)}`, dt: `Подборки > ${packTitleNoEmoji} > ${event.title}`})
+    ctx.ua.pv({
+        dp: `/packs/${mySlugify(packTitleNoEmoji)}/${mySlugify(event.ext_id)}`,
+        dt: `Подборки > ${packTitleNoEmoji} > ${event.title}`
+    })
+
+    const page = getCurEventIndex(ctx) + 1
+    const total = await getEventsCount(ctx)
+
+    // V1:
+    // const buttons = [
+    //     [
+    //         Markup.callbackButton(i18Btn(ctx, 'event_prev') + (page > 1 ? ` ${page}` : ``), actionName(`event_prev`)),
+    //         ...getLikesRow(ctx, {
+    //             eventId: event.id,
+    //             likesCount: event.likes,
+    //             dislikesCount: event.dislikes,
+    //         }),
+    //         Markup.callbackButton((total - page > 0 ? `${total - page} ` : ``) + i18Btn(ctx, 'event_next'), actionName(`event_next`)),
+    //     ],
+    //     [
+    //         Markup.callbackButton(i18Btn(ctx, 'event_back', {
+    //             packTitle: packTitleNoEmoji
+    //         }), actionName(`event_back`)),
+    //     ]
+    // ]
+    //
+    // V2:
+    // const buttons = [
+    //     [
+    //         Markup.callbackButton(i18Btn(ctx, 'event_prev'), actionName(`event_prev`)),
+    //         Markup.callbackButton(i18Btn(ctx, 'event_curr', {
+    //             page: getCurEventIndex(ctx) + 1,
+    //             total: await getEventsCount(ctx)
+    //         }), actionName(`event_curr_tip`)),
+    //         Markup.callbackButton(i18Btn(ctx, 'event_next'), actionName(`event_next`)),
+    //     ],
+    //     [
+    //         Markup.callbackButton(i18Btn(ctx, 'event_back', {
+    //             packTitle: ''
+    //         }), actionName(`event_back`)),
+    //         ...getLikesRow(ctx, {
+    //             eventId: event.id,
+    //             likesCount: event.likes,
+    //             dislikesCount: event.dislikes,
+    //         })
+    //     ]
+    // ]
+
 
     const buttons = [
         [
             Markup.callbackButton(i18Btn(ctx, 'event_prev'), actionName(`event_prev`)),
+            ...getLikesRow(ctx, {
+                eventId: event.id,
+                likesCount: event.likes,
+                dislikesCount: event.dislikes,
+            }),
             Markup.callbackButton(i18Btn(ctx, 'event_curr', {
                 page: getCurEventIndex(ctx) + 1,
                 total: await getEventsCount(ctx)
-            }), actionName(`event_curr_tip`)),
-            Markup.callbackButton(i18Btn(ctx, 'event_next'), actionName(`event_next`)),
+            }) + ' ' + i18Btn(ctx, 'event_next'), actionName(`event_next`)),
         ],
         [
             Markup.callbackButton(i18Btn(ctx, 'event_back', {

@@ -81,6 +81,9 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                 await updateLikeDislikeInlineButtons(ctx, dbTask, eventId, plusLikes, plusDislikes)
             })
         })
+        .action(/^favorite_(\d+)/, async (ctx: ContextMessageUpdate) => {
+            await ctx.answerCbQuery('😹 Это кнопка-декорация, она не настоящая')
+        })
 }
 
 export const likesScene = {

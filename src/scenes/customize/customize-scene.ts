@@ -26,6 +26,7 @@ import { Paging } from '../shared/paging'
 import { getISODay, startOfISOWeek } from 'date-fns'
 import { saveSession, SceneRegister } from '../../middleware-utils'
 import { isEmpty } from 'lodash'
+import { getLikesRow } from '../likes/likes-common'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
@@ -304,20 +305,29 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
         const isFirstCard = count == 1
         const isLastCardInTotal = ctx.session.paging.pagingOffset + count == totalCount
 
+        const likesRow = getLikesRow(ctx, {
+            eventId: event.id,
+            likesCount: event.likes,
+            dislikesCount: event.dislikes,
+        })
+
+
         let replyMarkup = undefined
         if (isLastCardOnPage && !isLastCardInTotal) {
-            replyMarkup = Markup.inlineKeyboard([
+            replyMarkup = Markup.inlineKeyboard([likesRow, [
                 Markup.callbackButton(i18Btn(ctx, 'show_more', {
                     countLeft: totalCount - ctx.session.paging.pagingOffset - count
                 }), actionName('show_more'))
-            ])
+            ]])
         } else if (isLastCardInTotal) {
-            replyMarkup = Markup.inlineKeyboard([
+            replyMarkup = Markup.inlineKeyboard([likesRow, [
                 Markup.callbackButton(i18Btn(ctx, 'back_to_filters'), actionName('last_event_back'))
-            ])
+            ]])
         }
         else if (isFirstCard) {
             replyMarkup = Markup.keyboard([Markup.button(i18nModuleBtnName('back_to_filters'))]).resize()
+        } else {
+            replyMarkup = Markup.inlineKeyboard([likesRow])
         }
 
         await ctx.replyWithHTML(cardFormat(event), {

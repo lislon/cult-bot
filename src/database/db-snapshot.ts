@@ -15,7 +15,7 @@ export class SnapshotRepository {
             await dbTx.none('TRUNCATE cb_events_snapshot')
             await dbTx.none('TRUNCATE cb_events_snapshot_meta')
             const columns = [
-                'id' +
+                'id',
                 'title',
                 'category',
                 'place',

@@ -9,3 +9,5 @@ ALTER TABLE cb_events DROP COLUMN IF EXISTS likes;
 ALTER TABLE cb_events DROP COLUMN IF EXISTS dislikes;
 ALTER TABLE cb_events DROP COLUMN IF EXISTS likes_fake;
 ALTER TABLE cb_events DROP COLUMN IF EXISTS dislikes_fake;
+
+ALTER TABLE cb_events_snapshot ADD COLUMN IF NOT EXISTS order_rnd INT DEFAULT 0;

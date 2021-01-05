@@ -20,7 +20,8 @@ Feature: Customize navigation
     When I click markup [Показать события]
     Then Bot responds '*<b>A</b>*' with inline buttons:
       """
-      [Назад [к фильтрам]]
+      [👍 0] [👎 0] [⭐]
+      [◀️ Назад [к фильтрам]]
       """
     When I click inline [Назад [к фильтрам]]
     Then Bot responds '*настройте*' with markup buttons:
@@ -43,10 +44,12 @@ Feature: Customize navigation
     Then Bot responds '*<b>B</b>*'
     Then Bot responds '*<b>C</b>*' with inline buttons:
       """
+      [👍 0] [👎 0] [⭐]
       [Показать еще (1)]
       """
     When I click inline [Показать еще (1)]
     Then Bot responds '*<b>D</b>*' with inline buttons:
       """
-      [Назад [к фильтрам]]
+      [👍 0] [👎 0] [⭐]
+      [◀️ Назад [к фильтрам]]
       """
