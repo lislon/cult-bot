@@ -407,8 +407,6 @@
       "cb_answer_disliked": "👎 -1",
       "cb_answer_unliked": "✊ Отмена",
       "cb_answer_undisliked": "✊ Отмена",
-      "cb_answer_favorited": "⭐ Сохранено",
-      "cb_answer_unfavorited": "Убрано из избранного",
       "keyboard": {
         "like": "👍 ${count}",
         "dislike": "👎 ${count}",
@@ -425,6 +423,8 @@
       "list_group_past": "<b>Прошедшие:</b>\n${list}",
       "event_item": " - ${title}",
       "cb_answer_wiped": "🗑 Список очищен",
+      "cb_answer_favorited": "⭐ Сохранено",
+      "cb_answer_unfavorited": "Убрано из избранного",
       "keyboard": {
         "show_actual": "✔️Показать актуальные",
         "wipe": "🗑 Очистить список",
