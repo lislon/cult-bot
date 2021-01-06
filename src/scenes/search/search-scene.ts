@@ -1,17 +1,16 @@
-import { BaseScene, Composer, Extra, Markup } from 'telegraf'
-import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
-import { getNextWeekendRange, limitEventsToPage, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
-import { cardFormat } from '../shared/card-format'
+import { BaseScene, Extra, Markup } from 'telegraf'
+import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
+import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
+import { getNextWeekendRange, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { Paging } from '../shared/paging'
 import { SceneRegister } from '../../middleware-utils'
 import { db } from '../../database/db'
-import { logger } from '../../util/logger'
-import { getLikesRow } from '../likes/likes-common'
+import { CurrentPage, EventsPager } from '../shared/events-pager'
+import emojiRegex from 'emoji-regex'
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene');
 
-const {sceneHelper, i18nSharedBtnName, actionName } = i18nSceneHelper(scene)
+const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg} = i18nSceneHelper(scene)
 
 export interface SearchSceneState {
     request: string
@@ -35,63 +34,55 @@ const content = (ctx: ContextMessageUpdate) => {
 
     return {
         msg: i18Msg('please_search'),
-        markupMainMenu: Extra.HTML(true).markup(Markup.keyboard([Markup.button(i18SharedBtn('back'))]).resize())
+        markupMainMenu: Extra.HTML().markup(Markup.keyboard([Markup.button(i18SharedBtn('back'))]).resize())
     }
 }
 
-async function showSearchResults(ctx: ContextMessageUpdate) {
-    const range = getNextWeekendRange(ctx.now())
 
-    const events = await db.repoSearch.search({
-        query: ctx.session.search.request,
-        limit: limitEventsToPage,
-        offset: ctx.session.paging.pagingOffset,
-        interval: range,
-        allowSearchById: isAdmin(ctx)
-    })
+const eventPager = new EventsPager({
+    hideNextBtnOnClick: true,
 
-    logger.debug(`Search: '${ctx.session.search.request}' offset=${ctx.session.paging.pagingOffset} found=${events.length}`)
-    const {i18Btn, i18Msg} = sceneHelper(ctx)
+    async nextPortion(ctx: ContextMessageUpdate, {limit, offset}: CurrentPage): Promise<Event[]> {
+        const range = getNextWeekendRange(ctx.now())
 
-    let count = 0;
-    for (const event of events) {
-
-        const isShowMore = ++count === events.length && events.length === limitEventsToPage
-
-        const likeLine = [
-            getLikesRow(ctx, {
-                eventId: event.id,
-                likesCount: event.likes,
-                dislikesCount: event.dislikes,
-            }),
-            ...[isShowMore ? [Markup.callbackButton(i18Btn('show_more'), actionName('show_more'))] : []]
-        ]
-
-        await ctx.replyWithHTML(cardFormat(event), {
-            disable_web_page_preview: true,
-            reply_markup: Markup.inlineKeyboard(likeLine)
+        const events = await db.repoSearch.search({
+            query: ctx.session.search.request,
+            limit,
+            offset,
+            interval: range,
+            allowSearchById: isAdmin(ctx)
         })
+        return events
+    },
 
-        await sleep(300)
-    }
+    async getTotal(ctx: ContextMessageUpdate): Promise<number> {
+        return await db.repoSearch.searchGetTotal({
+            query: ctx.session.search.request,
+            interval: getNextWeekendRange(ctx.now()),
+            allowSearchById: isAdmin(ctx)
+        })
+    },
 
-    if (events.length === 0) {
-        if (ctx.session.paging.pagingOffset > 0) {
-            await ctx.reply(i18Msg('no_more_events'))
-        } else {
-            await ctx.reply(i18Msg('no_results'))
-        }
+    async noResults(ctx: ContextMessageUpdate) {
+        await ctx.replyWithHTML(i18Msg(ctx, 'no_results'))
+    },
+
+    analytics(ctx: ContextMessageUpdate, events: Event[], {limit, offset}: CurrentPage) {
+        const pageNumber = Math.floor(limit / offset) + 1
+
+        const pageTitle = pageNumber > 1 ? ` [Страница ${pageNumber}]` : ''
+        const resultsTitle = `${events.length > 0 ? ' есть результаты' : 'ничего не найдено'}`
+        ctx.ua.pv({
+            dp: `/search/${ctx.session.search.request}/${pageNumber > 1 ? `p${pageNumber}/` : ''}`,
+            dt: `Поиск по '${ctx.session.search.request} ${pageTitle}' ${resultsTitle}`
+        })
     }
-    ctx.ua.pv({
-        dp: `/search/${ctx.session.search.request}/`,
-        dt: `Поиск по '${ctx.session.search.request}' ${events.length > 0 ? ' есть результаты' : 'ничего не найдено'}`
-    })
-}
+})
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
         await prepareSessionStateIfNeeded(ctx)
-        Paging.reset(ctx)
+        EventsPager.reset(ctx)
 
         const {msg, markupMainMenu} = content(ctx)
 
@@ -101,26 +92,18 @@ scene
     .leave(async (ctx: ContextMessageUpdate) => {
         ctx.session.search = undefined
     })
-    .use(Paging.pagingMiddleware(actionName('show_more'),
-        async (ctx: ContextMessageUpdate) => {
-            Paging.increment(ctx, limitEventsToPage)
-            await showSearchResults(ctx)
-            await ctx.editMessageReplyMarkup()
-        }))
-    .hears(i18nSharedBtnName('back'), async (ctx: ContextMessageUpdate) => {
-        await ctx.scene.enter('main_scene')
-    })
-    .hears(/^[^/].*$/, async (ctx: ContextMessageUpdate) => {
-        Paging.reset(ctx)
+    .use(eventPager.middleware())
+    .hears(/^[^/].*$/, async (ctx, next) => {
+        if (ctx.match[0].match(emojiRegex())) {
+            await next()
+            return
+        }
+        EventsPager.reset(ctx)
         ctx.session.search.request = ctx.match[0]
         await warnAdminIfDateIsOverriden(ctx)
-        await showSearchResults(ctx)
+        await eventPager.showCards(ctx)
     })
 
-function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
-}
-
 export const searchScene = {
-    scene,
-    postStageActionsFn
+    scene
 } as SceneRegister

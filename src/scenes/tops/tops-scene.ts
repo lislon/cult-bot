@@ -197,11 +197,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event
         const isShowMore = (++count === events.length)
 
         const likeLine = [
-            getLikesRow(ctx, {
-                eventId: event.id,
-                likesCount: event.likes,
-                dislikesCount: event.dislikes,
-            }),
+            getLikesRow(ctx, event),
             ...[isShowMore ? [Markup.callbackButton(i18Btn(ctx, 'show_more'), actionName('show_more'))] : []]
         ]
 

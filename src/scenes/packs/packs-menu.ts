@@ -144,11 +144,7 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
     const buttons = [
         [
             Markup.callbackButton(i18Btn(ctx, 'event_prev'), actionName(`event_prev`)),
-            ...getLikesRow(ctx, {
-                eventId: event.id,
-                likesCount: event.likes,
-                dislikesCount: event.dislikes,
-            }),
+            ...getLikesRow(ctx, event),
             Markup.callbackButton(i18Btn(ctx, 'event_curr', {
                 page: getCurEventIndex(ctx) + 1,
                 total: await getEventsCount(ctx)

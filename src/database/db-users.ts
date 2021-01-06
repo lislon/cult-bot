@@ -19,10 +19,10 @@ export class UserSaveData {
     language_code?: string
     ua_uuid?: string
     active_at?: Date
-    blocked_at?: Date|null
-    eventsLiked?: number[]
-    eventsDisliked?: number[]
-    eventsFavorite?: number[]
+    blocked_at?: Date | null
+    events_liked?: number[]
+    events_disliked?: number[]
+    events_favorite?: number[]
     clicks?: number
 }
 
@@ -63,13 +63,14 @@ export class UserRepository {
     }
 
     public async findUserByTid(tid: number): Promise<UserDb | null> {
-        return this.db.oneOrNone<UserDb>('SELECT id, tid, ua_uuid FROM cb_users WHERE tid = $1', tid,
+        return this.db.oneOrNone<UserDb>('SELECT id, tid, ua_uuid, events_favorite FROM cb_users WHERE tid = $1', tid,
             (row: UserDb) => {
                 if (row !== null) {
                     return {
                         id: +row.id,
                         tid: +row.tid,
-                        ua_uuid: row.ua_uuid
+                        ua_uuid: row.ua_uuid,
+                        events_favorite: row.events_favorite
                     }
                 }
                 return row;

@@ -323,11 +323,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
         const isFirstCard = count == 1
         const isLastCardInTotal = ctx.session.paging.pagingOffset + count == totalCount
 
-        const likesRow = getLikesRow(ctx, {
-            eventId: event.id,
-            likesCount: event.likes,
-            dislikesCount: event.dislikes,
-        })
+        const likesRow = getLikesRow(ctx, event)
 
 
         let replyMarkup = undefined

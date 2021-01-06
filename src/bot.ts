@@ -19,6 +19,7 @@ import { tailScene } from './scenes/tail/tail-scene'
 import { filterOnlyFeedbackChat } from './lib/middleware/support-feedback.middleware'
 import { botErrorHandler } from './util/error-handler'
 import { likesScene } from './scenes/likes/likes-scene'
+import { favoritesScene } from './scenes/favorites/favorites-scene'
 
 logger.info(`starting bot...`);
 
@@ -44,7 +45,7 @@ bot
     .use(middlewares.logger)
     .use(middlewares.session)
     // .use(middlewares.logMiddleware('session'))
-    .use(middlewares.userSaveMiddleware)
+    .use(middlewares.userMiddleware)
     .use(middlewares.dateTime)
     .use(middlewares.analyticsMiddleware)
     .hears(/.+/, async (ctx, next) => {
@@ -67,6 +68,7 @@ myRegisterScene(bot, stage, [
     searchScene,
     feedbackScene,
     likesScene,
+    favoritesScene,
     tailScene
 ])
 

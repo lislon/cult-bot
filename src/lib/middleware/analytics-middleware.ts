@@ -31,10 +31,10 @@ function shouldCountStatForUser(ctx: ContextMessageUpdate) {
 }
 
 export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) => {
-    if (ctx.session.uaUuid === undefined) {
-        ctx.session.uaUuid = generateUuid()
+    if (ctx.session.user.uaUuid === undefined) {
+        ctx.session.user.uaUuid = generateUuid()
     }
-    ctx.ua = ua(botConfig.GOOGLE_ANALYTICS_ID, ctx.session.uaUuid);
+    ctx.ua = ua(botConfig.GOOGLE_ANALYTICS_ID, ctx.session.user.uaUuid);
     ctx.ua.set('ds', 'app')
 
     prepareSessionStateIfNeeded(ctx)

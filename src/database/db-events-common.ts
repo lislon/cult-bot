@@ -1,17 +1,56 @@
-import { MyInterval } from '../interfaces/app-interfaces'
+import { Event, MyInterval } from '../interfaces/app-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
-import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise'
+import { ColumnSet, IColumnConfig, IDatabase, IMain, ITask } from 'pg-promise'
 
 interface CountEventsQuery {
     interval: MyInterval
 }
+
 export interface LikeDislikeChange {
     plusLikes: number
     plusDislikes: number
 }
 
+export function mapEvent(row: any) {
+    return {
+        ...row,
+        id: +row.id
+    } as Event
+}
+
+const selectCbLikesDislikes = `cb.likes + cb.likes_fake AS likes, cb.dislikes + cb.dislikes_fake as dislikes`
+
+export const SELECT_ALL_EVENTS_FIELDS: string = [
+    'id',
+    'title',
+    'category',
+    'place',
+    'address',
+    'timetable',
+    'duration',
+    'price',
+    'notes',
+    'description',
+    'url',
+    'tag_level_1',
+    'tag_level_2',
+    'tag_level_3',
+    'order_rnd',
+    'rating',
+    'reviewer',
+    'is_anytime',
+    'geotag',
+    'ext_id',
+].map(t => `cb.${t}`).join(',') + ',' + selectCbLikesDislikes
+
+
+// 'likes',
+// 'dislikes',
+// 'likes_fake',
+// 'dislikes_fake',
+
 export class EventsCommonRepository {
-    public readonly selectCbLikesDislikes = `cb.likes + cb.likes_fake AS likes, cb.dislikes + cb.dislikes_fake as dislikes`
+
     readonly columns: ColumnSet
 
     readonly columnsUserLikes: ColumnSet
@@ -31,22 +70,20 @@ export class EventsCommonRepository {
             },
         ], {table: 'cb_events'})
 
+        function getArrayPushPopColumnSettings(name: string): IColumnConfig<{}> {
+            return {
+                name: name,
+                init: c => c.value > 0 ? `array_append(${name}, ${c.value}::int8)` : `array_remove(${name}, ${-c.value}::int8)`,
+                skip: (c: { value: any }) => c.value === null || c.value === undefined || c.value === 0,
+                mod: ':raw'
+            }
+        }
+
         this.columnsUserLikes = new pgp.helpers.ColumnSet([
             '?id',
-            {
-                name: 'events_liked',
-                init: c => c.value > 0 ? `array_append(events_liked, ${c.value}::int8)` : `array_remove(events_liked, ${-c.value}::int8)`,
-                skip: (c: { value: any }) => c.value === null || c.value === undefined || c.value === 0,
-                mod: ':raw'
-            },
-            {
-                name: 'events_disliked',
-                init: c => c.value > 0 ? `array_append(events_disliked, ${c.value}::int8)` : `array_remove(events_disliked, ${-c.value}::int8)`,
-                skip: (c: { value: any }) => c.value === null || c.value === undefined || c.value === 0,
-                mod: ':raw'
-            },
+            getArrayPushPopColumnSettings('events_liked'),
+            getArrayPushPopColumnSettings('events_disliked'),
         ], {table: 'cb_users'})
-
     }
 
     public async countEvents(query: CountEventsQuery): Promise<number> {
@@ -120,10 +157,23 @@ export class EventsCommonRepository {
 
     public async getLikesDislikes(eventId: number): Promise<[number, number]> {
         return this.db.one(`
-            select ${this.selectCbLikesDislikes}
+            select ${selectCbLikesDislikes}
             from cb_events cb
             where cb.id = $(eventId)
         `, {eventId}, (row) => [+row.likes, +row.dislikes])
     }
+
+    public async getFavorites(eventIds: number[]): Promise<Event[]> {
+        if (eventIds.length === 0) {
+            return []
+        }
+        return this.db.map(`
+            select ${SELECT_ALL_EVENTS_FIELDS}
+            from cb_events cb
+            JOIN unnest('{$(eventIds:list)}'::int[]) WITH ORDINALITY t(id, ord) USING (id)
+            ORDER BY ord;
+        `, {eventIds}, mapEvent)
+    }
+
 
 }

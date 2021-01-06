@@ -104,17 +104,17 @@ export const MOCK_UUID = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'
 export function getMockUser({
                                 tid = 1,
                                 ua_uuid = MOCK_UUID,
-                                eventsLiked = [],
-                                eventsDisliked = [],
-                                eventsFavorite = [],
-                             }: Partial<UserSaveData> = {}
+                                events_liked = [],
+                                events_disliked = [],
+                                events_favorite = [],
+                            }: Partial<UserSaveData> = {}
 ): UserSaveData {
     return {
         tid,
         ua_uuid,
-        eventsLiked,
-        eventsDisliked,
-        eventsFavorite
+        events_liked,
+        events_disliked,
+        events_favorite: events_favorite
     }
 }
 

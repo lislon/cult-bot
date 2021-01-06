@@ -18,7 +18,7 @@ const content = (ctx: ContextMessageUpdate) => {
     const menu = [
         ['customize'],
         ['tops', 'packs'],
-        ['search'],
+        ['search', 'favorites'],
         ...[(isAdmin(ctx) ? ['admin', 'feedback'] : ['feedback'])]
     ]
 
@@ -61,6 +61,9 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
         .hears(i18nModuleBtnName('feedback'), async (ctx: ContextMessageUpdate) => {
             await ctx.scene.enter('feedback_scene')
+        })
+        .hears(i18nModuleBtnName('favorites'), async (ctx: ContextMessageUpdate) => {
+            await ctx.scene.enter('favorites_scene')
         })
         .hears(i18nModuleBtnName('admin'), async (ctx: ContextMessageUpdate) => {
             await ifAdmin(ctx, () => ctx.scene.enter('admin_scene'))
@@ -114,7 +117,7 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
             `last_name=${ctx.from.last_name}`,
             `username=${ctx.from.username}`,
             `startPayload=${ctx.startPayload}`,
-            `ua_uuid=${ctx.session.uaUuid}`].join(' '))
+            `ua_uuid=${ctx.session.user.uaUuid}`].join(' '))
 
         // cn Campaign Name
         // cs

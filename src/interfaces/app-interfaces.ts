@@ -11,7 +11,7 @@ import { Visitor } from 'universal-analytics'
 import { PerformanceContext } from '../lib/middleware/performance-middleware'
 import { FeedbackSceneState } from '../scenes/feedback/feedback-scene'
 import { AnalyticsState } from '../lib/middleware/analytics-middleware'
-import { UserSaveState } from '../lib/middleware/user-save-middleware'
+import { UserState } from '../lib/middleware/user-middleware'
 import { HelpSceneState } from '../scenes/help/help-scene'
 import { PacksSceneState } from '../scenes/packs/packs-common'
 
@@ -47,10 +47,8 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         feedbackScene: FeedbackSceneState
         analytics: AnalyticsState,
         paging: PagingState
-        userSave: UserSaveState
+        user: UserState
         help: HelpSceneState,
-        userId: number
-        uaUuid: string
         language: 'en' | 'ru'
     }
     webhookReply: boolean

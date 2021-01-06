@@ -1,4 +1,11 @@
-import { cleanDb, getMockEvent, getMockUser, givenUsers, syncEventsDb4Test } from './db-test-utils'
+import {
+    cleanDb,
+    expectedTitlesStrict,
+    getMockEvent,
+    getMockUser,
+    givenUsers,
+    syncEventsDb4Test
+} from './db-test-utils'
 import { db, dbCfg } from '../../../src/database/db'
 import { mkInterval } from '../../lib/timetable/test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
@@ -85,4 +92,16 @@ describe('Events common', () => {
 
 
     })
+
+    test('test list favorites', async () => {
+        const [A, B, C] = await syncEventsDb4Test([
+            getMockEvent({title: 'A', eventTime}),
+            getMockEvent({title: 'B', eventTime}),
+            getMockEvent({title: 'C', eventTime}),
+        ])
+
+        const events = await db.repoEventsCommon.getFavorites([B, A, C])
+        expectedTitlesStrict(['B', 'A', 'C'], events)
+    }, 50000000)
+
 })

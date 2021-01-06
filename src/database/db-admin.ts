@@ -3,6 +3,7 @@ import { db } from './db'
 import { mapToPgInterval } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
 import { buildPostgresMd5Expression } from './db-sync-repository'
+import { SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
 
 export class StatByCat {
     category: string
@@ -86,7 +87,7 @@ export class AdminRepository {
     async findAllChangedEventsByCat(category: EventCategory, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<EventWithOldVersion[]> {
         const finalQuery = `
         select * FROM (
-            SELECT cb.*, ${this.snapshotSelectQueryPart}
+            SELECT ${SELECT_ALL_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
             FROM cb_events cb
             LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
             WHERE
@@ -114,7 +115,7 @@ export class AdminRepository {
     async findAllEventsByReviewer(reviewer: string, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<EventWithOldVersion[]> {
         const finalQuery = `
         select * FROM (
-            SELECT cb.*, ${this.snapshotSelectQueryPart}
+            SELECT ${SELECT_ALL_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
             FROM cb_events cb
             LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
             WHERE

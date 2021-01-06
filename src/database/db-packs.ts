@@ -3,6 +3,7 @@ import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { ColumnSet, IBaseProtocol, IDatabase, IMain, ITask } from 'pg-promise'
 import { db, IExtensions } from './db'
 import { zip } from 'lodash'
+import { SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
 
 export interface EventPackForSave {
     title: string
@@ -71,7 +72,7 @@ export class PacksRepository {
                 array_agg(pe.title) event_titles
             from cb_events_packs p
             join (
-                SELECT cb.*
+                SELECT ${SELECT_ALL_EVENTS_FIELDS}
                 FROM (
                     SELECT cbet.event_id, MIN(LOWER(cbet.entrance)) AS first_entrance
                     FROM cb_events_entrance_times cbet
@@ -101,7 +102,7 @@ export class PacksRepository {
 
     public async getEvent(eventId: number): Promise<Event> {
         return await db.one(`
-            SELECT cb.*
+            SELECT ${SELECT_ALL_EVENTS_FIELDS}
             FROM cb_events cb
             WHERE cb.id = $(eventId)
                   AND cb.deleted_at IS NULL

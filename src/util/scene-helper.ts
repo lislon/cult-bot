@@ -35,12 +35,14 @@ export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id
                 try {
                     return ctx.i18n.t(resourceKey, tplData)
                 } catch (e) {
-                    throw Error(`Compile error for template '${resourceKey}'`)
+                    throw Error(`Compile error for template '${resourceKey}': ${e}`)
                 }
             } else {
                 return byDefault
             }
         },
+        i18SharedMsg: (ctx: ContextMessageUpdate, id: string, tplData: object = undefined) =>
+            ctx.i18n.t(`shared.${id}`, tplData),
 
         sceneHelper: (ctx: ContextMessageUpdate) => {
             return {

@@ -2,7 +2,7 @@ import updateLogger from 'telegraf-update-logger'
 import telegrafThrottler from 'telegraf-throttler'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { parseISO } from 'date-fns'
-import { userSaveMiddleware } from './lib/middleware/user-save-middleware'
+import { userMiddleware } from './lib/middleware/user-middleware'
 import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
 import { Composer, session, Stage } from 'telegraf'
 import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
@@ -42,9 +42,9 @@ const dateTimeMiddleware = async (ctx: ContextMessageUpdate, next: any) => {
 
 function logMiddleware(str: string) {
     return (ctx: ContextMessageUpdate, next: any) => {
-        logger.silly(`before ${str}  (uauuId=${ctx.session?.uaUuid})`)
+        logger.silly(`before ${str}  (uauuId=${ctx.session?.user?.uaUuid})`)
         return Promise.resolve(next()).then(() => {
-            logger.silly(`after ${str} (uauuId=${ctx.session?.uaUuid})`)
+            logger.silly(`after ${str} (uauuId=${ctx.session?.user?.uaUuid})`)
         })
     }
 }
@@ -63,7 +63,7 @@ export default {
     logger: updateLogger({colors: true}),
     session: sessionMechanism,
     logMiddleware: logMiddleware,
-    userSaveMiddleware,
+    userMiddleware: userMiddleware,
     analyticsMiddleware,
     supportFeedbackMiddleware
 }
@@ -81,22 +81,19 @@ export const myRegisterScene = (bot: Composer<ContextMessageUpdate>,
                                 stage: Stage<SceneContextMessageUpdate>,
                                 scenesReg: SceneRegister[]) => {
     scenesReg.map(scene => {
-        if (scene.preSceneGlobalActionsFn) {
-            scene.preSceneGlobalActionsFn(bot)
-        }
+        scene.preSceneGlobalActionsFn?.(bot)
     })
     // bot.use(logMiddleware('stage.middleware()'))
     bot.use(stage.middleware())
     scenesReg.map(scene => {
-        if (scene.preStageGlobalActionsFn) {
-            scene.preStageGlobalActionsFn(bot)
-        }
+        scene.preStageGlobalActionsFn?.(bot)
+
         if (scene.scene !== undefined) {
             stage.register(scene.scene)
         }
         // all middlewares registered inside scene.postStageActionsFn will have correct ctx.i18nScene
         // This is needed for ctx.i18nMsg functions
-        scene.postStageActionsFn(bot)
+        scene.postStageActionsFn?.(bot)
     })
     return stage
 }

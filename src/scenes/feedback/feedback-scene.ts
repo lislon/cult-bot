@@ -38,7 +38,7 @@ async function saveSurveyToDb(ctx: ContextMessageUpdate) {
         what_is_important: ctx.session.feedbackScene.whatImportant.map((r: string) => r.replace(/^opt_/, '')),
         why_not_like: ctx.session.feedbackScene.whyDontLike.map((r: string) => r.replace(/^opt_/, '')),
         isFound: ctx.session.feedbackScene.isFound,
-        userId: ctx.session.userId
+        userId: ctx.session.user.id
     })
 }
 
@@ -146,11 +146,11 @@ async function sendSurveyToOurGroup(ctx: ContextMessageUpdate, result: IsListeni
 
 function getBasicTemplateForAdminMessage(ctx: ContextMessageUpdate) {
     return {
-        userId: ctx.session.userId,
+        userId: ctx.session.user.id,
         user: formatUserName(ctx),
         text: ctx.message?.text,
         clickCount: countInteractions(ctx),
-        uaUuid: ctx.session.uaUuid
+        uaUuid: ctx.session.user.uaUuid
     }
 }
 
@@ -182,7 +182,7 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
         }
 
         await db.repoFeedback.saveFeedback({
-            userId: ctx.session.userId,
+            userId: ctx.session.user.id,
             messageId: ctx.message.message_id,
             feedbackText: ctx.message.text || 'other media: ' + JSON.stringify(ctx.message),
             adminChatId: botConfig.SUPPORT_FEEDBACK_CHAT_ID,

@@ -3,6 +3,7 @@ import { TagCategory } from '../interfaces/db-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
 import { addMinutes } from 'date-fns'
+import { mapEvent, SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
 
 export interface TopEventsQuery {
     category: EventCategory
@@ -26,7 +27,7 @@ export class TopEventsRepository {
         }
 
         const primaryEvents = `
-            SELECT cb.*
+            SELECT ${SELECT_ALL_EVENTS_FIELDS}
             FROM cb_events cb
             WHERE
                 EXISTS
@@ -46,7 +47,7 @@ export class TopEventsRepository {
             select
                 top30.*
             from
-                (select cb.*
+                (select ${SELECT_ALL_EVENTS_FIELDS}
                 from cb_events cb
                 where
                     EXISTS
@@ -67,14 +68,14 @@ export class TopEventsRepository {
 
         const finalQuery = `(${primaryEvents}) UNION ALL (${secondaryEvents}) limit $(limit) offset $(offset)`
 
-        return await this.db.any(finalQuery,
+        return await this.db.map(finalQuery,
             {
                 interval: mapToPgInterval(adjustedIntervals),
                 category: query.category,
                 oblasti: query.oblasti || [],
                 limit: query.limit || 3,
                 offset: query.offset || 0
-            }) as Event[];
+            }, mapEvent);
     }
 
     private async loadTags(cat: TagCategory) {

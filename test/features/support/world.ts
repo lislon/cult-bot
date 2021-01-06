@@ -17,6 +17,7 @@ import { MarkupHelper } from '../lib/MarkupHelper'
 import { searchScene } from '../../../src/scenes/search/search-scene'
 import { botErrorHandler } from '../../../src/util/error-handler';
 import { likesScene } from '../../../src/scenes/likes/likes-scene'
+import { favoritesScene } from '../../../src/scenes/favorites/favorites-scene'
 
 const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
 
@@ -49,7 +50,7 @@ class CustomWorld {
             }),
             session(),
             // middlewares.logMiddleware('pre_session'),
-            middlewares.userSaveMiddleware,
+            middlewares.userMiddleware,
             middlewares.analyticsMiddleware,
             this.analyticsRecorder.middleware(),
             middlewares.dateTime,
@@ -65,6 +66,7 @@ class CustomWorld {
             packsScene,
             searchScene,
             likesScene,
+            favoritesScene,
             tailScene
         ])
         this.bot.catch(botErrorHandler)
