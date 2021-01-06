@@ -1,7 +1,7 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { chidrensTags, ContextMessageUpdate, EventFormat, MyInterval, TagLevel2 } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
-import { InlineKeyboardButton } from 'telegraf/typings/markup'
+import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
 import {
     checkboxi18nBtnId,
     generatePlural,
@@ -27,6 +27,8 @@ import { getISODay, startOfISOWeek } from 'date-fns'
 import { saveSession, SceneRegister } from '../../middleware-utils'
 import { isEmpty } from 'lodash'
 import { getLikesRow } from '../likes/likes-common'
+import { InlineKeyboardMarkup } from 'telegram-typings'
+import emojiRegex from 'emoji-regex'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
@@ -71,24 +73,37 @@ async function countFilteredEvents(ctx: ContextMessageUpdate) {
     return ctx.session.customize.resultsFound;
 }
 
-const content = async (ctx: ContextMessageUpdate) => {
+async function showFilteredEventsButton(ctx: ContextMessageUpdate) {
+    return Markup.callbackButton(i18Btn(ctx, 'show_personalized_events', {
+        eventPlural: await generateAmountSelectedPlural(ctx)
+    }), actionName('show_personalized_events'))
+}
+
+const getFilterMainButtons = async (ctx: ContextMessageUpdate): Promise<CallbackButton[][]> => {
     const selected = i18Btn(ctx, 'selected_filter_postfix')
+
+    function btn(name: string, state: string[]): CallbackButton {
+        return Markup.callbackButton(i18Btn(ctx, name) + (isEmpty(state) ? '' : ' ' + selected), actionName(name))
+    }
+
     const keyboard = [
         [
-            Markup.button(i18Btn(ctx, 'oblasti') + (isEmpty(ctx.session.customize.oblasti) ? '' : ' ' + selected)),
-            Markup.button(i18Btn(ctx, 'priorities') + (isEmpty(ctx.session.customize.cennosti) ? '' : ' ' + selected))
+            btn('oblasti', ctx.session.customize.oblasti),
+            btn('priorities', ctx.session.customize.cennosti),
         ],
         [
-            Markup.button(i18Btn(ctx, 'time') + (isEmpty(ctx.session.customize.time) ? '' : ' ' + selected)),
-            Markup.button(i18Btn(ctx, 'format') + (isEmpty(ctx.session.customize.format) ? '' : ' ' + selected))
+            btn('time', ctx.session.customize.time),
+            btn('format', ctx.session.customize.format),
         ],
-        [Markup.button(i18Btn(ctx, 'show_personalized_events'))],
-        [backButton(ctx)],
+        [
+            await showFilteredEventsButton(ctx)
+        ],
+        // [
+        //     Markup.callbackButton(i18Btn(ctx, 'back'), actionName('back')),
+        // ],
     ]
 
-    return {
-        markup: Extra.HTML().markup(Markup.keyboard(keyboard).resize())
-    }
+    return keyboard
 }
 
 type SectionName = 'oblasti_section' | 'cennosti_section' | 'time_section' | 'format_section'
@@ -109,10 +124,10 @@ class Menu {
         this.section = section
     }
 
-    button(tag: string, hide: boolean = false): InlineKeyboardButton {
+    button(tag: string): InlineKeyboardButton {
         const isSelected = this.selected.includes(tag)
         const text = i18Btn(this.ctx, `${this.section}.${tag}`) + checkboxi18nBtnId(this.ctx, isSelected)
-        return Markup.callbackButton(text, this.actionName(`${tag}`), hide)
+        return Markup.callbackButton(text, this.actionName(`${tag}`))
     }
 
     private actionName(postfix: string) {
@@ -145,15 +160,18 @@ class Menu {
             title: menuTitleWord,
             checkbox: checkboxi18nBtnId(this.ctx, isAnySubmenuSelected),
         })
+        const map: InlineKeyboardButton[][] = isOpen ? submenus.map(rows => rows.map(tag => this.button(decorateTag(tag)))) : []
+
         return [
             [Markup.callbackButton(menuTitleFull, this.actionName(menuTitle))],
-            ...submenus.map(rows => rows.map(tag => this.button(decorateTag(tag), !isOpen)))
+            ...map
         ]
     }
 
 }
 
-async function getKeyboardCennosti(ctx: ContextMessageUpdate, state: CustomizeSceneState) {
+async function getKeyboardCennosti(ctx: ContextMessageUpdate) {
+    const state = ctx.session.customize
     const menu = new Menu(ctx, state.cennosti, state.openedMenus, 'cennosti_section')
 
     const buttons = [
@@ -169,7 +187,7 @@ async function getKeyboardCennosti(ctx: ContextMessageUpdate, state: CustomizeSc
         [menu.button('#культурныйбазис')],
         // [Markup.callbackButton(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}), actionName('show_filtered_events'))]
     ]
-    return Markup.inlineKeyboard(buttons)
+    return buttons
 }
 
 async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
@@ -202,7 +220,7 @@ async function getKeyboardOblasti(ctx: ContextMessageUpdate) {
             getSectionFromI18n('walks')
         ))
     ]
-    return Markup.inlineKeyboard(buttons)
+    return buttons
 }
 
 /**
@@ -245,7 +263,7 @@ async function getKeyboardTime(ctx: ContextMessageUpdate) {
         buttons = [...buttons, ...sun]
     }
 
-    return Markup.inlineKeyboard(buttons)
+    return buttons
 }
 
 async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
@@ -260,13 +278,13 @@ async function getMarkupKeyboard(ctx: ContextMessageUpdate) {
     ]).resize()
 }
 
-async function getKeyboardFormat(ctx: ContextMessageUpdate) {
+async function getKeyboardFormat(ctx: ContextMessageUpdate): Promise<InlineKeyboardButton[][]> {
     const menu = new Menu(ctx, ctx.session.customize.format, ctx.session.customize.openedMenus, 'format_section')
 
-    const buttons = [
-        [menu.button('online'), menu.button('outdoor')]
+    return [
+        [menu.button('online')],
+        [menu.button('outdoor')]
     ]
-    return Markup.inlineKeyboard(buttons)
 }
 
 function resetOpenMenus(ctx: ContextMessageUpdate) {
@@ -426,73 +444,153 @@ export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<st
     return undefined
 }
 
-async function withSubdialog(ctx: ContextMessageUpdate, subStage: CurrentStageType,  callback: () => Promise<void>) {
+async function withSubdialog(ctx: ContextMessageUpdate, subStage: StageType, callback: () => Promise<void>) {
     ctx.session.customize.currentStage = subStage
     prepareSessionStateIfNeeded(ctx)
     resetOpenMenus(ctx)
     resetBottomMessageWithNumberOfEventsFound(ctx)
 
     await callback()
-    await ctx.replyWithHTML(i18Msg(ctx, 'select_finger_up'), Extra.markup((await getMarkupKeyboard(ctx))))
-
-    await putOrRefreshCounterMessage(ctx)
+    // await ctx.replyWithHTML(i18Msg(ctx, 'select_finger_up'), Extra.markup((await getMarkupKeyboard(ctx))))
+    //
+    // await putOrRefreshCounterMessage(ctx)
 }
 
-function listenMarkupButtonsCategories() {
-    return new Composer()
-        .hears(new RegExp(i18nModuleBtnName('oblasti') + '.*'), async (ctx: ContextMessageUpdate) => {
-
-            await withSubdialog(ctx, 'oblasti', async () => {
-                await ctx.replyWithHTML(i18Msg(ctx, 'select_oblasti'), Extra.markup((await getKeyboardOblasti(ctx))))
-                ctx.ua.pv({dp: `/customize/rubrics/`, dt: `Подобрать под мои интересы > Рубрики`})
-            })
-
+export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineButtons: InlineKeyboardButton[][], text: string) {
+    const markup: InlineKeyboardMarkup = {
+        inline_keyboard: inlineButtons
+    };
+    const goodErrors = [
+        `Telegraf: "editMessageText" isn't available for "message::text"`,
+        `Telegraf: "editMessageReplyMarkup" isn't available for "message::text"`,
+    ]
+    try {
+        // if (ctx.session.lastText !== text) {
+        await ctx.editMessageText(text, {
+            parse_mode: 'HTML',
+            reply_markup: markup
         })
-        .hears(new RegExp(i18nModuleBtnName('priorities') + '.*'), async (ctx: ContextMessageUpdate) => {
+        // }
 
-            await withSubdialog(ctx, 'priorities', async () => {
-                await ctx.replyWithHTML(i18Msg(ctx, 'select_priorities'), Extra.markup((await getKeyboardCennosti(ctx, ctx.session.customize))))
-                ctx.ua.pv({dp: `/customize/priorities/`, dt: `Подобрать под мои интересы > Приоритеты`})
+    } catch (e) {
+        if (goodErrors.includes(e.message)) {
+            await ctx.replyWithHTML(text, {
+                reply_markup: markup
             })
+        } else {
+            throw e
+        }
+    }
+    // ctx.session.lastText = text
+}
 
-        })
-        .hears(new RegExp(i18nModuleBtnName('time') + '.*'), async (ctx: ContextMessageUpdate) => {
-            await withSubdialog(ctx, 'time', async () => {
-                await ctx.replyWithHTML(i18Msg(ctx, 'select_time'), Extra.markup((await getKeyboardTime(ctx))))
-                ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под мои интересы > Время`})
-            })
+async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType) {
 
-        })
-        .hears(new RegExp(i18nModuleBtnName('format') + '.*'), async (ctx: ContextMessageUpdate) => {
-            await withSubdialog(ctx, 'format', async () => {
-                await ctx.replyWithHTML(i18Msg(ctx, 'select_format'), Extra.markup((await getKeyboardFormat(ctx))))
-                ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под мои интересы > Формат`})
-            })
-        })
+    function navRow() {
+        return [Markup.callbackButton('---', actionName('---'))]
+    }
+
+    async function btnRow(btn1: string, btn2: string, selected: any[]): Promise<InlineKeyboardButton[]> {
+
+        function removeEmoji(str: string) {
+            return str.replace(emojiRegex(), '').trim()
+        }
+
+        let btn2Text
+        if (btn2 !== 'show_personalized_events') {
+            btn2Text = i18Btn(ctx, 'forward_icon', {btn: removeEmoji(i18Btn(ctx, 'next', {eventPlural: await generateAmountSelectedPlural(ctx)}))})
+        } else {
+            btn2Text = i18Btn(ctx, 'show_personalized_events', {eventPlural: await generateAmountSelectedPlural(ctx)})
+        }
+        return [
+            Markup.callbackButton(btn1 === 'up' ? i18Btn(ctx, 'up') : i18Btn(ctx, 'back'), actionName(btn1)),
+            Markup.callbackButton(btn2Text, actionName(btn2)),
+        ]
+
+        //
+        // return btns.map(btnType => {
+        //     switch (btnType) {
+        //         case 'back':
+        //             return Markup.callbackButton(i18Btn(ctx, 'back'), actionName('back_to_filters'))
+        //         case 'reset':
+        //             return Markup.callbackButton(i18Btn(ctx, 'reset_filter'), actionName('reset_filter'))
+        //         default:
+        //             return Markup.callbackButton(i18Btn(ctx, `go_${btnType}`), actionName(btnType))
+        //     }
+        // })
+    }
+
+    const kbs: Record<StageType, () => Promise<InlineKeyboardButton[][]>> = {
+        root: undefined,
+        format: async () => [...await getKeyboardFormat(ctx), await btnRow('up', 'oblasti', ctx.session.customize.format)],
+        oblasti: async () => [...await getKeyboardOblasti(ctx), await btnRow('format', 'priorities', ctx.session.customize.oblasti)],
+        priorities: async () => [...await getKeyboardCennosti(ctx), await btnRow('oblasti', 'time', ctx.session.customize.cennosti)],
+        time: async () => [...await getKeyboardTime(ctx), await btnRow('customize', 'show_personalized_events', ctx.session.customize.time)],
+    }
+
+    const inlineButtons =
+        [
+            ...await kbs[subStage]()
+        ]
+
+    const msg = await getMsgExplainFilter(ctx)
+    // const msg = i18Msg(ctx, `select_${subStage}`)
+    return await editMessageAndButtons(ctx, inlineButtons, msg ?? i18Msg(ctx, `select_${subStage}`))
 }
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
-        .use(listenMarkupButtonsCategories())
-        .hears(i18nModuleBtnName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
+        .action(actionName('oblasti'), async (ctx: ContextMessageUpdate) => {
+            await ctx.answerCbQuery()
+            await withSubdialog(ctx, 'oblasti', async () => {
+                await updateDialog(ctx, 'oblasti')
+                ctx.ua.pv({dp: `/customize/rubrics/`, dt: `Подобрать под мои интересы > Рубрики`})
+            })
+
+        })
+        .action(actionName('priorities'), async (ctx: ContextMessageUpdate) => {
+            await ctx.answerCbQuery()
+            await withSubdialog(ctx, 'priorities', async () => {
+                await updateDialog(ctx, 'priorities')
+                ctx.ua.pv({dp: `/customize/priorities/`, dt: `Подобрать под мои интересы > Приоритеты`})
+            })
+
+        })
+        .action(actionName('time'), async (ctx: ContextMessageUpdate) => {
+            await ctx.answerCbQuery()
+            await withSubdialog(ctx, 'time', async () => {
+                await updateDialog(ctx, 'time')
+                ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под мои интересы > Время`})
+            })
+
+        })
+        .action(actionName('format'), async (ctx: ContextMessageUpdate) => {
+            await ctx.answerCbQuery()
+            await withSubdialog(ctx, 'format', async () => {
+                await updateDialog(ctx, 'format')
+                ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под мои интересы > Формат`})
+            })
+        })
+        .action(actionName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
             await warnAdminIfDateIsOverriden(ctx)
             await showNextPortionOfResults(ctx)
         })
-        .hears(i18nModuleBtnName('reset_filter'), async (ctx: ContextMessageUpdate) => {
+        .action(actionName('reset_filter'), async (ctx: ContextMessageUpdate) => {
             await resetFilter(ctx)
             await goBackToCustomize(ctx)
-            await putOrRefreshCounterMessage(ctx)
+        })
+        .action(actionName('back_to_filters'), async (ctx: ContextMessageUpdate) => {
+            await ctx.answerCbQuery()
+            await goBackToCustomize(ctx)
         })
 }
 
 async function goBackToCustomize(ctx: ContextMessageUpdate) {
     prepareSessionStateIfNeeded(ctx)
     const explainMsg = await getMsgExplainFilter(ctx)
-    const msg = explainMsg !== undefined ? explainMsg : i18Msg(ctx, 'welcome')
+    const msg = explainMsg ?? undefined
     ctx.session.customize.currentStage = 'root'
-
-    const {markup} = await content(ctx)
-    await ctx.replyWithMarkdown(msg, markup)
+    await showMainMenu(ctx, msg)
 }
 
 function cennostiOptionLogic(ctx: ContextMessageUpdate, selected: string) {
@@ -533,7 +631,7 @@ function formatOptionLogic(ctx: ContextMessageUpdate, selected: string) {
     }
 }
 
-async function checkOrUncheckMenu(ctx: ContextMessageUpdate) {
+async function checkOrUncheckMenuState(ctx: ContextMessageUpdate) {
     await ctx.answerCbQuery()
     const menuTitle = ctx.match[1]
     if (ctx.session.customize.openedMenus.includes(menuTitle)) {
@@ -544,14 +642,29 @@ async function checkOrUncheckMenu(ctx: ContextMessageUpdate) {
 }
 
 
+async function showMainMenu(ctx: ContextMessageUpdate, text = i18Msg(ctx, 'welcome')) {
+    await ctx.replyWithHTML(text, Extra.markup(Markup.inlineKeyboard(await getFilterMainButtons(ctx))))
+
+    ctx.ua.pv({dp: `/customize/`, dt: `Подобрать под мои интересы`})
+}
+
+async function answerCbEventsSelected(ctx: ContextMessageUpdate) {
+    const count = await countFilteredEvents(ctx)
+
+    if (count > 0) {
+        await ctx.answerCbQuery(i18Msg(ctx, 'popup_selected',
+            {eventPlural: generatePlural(ctx, 'event', count)}))
+    } else {
+        await ctx.answerCbQuery(i18Msg(ctx, 'popup_zero_selected'))
+    }
+}
+
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
         prepareSessionStateIfNeeded(ctx)
 
-        const {markup} = await content(ctx)
-        await ctx.replyWithMarkdown(i18Msg(ctx, 'welcome'), markup)
-
-        ctx.ua.pv({dp: `/customize/`, dt: `Подобрать под мои интересы`})
+        await ctx.replyWithHTML(i18Msg(ctx, 'header'), Extra.markup(Markup.keyboard([i18Btn(ctx, 'back')]).resize()))
+        await showMainMenu(ctx)
     })
     .leave((ctx: ContextMessageUpdate) => {
         ctx.session.customize = undefined
@@ -562,57 +675,51 @@ scene
             await ctx.editMessageReplyMarkup()
             await showNextPortionOfResults(ctx)
         }))
-    .use(listenMarkupButtonsCategories())
     .action(actionName('show_filtered_events'), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
         await showNextPortionOfResults(ctx)
     })
     .action(/customize_scene[.]p_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
-        await checkOrUncheckMenu(ctx)
-        await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
+        await checkOrUncheckMenuState(ctx)
+        await updateDialog(ctx, 'priorities')
     })
     .action(/customize_scene[.]o_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
-        await checkOrUncheckMenu(ctx)
-        await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx))
+        await checkOrUncheckMenuState(ctx)
+        await updateDialog(ctx, 'oblasti')
     })
     .action(/customize_scene[.]t_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
-        await checkOrUncheckMenu(ctx)
-        await ctx.editMessageReplyMarkup(await getKeyboardTime(ctx))
+        await checkOrUncheckMenuState(ctx)
+        await updateDialog(ctx, 'time')
     })
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
         cennostiOptionLogic(ctx, ctx.match[1])
         resetPaging(ctx)
-        await ctx.editMessageReplyMarkup(await getKeyboardCennosti(ctx, ctx.session.customize))
-        await ctx.answerCbQuery(i18Msg(ctx, 'popup_selected',
-            {eventPlural: await generateAmountSelectedPlural(ctx)}))
-        await putOrRefreshCounterMessage(ctx)
+        await answerCbEventsSelected(ctx)
+        await updateDialog(ctx, 'priorities')
     })
     .action(/customize_scene[.]o_(.+)/, async (ctx: ContextMessageUpdate) => {
         oblastiOptionLogic(ctx, ctx.match[1])
         resetPaging(ctx)
-        // await ctx.answerCbQuery()
-        await ctx.editMessageReplyMarkup(await getKeyboardOblasti(ctx))
-        await ctx.answerCbQuery(i18Msg(ctx, 'popup_selected',
-            {eventPlural: await generateAmountSelectedPlural(ctx)}))
-        await putOrRefreshCounterMessage(ctx)
+        await answerCbEventsSelected(ctx)
+        await updateDialog(ctx, 'oblasti')
     })
     .action(/customize_scene[.]t_(.+)/, async (ctx: ContextMessageUpdate) => {
         timeOptionLogic(ctx, ctx.match[1])
         resetPaging(ctx)
 
-        await ctx.editMessageReplyMarkup(await getKeyboardTime(ctx))
-        await ctx.answerCbQuery(i18Msg(ctx, 'popup_selected',
-            {eventPlural: await generateAmountSelectedPlural(ctx)}))
-        await putOrRefreshCounterMessage(ctx)
+        await answerCbEventsSelected(ctx)
+        await updateDialog(ctx, 'time')
     })
     .action(/customize_scene[.]f_(.+)/, async (ctx: ContextMessageUpdate) => {
         formatOptionLogic(ctx, ctx.match[1])
         resetPaging(ctx)
 
-        await ctx.editMessageReplyMarkup(await getKeyboardFormat(ctx))
-        await ctx.answerCbQuery(i18Msg(ctx, 'popup_selected',
-            {eventPlural: await generateAmountSelectedPlural(ctx)}))
-        await putOrRefreshCounterMessage(ctx)
+        await answerCbEventsSelected(ctx)
+        await updateDialog(ctx, 'format')
+        // await putOrRefreshCounterMessage(ctx)
+    })
+    .action(actionName('dummy'), async (ctx: ContextMessageUpdate) => {
+        await ctx.answerCbQuery('Чтобы увидеть события, пройдите к следующему фильтру')
     })
     .action(actionName('last_event_back'), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
@@ -621,13 +728,7 @@ scene
             await goBackToCustomize(ctx)
         })
     })
-    .hears(i18nModuleBtnName('back_to_filters'), async (ctx: ContextMessageUpdate) => {
-        await resetSessionIfProblem(ctx, async () => {
-            prepareSessionStateIfNeeded(ctx)
-            await goBackToCustomize(ctx)
-        })
-    })
-    .hears(i18nSharedBtnName('back'), async (ctx: ContextMessageUpdate) => {
+    .hears(i18nModuleBtnName('back'), async (ctx: ContextMessageUpdate) => {
         await resetSessionIfProblem(ctx, async () => {
             prepareSessionStateIfNeeded(ctx)
             if (ctx.session.customize.currentStage === 'root') {
@@ -690,7 +791,7 @@ export const customizeScene = {
     postStageActionsFn
 } as SceneRegister
 
-type CurrentStageType = 'root' | 'time' | 'oblasti' | 'priorities' | 'format'
+type StageType = 'root' | 'time' | 'oblasti' | 'priorities' | 'format'
 
 export interface CustomizeSceneState {
     time: string[]
@@ -701,5 +802,5 @@ export interface CustomizeSceneState {
     eventsCounterMsgId?: number
     eventsCounterMsgText: string
     resultsFound: number
-    currentStage: CurrentStageType
+    currentStage: StageType
 }

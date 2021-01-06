@@ -9,6 +9,11 @@ import { match } from 'telegraf-i18n'
 const tail = new Composer<ContextMessageUpdate>()
 
 const backButtonsCatch = new Composer<ContextMessageUpdate>()
+backButtonsCatch
+    .hears(/(\s|^)Назад(\s|$)|◀️/, async ctx => {
+        logger.debug('main catch: %s', ctx.match[0])
+        await ctx.scene.enter('main_scene');
+    })
 i18n.resourceKeys('ru')
     .filter((id: string) => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.](back)$/))
     .forEach((id: string) => {
@@ -32,24 +37,16 @@ tail
     })
     .on('sticker', (ctx) => ctx.reply('👍'))
     .hears('hi', (ctx) => ctx.reply('Hey there'))
+    .use(backButtonsCatch)
     .hears(/.+/, async (ctx) => {
         await ctx.replyWithHTML('Введена непонятная команда. Вернемся вначало? /menu')
+        logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [text=${ctx.message.text}] Введена непонятная команда`)
     })
-    .use(backButtonsCatch)
     .action(/.+/, async (ctx) => {
-        logger.debug('Аварийный выход');
         await ctx.answerCbQuery()
-        await ctx.scene.enter('main_scene');
+        await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.unknown_action')});
+        logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [callback_data=${ctx.update?.callback_query?.data}] Аварийный выход`)
     })
-    .hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
-        await ctx.scene.enter('main_scene');
-    })
-    .hears(/.+/, async (ctx, next) => {
-        logger.info(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [text=${ctx.message.text}]`)
-
-        return await next()
-    })
-
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot.use(tail)

@@ -47,6 +47,12 @@ bot
     .use(middlewares.userSaveMiddleware)
     .use(middlewares.dateTime)
     .use(middlewares.analyticsMiddleware)
+    .hears(/.+/, async (ctx, next) => {
+        logger.info(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [text=${ctx.message.text}]`)
+
+        return await next()
+    })
+
 // .use(middlewares.logMiddleware('analyticsMiddleware'))
 
 myRegisterScene(bot, stage, [
