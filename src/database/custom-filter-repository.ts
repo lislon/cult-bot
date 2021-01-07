@@ -1,7 +1,6 @@
-import { chidrensTags, Event, EventFormat, moneyTags, MyInterval, TagLevel2 } from '../interfaces/app-interfaces'
+import { chidrensTags, EventFormat, moneyTags, MyInterval, TagLevel2 } from '../interfaces/app-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
-import { mapEvent, SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
 
 
 export interface CustomFilter {
@@ -10,31 +9,26 @@ export interface CustomFilter {
     format?: EventFormat
     oblasti?: string[]
     cennosti?: TagLevel2[]
-    offset?: number
-    limit?: number
 }
 export class CustomFilterRepository {
     constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
-    public async findEventsCustomFilter(customFilter: CustomFilter): Promise<Event[]> {
+    public async findEventIdsCustomFilter(customFilter: CustomFilter): Promise<number[]> {
         const {queryBody, queryParams} = doQueryCore(customFilter)
 
         const sql = `
-        SELECT ${SELECT_ALL_EVENTS_FIELDS} ${queryBody}
+        SELECT cb.id ${queryBody}
         order by
             cb.is_anytime ASC,
             cb.rating DESC,
             cb.title ASC
-        limit $(limit)
-        offset $(offset)
+        limit 50
     `
         return await this.db.map(sql,
             {
                 ...queryParams,
-                limit: customFilter.limit || 3,
-                offset: customFilter.offset || 0
-            }, mapEvent);
+            }, row => +row.id);
     }
 
 

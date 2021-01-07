@@ -1,15 +1,15 @@
 import { BaseScene, Composer, Extra, Markup } from 'telegraf'
-import { chidrensTags, ContextMessageUpdate, EventFormat, MyInterval, TagLevel2 } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, sleep } from '../../util/scene-helper'
-import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
 import {
-    checkboxi18nBtnId,
-    generatePlural,
-    getNextWeekendRange,
-    limitEventsToPage,
-    SessionEnforcer,
-    warnAdminIfDateIsOverriden
-} from '../shared/shared-logic'
+    chidrensTags,
+    ContextMessageUpdate,
+    Event,
+    EventFormat,
+    MyInterval,
+    TagLevel2
+} from '../../interfaces/app-interfaces'
+import { i18nSceneHelper } from '../../util/scene-helper'
+import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
+import { checkboxi18nBtnId, generatePlural, getNextWeekendRange, UpdatableMessageState } from '../shared/shared-logic'
 import { cardFormat } from '../shared/card-format'
 import {
     filterPastIntervals,
@@ -26,14 +26,30 @@ import { Paging } from '../shared/paging'
 import { getISODay, startOfISOWeek } from 'date-fns'
 import { saveSession, SceneRegister } from '../../middleware-utils'
 import { isEmpty } from 'lodash'
-import { getLikesRow } from '../likes/likes-common'
 import { InlineKeyboardMarkup } from 'telegram-typings'
 import emojiRegex from 'emoji-regex'
-import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
+import { prepareSessionStateIfNeeded } from './customize-common'
+import { getLikesRow } from '../likes/likes-common'
 
-const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
+const scene = new BaseScene<ContextMessageUpdate>('customize_scene')
 
 const {backButton, actionName, i18nModuleBtnName, revertActionName, scanKeys, i18nSharedBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
+
+export interface CustomizeSceneState extends UpdatableMessageState {
+    time: string[]
+    openedMenus: string[]
+    cennosti: TagLevel2[]
+    oblasti: string[]
+    format: string[]
+    eventsCounterMsgId?: number
+    eventsCounterMsgText: string
+    resultsFound: number
+    currentStage: StageType
+    prevStage?: StageType
+    // resultsCarusel: EventsSliderState
+    foundEventIds?: number[]
+    foundEventSelectedIdx?: number
+}
 
 function mapFormatToDbQuery(format: string[]) {
     if (format === undefined || format.length !== 1) {
@@ -88,20 +104,20 @@ const getFilterMainButtons = async (ctx: ContextMessageUpdate): Promise<Callback
     }
 
     const keyboard = [
-        // [
-        //     btn('oblasti', ctx.session.customize.oblasti),
-        //     btn('priorities', ctx.session.customize.cennosti),
-        // ],
-        // [
-        //     btn('time', ctx.session.customize.time),
-        //     btn('format', ctx.session.customize.format),
-        // ],
-        // [
-        //     await showFilteredEventsButton(ctx)
-        // ],
         [
-            Markup.callbackButton(i18Btn(ctx, 'start_configure'), actionName('format')),
+            btn('oblasti', ctx.session.customize.oblasti),
+            btn('priorities', ctx.session.customize.cennosti),
         ],
+        [
+            btn('time', ctx.session.customize.time),
+            btn('format', ctx.session.customize.format),
+        ],
+        [
+            await showFilteredEventsButton(ctx)
+        ],
+        // [
+        //     Markup.callbackButton(i18Btn(ctx, 'start_configure'), actionName('format')),
+        // ],
         // [
         //     Markup.callbackButton(i18Btn(ctx, 'back'), actionName('back')),
         // ],
@@ -309,70 +325,70 @@ async function resetFilter(ctx: ContextMessageUpdate) {
     }
 }
 
-async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
+async function getCustomizeEventIdList(ctx: ContextMessageUpdate): Promise<number[]> {
     prepareSessionStateIfNeeded(ctx)
 
-    const query = prepareRepositoryQuery(ctx)
-    const events = await db.repoCustomEvents.findEventsCustomFilter({
-        ...query,
-        limit: limitEventsToPage,
-        offset: ctx.session.paging.pagingOffset
-    })
-
-    const totalCount = await countFilteredEvents(ctx)
-
-    let count = 1
-    for (const event of events) {
-        const isLastCardOnPage = count == events.length
-        const isFirstCard = count == 1
-        const isLastCardInTotal = ctx.session.paging.pagingOffset + count == totalCount
-
-        const likesRow = getLikesRow(ctx, event)
-
-
-        let replyMarkup = undefined
-        if (isLastCardOnPage && !isLastCardInTotal) {
-            replyMarkup = Markup.inlineKeyboard([likesRow, [
-                Markup.callbackButton(i18Btn(ctx, 'show_more', {
-                    countLeft: totalCount - ctx.session.paging.pagingOffset - count
-                }), actionName('show_more'))
-            ]])
-        } else if (isLastCardInTotal) {
-            replyMarkup = Markup.inlineKeyboard([likesRow, [
-                Markup.callbackButton(i18Btn(ctx, 'back_to_filters'), actionName('last_event_back'))
-            ]])
-        }
-        else if (isFirstCard) {
-            replyMarkup = Markup.keyboard([Markup.button(i18nModuleBtnName('back_to_filters'))]).resize()
-        } else {
-            replyMarkup = Markup.inlineKeyboard([likesRow])
-        }
-
-        await ctx.replyWithHTML(cardFormat(event), {
-            disable_web_page_preview: true,
-            reply_markup: replyMarkup
+    if (ctx.session.customize.foundEventIds === undefined) {
+        ctx.session.customize.foundEventIds = await db.repoCustomEvents.findEventIdsCustomFilter({
+            ...prepareRepositoryQuery(ctx),
         })
-
-        analyticRecordEventView(ctx, event)
-
-        count++
-        await sleep(200)
     }
+    return ctx.session.customize.foundEventIds
+}
 
-    if (events.length === 0) {
-        await ctx.replyWithHTML(i18Msg(ctx, 'nothing_found', {body: getExplainFilterBody(ctx)}))
-    }
+export async function getCustomizeSelectedEvent(ctx: ContextMessageUpdate): Promise<Event> {
+    const eventIds = await getCustomizeEventIdList(ctx)
 
-    if (ctx.session.paging.pagingOffset === 0) {
-        ctx.ua.pv({dp: `/customize/results/`, dt: `Подобрать под мои интересы / ${totalCount} результатов`})
+    const curEventIndex = getCustomizeCurrentIdx(ctx)
 
-        const searchByTags = [
-            ...ctx.session.customize.cennosti,
-            ...ctx.session.customize.oblasti,
-            ...ctx.session.customize.format,
-            ...ctx.session.customize.time]
-        searchByTags.forEach(tag => ctx.ua.e('customize', 'search_tag', tag))
-    }
+    const events = await db.repoEventsCommon.getEventsByIds([eventIds[curEventIndex]])
+    return events[0]
+}
+
+function getCustomizeCurrentIdx(ctx: ContextMessageUpdate) {
+    return ctx.session.customize.foundEventSelectedIdx || 0
+}
+
+export async function updateMenuToCardView(ctx: ContextMessageUpdate) {
+    const event = await getCustomizeSelectedEvent(ctx)
+
+    const buttons = [
+        [
+            Markup.callbackButton(i18Btn(ctx, 'event_prev'), actionName(`event_prev`)),
+            ...getLikesRow(ctx, event),
+            Markup.callbackButton(i18Btn(ctx, 'event_curr', {
+                page: getCustomizeCurrentIdx(ctx) + 1,
+                total: (await getCustomizeEventIdList(ctx)).length
+            }) + ' ' + i18Btn(ctx, 'event_next'), actionName(`event_next`)),
+        ],
+        [
+            Markup.callbackButton(i18Btn(ctx, 'event_back',), actionName(`event_back`)),
+        ]
+    ]
+
+    await editMessageAndButtons(ctx, buttons,
+        cardFormat(event, {
+            showAdminInfo: false,
+            packs: true
+        })
+    )
+
+
+    //
+    // if (events.length === 0) {
+    //     await ctx.replyWithHTML(i18Msg(ctx, 'nothing_found', {body: getExplainFilterBody(ctx)}))
+    // }
+    //
+    // if (ctx.session.paging.pagingOffset === 0) {
+    //     ctx.ua.pv({dp: `/customize/results/`, dt: `Подобрать под мои интересы / ${totalCount} результатов`})
+    //
+    //     const searchByTags = [
+    //         ...ctx.session.customize.cennosti,
+    //         ...ctx.session.customize.oblasti,
+    //         ...ctx.session.customize.format,
+    //         ...ctx.session.customize.time]
+    //     searchByTags.forEach(tag => ctx.ua.e('customize', 'search_tag', tag))
+    // }
 }
 
 async function generateAmountSelectedPlural(ctx: ContextMessageUpdate) {
@@ -470,19 +486,22 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
     const goodErrors = [
         `Telegraf: "editMessageText" isn't available for "message::text"`,
         `Telegraf: "editMessageReplyMarkup" isn't available for "message::text"`,
+        '400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message'
     ]
     try {
-        // if (ctx.session.lastText !== text) {
+
         await ctx.editMessageText(text, {
             parse_mode: 'HTML',
+            disable_web_page_preview: true,
             reply_markup: markup
         })
-        // }
+
 
     } catch (e) {
         if (goodErrors.includes(e.message)) {
             await ctx.replyWithHTML(text, {
-                reply_markup: markup
+                reply_markup: markup,
+                disable_web_page_preview: true
             })
         } else {
             throw e
@@ -506,6 +525,9 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType) {
         }
         return [
             Markup.callbackButton(i18Btn(ctx, 'back'), actionName(btn1)),
+            Markup.callbackButton(i18Btn(ctx, 'show_personalized_events', {
+                count: 'x'
+            }), actionName('show_personalized_events')),
             Markup.callbackButton(btn2Text, actionName(btn2)),
         ]
 
@@ -524,6 +546,7 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType) {
 
     const kbs: Record<StageType, () => Promise<InlineKeyboardButton[][]>> = {
         root: undefined,
+        results: undefined,
         format: async () => [...await getKeyboardFormat(ctx), await btnRow('back_to_filters', 'oblasti', ctx.session.customize.format)],
         oblasti: async () => [...await getKeyboardOblasti(ctx), await btnRow('format', 'priorities', ctx.session.customize.oblasti)],
         priorities: async () => [...await getKeyboardCennosti(ctx), await btnRow('oblasti', 'time', ctx.session.customize.cennosti)],
@@ -577,8 +600,15 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
 
         })
         .action(actionName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
-            await warnAdminIfDateIsOverriden(ctx)
-            await showNextPortionOfResults(ctx)
+            ctx.session.customize.prevStage = ctx.session.customize.currentStage
+            ctx.session.customize.currentStage = 'results'
+            await updateMenuToCardView(ctx)
+        })
+        .action(actionName('event_back'), async (ctx: ContextMessageUpdate) => {
+            await withSubdialog(ctx, ctx.session.customize.prevStage, async () => {
+                await updateDialog(ctx, ctx.session.customize.prevStage)
+                // ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под мои интересы > Время`})
+            })
         })
         .action(actionName('reset_filter'), async (ctx: ContextMessageUpdate) => {
             await resetFilter(ctx)
@@ -674,15 +704,9 @@ scene
     .leave((ctx: ContextMessageUpdate) => {
         ctx.session.customize = undefined
     })
-    .use(Paging.pagingMiddleware(actionName('show_more'),
-        async (ctx: ContextMessageUpdate) => {
-            Paging.increment(ctx, limitEventsToPage)
-            await ctx.editMessageReplyMarkup()
-            await showNextPortionOfResults(ctx)
-        }))
     .action(actionName('show_filtered_events'), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
-        await showNextPortionOfResults(ctx)
+        await updateMenuToCardView(ctx)
     })
     .action(/customize_scene[.]p_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
         await checkOrUncheckMenuState(ctx)
@@ -762,50 +786,9 @@ function resetPaging(ctx: ContextMessageUpdate) {
     ctx.session.customize.resultsFound = undefined;
 }
 
-function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
-    Paging.prepareSession(ctx)
-
-    const {
-        openedMenus,
-        cennosti,
-        time,
-        resultsFound,
-        eventsCounterMsgId,
-        eventsCounterMsgText,
-        oblasti,
-        format,
-        currentStage
-    } = ctx.session.customize || {}
-
-    ctx.session.customize = {
-        openedMenus: SessionEnforcer.array(openedMenus),
-        cennosti: SessionEnforcer.array(cennosti),
-        oblasti: SessionEnforcer.array(oblasti),
-        time: SessionEnforcer.array(time),
-        format: SessionEnforcer.array(format),
-        eventsCounterMsgText,
-        currentStage: currentStage || 'root',
-        resultsFound: SessionEnforcer.number(resultsFound),
-
-        eventsCounterMsgId: SessionEnforcer.number(eventsCounterMsgId),
-    }
-}
-
 export const customizeScene = {
     scene,
     postStageActionsFn
 } as SceneRegister
 
-type StageType = 'root' | 'time' | 'oblasti' | 'priorities' | 'format'
-
-export interface CustomizeSceneState {
-    time: string[]
-    openedMenus: string[]
-    cennosti: TagLevel2[]
-    oblasti: string[]
-    format: string[]
-    eventsCounterMsgId?: number
-    eventsCounterMsgText: string
-    resultsFound: number
-    currentStage: StageType
-}
+type StageType = 'root' | 'time' | 'oblasti' | 'priorities' | 'format' | 'results'

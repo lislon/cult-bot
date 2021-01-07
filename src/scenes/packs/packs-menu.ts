@@ -2,20 +2,19 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { Markup } from 'telegraf'
 import {
-    getCurEventIndex,
     getCurPackIndex,
     getEventsCount,
-    getEventSelected,
+    getPackEventSelected,
     getPacksCount,
+    getPacksCurEventIndex,
     getPackSelected,
     getPacksList,
-    resetEventIndex,
     resetPackIndex,
-    scene,
-    updateMenu
+    resetPacksEventIndex,
+    scene
 } from './packs-common'
 import { cardFormat } from '../shared/card-format'
-import { generatePlural, mySlugify } from '../shared/shared-logic'
+import { generatePlural, mySlugify, updateMenu } from '../shared/shared-logic'
 import emojiRegex from 'emoji-regex'
 import { getLikesRow } from '../likes/likes-common'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
@@ -41,12 +40,12 @@ export async function displayMainMenu(ctx: ContextMessageUpdate) {
     await updateMenu(ctx, {
         text: i18Msg(ctx, 'welcome'),
         buttons
-    })
+    }, ctx.session.packsScene)
 }
 
 export async function displayPackMenu(ctx: ContextMessageUpdate) {
     const pack = await getPackSelected(ctx)
-    resetEventIndex(ctx)
+    resetPacksEventIndex(ctx)
 
     ctx.ua.pv({dp: `/packs/${mySlugify(pack.title)}/`, dt: `Подборки > ${pack.title}`})
 
@@ -76,12 +75,12 @@ export async function displayPackMenu(ctx: ContextMessageUpdate) {
     await updateMenu(ctx, {
         text: text,
         buttons
-    })
+    }, ctx.session.packsScene)
 }
 
 export async function displayEventsMenu(ctx: ContextMessageUpdate) {
     const pack = await getPackSelected(ctx)
-    const event = await getEventSelected(ctx)
+    const event = await getPackEventSelected(ctx)
 
     const packTitleNoEmoji = pack.title.replace(emojiRegex(), '').trim()
 
@@ -91,7 +90,7 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
     })
     analyticRecordEventView(ctx, event)
 
-    const page = getCurEventIndex(ctx) + 1
+    const page = getPacksCurEventIndex(ctx) + 1
     const total = await getEventsCount(ctx)
 
     // V1:
@@ -140,7 +139,7 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
             Markup.callbackButton(i18Btn(ctx, 'event_prev'), actionName(`event_prev`)),
             ...getLikesRow(ctx, event),
             Markup.callbackButton(i18Btn(ctx, 'event_curr', {
-                page: getCurEventIndex(ctx) + 1,
+                page: getPacksCurEventIndex(ctx) + 1,
                 total: await getEventsCount(ctx)
             }) + ' ' + i18Btn(ctx, 'event_next'), actionName(`event_next`)),
         ],
@@ -157,5 +156,5 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
             packs: true
         }),
         buttons
-    })
+    }, ctx.session.packsScene)
 }

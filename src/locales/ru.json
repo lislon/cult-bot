@@ -212,7 +212,6 @@
         "forward_icon": "${btn}   ▶️",
         "back_icon": "◀️ ${btn}",
         "selected_filter_postfix": "✔",
-        "show_more": "Показать еще (${countLeft})",
         "menu_open": "➖ ${title}${checkbox}",
         "menu_closed": "➕ ${title}${checkbox}",
         "last_event_back": "◀️ Назад [к фильтрам]",
@@ -222,6 +221,10 @@
         "back": "◀️ Назад",
         "confirm_filter": "Дальше ▶️",
         "back_to_filters": "◀️ Назад [к фильтрам]",
+        "event_prev": "«",
+        "event_curr": "${page} / ${total}",
+        "event_next": "»",
+        "event_back": "🎯 Назад к фильтрам",
         "cennosti_section": {
           "menu_childrens": "С детьми",
           "#сдетьми0+": "0+",
@@ -229,7 +232,6 @@
           "#сдетьми6+": "6+",
           "#сдетьми12+": "12+",
           "#сдетьми16+": "16+",
-
           "menu_cost": "Стоимость",
           "#бесплатно": "Беспл",
           "#доступноподеньгам": "до 500₽",
@@ -400,15 +402,13 @@
       "reset": "Подсказки сброшены. /start чтобы начать сначала"
     },
     "likes_scene": {
-      "cb_answer_liked": "👍 +1",
-      "cb_answer_disliked": "👎 -1",
-      "cb_answer_unliked": "✊ Отмена",
-      "cb_answer_undisliked": "✊ Отмена",
+      "cb_answer_liked": "«${title}» 👍 +1",
+      "cb_answer_disliked": "«${title}» 👎 -1",
+      "cb_answer_unliked": "«${title}» ✊ Отмена",
+      "cb_answer_undisliked": "«${title}» ✊ Отмена",
       "keyboard": {
         "like": "👍 ${count}",
-        "dislike": "👎 ${count}",
-        "favorite": "⭐",
-        "favorite_done": "⭐ Сохранено"
+        "dislike": "👎 ${count}"
       }
     },
     "favorites_scene": {
@@ -419,8 +419,8 @@
       "event_item_detailed": " ${icon} <b>${title}</b>\n${timetable}",
       "event_item_past": " ${icon} <s>${title} (прошло ${date})</s>",
       "cb_answer_wiped": "🗑 ${count} прошедших событий удалено",
-      "cb_answer_favorited": "⭐ Сохранено",
-      "cb_answer_unfavorited": "Убрано из избранного",
+      "cb_answer_favorited": "⭐ «${title}»",
+      "cb_answer_unfavorited": "«${title}» убрано из избранного",
       "date_anytime": "в любое время",
       "deleted_card": "${icon} - <s>${title}</s> <i>(Удалено)</i>",
       "keyboard": {
@@ -429,7 +429,7 @@
         "detailed_view": "📆 Расписание",
         "wipe": "🗑 Убрать старые",
         "favorite": "⭐",
-        "favorite_done": "⭐ Сохранено",
+        "favorite_done": "⭐ ✔️",
         "remove_favorite": "🗑 "
       }
     },

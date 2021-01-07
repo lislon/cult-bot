@@ -30,8 +30,8 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                 const {plusLikes, plusDislikes} = await dbTask.repoEventsCommon.voteEvent(ctx.session.user.id, eventId, 'like')
 
                 logLikes(plusLikes, ctx, eventId, plusDislikes)
-
-                await ctx.answerCbQuery(i18Msg(ctx, plusLikes > 0 ? `cb_answer_liked` : `cb_answer_unliked`))
+                const [{title}] = await dbTask.repoEventsCommon.getEventsByIds([eventId])
+                await ctx.answerCbQuery(i18Msg(ctx, plusLikes > 0 ? `cb_answer_liked` : `cb_answer_unliked`, {title}))
                 await updateLikeDislikeInlineButtons(ctx, dbTask, eventId)
             })
         })
@@ -41,8 +41,8 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                 const {plusLikes, plusDislikes} = await dbTask.repoEventsCommon.voteEvent(ctx.session.user.id, eventId, 'dislike')
 
                 logLikes(plusLikes, ctx, eventId, plusDislikes)
-
-                await ctx.answerCbQuery(i18Msg(ctx, plusDislikes > 0 ? `cb_answer_disliked` : `cb_answer_undisliked`))
+                const [{title}] = await dbTask.repoEventsCommon.getEventsByIds([eventId])
+                await ctx.answerCbQuery(i18Msg(ctx, plusDislikes > 0 ? `cb_answer_disliked` : `cb_answer_undisliked`, {title}))
                 await updateLikeDislikeInlineButtons(ctx, dbTask, eventId)
             })
         })

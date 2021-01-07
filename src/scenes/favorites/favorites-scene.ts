@@ -232,12 +232,13 @@ scene
     })
 
 async function toggleFavoriteButtonLogic(ctx: ContextMessageUpdate, eventId: number) {
+    const [{title}] = await db.repoEventsCommon.getEventsByIds([eventId])
     if (ctx.session.user.eventsFavorite.includes(eventId)) {
         ctx.session.user.eventsFavorite = ctx.session.user.eventsFavorite.filter(id => id !== eventId)
-        await ctx.answerCbQuery(i18Msg(ctx, 'cb_answer_unfavorited'))
+        await ctx.answerCbQuery(i18Msg(ctx, 'cb_answer_unfavorited', {title}))
     } else {
         ctx.session.user.eventsFavorite.push(eventId)
-        await ctx.answerCbQuery(i18Msg(ctx, 'cb_answer_favorited'))
+        await ctx.answerCbQuery(i18Msg(ctx, 'cb_answer_favorited', {title}))
     }
     forceSaveUserDataInDb(ctx)
 }

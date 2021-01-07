@@ -5,6 +5,7 @@ import { CallbackButton } from 'telegraf/typings/markup'
 import { ITask } from 'pg-promise'
 import { IExtensions } from '../../database/db'
 import { getMsgInlineKeyboard, parseAndUpdateBtn } from '../shared/shared-logic'
+import { getFavoriteBtnText } from '../favorites/favorites-common'
 
 const scene = new BaseScene<ContextMessageUpdate>('likes_scene');
 
@@ -18,10 +19,6 @@ export interface BtnLikeDislikeParams {
     eventId: number
     likesCount: number
     dislikesCount: number
-}
-
-export function getFavoriteBtnText(ctx: ContextMessageUpdate, isFavorite: boolean) {
-    return i18Btn(ctx, isFavorite ? 'favorite_done' : 'favorite')
 }
 
 export function getLikesRow(ctx: ContextMessageUpdate, event: Pick<Event, 'id' | 'likes' | 'dislikes'>): CallbackButton[] {

@@ -6,10 +6,11 @@ import { ru } from 'date-fns/locale'
 import { i18n } from '../../util/i18n'
 import { botConfig } from '../../util/bot-config'
 import plural from 'plural-ru'
-import { Markup } from 'telegraf'
+import { Extra, Markup } from 'telegraf'
 import { ExtraReplyMessage, InlineKeyboardMarkup } from 'telegraf/typings/telegram-types'
 import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
 import slugify from 'slugify'
+import { logger } from '../../util/logger'
 
 const YEAR_2020_WEEKENDS = [parseISO('2021-01-01 00:00:00'), parseISO('2021-01-11 00:00:00')]
 const START_SHOW_WEEKENDS_FROM = parseISO('2020-12-28 00:00:00')
@@ -141,4 +142,43 @@ export function mySlugify(text: string) {
 
 export function getMsgInlineKeyboard(ctx: ContextMessageUpdate) {
     return (ctx.update.callback_query.message as any)?.reply_markup as InlineKeyboardMarkup
+}
+
+export interface UpdatableMessageState {
+    msgId?: number
+    lastText?: string
+    lastMarkup?: CallbackButton[][]
+}
+
+export interface UpdateMenu {
+    text: string,
+    buttons: CallbackButton[][]
+}
+
+// @deprec -> editMessageAndButtons
+export async function updateMenu(ctx: ContextMessageUpdate, upd: UpdateMenu, state: UpdatableMessageState) {
+
+    let response;
+    if (state.msgId === undefined) {
+        response = await ctx.replyWithHTML(upd.text, {
+                ...Extra.markup(Markup.inlineKeyboard(upd.buttons)),
+                disable_web_page_preview: true
+            }
+        )
+    } else {
+
+        if (state.lastText === upd.text && JSON.stringify(state.lastMarkup) === JSON.stringify(upd.buttons)) {
+            logger.debug('message not changed')
+            return
+        }
+
+        response = await ctx.editMessageText(upd.text, Extra.HTML()
+            .webPreview(false)
+            .markup(Markup.inlineKeyboard(upd.buttons)))
+    }
+    if (typeof response !== 'boolean') {
+        state.msgId = response.message_id
+        state.lastText = upd.text
+        state.lastMarkup = upd.buttons
+    }
 }
