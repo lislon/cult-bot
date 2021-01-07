@@ -76,7 +76,7 @@ async function countFilteredEvents(ctx: ContextMessageUpdate) {
 
 async function showFilteredEventsButton(ctx: ContextMessageUpdate) {
     return Markup.callbackButton(i18Btn(ctx, 'show_personalized_events', {
-        eventPlural: await generateAmountSelectedPlural(ctx)
+        count: await countFilteredEvents(ctx)
     }), actionName('show_personalized_events'))
 }
 
@@ -88,16 +88,19 @@ const getFilterMainButtons = async (ctx: ContextMessageUpdate): Promise<Callback
     }
 
     const keyboard = [
+        // [
+        //     btn('oblasti', ctx.session.customize.oblasti),
+        //     btn('priorities', ctx.session.customize.cennosti),
+        // ],
+        // [
+        //     btn('time', ctx.session.customize.time),
+        //     btn('format', ctx.session.customize.format),
+        // ],
+        // [
+        //     await showFilteredEventsButton(ctx)
+        // ],
         [
-            btn('oblasti', ctx.session.customize.oblasti),
-            btn('priorities', ctx.session.customize.cennosti),
-        ],
-        [
-            btn('time', ctx.session.customize.time),
-            btn('format', ctx.session.customize.format),
-        ],
-        [
-            await showFilteredEventsButton(ctx)
+            Markup.callbackButton(i18Btn(ctx, 'start_configure'), actionName('format')),
         ],
         // [
         //     Markup.callbackButton(i18Btn(ctx, 'back'), actionName('back')),
@@ -385,13 +388,16 @@ function isFilterEmpty(ctx: ContextMessageUpdate) {
 async function getMsgForCountEvents(ctx: ContextMessageUpdate, count: number) {
     if (isFilterEmpty(ctx) && ctx.session.customize.currentStage !== 'root') {
         const tplData = {
-            show_personalized_events: i18Btn(ctx, 'show_personalized_events').replace(' ', '')
+            show_personalized_events: i18Btn(ctx, 'show_personalized_events', {count: 0}).replace(' ', '')
         }
         switch (ctx.session.customize.currentStage) {
             case 'oblasti': return i18Msg(ctx, 'select_counter_init_oblasti', tplData)
-            case 'priorities': return i18Msg(ctx, 'select_counter_init_priorities', tplData)
-            case 'format': return i18Msg(ctx, 'select_counter_init_format', tplData)
-            case 'time': return i18Msg(ctx, 'select_counter_init_time', tplData)
+            case 'priorities':
+                return i18Msg(ctx, 'select_counter_init_priorities', tplData)
+            case 'format':
+                return i18Msg(ctx, 'select_counter_init_format', tplData)
+            case 'time':
+                return i18Msg(ctx, 'select_counter_init_time', tplData)
         }
     } else if (count === 0) {
         return i18Msg(ctx, 'select_counter_zero')
@@ -399,6 +405,8 @@ async function getMsgForCountEvents(ctx: ContextMessageUpdate, count: number) {
         return i18Msg(ctx, 'select_counter', {eventPlural: await generateAmountSelectedPlural(ctx)})
     }
 }
+
+// Уберите условия с других фильтров, или добавьте
 
 async function putOrRefreshCounterMessage(ctx: ContextMessageUpdate) {
     const count = await countFilteredEvents(ctx)
@@ -423,14 +431,14 @@ function resetBottomMessageWithNumberOfEventsFound(ctx: ContextMessageUpdate) {
 
 function getExplainFilterBody(ctx: ContextMessageUpdate): string {
     let lines: string[] = [];
-    lines = [...lines, ...formatExplainTime(ctx, i18Msg)]
+    lines = [...lines, ...formatExplainFormat(ctx, i18Msg)]
     lines = [...lines, ...formatExplainOblasti(ctx, i18Msg)]
     lines = [...lines, ...formatExplainCennosti(ctx, i18Msg)]
-    lines = [...lines, ...formatExplainFormat(ctx, i18Msg)]
+    lines = [...lines, ...formatExplainTime(ctx, i18Msg)]
     return lines.join('\n')
 }
 
-export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<string | undefined> {
+export async function getMsgExplainFilter(ctx: ContextMessageUpdate, layoutId: 'layout' | 'layout_step'): Promise<string | undefined> {
     prepareSessionStateIfNeeded(ctx)
 
     const body = getExplainFilterBody(ctx).trim()
@@ -438,7 +446,7 @@ export async function getMsgExplainFilter(ctx: ContextMessageUpdate): Promise<st
     if (body !== '') {
         const count = await countFilteredEvents(ctx)
         const eventPlural = generatePlural(ctx, 'event', count)
-        return i18Msg(ctx, 'explain_filter.layout', {body, eventPlural})
+        return i18Msg(ctx, 'explain_filter.' + layoutId, {body, eventPlural})
     }
     return undefined
 }
@@ -497,7 +505,7 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType) {
             btn2Text = i18Btn(ctx, 'show_personalized_events', {eventPlural: await generateAmountSelectedPlural(ctx)})
         }
         return [
-            Markup.callbackButton(btn1 === 'up' ? i18Btn(ctx, 'up') : i18Btn(ctx, 'back'), actionName(btn1)),
+            Markup.callbackButton(i18Btn(ctx, 'back'), actionName(btn1)),
             Markup.callbackButton(btn2Text, actionName(btn2)),
         ]
 
@@ -516,10 +524,10 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType) {
 
     const kbs: Record<StageType, () => Promise<InlineKeyboardButton[][]>> = {
         root: undefined,
-        format: async () => [...await getKeyboardFormat(ctx), await btnRow('up', 'oblasti', ctx.session.customize.format)],
+        format: async () => [...await getKeyboardFormat(ctx), await btnRow('back_to_filters', 'oblasti', ctx.session.customize.format)],
         oblasti: async () => [...await getKeyboardOblasti(ctx), await btnRow('format', 'priorities', ctx.session.customize.oblasti)],
         priorities: async () => [...await getKeyboardCennosti(ctx), await btnRow('oblasti', 'time', ctx.session.customize.cennosti)],
-        time: async () => [...await getKeyboardTime(ctx), await btnRow('customize', 'show_personalized_events', ctx.session.customize.time)],
+        time: async () => [...await getKeyboardTime(ctx), await btnRow('priorities', 'show_personalized_events', ctx.session.customize.time)],
     }
 
     const inlineButtons =
@@ -527,13 +535,23 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType) {
             ...await kbs[subStage]()
         ]
 
-    const msg = await getMsgExplainFilter(ctx)
     // const msg = i18Msg(ctx, `select_${subStage}`)
-    return await editMessageAndButtons(ctx, inlineButtons, msg ?? i18Msg(ctx, `select_${subStage}`))
+    const explain = await getMsgExplainFilter(ctx, 'layout_step')
+    return await editMessageAndButtons(ctx, inlineButtons, i18Msg(ctx, `select_${subStage}`, {
+        breadcrumbs: i18Msg(ctx, `breadcrumbs_${subStage}`),
+        explain: explain ? `\n\n${explain}` : ''
+    }))
 }
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
+        .action(actionName('format'), async (ctx: ContextMessageUpdate) => {
+            await ctx.answerCbQuery()
+            await withSubdialog(ctx, 'format', async () => {
+                await updateDialog(ctx, 'format')
+                ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под мои интересы > Формат`})
+            })
+        })
         .action(actionName('oblasti'), async (ctx: ContextMessageUpdate) => {
             await ctx.answerCbQuery()
             await withSubdialog(ctx, 'oblasti', async () => {
@@ -558,13 +576,6 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             })
 
         })
-        .action(actionName('format'), async (ctx: ContextMessageUpdate) => {
-            await ctx.answerCbQuery()
-            await withSubdialog(ctx, 'format', async () => {
-                await updateDialog(ctx, 'format')
-                ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под мои интересы > Формат`})
-            })
-        })
         .action(actionName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
             await warnAdminIfDateIsOverriden(ctx)
             await showNextPortionOfResults(ctx)
@@ -581,7 +592,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
 
 async function goBackToCustomize(ctx: ContextMessageUpdate) {
     prepareSessionStateIfNeeded(ctx)
-    const explainMsg = await getMsgExplainFilter(ctx)
+    const explainMsg = await getMsgExplainFilter(ctx, 'layout')
     const msg = explainMsg ?? undefined
     ctx.session.customize.currentStage = 'root'
     await showMainMenu(ctx, msg)

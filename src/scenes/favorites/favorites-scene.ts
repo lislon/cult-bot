@@ -79,14 +79,14 @@ async function getListOfFavorites(ctx: ContextMessageUpdate, eventIds: number[])
     return eventsWithNearestDate
 }
 
-function nearstDate(now: Date, event: FavoriteEvent) {
+function nearestDate(now: Date, event: FavoriteEvent) {
     return first(event.parsedTimetable.timeIntervals.map(rightDate).filter(rightDate => isAfter(rightDate, now)))
 }
 
 async function formatListOfFavorites(ctx: ContextMessageUpdate, events: FavoriteEvent[]) {
     return events.map(event => {
         if (event.isFuture) {
-            const date = event.parsedTimetable.timetable.anytime ? i18Msg(ctx, 'date_anytime') : ruFormat(nearstDate(ctx.now(), event), 'dd MMMM')
+            const date = event.parsedTimetable.timetable.anytime ? i18Msg(ctx, 'date_anytime') : ruFormat(nearestDate(ctx.now(), event), 'dd MMMM')
             const timetable = formatTimetable(event)
 
             if (ctx.session.favorites.showDetails) {
