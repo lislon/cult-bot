@@ -409,13 +409,14 @@
     "favorites_scene": {
       "empty_list": "Здесь пока пусто. Сюда попадут события, которые вы отметите звездочкой (⭐)",
       "header": "\uD83D\uDC47",
-      "main": "В избранном ${eventsPlural}:\n\n${list}",
-      "event_item": " ${icon} <b>${title}</b> (${date})",
+      "main": "Отобрано ${eventsPlural}:\n\n${list}",
+      "event_item": " ${icon} <b>${title}</b> - <i>${date}</i>\n",
       "event_item_detailed": " ${icon} <b>${title}</b>\n${timetable}",
       "event_item_past": " ${icon} <s>${title} (прошло ${date})</s>",
       "cb_answer_wiped": "🗑 ${count} прошедших событий удалено",
       "cb_answer_favorited": "⭐ Сохранено",
       "cb_answer_unfavorited": "Убрано из избранного",
+      "date_anytime": "в любое время",
       "deleted_card": "${icon} - <s>${title}</s> <i>(Удалено)</i>",
       "keyboard": {
         "restore": "Восстановить ↩️",

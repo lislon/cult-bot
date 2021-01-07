@@ -17,7 +17,7 @@ import {
 import { leftDate, MomentIntervals, rightDate } from '../../lib/timetable/intervals'
 import { parseAndPredictTimetable, ParseAndPredictTimetableResult } from '../../lib/timetable/timetable-utils'
 import { first, last } from 'lodash'
-import { compareDesc, isAfter } from 'date-fns'
+import { compareAsc, compareDesc, isAfter } from 'date-fns'
 import { ERROR_MESSAGE_NOT_MODIFIED } from '../../util/error-handler'
 import { logger } from '../../util/logger'
 import { CurrentPage, EventsPager, PagingConfig } from '../shared/events-pager'
@@ -56,18 +56,37 @@ async function getListOfFavorites(ctx: ContextMessageUpdate, eventIds: number[])
             isFuture: hasEventsInFuture(parsedTimetable.timeIntervals, ctx.now())
         } as FavoriteEvent
     })
-        .sort((left, right) => compareDesc(left.firstDate, right.firstDate))
+        .sort((left, right) => {
+                if (left.isFuture === true && right.isFuture === true) {
+
+                    if (left.parsedTimetable.timetable.anytime === false && right.parsedTimetable.timetable.anytime === false) {
+                        return compareAsc(left.firstDate, right.firstDate)
+                    } else if (left.parsedTimetable.timetable.anytime === true) {
+                        return 1
+                    } else if (right.parsedTimetable.timetable.anytime === true) {
+                        return -1
+                    } else {
+                        return 0
+                    }
+
+                } else if (left.isFuture === false && right.isFuture === false) {
+                    return compareDesc(left.firstDate, right.firstDate)
+                } else {
+                    return left.isFuture ? -1 : 1
+                }
+            }
+        )
     return eventsWithNearestDate
 }
 
-function nearsetDate(now: Date, event: FavoriteEvent) {
-    return rightDate(last(event.parsedTimetable.timeIntervals))
+function nearstDate(now: Date, event: FavoriteEvent) {
+    return first(event.parsedTimetable.timeIntervals.map(rightDate).filter(rightDate => isAfter(rightDate, now)))
 }
 
 async function formatListOfFavorites(ctx: ContextMessageUpdate, events: FavoriteEvent[]) {
     return events.map(event => {
         if (event.isFuture) {
-            const date = ruFormat(nearsetDate(ctx.now(), event), 'dd MMMM')
+            const date = event.parsedTimetable.timetable.anytime ? i18Msg(ctx, 'date_anytime') : ruFormat(nearstDate(ctx.now(), event), 'dd MMMM')
             const timetable = formatTimetable(event)
 
             if (ctx.session.favorites.showDetails) {
@@ -110,7 +129,7 @@ async function getMainMenu(ctx: ContextMessageUpdate) {
 
         const hasOld = events.find(e => e.isFuture === false) !== undefined
 
-        markup = extraInlineMenu([[showCards, ...(hasOld ? [wipeButton] : []), showTimetable]])
+        markup = extraInlineMenu([[...(hasOld ? [wipeButton] : []), showTimetable], [showCards]])
 
         msg = i18Msg(ctx, 'main', {
             eventsPlural: generatePlural(ctx, 'event', events.length),
