@@ -1,5 +1,6 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { db } from '../../database/db'
+import { countInteractions } from './analytics-middleware'
 
 const UPDATE_EVERY_N_SECONDS = 5 * 60
 
@@ -29,7 +30,7 @@ function migrateOldSession(ctx: ContextMessageUpdate) {
         ctx.session.user.uaUuid = anySession.uaUuid
     }
 
-    delete anySession.gcMessages
+    delete anySession.mainScene?.gcMessages
     delete anySession.userId
     delete anySession.uaUuid
 }
@@ -80,6 +81,7 @@ async function updateOrInsertUser(ctx: ContextMessageUpdate) {
             active_at: new Date(),
             blocked_at: undefined,
             events_favorite: ctx.session.user.eventsFavorite,
+            clicks: countInteractions(ctx)
         })
     }
 }

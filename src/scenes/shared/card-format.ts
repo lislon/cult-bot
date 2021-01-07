@@ -19,7 +19,7 @@ function formatUrl(text: string) {
     return niceUrls
 }
 
-function formatTimetable(event: Event) {
+export function formatTimetable(event: Event) {
     const humanTimetable = getOnlyHumanTimetable(event.timetable);
 
     function formatCinemaUrls(humanTimetable: string) {
@@ -62,11 +62,19 @@ export interface CardOptions {
     packs?: boolean
 }
 
+export interface EventFavorite extends Event {
+    isFuture: boolean
+}
+
 function filterTagLevel2(row: Event | EventWithOldVersion) {
     return row.tag_level_2.filter(t => !t.startsWith('#_'))
 }
 
-export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions = { showAdminInfo: false }) {
+function isFavoriteCard(row: Event | EventFavorite): row is EventFavorite {
+    return (row as EventFavorite).isFuture !== undefined
+}
+
+export function cardFormat(row: Event | EventWithOldVersion | EventFavorite, options: CardOptions = {showAdminInfo: false}) {
     let text = ``;
     const rowWithOldVersion = row as EventWithOldVersion
     if (rowWithOldVersion.snapshotStatus !== undefined) {
@@ -78,6 +86,7 @@ export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions 
             text += '[OLD] '
         }
     }
+    const isFuture = !(isFavoriteCard(row) && row.isFuture == false)
 
     // if (options.packs) {
     //     text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`
@@ -87,10 +96,17 @@ export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions 
     // } else {
     //
     // }
+
     text += `${getCardHeaderCat(row)} <b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>`
+
     text += '\n'
     text += '\n'
-    text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`
+
+    if (isFuture) {
+        text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`
+    } else {
+        text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b> <i>(прошло)</i>`
+    }
 
     text += '\n'
     text += '\n'
@@ -104,7 +120,11 @@ export function cardFormat(row: Event|EventWithOldVersion, options: CardOptions 
     if (!fieldIsQuestionMarkOrEmpty(row.address)) {
         text += `📍 ${addHtmlNiceUrls(escapeHTML(row.address))}${map}\n`
     }
-    text += formatTimetable(row)
+    if (isFuture) {
+        text += formatTimetable(row)
+    } else {
+        text += `<s>${formatTimetable(row)}</s>`
+    }
     if (!fieldIsQuestionMarkOrEmpty(row.duration)) {
         text += `🕐 ${escapeHTML(formatEventDuration(row.duration))}\n`
     }

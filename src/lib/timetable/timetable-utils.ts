@@ -30,7 +30,6 @@ export interface ParseAndPredictTimetableResult {
     errors: string[]
     timeIntervals: MomentIntervals
     timetable?: EventTimetable
-
 }
 
 export function parseAndPredictTimetable(rawTimetable: string, now: Date): ParseAndPredictTimetableResult {

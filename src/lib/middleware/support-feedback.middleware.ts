@@ -10,10 +10,14 @@ import { isBlockedError } from '../../util/error-handler'
 import { logger } from '../../util/logger'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { parseTelegramMessageToHtml } from '../message-parser/message-parser'
+import { extraInlineMenu, getNextWeekRange, mySlugify, ruFormat } from '../../scenes/shared/shared-logic'
+import { ScenePack } from '../../database/db-packs'
+import { formatUserName } from '../../util/misc-utils'
+import ua from 'universal-analytics'
 
 const scene = new BaseScene<ContextMessageUpdate>('support_chat_scene');
 
-const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg } = i18nSceneHelper(scene)
+const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 export const supportFeedbackMiddleware = new Composer<ContextMessageUpdate>()
 
@@ -25,21 +29,30 @@ interface FormattedMailedMessages {
     btns: CallbackButton[][]
 }
 
-async function formatMessage(msg: Message): Promise<FormattedMailedMessages> {
+async function formatMessage(ctx: ContextMessageUpdate, msg: Message, allPacks: ScenePack[]): Promise<FormattedMailedMessages> {
     let text = parseTelegramMessageToHtml(msg)
     const matchButtonAtEnd = text.match(/\[\s*(.+)\s*\]\s*$/)
     if (matchButtonAtEnd) {
-        const packData = await db.repoPacks.findPackByTitle(matchButtonAtEnd[1])
+        const searchForPackTitle = matchButtonAtEnd[1]
+
+        const packData = allPacks.find(p => p.title.toLowerCase() === searchForPackTitle.toLowerCase().trim())
         if (packData !== undefined) {
             const btns = [[Markup.callbackButton(packData.title, `packs_scene.direct_${packData.id}`)]]
             text = text.replace(/\[.+\]\s*$/, '')
-            return { text, btns }
+            return {text, btns}
         } else {
-            text = text.replace(/\[.+\]\s*$/, '[ название не найдено ⛔️ ]')
+
+            const allPacks = await db.repoPacks.listPacks({
+                interval: getNextWeekRange(ctx.now())
+            })
+
+            text = text.replace(/\[.+\]\s*$/, i18Msg(ctx, 'pack_not_found', {
+                title: searchForPackTitle,
+            }))
         }
     }
 
-    return { text, btns: [[]] }
+    return {text, btns: []}
 }
 
 function i18MsgSupport(id: string, templateData?: any) {
@@ -56,24 +69,30 @@ async function startMailings(telegram: Telegram, mailingId: number) {
     const mailMsg = mailingMessages[mailingId]
     mailingMessages = {}
 
-    await telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, i18MsgSupport(`mailing_started`), {
-        parse_mode: 'HTML'
-    })
-
     const blockedUsers: number[] = []
     const sentOkUsers: number[] = []
 
-    const users = await db.repoUser.listUsersForMailing(botConfig.MAX_MAILINGS_PER_WEEK);
+    const users = await db.repoUser.listUsersForMailing(botConfig.MAILINGS_PER_WEEK_MAX);
     logger.info(`Starting mailing to ${users.length}`)
+    const nowFormat = ruFormat(new Date(), 'yyyy-MM-dd')
+
+
+    const analyticsPath = `/mailing/${nowFormat}-${mySlugify(mailMsg.text).substring(0, 40)}/`
 
     for (const user of users) {
         try {
             await telegram.sendMessage(user.tid, mailMsg.text, Extra.HTML()
                 .webPreview(false)
                 .markup(Markup.inlineKeyboard(mailMsg.btns)
-            ))
+                ))
+
             sentOkUsers.push(user.id)
-            await sleep(250)
+
+            const googleAnalytics = ua(botConfig.GOOGLE_ANALYTICS_ID, user.ua_uuid);
+            googleAnalytics.pageview(analyticsPath, undefined)
+            googleAnalytics.send()
+
+            await sleep(1000.0 / botConfig.MAILINGS_PER_SECOND)
         } catch (e) {
             if (isBlockedError(e)) {
                 blockedUsers.push(user.id)
@@ -99,7 +118,7 @@ async function startMailings(telegram: Telegram, mailingId: number) {
     await telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, i18MsgSupport(`mailing_done`, {
         users: sentOkUsers.length,
         blocked: blockedUsers.length,
-        maxPerWeek: botConfig.MAX_MAILINGS_PER_WEEK
+        maxPerWeek: botConfig.MAILINGS_PER_WEEK_MAX
     }), {
         parse_mode: 'HTML'
     })
@@ -114,19 +133,31 @@ supportFeedbackMiddleware
         }
         await next()
     })
-    .hears(/^s/, async (ctx: ContextMessageUpdate, next: any) => {
+    .hears(/^(s|ы|send|послать)\s*$/i, async (ctx: ContextMessageUpdate, next: any) => {
         if (ctx.message?.reply_to_message?.message_id !== undefined) {
             const messageId = ctx.message.reply_to_message.message_id
 
-            const messageToSend = await formatMessage(ctx.message.reply_to_message)
-            const users = await db.repoUser.listUsersForMailing(botConfig.MAX_MAILINGS_PER_WEEK);
-            mailingMessages = { [messageId]:  messageToSend }
+            const allPacks = await db.repoPacks.listPacks({
+                interval: getNextWeekRange(new Date())
+            })
+
+            const messageToSend = await formatMessage(ctx, ctx.message.reply_to_message, allPacks)
+            const users = await db.repoUser.listUsersForMailing(botConfig.MAILINGS_PER_WEEK_MAX);
+            mailingMessages = {[messageId]: messageToSend}
 
             await ctx.replyWithHTML(messageToSend.text, Extra.markup(
                 Markup.inlineKeyboard(messageToSend.btns)
             ))
 
-            await ctx.replyWithHTML(i18Msg(ctx, 'ready_to_send'), Extra.markup(
+
+            let msg = ''
+            if (messageToSend.btns.length > 0) {
+                msg = i18Msg(ctx, 'ready_to_send')
+            } else {
+                const list = allPacks.map(p => ` [ ${p.title} ]`).join('\n')
+                msg = i18Msg(ctx, 'ready_to_send_with_packs', {list})
+            }
+            await ctx.replyWithHTML(msg, Extra.markup(
                 Markup.inlineKeyboard([Markup.callbackButton(i18Btn(ctx, 'mailing_start', {
                     users: users.length
                 }), 'mailing_start_' + messageId)])
@@ -135,6 +166,9 @@ supportFeedbackMiddleware
     })
     .action(/mailing_start_(\d+)/, async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
+        await ctx.editMessageText(i18MsgSupport(`mailing_started`, {
+            name: formatUserName(ctx)
+        }), extraInlineMenu([]))
         setTimeout(startMailings, 0, ctx.telegram, +ctx.match[1])
     })
     .hears(/.+/, async (ctx: ContextMessageUpdate, next: any) => {

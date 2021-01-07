@@ -163,11 +163,11 @@ export class EventsCommonRepository {
         `, {eventId}, (row) => [+row.likes, +row.dislikes])
     }
 
-    public async getFavorites(eventIds: number[]): Promise<Event[]> {
+    public async getEventsByIds(eventIds: number[]): Promise<Event[]> {
         if (eventIds.length === 0) {
             return []
         }
-        return this.db.map(`
+        return await this.db.map(`
             select ${SELECT_ALL_EVENTS_FIELDS}
             from cb_events cb
             JOIN unnest('{$(eventIds:list)}'::int[]) WITH ORDINALITY t(id, ord) USING (id)
@@ -175,5 +175,14 @@ export class EventsCommonRepository {
         `, {eventIds}, mapEvent)
     }
 
+    public async logViews(eventIds: number[]): Promise<void> {
+        if (eventIds.length > 0) {
+            await this.db.none(`
+                update cb_events
+                set views = views + 1
+                WHERE id IN ($(eventIds:csv))
+            `, {eventIds})
+        }
+    }
 
 }

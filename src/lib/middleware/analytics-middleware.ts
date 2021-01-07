@@ -1,13 +1,19 @@
-import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import ua from 'universal-analytics'
 import { v4 as generateUuid } from 'uuid'
 import { botConfig } from '../../util/bot-config'
-import { bot } from '../../bot'
-import { isAdmin } from '../../util/scene-helper'
+import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
+import { BaseScene } from 'telegraf'
+import { db } from '../../database/db'
+import { logger } from '../../util/logger'
 
 export interface AnalyticsState {
     markupClicks: number
     inlineClicks: number
+}
+
+export interface AnalyticsStateTmp {
+    viewedEvents: number[]
 }
 
 export function countInteractions(ctx: ContextMessageUpdate): number {
@@ -24,6 +30,10 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         markupClicks: markupClicks || 0,
         inlineClicks: inlineClicks || 0,
     }
+
+    ctx.sessionTmp.analyticsScene = {
+        viewedEvents: []
+    }
 }
 
 function shouldCountStatForUser(ctx: ContextMessageUpdate) {
@@ -39,7 +49,7 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
 
     prepareSessionStateIfNeeded(ctx)
     if (ctx.updateType === 'message' && ctx.updateSubTypes.includes('text')) {
-        ctx.ua.e('Event', 'button', ctx.message.text, undefined)
+        ctx.ua.e('Button', 'type', ctx.message.text, undefined)
         ctx.session.analytics.markupClicks++
     }
     if (ctx.updateType === 'callback_query') {
@@ -52,7 +62,7 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
             .find(({ callback_data }: any) => callback_data === ctx.update.callback_query.data)
 
         if (buttonText !== undefined) {
-            ctx.ua.e('Event', 'button', buttonText.text, undefined)
+            ctx.ua.e('Button', 'click', buttonText.text, undefined)
         }
         ctx.session.analytics.inlineClicks++
     }
@@ -66,7 +76,7 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
         throw e
     } finally {
         if (ctx.perf !== undefined && ctx.perf.timeBeforeFirstMsg !== undefined) {
-            ctx.ua.timing('bot', 'timeBeforeFirstMsg', ctx.perf.timeBeforeFirstMsg)
+            ctx.ua.timing('category', 'timeBeforeFirstMsg', Math.ceil(ctx.perf.timeBeforeFirstMsg))
         }
         if (botConfig.GOOGLE_ANALYTICS_ID !== undefined) {
 
@@ -74,5 +84,22 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
                 ctx.ua.send()
             }
         }
+
+        if (botConfig.LOG_PAGE_VIEWS_IN_DB) {
+            try {
+                await db.repoEventsCommon.logViews(ctx.sessionTmp.analyticsScene.viewedEvents)
+            } catch (e) {
+                logger.error(e)
+            }
+        }
+
     }
+}
+
+const {i18SharedMsg} = i18nSceneHelper(new BaseScene<ContextMessageUpdate>(''))
+
+export function analyticRecordEventView(ctx: ContextMessageUpdate, event: Event) {
+    const label = `${i18SharedMsg(ctx, `category_icons.${event.category}`)} ${event.ext_id} ${event.title} [${event.place}]`
+    ctx.ua.event('Card View', 'view', label, undefined)
+    ctx.sessionTmp.analyticsScene.viewedEvents.push(+event.id)
 }

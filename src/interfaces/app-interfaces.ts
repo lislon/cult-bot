@@ -10,10 +10,11 @@ import { SearchSceneState } from '../scenes/search/search-scene'
 import { Visitor } from 'universal-analytics'
 import { PerformanceContext } from '../lib/middleware/performance-middleware'
 import { FeedbackSceneState } from '../scenes/feedback/feedback-scene'
-import { AnalyticsState } from '../lib/middleware/analytics-middleware'
+import { AnalyticsState, AnalyticsStateTmp } from '../lib/middleware/analytics-middleware'
 import { UserState } from '../lib/middleware/user-middleware'
 import { HelpSceneState } from '../scenes/help/help-scene'
 import { PacksSceneState } from '../scenes/packs/packs-common'
+import { FavoritesState } from '../scenes/favorites/favorites-scene'
 
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
@@ -36,6 +37,9 @@ export type EventFormat = 'online' | 'outdoor' | undefined
 
 export interface ContextMessageUpdate extends SceneContextMessageUpdate {
     i18n: I18n
+    sessionTmp: {
+        analyticsScene: AnalyticsStateTmp
+    },
     session: {
         topsScene: TopsSceneState
         packsScene: PacksSceneState
@@ -45,6 +49,7 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         timeInterval: TimeIntervalSceneState
         adminScene: AdminSceneState
         feedbackScene: FeedbackSceneState
+        favorites: FavoritesState
         analytics: AnalyticsState,
         paging: PagingState
         user: UserState

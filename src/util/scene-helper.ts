@@ -3,6 +3,7 @@ import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 import { ReversableTranslit } from '../lib/translit/reversable-translit'
 import { i18n } from './i18n'
 import { adminIds, adminUsernames, devUsernames } from './admins-list'
+import { CallbackButton } from 'telegraf/typings/markup'
 
 export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id'>) {
     const backAction = scene.id + '.button.back'
@@ -12,7 +13,7 @@ export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id
     }
 
     return {
-        backButton: (ctx: ContextMessageUpdate) => Markup.callbackButton(ctx.i18n.t('shared.keyboard.back'), backAction),
+        backButton: (ctx: ContextMessageUpdate): CallbackButton => Markup.callbackButton(ctx.i18n.t('shared.keyboard.back'), backAction),
         actionName: (id: string) => `${scene.id}.${ReversableTranslit.translit(id)}`,
         revertActionName: (id: string) => {
             if (id.startsWith('#_')) {

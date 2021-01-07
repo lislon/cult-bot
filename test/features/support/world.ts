@@ -49,6 +49,7 @@ class CustomWorld {
                 }
             }),
             session(),
+            middlewares.sessionTmp,
             // middlewares.logMiddleware('pre_session'),
             middlewares.userMiddleware,
             middlewares.analyticsMiddleware,

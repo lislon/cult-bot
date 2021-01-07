@@ -100,7 +100,7 @@ describe('Events common', () => {
             getMockEvent({title: 'C', eventTime}),
         ])
 
-        const events = await db.repoEventsCommon.getFavorites([B, A, C])
+        const events = await db.repoEventsCommon.getEventsByIds([B, A, C])
         expectedTitlesStrict(['B', 'A', 'C'], events)
     }, 50000000)
 

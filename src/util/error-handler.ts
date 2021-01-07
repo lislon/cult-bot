@@ -7,7 +7,7 @@ export function isBlockedError(error: any) {
     return error?.code === 403 && error.message.includes('bot was blocked by the user')
 }
 
-const ERROR_MESSAGE_NOT_MODIFIED = '400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message'
+export const ERROR_MESSAGE_NOT_MODIFIED = '400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message'
 
 export async function botErrorHandler(error: any, ctx: ContextMessageUpdate) {
     if (error.message.includes('query is too old and response timeout expired')) {

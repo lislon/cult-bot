@@ -117,7 +117,7 @@ export async function formatMessageForSyncReport(errors: SpreadSheetValidationEr
             .map(({cat, inserted, updated, recovered, deleted}) => {
                 let rows: string[] = [
                     i18Msg(ctx, `sync_stats_cat_header`, {
-                        icon: i18Msg(ctx, 'sync_stats_category_icons.' + cat),
+                        icon: i18SharedBtn(ctx, 'category_icons.' + cat),
                         categoryTitle: i18Msg(ctx, 'sync_stats_category_titles.' + cat)
                     })
                 ]

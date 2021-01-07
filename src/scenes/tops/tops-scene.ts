@@ -12,6 +12,7 @@ import { SceneRegister } from '../../middleware-utils'
 import { db } from '../../database/db'
 import { encodeTagsLevel1 } from '../../util/tag-level1-encoder'
 import { getLikesRow } from '../likes/likes-common'
+import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
 
 type SubMenuVariants = 'exhibitions_temp' | 'exhibitions_perm'
 
@@ -211,6 +212,7 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate, events: Event
             await ctx.replyWithHTML(i18Msg(ctx, 'its_fire'));
         }
 
+        analyticRecordEventView(ctx, event)
         await sleep(300)
     }
 

@@ -10,8 +10,12 @@ import { warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
 
-function loop(index: number|undefined, count: number, dir: string) {
+function loop(index: number | undefined, count: number, dir: string) {
     return (count + (index === undefined ? 0 : index) + (dir === 'prev' ? -1 : 1)) % count
+}
+
+function doNotUpdateInlineMenu(ctx: ContextMessageUpdate) {
+    ctx.session.packsScene.msgId = undefined
 }
 
 scene
@@ -65,6 +69,7 @@ scene
     })
     .hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
         await prepareSessionStateIfNeeded(ctx)
+        doNotUpdateInlineMenu(ctx)
         try {
             if (ctx.session.packsScene.packSelectedIdx === undefined) {
                 await ctx.scene.enter('main_scene')

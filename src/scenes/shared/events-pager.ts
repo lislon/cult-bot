@@ -3,26 +3,33 @@ import { MiddlewareFn } from 'telegraf/typings/composer'
 import { BaseScene, Composer, Markup } from 'telegraf'
 import { limitEventsToPage, SessionEnforcer } from './shared-logic'
 import { getLikesRow } from '../likes/likes-common'
-import { cardFormat } from './card-format'
+import { cardFormat, CardOptions } from './card-format'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { Paging } from './paging'
+import { CallbackButton } from 'telegraf/typings/markup'
+import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
 
 const scene = new BaseScene<ContextMessageUpdate>('');
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg} = i18nSceneHelper(scene)
 
 export type CurrentPage = { limit: number, offset: number }
 
-interface PagingConfig {
+export interface PagingConfig {
     hideNextBtnOnClick?: boolean
-    lastEventBackActionName?: string
+    onLastEvent?: (ctx: ContextMessageUpdate) => Promise<void>
+    cardOptions?: CardOptions
 
     nextPortion(ctx: ContextMessageUpdate, {limit, offset}: CurrentPage): Promise<Event[]>
 
     getTotal(ctx: ContextMessageUpdate): Promise<number>
 
-    noResults(ctx: ContextMessageUpdate): Promise<void>
+    noResults?(ctx: ContextMessageUpdate): Promise<void>
 
     analytics?(ctx: ContextMessageUpdate, events: Event[], page: CurrentPage): void
+
+    cardButtons?(ctx: ContextMessageUpdate, event: Event): Promise<CallbackButton[][]>
+
+    onNewPaging?(ctx: ContextMessageUpdate): Promise<void>
 }
 
 export class EventsPager {
@@ -59,7 +66,13 @@ export class EventsPager {
         ).middleware()
     }
 
-    public async showCards(ctx: ContextMessageUpdate) {
+    public async initialShowCards(ctx: ContextMessageUpdate) {
+        EventsPager.reset(ctx)
+        await this.config.onNewPaging?.(ctx)
+        await this.showCards(ctx)
+    }
+
+    private async showCards(ctx: ContextMessageUpdate) {
 
         const pagingInfo = {
             limit: limitEventsToPage,
@@ -71,23 +84,37 @@ export class EventsPager {
         if (ctx.session.paging.total === undefined) {
             ctx.session.paging.total = await this.config.getTotal(ctx)
         }
-        const countLeft = ctx.session.paging.total - pagingInfo.offset
-        let counter = 0;
+
+        let counter = 1;
         for (const event of events) {
 
-            const isShowMore = countLeft > 0 && ++counter === limitEventsToPage
+            const countLeft = ctx.session.paging.total - pagingInfo.offset - counter
+            const isShowMore = countLeft > 0 && counter === limitEventsToPage
+            const isLastEvent = countLeft == 0
+
+            counter++
+
+            const buttons = this.config.cardButtons ? await this.config.cardButtons(ctx, event) : [getLikesRow(ctx, event)]
 
             const likeLine = [
-                getLikesRow(ctx, event),
-                ...[isShowMore ? [Markup.callbackButton(i18nSharedBtnName('paging_show_more', {countLeft}), this.pagingActionName)] : []]
+                ...buttons,
+                ...[isShowMore ? [Markup.callbackButton(i18nSharedBtnName('paging_show_more', {countLeft}), this.pagingActionName)] : []],
+                // ...[isLastEvent && this.config.lastEventBackButton ? [this.config.lastEventBackButton(ctx)] : []]
             ]
 
-            await ctx.replyWithHTML(cardFormat(event), {
+            const html = cardFormat(event, this.config.cardOptions)
+            await ctx.replyWithHTML(html, {
                 disable_web_page_preview: true,
                 reply_markup: Markup.inlineKeyboard(likeLine)
             })
 
+            analyticRecordEventView(ctx, event)
+
             await sleep(300)
+
+            if (isLastEvent) {
+                await this.config.onLastEvent?.(ctx)
+            }
         }
 
         if (events.length === 0) {
@@ -101,7 +128,9 @@ export class EventsPager {
 
     public static reset(ctx: ContextMessageUpdate) {
         Paging.prepareSession(ctx)
-        ctx.session.paging.pagingOffset = 0;
+        ctx.session.paging = {
+            pagingOffset: 0
+        };
     }
 
     private prepareSession(ctx: ContextMessageUpdate) {

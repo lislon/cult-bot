@@ -21,7 +21,7 @@ export class SearchRepository {
 
     public async searchGetTotal(request: SearchRequest): Promise<number> {
         const {queryBody, queryParams} = this.formatQueryParts(request)
-        return await this.db.one(`SELECT COUNT(1) AS total FROM ${queryBody}`, queryParams, r => r.total);
+        return await this.db.one(`SELECT COUNT(1) AS total FROM ${queryBody}`, queryParams, r => +r.total);
     }
 
     public async search(request: SearchRequest): Promise<Event[]> {

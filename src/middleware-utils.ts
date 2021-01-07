@@ -40,6 +40,16 @@ const dateTimeMiddleware = async (ctx: ContextMessageUpdate, next: any) => {
 }
 
 
+function sessionTmp() {
+    return async (ctx: ContextMessageUpdate, next: any) => {
+        ctx.sessionTmp = {
+            analyticsScene: undefined
+        }
+        await next()
+    }
+
+}
+
 function logMiddleware(str: string) {
     return (ctx: ContextMessageUpdate, next: any) => {
         logger.silly(`before ${str}  (uauuId=${ctx.session?.user?.uaUuid})`)
@@ -62,6 +72,7 @@ export default {
     },
     logger: updateLogger({colors: true}),
     session: sessionMechanism,
+    sessionTmp: sessionTmp(),
     logMiddleware: logMiddleware,
     userMiddleware: userMiddleware,
     analyticsMiddleware,

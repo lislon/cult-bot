@@ -15,10 +15,10 @@ import {
     updateMenu
 } from './packs-common'
 import { cardFormat } from '../shared/card-format'
-import slugify from 'slugify'
-import { generatePlural } from '../shared/shared-logic'
+import { generatePlural, mySlugify } from '../shared/shared-logic'
 import emojiRegex from 'emoji-regex'
 import { getLikesRow } from '../likes/likes-common'
+import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
 
 
 const {actionName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
@@ -41,13 +41,6 @@ export async function displayMainMenu(ctx: ContextMessageUpdate) {
     await updateMenu(ctx, {
         text: i18Msg(ctx, 'welcome'),
         buttons
-    })
-}
-
-export function mySlugify(text: string) {
-    return slugify(text, {
-        lower: true,
-        strict: true
     })
 }
 
@@ -96,6 +89,7 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
         dp: `/packs/${mySlugify(packTitleNoEmoji)}/${mySlugify(event.ext_id)}`,
         dt: `Подборки > ${packTitleNoEmoji} > ${event.title}`
     })
+    analyticRecordEventView(ctx, event)
 
     const page = getCurEventIndex(ctx) + 1
     const total = await getEventsCount(ctx)

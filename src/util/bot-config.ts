@@ -20,11 +20,13 @@ export class BotConfig {
     public readonly WEBHOOK_PORT: number
     public readonly REDIS_URL: string
     public readonly NODE_ENV: Envs
-    public readonly DEBUG: string|undefined
+    public readonly DEBUG: string | undefined
     public readonly BOT_DISABLED: boolean
     public readonly LOG_LEVEL: string
 
-    public readonly MAX_MAILINGS_PER_WEEK: number
+    public readonly MAILINGS_PER_WEEK_MAX: number
+    public readonly MAILINGS_PER_SECOND: number
+    public readonly LOG_PAGE_VIEWS_IN_DB: boolean
 
     /**
      * Chat used to receive user feedback and send reply to it.
@@ -59,7 +61,9 @@ export class BotConfig {
         }
 
         this.SUPPORT_FEEDBACK_CHAT_ID = +process.env.SUPPORT_FEEDBACK_CHAT_ID || undefined
-        this.MAX_MAILINGS_PER_WEEK = +process.env.MAX_MAILINGS_PER_WEEK || 2
+        this.MAILINGS_PER_WEEK_MAX = +process.env.MAILINGS_PER_WEEK_MAX || 2
+        this.MAILINGS_PER_SECOND = +process.env.MAILINGS_PER_SECOND || 4
+        this.LOG_PAGE_VIEWS_IN_DB = !!process.env.LOG_PAGE_VIEWS_IN_DB || true
     }
 }
 

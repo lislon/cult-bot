@@ -29,6 +29,7 @@ import { isEmpty } from 'lodash'
 import { getLikesRow } from '../likes/likes-common'
 import { InlineKeyboardMarkup } from 'telegram-typings'
 import emojiRegex from 'emoji-regex'
+import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene');
 
@@ -345,9 +346,11 @@ async function showNextPortionOfResults(ctx: ContextMessageUpdate) {
         }
 
         await ctx.replyWithHTML(cardFormat(event), {
-                    disable_web_page_preview: true,
-                    reply_markup: replyMarkup
-                })
+            disable_web_page_preview: true,
+            reply_markup: replyMarkup
+        })
+
+        analyticRecordEventView(ctx, event)
 
         count++
         await sleep(200)
@@ -481,11 +484,6 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
 }
 
 async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType) {
-
-    function navRow() {
-        return [Markup.callbackButton('---', actionName('---'))]
-    }
-
     async function btnRow(btn1: string, btn2: string, selected: any[]): Promise<InlineKeyboardButton[]> {
 
         function removeEmoji(str: string) {

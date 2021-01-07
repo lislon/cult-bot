@@ -2,9 +2,9 @@ import { BaseScene, Markup } from 'telegraf'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { CallbackButton } from 'telegraf/typings/markup'
-import { InlineKeyboardButton, InlineKeyboardMarkup } from 'telegram-typings'
 import { ITask } from 'pg-promise'
 import { IExtensions } from '../../database/db'
+import { getMsgInlineKeyboard, parseAndUpdateBtn } from '../shared/shared-logic'
 
 const scene = new BaseScene<ContextMessageUpdate>('likes_scene');
 
@@ -36,30 +36,12 @@ export function isFavoriteEvent(eventId: number, ctx: ContextMessageUpdate) {
     return ctx.session.user.eventsFavorite.includes(+eventId)
 }
 
-async function parseAndUpdateBtn(replyMarkup: InlineKeyboardMarkup,
-                                 callbackDataToken: RegExp, updateFunc: (text: InlineKeyboardButton) => (InlineKeyboardButton)): Promise<undefined | InlineKeyboardMarkup> {
-    if (replyMarkup !== undefined) {
-        const newKeyboard: InlineKeyboardButton[][] = []
-        for (const row of replyMarkup.inline_keyboard) {
-            newKeyboard.push(
-                row.map(btn => {
-                    if (btn.callback_data.match(callbackDataToken)) {
-                        return updateFunc(btn)
-                    }
-                    return btn;
-                }))
-        }
-        return {inline_keyboard: newKeyboard}
-    }
-    return undefined
-}
-
 export async function updateLikeDislikeInlineButtons(ctx: ContextMessageUpdate, dbTask: ITask<IExtensions> & IExtensions, eventId: number) {
-    const orignalKeyboard = (ctx.update.callback_query.message as any)?.reply_markup as InlineKeyboardMarkup
+    const originalKeyboard = getMsgInlineKeyboard(ctx)
 
     const [likes, dislikes] = await dbTask.repoEventsCommon.getLikesDislikes(eventId)
 
-    let newKeyboard = await parseAndUpdateBtn(orignalKeyboard, /^(like|dislike)_/, (btn) => {
+    let newKeyboard = await parseAndUpdateBtn(originalKeyboard, /^(like|dislike)_/, (btn) => {
         if (btn.callback_data.startsWith('like_')) {
             return {...btn, text: i18Btn(ctx, 'like', {count: likes})}
         } else {
@@ -71,7 +53,7 @@ export async function updateLikeDislikeInlineButtons(ctx: ContextMessageUpdate, 
         return {...btn, text: getFavoriteBtnText(ctx, isFavoriteEvent(eventId, ctx))}
     })
 
-    if (JSON.stringify(newKeyboard) !== JSON.stringify(orignalKeyboard)) {
+    if (JSON.stringify(newKeyboard) !== JSON.stringify(originalKeyboard)) {
         await ctx.editMessageReplyMarkup(newKeyboard)
     }
 }

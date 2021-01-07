@@ -41,11 +41,16 @@ export interface EventTimetable {
     datesExact?: DateExact[]
     anytime?: boolean
 }
+
 export type MomentOrInterval = Date | Date[];
 export type MomentIntervals = MomentOrInterval[]
 
 export function rightDate(q: MomentOrInterval) {
     return Array.isArray(q) ? q[1] : q
+}
+
+export function leftDate(q: MomentOrInterval) {
+    return Array.isArray(q) ? q[0] : q
 }
 
 function toDateOrUndefined(dateStr: string) {

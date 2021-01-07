@@ -1,4 +1,4 @@
-import { BaseScene, Extra, Markup } from 'telegraf'
+import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { getNextWeekendRange, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
@@ -10,7 +10,7 @@ import emojiRegex from 'emoji-regex'
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene');
 
-const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg} = i18nSceneHelper(scene)
+const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
 
 export interface SearchSceneState {
     request: string
@@ -38,10 +38,7 @@ const content = (ctx: ContextMessageUpdate) => {
     }
 }
 
-
 const eventPager = new EventsPager({
-    hideNextBtnOnClick: true,
-
     async nextPortion(ctx: ContextMessageUpdate, {limit, offset}: CurrentPage): Promise<Event[]> {
         const range = getNextWeekendRange(ctx.now())
 
@@ -68,13 +65,21 @@ const eventPager = new EventsPager({
     },
 
     analytics(ctx: ContextMessageUpdate, events: Event[], {limit, offset}: CurrentPage) {
-        const pageNumber = Math.floor(limit / offset) + 1
+        const pageNumber = Math.floor(offset / limit) + 1
 
         const pageTitle = pageNumber > 1 ? ` [Страница ${pageNumber}]` : ''
         const resultsTitle = `${events.length > 0 ? ' есть результаты' : 'ничего не найдено'}`
+        ctx.ua.e('Search', 'query', ctx.session.search.request, undefined)
         ctx.ua.pv({
-            dp: `/search/${ctx.session.search.request}/${pageNumber > 1 ? `p${pageNumber}/` : ''}`,
+            dp: `/search/${encodeURI(ctx.session.search.request)}/${pageNumber > 1 ? `p${pageNumber}/` : ''}?q=${encodeURIComponent(ctx.session.search.request)}`,
             dt: `Поиск по '${ctx.session.search.request} ${pageTitle}' ${resultsTitle}`
+        })
+    },
+    async onLastEvent(ctx) {
+        await ctx.replyWithHTML(i18Msg(ctx, 'last_event'), {
+            reply_markup: Markup.inlineKeyboard([[
+                Markup.callbackButton(i18Btn(ctx, 'back_to_main'), actionName('back_to_main'))
+            ]])
         })
     }
 })
@@ -98,12 +103,21 @@ scene
             await next()
             return
         }
-        EventsPager.reset(ctx)
         ctx.session.search.request = ctx.match[0]
         await warnAdminIfDateIsOverriden(ctx)
-        await eventPager.showCards(ctx)
+        await eventPager.initialShowCards(ctx)
     })
 
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+    bot
+        .action(actionName('back_to_main'), async (ctx) => {
+            await ctx.answerCbQuery()
+            await ctx.scene.enter('main_scene')
+        })
+}
+
+
 export const searchScene = {
-    scene
+    scene,
+    postStageActionsFn
 } as SceneRegister
