@@ -1,4 +1,4 @@
-import { Composer, Extra, Markup } from 'telegraf'
+import { Composer } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { i18n } from '../../util/i18n'
@@ -6,7 +6,7 @@ import { SceneRegister } from '../../middleware-utils'
 import { displayEventsMenu, displayMainMenu, displayPackMenu } from './packs-menu'
 import { getEventsCount, getPacksCount, getPacksList, prepareSessionStateIfNeeded, scene } from './packs-common'
 import { logger } from '../../util/logger'
-import { warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
 
@@ -21,11 +21,8 @@ function doNotUpdateInlineMenu(ctx: ContextMessageUpdate) {
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
         await warnAdminIfDateIsOverriden(ctx)
-        await ctx.replyWithMarkdown(
-            i18Msg(ctx, 'header'),
-            Extra.HTML(true).markup(Markup.keyboard([backButton(ctx)]).resize())
-        )
 
+        await replyWithBackToMainMarkup(ctx)
         await displayMainMenu(ctx)
     })
     .leave(async (ctx) => {

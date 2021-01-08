@@ -1,7 +1,8 @@
 import { addDays, addHours } from 'date-fns/fp'
-import { MyInterval } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
 import { startOfISOWeek } from 'date-fns'
 import { filterByRange } from '../../lib/timetable/intervals'
+import { saveSession } from '../../middleware-utils'
 
 export function mapUserInputToTimeIntervals(times: string[], weekendInterval: MyInterval): MyInterval[] {
     const hours = (times)
@@ -35,4 +36,14 @@ export function mapUserInputToTimeIntervals(times: string[], weekendInterval: My
         }
     })
     return map
+}
+
+export async function resetSessionIfProblem(ctx: ContextMessageUpdate, callback: () => Promise<void>) {
+    try {
+        await callback()
+    } catch (e) {
+        ctx.session.customize = undefined
+        await saveSession(ctx)
+        throw e
+    }
 }

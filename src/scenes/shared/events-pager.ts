@@ -14,9 +14,7 @@ const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg}
 
 export type CurrentPage = { limit: number, offset: number }
 
-export interface PagingConfig {
-    hideNextBtnOnClick?: boolean
-    onLastEvent?: (ctx: ContextMessageUpdate) => Promise<void>
+export interface PagingCommonConfig {
     cardOptions?: CardOptions
 
     nextPortion(ctx: ContextMessageUpdate, {limit, offset}: CurrentPage): Promise<Event[]>
@@ -29,7 +27,13 @@ export interface PagingConfig {
 
     cardButtons?(ctx: ContextMessageUpdate, event: Event): Promise<CallbackButton[][]>
 
-    onNewPaging?(ctx: ContextMessageUpdate): Promise<void>
+    newQuery?(ctx: ContextMessageUpdate): Promise<void>
+}
+
+export interface PagingConfig extends PagingCommonConfig {
+    hideNextBtnOnClick?: boolean
+    lastEventEndButton?: (ctx: ContextMessageUpdate) => CallbackButton[]
+    onLastEvent?: (ctx: ContextMessageUpdate) => Promise<void>
 }
 
 export class EventsPager {
@@ -68,7 +72,7 @@ export class EventsPager {
 
     public async initialShowCards(ctx: ContextMessageUpdate) {
         EventsPager.reset(ctx)
-        await this.config.onNewPaging?.(ctx)
+        await this.config.newQuery?.(ctx)
         await this.showCards(ctx)
     }
 
@@ -96,10 +100,11 @@ export class EventsPager {
 
             const buttons = this.config.cardButtons ? await this.config.cardButtons(ctx, event) : [getLikesRow(ctx, event)]
 
+            const showMoreButton = Markup.callbackButton(i18nSharedBtnName('paging_show_more', {countLeft}), this.pagingActionName)
             const likeLine = [
                 ...buttons,
-                ...[isShowMore ? [Markup.callbackButton(i18nSharedBtnName('paging_show_more', {countLeft}), this.pagingActionName)] : []],
-                // ...[isLastEvent && this.config.lastEventBackButton ? [this.config.lastEventBackButton(ctx)] : []]
+                ...[isShowMore ? [showMoreButton] : []],
+                ...[isLastEvent && this.config.lastEventEndButton ? this.config.lastEventEndButton(ctx) : []]
             ]
 
             const html = cardFormat(event, this.config.cardOptions)

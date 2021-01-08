@@ -15,6 +15,7 @@ import { UserState } from '../lib/middleware/user-middleware'
 import { HelpSceneState } from '../scenes/help/help-scene'
 import { PacksSceneState } from '../scenes/packs/packs-common'
 import { FavoritesState } from '../scenes/favorites/favorites-scene'
+import { EventsSliderState } from '../scenes/shared/events-slider'
 
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
@@ -54,6 +55,7 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         paging: PagingState
         user: UserState
         help: HelpSceneState,
+        slider: EventsSliderState
         language: 'en' | 'ru'
     }
     webhookReply: boolean
@@ -85,6 +87,7 @@ export interface Event {
     reviewer: string
     likes: number
     dislikes: number
+    views?: number
 }
 
 export type MyInterval = {

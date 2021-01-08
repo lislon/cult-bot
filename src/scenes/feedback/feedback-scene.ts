@@ -1,10 +1,10 @@
-import { BaseScene, Extra, Markup, Telegraf } from 'telegraf'
+import { BaseScene, Extra, Telegraf } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
 import { db } from '../../database/db'
-import { SessionEnforcer } from '../shared/shared-logic'
+import { backToMainButtonTitle, replyWithBackToMainMarkup, SessionEnforcer } from '../shared/shared-logic'
 import { menuMiddleware } from './survey'
 import * as tt from 'telegraf/typings/telegram-types'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
@@ -46,11 +46,8 @@ scene
     .enter(async (ctx: ContextMessageUpdate) => {
         prepareSessionStateIfNeeded(ctx)
 
-        const buttons = Markup.keyboard([
-            [Markup.button(i18Btn(ctx, 'go_back'))]
-        ]).resize()
+        await replyWithBackToMainMarkup(ctx, i18Msg(ctx, 'welcome'))
 
-        await ctx.replyWithMarkdown(i18Msg(ctx, 'welcome'), Extra.HTML().markup(buttons))
         await menuMiddleware.replyToContext(ctx)
         // await ctx.replyWithMarkdown(i18Msg(ctx, 'take_survey'), Extra.HTML(true).markup(Markup.inlineKeyboard(
         //     [[Markup.callbackButton(i18Btn(ctx, 'take_survey'), 'take_survey')],
@@ -109,7 +106,7 @@ scene
         await next()
     })
     .use(menuMiddleware)
-    .hears(i18nModuleBtnName('go_back'), async (ctx: ContextMessageUpdate) => {
+    .hears(backToMainButtonTitle(), async (ctx: ContextMessageUpdate) => {
         await ctx.scene.enter('main_scene')
     })
     .hears(/^[^/].*$/, async (ctx: ContextMessageUpdate) => {

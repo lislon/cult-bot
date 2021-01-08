@@ -83,6 +83,7 @@ async function updateOrInsertUser(ctx: ContextMessageUpdate) {
             events_favorite: ctx.session.user.eventsFavorite,
             clicks: countInteractions(ctx)
         })
+        ctx.session.user.lastDbUpdated = new Date().getTime()
     }
 }
 

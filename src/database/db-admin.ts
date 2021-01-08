@@ -19,6 +19,8 @@ export interface EventWithOldVersion extends Event {
     snapshotStatus: 'updated' | 'inserted' | 'unchanged'
 }
 
+const SELECT_ADMIN_EVENT_FIELDS = `${SELECT_ALL_EVENTS_FIELDS}, views`
+
 export class AdminRepository {
 
     private snapshotSelectQueryPart = `
@@ -87,7 +89,7 @@ export class AdminRepository {
     async findAllChangedEventsByCat(category: EventCategory, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<EventWithOldVersion[]> {
         const finalQuery = `
         select * FROM (
-            SELECT ${SELECT_ALL_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
+            SELECT ${SELECT_ADMIN_EVENT_FIELDS}, ${this.snapshotSelectQueryPart}
             FROM cb_events cb
             LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
             WHERE
@@ -115,7 +117,7 @@ export class AdminRepository {
     async findAllEventsByReviewer(reviewer: string, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<EventWithOldVersion[]> {
         const finalQuery = `
         select * FROM (
-            SELECT ${SELECT_ALL_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
+            SELECT ${SELECT_ADMIN_EVENT_FIELDS}, ${this.snapshotSelectQueryPart}
             FROM cb_events cb
             LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
             WHERE

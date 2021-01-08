@@ -1,6 +1,8 @@
-import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, EventFormat, MyInterval } from '../../interfaces/app-interfaces'
 import { Paging } from '../shared/paging'
-import { SessionEnforcer } from '../shared/shared-logic'
+import { getNextWeekendRange, SessionEnforcer } from '../shared/shared-logic'
+import { mapUserInputToTimeIntervals } from './customize-utils'
+import { cleanOblastiTag } from './filters/customize-oblasti'
 
 export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     Paging.prepareSession(ctx)
@@ -30,5 +32,26 @@ export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         resultsFound: SessionEnforcer.number(resultsFound),
 
         eventsCounterMsgId: SessionEnforcer.number(eventsCounterMsgId),
+    }
+}
+
+export function getNextWeekendRangeForCustom(now: Date): MyInterval {
+    return getNextWeekendRange(now, '2weekends_only')
+}
+
+export function prepareRepositoryQuery(ctx: ContextMessageUpdate) {
+    function mapFormatToDbQuery(format: string[]) {
+        if (format === undefined || format.length !== 1) {
+            return undefined
+        }
+        return format[0] as EventFormat
+    }
+
+    return {
+        timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekendRangeForCustom(ctx.now())),
+        weekendRange: getNextWeekendRangeForCustom(ctx.now()),
+        cennosti: ctx.session.customize.cennosti,
+        oblasti: cleanOblastiTag(ctx),
+        format: mapFormatToDbQuery(ctx.session.customize.format)
     }
 }

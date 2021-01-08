@@ -11,6 +11,7 @@ import { ExtraReplyMessage, InlineKeyboardMarkup } from 'telegraf/typings/telegr
 import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
 import slugify from 'slugify'
 import { logger } from '../../util/logger'
+import { i18SharedBtn, i18SharedMsg } from '../../util/scene-helper'
 
 const YEAR_2020_WEEKENDS = [parseISO('2021-01-01 00:00:00'), parseISO('2021-01-11 00:00:00')]
 const START_SHOW_WEEKENDS_FROM = parseISO('2020-12-28 00:00:00')
@@ -181,4 +182,45 @@ export async function updateMenu(ctx: ContextMessageUpdate, upd: UpdateMenu, sta
         state.lastText = upd.text
         state.lastMarkup = upd.buttons
     }
+}
+
+export function backToMainButtonTitle() {
+    return i18SharedBtn('markup_back')
+}
+
+export async function replyWithBackToMainMarkup(ctx: ContextMessageUpdate, message: string = undefined) {
+    const markupWithBackButton = Extra.HTML().markup(Markup.keyboard([Markup.button(backToMainButtonTitle())]).resize())
+
+    await ctx.replyWithHTML(message ?? i18SharedMsg('markup_back_decoy'), markupWithBackButton)
+}
+
+export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineButtons: InlineKeyboardButton[][], text: string) {
+    const markup: InlineKeyboardMarkup = {
+        inline_keyboard: inlineButtons
+    }
+    const goodErrors = [
+        `Telegraf: "editMessageText" isn't available for "message::text"`,
+        `Telegraf: "editMessageReplyMarkup" isn't available for "message::text"`,
+        '400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message'
+    ]
+    try {
+
+        await ctx.editMessageText(text, {
+            parse_mode: 'HTML',
+            disable_web_page_preview: true,
+            reply_markup: markup
+        })
+
+
+    } catch (e) {
+        if (goodErrors.includes(e.message)) {
+            await ctx.replyWithHTML(text, {
+                reply_markup: markup,
+                disable_web_page_preview: true
+            })
+        } else {
+            throw e
+        }
+    }
+    // ctx.session.lastText = text
 }

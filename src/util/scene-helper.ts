@@ -5,6 +5,14 @@ import { i18n } from './i18n'
 import { adminIds, adminUsernames, devUsernames } from './admins-list'
 import { CallbackButton } from 'telegraf/typings/markup'
 
+export function i18SharedBtn(id: string, tplData: object = undefined) {
+    return i18n.t(`ru`, `shared.keyboard.${id}`, tplData)
+}
+
+export function i18SharedMsg(id: string, tplData: object = undefined) {
+    return i18n.t(`ru`, `shared.${id}`, tplData)
+}
+
 export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id'>) {
     const backAction = scene.id + '.button.back'
 

@@ -3,29 +3,36 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { isAdmin } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { logger } from '../../util/logger'
-import { i18n } from '../../util/i18n'
-import { match } from 'telegraf-i18n'
+import { backToMainButtonTitle } from '../shared/shared-logic'
 
 const tail = new Composer<ContextMessageUpdate>()
 
 const backButtonsCatch = new Composer<ContextMessageUpdate>()
 backButtonsCatch
+    .hears(backToMainButtonTitle(), async ctx => {
+        logger.debug('main catch: %s', ctx.match[0])
+        await ctx.scene.enter('main_scene')
+    })
     .hears(/(\s|^)Назад(\s|$)|◀️/, async ctx => {
         logger.debug('main catch: %s', ctx.match[0])
-        await ctx.scene.enter('main_scene');
+        await ctx.scene.enter('main_scene')
     })
-i18n.resourceKeys('ru')
-    .filter((id: string) => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.](back)$/))
-    .forEach((id: string) => {
-        backButtonsCatch.hears(match(id), async (ctx) => {
-            logger.debug('main catch: %s', id)
-            await ctx.scene.enter('main_scene');
-        });
+    .action(/[.]back$/, async (ctx) => {
+        await ctx.answerCbQuery()
+        await ctx.scene.enter('main_scene')
     })
+// i18n.resourceKeys('ru')
+//     .filter((id: string) => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.](back)$/))
+//     .forEach((id: string) => {
+//         backButtonsCatch.hears(match(id), async (ctx) => {
+//             logger.debug('main catch: %s', id)
+//             await ctx.scene.enter('main_scene');
+//         });
+//     })
 
 tail
     .command('menu', async (ctx: ContextMessageUpdate) => {
-        await ctx.scene.enter('main_scene');
+        await ctx.scene.enter('main_scene')
     })
     .command('error', async (ctx: ContextMessageUpdate) => {
         throw new Error('This is test error from userId=' + ctx.from.id)

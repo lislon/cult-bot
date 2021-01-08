@@ -1,4 +1,4 @@
-import { BaseScene, Composer, Extra, Markup } from 'telegraf'
+import { BaseScene, Composer, Markup } from 'telegraf'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { db } from '../../database/db'
@@ -6,10 +6,12 @@ import { SceneRegister } from '../../middleware-utils'
 import { forceSaveUserDataInDb } from '../../lib/middleware/user-middleware'
 import { getLikeDislikeButtonText, updateLikeDislikeInlineButtons } from '../likes/likes-common'
 import {
+    editMessageAndButtons,
     extraInlineMenu,
     generatePlural,
     getMsgInlineKeyboard,
     parseAndUpdateBtn,
+    replyWithBackToMainMarkup,
     ruFormat,
     SessionEnforcer,
     warnAdminIfDateIsOverriden
@@ -18,20 +20,20 @@ import { leftDate, MomentIntervals, rightDate } from '../../lib/timetable/interv
 import { parseAndPredictTimetable, ParseAndPredictTimetableResult } from '../../lib/timetable/timetable-utils'
 import { first, last } from 'lodash'
 import { compareAsc, compareDesc, isAfter } from 'date-fns'
-import { ERROR_MESSAGE_NOT_MODIFIED } from '../../util/error-handler'
-import { logger } from '../../util/logger'
 import { CurrentPage, EventsPager, PagingConfig } from '../shared/events-pager'
-import { cardFormat, formatTimetable } from '../shared/card-format'
+import { addHtmlNiceUrls, cardFormat, formatTimetable } from '../shared/card-format'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { InlineKeyboardMarkup } from 'telegram-typings'
+import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
+import { escapeHTML } from '../../util/string-utils'
 
-const scene = new BaseScene<ContextMessageUpdate>('favorites_scene');
+const scene = new BaseScene<ContextMessageUpdate>('favorites_scene')
 
 const {i18SharedMsg, i18Btn, i18Msg, i18SharedBtn, backButton, actionName} = i18nSceneHelper(scene)
 
 export interface FavoritesState {
     favoriteIdsSnapshot: number[]
-    showDetails: boolean
+    viewType: 'compact' | 'detailed'
 }
 
 export interface FavoriteEvent extends Event {
@@ -87,13 +89,20 @@ async function formatListOfFavorites(ctx: ContextMessageUpdate, events: Favorite
     return events.map(event => {
         if (event.isFuture) {
             const date = event.parsedTimetable.timetable.anytime ? i18Msg(ctx, 'date_anytime') : ruFormat(nearestDate(ctx.now(), event), 'dd MMMM')
-            const timetable = formatTimetable(event)
+            const timetable = formatTimetable(event).trimEnd()
 
-            if (ctx.session.favorites.showDetails) {
+            if (ctx.session.favorites.viewType === 'detailed') {
+
+
+                const details = [timetable]
+                if (!fieldIsQuestionMarkOrEmpty(event.place)) {
+                    details.push(`🌐 ${addHtmlNiceUrls(escapeHTML(event.place))}\n`)
+                }
+
                 return i18Msg(ctx, 'event_item_detailed', {
                     icon: i18SharedMsg(ctx, 'category_icons.' + event.category),
                     title: event.title,
-                    timetable,
+                    details: details.join('\n'),
                     date
                 })
             } else {
@@ -118,18 +127,22 @@ async function formatListOfFavorites(ctx: ContextMessageUpdate, events: Favorite
 
 async function getMainMenu(ctx: ContextMessageUpdate) {
     let msg
-    let markup = undefined
+    let buttons: CallbackButton[][] = []
     const events = await getListOfFavorites(ctx, ctx.session.user.eventsFavorite)
 
+    const back = backButton(ctx)
     if (events.length > 0) {
         const wipeButton = Markup.callbackButton(i18Btn(ctx, 'wipe'), actionName('wipe'))
         const showCards = Markup.callbackButton(i18Btn(ctx, 'show_cards', {count: events.length}), actionName('show_cards'))
-        const showTimetable = Markup.callbackButton(i18Btn(ctx, 'detailed_view'), actionName('detailed_view'))
+
+        const viewType = Markup.callbackButton(i18Btn(ctx, 'view_type', {
+            viewType: i18Btn(ctx, ctx.session.favorites.viewType === 'compact' ? 'view_type_compact' : 'view_type_detailed')
+        }), actionName('view_type'))
 
 
         const hasOld = events.find(e => e.isFuture === false) !== undefined
 
-        markup = extraInlineMenu([[...(hasOld ? [wipeButton] : []), showTimetable], [showCards]])
+        buttons = [[...(hasOld ? [wipeButton] : []), viewType], [back, showCards]]
 
         msg = i18Msg(ctx, 'main', {
             eventsPlural: generatePlural(ctx, 'event', events.length),
@@ -137,9 +150,10 @@ async function getMainMenu(ctx: ContextMessageUpdate) {
         })
     } else {
         msg = i18Msg(ctx, 'empty_list')
+        buttons = [[back]]
     }
 
-    return {msg, markup}
+    return {msg, buttons}
 }
 
 function cardButtonsRow(ctx: ContextMessageUpdate, event: Event) {
@@ -151,7 +165,7 @@ function cardButtonsRow(ctx: ContextMessageUpdate, event: Event) {
 }
 
 class FavoritePaging implements PagingConfig {
-    async onNewPaging(ctx: ContextMessageUpdate): Promise<void> {
+    async newQuery(ctx: ContextMessageUpdate): Promise<void> {
         ctx.session.favorites.favoriteIdsSnapshot = ctx.session.user.eventsFavorite
     }
 
@@ -163,9 +177,14 @@ class FavoritePaging implements PagingConfig {
         return (await getListOfFavorites(ctx, ctx.session.favorites.favoriteIdsSnapshot)).length
     }
 
-    public async cardButtons?(ctx: ContextMessageUpdate, event: Event): Promise<CallbackButton[][]> {
+    async cardButtons?(ctx: ContextMessageUpdate, event: Event): Promise<CallbackButton[][]> {
         return [cardButtonsRow(ctx, event)]
     }
+
+    lastEventEndButton(ctx: ContextMessageUpdate): CallbackButton[] {
+        return [Markup.callbackButton(i18Btn(ctx, 'back_to_favorite_main'), actionName(`back_to_favorite_main`))]
+    }
+
 
     analytics(ctx: ContextMessageUpdate, events: Event[], {limit, offset}: CurrentPage) {
         const pageNumber = Math.floor(limit / offset) + 1
@@ -183,30 +202,30 @@ const eventPager = new EventsPager(new FavoritePaging())
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     const {
         favoriteIdsSnapshot,
-        showDetails
+        viewType
     } = ctx.session.favorites || {}
 
     ctx.session.favorites = {
         favoriteIdsSnapshot: SessionEnforcer.array(favoriteIdsSnapshot),
-        showDetails: !!showDetails
+        viewType: SessionEnforcer.default(viewType, 'compact')
     }
 }
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
-        const markupWithBackButton = Extra.HTML().markup(Markup.keyboard([[backButton(ctx)]]).resize())
+        await replyWithBackToMainMarkup(ctx)
 
-        await ctx.replyWithHTML(i18Msg(ctx, 'header'), markupWithBackButton)
+
         await warnAdminIfDateIsOverriden(ctx)
         prepareSessionStateIfNeeded(ctx)
 
-        const {msg, markup} = await getMainMenu(ctx)
-        await ctx.replyWithHTML(msg, markup)
+        const {msg, buttons} = await getMainMenu(ctx)
+        await ctx.replyWithHTML(msg, extraInlineMenu(buttons))
 
         ctx.ua.pv({dp: `/favorites/`, dt: `Избранное`})
     })
     .leave((ctx: ContextMessageUpdate) => {
-        ctx.session.favorites = undefined
+        ctx.session.favorites.favoriteIdsSnapshot = undefined
     })
     .action(/^favorite_(\d+)/, async (ctx: ContextMessageUpdate) => {
         const eventId = +ctx.match[1]
@@ -277,27 +296,19 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                 })
             }
         })
-        .action(actionName('detailed_view'), async ctx => {
+        .action(actionName('view_type'), async ctx => {
             await ctx.answerCbQuery()
             prepareSessionStateIfNeeded(ctx)
-            ctx.session.favorites.showDetails = !ctx.session.favorites.showDetails
+            ctx.session.favorites.viewType = ctx.session.favorites.viewType === 'compact' ? 'detailed' : 'compact'
 
-            const {msg, markup} = await getMainMenu(ctx)
-
-            try {
-                await ctx.editMessageText(msg, markup)
-            } catch (e) {
-                if (e.message !== ERROR_MESSAGE_NOT_MODIFIED) {
-                    throw e
-                }
-                logger.warn(e)
-            }
+            const {msg, buttons} = await getMainMenu(ctx)
+            await editMessageAndButtons(ctx, buttons, msg)
 
 
-            if (ctx.session.favorites.showDetails) {
-                ctx.ua.pv({dp: `/favorites/detailed/`, dt: `Избранное (с форматом времени)`})
+            if (ctx.session.favorites.viewType === 'compact') {
+                ctx.ua.pv({dp: `/favorites/compact/`, dt: `Избранное (с форматом времени)`})
             } else {
-                ctx.ua.pv({dp: `/favorites/`, dt: `Избранное`})
+                ctx.ua.pv({dp: `/favorites/detailed/`, dt: `Избранное`})
             }
         })
         .action(actionName('wipe'), async ctx => {
@@ -312,21 +323,20 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                 .filter(favoriteEventId => pastEvents.find(past => past.id === favoriteEventId) === undefined)
 
             if (pastEvents.length > 0) {
-                const {msg, markup} = await getMainMenu(ctx)
-                try {
-                    await ctx.editMessageText(msg, markup)
-                } catch (e) {
-                    if (e.message !== ERROR_MESSAGE_NOT_MODIFIED) {
-                        throw e
-                    }
-                    logger.warn(e)
-                }
+                const {msg, buttons} = await getMainMenu(ctx)
+                await editMessageAndButtons(ctx, buttons, msg)
+
             }
         })
         .action(actionName('show_cards'), async ctx => {
             await ctx.answerCbQuery()
             await prepareSessionStateIfNeeded(ctx)
             await eventPager.initialShowCards(ctx)
+        })
+        .action(actionName('back_to_favorite_main'), async ctx => {
+            await ctx.answerCbQuery()
+            const {msg, buttons} = await getMainMenu(ctx)
+            await editMessageAndButtons(ctx, buttons, msg)
         })
         .use(eventPager.middleware())
 }

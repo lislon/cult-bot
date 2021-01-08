@@ -1,7 +1,7 @@
-import { BaseScene, Composer, Extra, Markup } from 'telegraf'
+import { BaseScene, Composer, Markup } from 'telegraf'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
-import { getNextWeekendRange, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { getNextWeekendRange, replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { Paging } from '../shared/paging'
 import { SceneRegister } from '../../middleware-utils'
 import { db } from '../../database/db'
@@ -25,16 +25,6 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         ctx.session.search = {
             request: undefined
         }
-    }
-}
-
-const content = (ctx: ContextMessageUpdate) => {
-
-    const {i18SharedBtn, i18Msg} = sceneHelper(ctx)
-
-    return {
-        msg: i18Msg('please_search'),
-        markupMainMenu: Extra.HTML().markup(Markup.keyboard([Markup.button(i18SharedBtn('back'))]).resize())
     }
 }
 
@@ -88,10 +78,8 @@ scene
     .enter(async (ctx: ContextMessageUpdate) => {
         await prepareSessionStateIfNeeded(ctx)
         EventsPager.reset(ctx)
+        await replyWithBackToMainMarkup(ctx, i18Msg(ctx, 'please_search'))
 
-        const {msg, markupMainMenu} = content(ctx)
-
-        await ctx.replyWithMarkdown(msg, markupMainMenu)
         ctx.ua.pv({dp: `/search/`, dt: `Поиск`})
     })
     .leave(async (ctx: ContextMessageUpdate) => {

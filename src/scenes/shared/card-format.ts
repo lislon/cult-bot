@@ -7,7 +7,7 @@ import { i18n } from '../../util/i18n'
 import { EventWithOldVersion } from '../../database/db-admin'
 import { formatPrice, parsePrice } from '../../lib/price-parser'
 
-function addHtmlNiceUrls(text: string) {
+export function addHtmlNiceUrls(text: string) {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
 }
 
@@ -140,7 +140,7 @@ export function cardFormat(row: Event | EventWithOldVersion | EventFavorite, opt
     text += '\n'
     text += `${escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' '))}\n`
     if (options.showAdminInfo) {
-        text += `<i>${row.ext_id}, ${row.reviewer}, оценка ${row.rating}</i>\n`
+        text += `<i>${row.ext_id}, ${row.reviewer}, оценка ${row.rating}, просмотров ${row.views}</i>\n`
     }
 
     return text;
