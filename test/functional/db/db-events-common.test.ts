@@ -23,7 +23,7 @@ describe('Events common', () => {
     })
 
     test('count events on nearest date', async () => {
-        await syncEventsDb4Test([
+        const [A, B, C] = await syncEventsDb4Test([
             getMockEvent({title: 'A', eventTime}),
             getMockEvent({title: 'B', eventTime: eventTimeOutRange}),
         ])

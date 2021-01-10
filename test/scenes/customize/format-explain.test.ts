@@ -30,7 +30,7 @@ function formatExplainTimeEx(now: string, time: string[]): string[] {
     return formatExplainTime(ctx as ContextMessageUpdate, i18Msg)
 }
 
-describe('convert_to_intervals', () => {
+describe.skip('convert_to_intervals', () => {
     const expectedInterval = mkInterval
     const weekendsInterval = mkInterval
 

@@ -1,11 +1,11 @@
 import { DbEvent, EventToSave } from '../interfaces/db-interfaces'
 import { encodeTagsLevel1 } from '../util/tag-level1-encoder'
-import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise';
+import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise'
 import { db } from './db'
 import md5 from 'md5'
 import { MomentIntervals } from '../lib/timetable/intervals'
 import { logger } from '../util/logger'
-import { keyBy } from 'lodash';
+import { keyBy } from 'lodash'
 import { fieldInt, fieldStr, fieldTextArray, fieldTimestamptzNullable } from './db-utils'
 
 function generateRandomOrder() {
@@ -181,7 +181,7 @@ export class EventsSyncRepository {
 
                 } else {
                     const e = { ...newEvent }
-                    e.primaryData.id =  existingIdsRaw.find(e => e['extid'] === newEvent.primaryData.ext_id).id
+                    e.primaryData.id = +existingIdsRaw.find(e => e['extid'] === newEvent.primaryData.ext_id).id
                     result.notChangedEvents.push(e)
                 }
                 removedEventExtIds.delete(newEvent.primaryData.ext_id)

@@ -1,5 +1,5 @@
-import util from 'util';
-import winston, { format } from 'winston';
+import util from 'util'
+import winston, { format } from 'winston'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 import { botConfig } from './bot-config'
 
@@ -53,11 +53,4 @@ export const logger = winston.createLogger({
         loggerTransport
     ],
     format: getFormat()
-});
-
-export const loggerWithCtx = {
-    debug: (ctx: ContextMessageUpdate, msg: string, ...data: any[]) =>
-        logger.debug(prepareMessage(ctx, msg, ...data)),
-    error: (ctx: ContextMessageUpdate, msg: string, ...data: any[]) =>
-        logger.error(prepareMessage(ctx, msg, ...data))
-}
+})

@@ -48,18 +48,17 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
     ctx.ua.set('ds', 'app')
 
     prepareSessionStateIfNeeded(ctx)
-    if (ctx.updateType === 'message' && ctx.updateSubTypes.includes('text')) {
+    if (ctx.updateType === 'message' && ctx.updateSubTypes.includes('text') && !ctx.message.text?.startsWith('/start')) {
         ctx.ua.e('Button', 'type', ctx.message.text, undefined)
         ctx.session.analytics.markupClicks++
-    }
-    if (ctx.updateType === 'callback_query') {
+    } else if (ctx.updateType === 'callback_query') {
         const message = ctx.update.callback_query.message as any
         const replyMarkup = message.reply_markup
         const inlineKeyboard = replyMarkup.inline_keyboard
 
         const buttonText = inlineKeyboard
             .flatMap((kbRows: any) => kbRows)
-            .find(({ callback_data }: any) => callback_data === ctx.update.callback_query.data)
+            .find(({callback_data}: any) => callback_data === ctx.update.callback_query.data)
 
         if (buttonText !== undefined) {
             ctx.ua.e('Button', 'click', buttonText.text, undefined)

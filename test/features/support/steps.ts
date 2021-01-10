@@ -79,7 +79,7 @@ Given(/^there is events:$/, async function (table: DataTable) {
         return getMockEvent({...row, eventTime: timetableResult.timeIntervals})
     })
 
-    await syncEventsDb4Test(mockEvents)
+    const [A, B, C] = await syncEventsDb4Test(mockEvents)
 })
 
 Given(/^there is packs:$/, async function (table: DataTable) {

@@ -11,7 +11,7 @@ describe('Users', () => {
 
     test('Snapshot can be taken', async () => {
         const eventTime = [[date('2020-01-01 12:00'), date('2020-01-03 15:00')]]
-        await syncEventsDb4Test([
+        const [A, B, C] = await syncEventsDb4Test([
             getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_1: ['#A', '#B', '#C']}),
         ])
 

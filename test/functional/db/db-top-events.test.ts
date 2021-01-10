@@ -1,4 +1,4 @@
-import { cleanDb, expectedTitlesStrict, getMockEvent, syncEventsDb4Test } from './db-test-utils'
+import { cleanDb, getMockEvent, syncEventsDb4Test } from './db-test-utils'
 import { db, dbCfg } from '../../../src/database/db'
 import { date, mkInterval } from '../../lib/timetable/test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
@@ -19,7 +19,7 @@ describe('Top events', () => {
     })
 
     test('single event', async () => {
-        await syncEventsDb4Test([getMockEvent({
+        const [A] = await syncEventsDb4Test([getMockEvent({
             title: 'A',
             eventTime: [
                 date('2020-01-02 15:00'),
@@ -29,11 +29,12 @@ describe('Top events', () => {
         })])
 
         const interval = mkInterval('[2020-01-01 15:00, 2020-01-03 15:00)')
-        expectedTitlesStrict(['A'], await db.repoTopEvents.getTopIds({category: 'theaters', interval: interval}))
+        const events = await db.repoTopEvents.getTopIds({category: 'theaters', interval: interval})
+        expect([A]).toStrictEqual(events)
     })
 
     test('do not show exhibition when less then 1 hours before close', async () => {
-        await syncEventsDb4Test([getMockEvent({
+        const [A, B, C] = await syncEventsDb4Test([getMockEvent({
             eventTime: [
                 [date('2020-01-01 15:00'), date('2020-01-01 20:00')]
             ],
@@ -52,7 +53,7 @@ describe('Top events', () => {
     })
 
     test('exhibitions subcategory', async () => {
-        await syncEventsDb4Test([
+        const [A, B] = await syncEventsDb4Test([
             getMockEvent({
                 title: 'A',
                 eventTime: [
@@ -70,15 +71,16 @@ describe('Top events', () => {
             })])
 
         const interval = mkInterval('[2020-01-01 15:00, 2020-01-03 15:00)')
-        expectedTitlesStrict(['A'], await db.repoTopEvents.getTopIds({
+        const events = await db.repoTopEvents.getTopIds({
             category: 'exhibitions',
             oblasti: ['exhibitions.#постоянныеколлекции'],
             interval: interval
-        }))
+        })
+        expect([A]).toStrictEqual(events)
     })
 
     test('include anytime events when no primary results', async () => {
-        await syncEventsDb4Test([
+        const [PRIMARY, AUX] = await syncEventsDb4Test([
             getMockEvent({
                 title: 'PRIMARY',
                 eventTime: [
@@ -98,24 +100,24 @@ describe('Top events', () => {
         )
         const interval = mkInterval('2020-01-01 00:00,2020-01-01 23:59)')
         const events = await db.repoTopEvents.getTopIds({category: 'theaters', interval})
-        expectedTitlesStrict(['PRIMARY', 'AUX'], events)
+        expect([PRIMARY, AUX]).toStrictEqual(events)
     })
 
     test('sorting is done by rating', async () => {
         const timeIntervals = [
             [date('2020-01-01 15:00'), date('2020-01-01 20:00')]
         ]
-        await syncEventsDb4Test([
-                getMockEvent({
-                    title: '1. NOT SO GOOD',
-                    eventTime: timeIntervals,
-                    rating: 1
-                }),
-                getMockEvent({
-                    title: '2. BEST',
-                    eventTime: timeIntervals,
-                    rating: 19
-                }),
+        const [idNotSoGood, idBest, idBetter] = await syncEventsDb4Test([
+            getMockEvent({
+                title: '1. NOT SO GOOD',
+                eventTime: timeIntervals,
+                rating: 1
+            }),
+            getMockEvent({
+                title: '2. BEST',
+                eventTime: timeIntervals,
+                rating: 19
+            }),
                 getMockEvent({
                     title: '3. BETTER',
                     eventTime: timeIntervals,
@@ -125,24 +127,24 @@ describe('Top events', () => {
         )
         const interval = mkInterval('[2020-01-01 00:00, 2020-01-01 23:59)')
         const events = await db.repoTopEvents.getTopIds({category: 'theaters', interval, limit: 2})
-        expectedTitlesStrict(['2. BEST', '3. BETTER'], events)
+        expect([idBest, idBetter]).toStrictEqual(events)
     })
 
     test('paging is work', async () => {
         const eventTime = [
             [mskMoment('2020-01-01 15:00'), mskMoment('2020-01-01 20:00')]
         ]
-        await syncEventsDb4Test([
-                getMockEvent({
-                    title: 'A - timed',
-                    eventTime,
-                    order_rnd: 1
-                }),
-                getMockEvent({
-                    title: 'B - timed',
-                    eventTime,
-                    order_rnd: 2
-                }),
+        const [Atimed, Btimed, Conline, Donline] = await syncEventsDb4Test([
+            getMockEvent({
+                title: 'A - timed',
+                eventTime,
+                order_rnd: 1
+            }),
+            getMockEvent({
+                title: 'B - timed',
+                eventTime,
+                order_rnd: 2
+            }),
                 getMockEvent({
                     title: 'C - online',
                     anytime: true,
@@ -159,11 +161,11 @@ describe('Top events', () => {
         )
         const interval = mkInterval('[2020-01-01 00:00, 2020-01-01 23:59)')
         const events = await db.repoTopEvents.getTopIds({category: 'theaters', interval, limit: 2, offset: 1})
-        expectedTitlesStrict(['B - timed', 'C - online'], events)
+        expect([Btimed, Conline]).toStrictEqual(events)
     })
 
     test('even with is_anytime = true we should intersect intervals', async () => {
-        await syncEventsDb4Test([
+        const [A, B] = await syncEventsDb4Test([
                 getMockEvent({
                     title: 'A',
                     eventTime: [date('2020-01-01 00:00'), date('2020-01-01 10:00')],
@@ -177,7 +179,14 @@ describe('Top events', () => {
             ]
         )
         const interval = mkInterval('[2020-01-01 00:00, 2020-01-01 10:00)')
-        expectedTitlesStrict(['A'], await db.repoTopEvents.getTopIds({category: 'theaters', interval}))
+        const events = await db.repoTopEvents.getTopIds({category: 'theaters', interval})
+        expect([A]).toStrictEqual(events)
+    })
+
+    test('count works', async () => {
+        const interval = mkInterval('[2020-01-01 00:00, 2020-01-01 10:00)')
+        const count = await db.repoTopEvents.getTopIdsCount({category: 'theaters', interval})
+        expect(0).toStrictEqual(count)
     })
 })
 
@@ -188,7 +197,7 @@ describe('Search intervals - SINGLE_INTERVAL [restriction]', () => {
     })
 
     beforeEach(async () => {
-        await syncEventsDb4Test([getMockEvent({
+        const [A, B, C] = await syncEventsDb4Test([getMockEvent({
             eventTime: [
                 date('2020-01-02 15:00')
             ]
@@ -220,7 +229,7 @@ describe('Search intervals -  (range). [restriction]', () => {
     })
 
     beforeEach(async () => {
-        await syncEventsDb4Test([getMockEvent({
+        const [A, B, C] = await syncEventsDb4Test([getMockEvent({
             eventTime: [[
                 date('2020-01-01 12:00'),
                 date('2020-01-01 18:00')],

@@ -6,7 +6,7 @@ import { EventPackForSave } from '../../../src/database/db-packs'
 import { UserSaveData } from '../../../src/database/db-users'
 
 export async function cleanDb() {
-    await db.none('TRUNCATE cb_events_entrance_times, cb_events, cb_events_packs RESTART identity')
+    return await db.none('TRUNCATE cb_events_entrance_times, cb_events, cb_events_packs RESTART identity')
 }
 
 export interface MockEvent {
@@ -123,6 +123,10 @@ export function expectedTitles(titles: string[], events: Pick<Event, 'title'>[])
     expect(events.map(t => t.title).sort()).toEqual(titles.sort())
 }
 
+export function expectedIds(ids: number[], eventIds: number[]) {
+    expect(eventIds.sort()).toEqual(ids.sort())
+}
+
 export function expectedTitlesStrict(titles: string[], events: Pick<Event, 'title'>[]) {
     expect(events.map(t => t.title)).toEqual(titles)
 }
@@ -134,6 +138,9 @@ export async function syncEventsDb4Test(events: EventToSave[]): Promise<number[]
         }
     })
     const syncDiff = await db.repoSync.syncDatabase(events)
+    if (syncDiff.insertedEvents.length === 0 && syncDiff.notChangedEvents.length > 0) {
+        return syncDiff.notChangedEvents.map(e => +e.primaryData.id)
+    }
     return syncDiff.insertedEvents.map(e => e.primaryData.id)
 
 }

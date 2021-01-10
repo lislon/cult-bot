@@ -1,11 +1,4 @@
-import {
-    cleanDb,
-    expectedPacksTitle,
-    expectedTitles,
-    getMockEvent,
-    getMockPack,
-    syncEventsDb4Test
-} from './db-test-utils'
+import { cleanDb, expectedIds, expectedPacksTitle, getMockEvent, getMockPack, syncEventsDb4Test } from './db-test-utils'
 import { db, dbCfg } from '../../../src/database/db'
 import { mkInterval } from '../../lib/timetable/test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
@@ -46,7 +39,7 @@ describe('Packs', () => {
         const day2 = [mskMoment('2020-01-02 12:00')]
         const day3 = [mskMoment('2020-01-03 12:00')]
 
-        const eventIds = await syncEventsDb4Test([
+        const [A, B, C, D, E] = await syncEventsDb4Test([
             getMockEvent({title: 'B', eventTime: day2}),
             getMockEvent({title: 'E', eventTime: day2, anytime: true, rating: 10}),
             getMockEvent({title: 'D', eventTime: day2, anytime: true, rating: 5}),
@@ -55,11 +48,11 @@ describe('Packs', () => {
         ])
 
         await db.repoPacks.sync([
-            getMockPack({ title: 'A pack', eventIds }),
+            getMockPack({title: 'A pack', eventIds: [A, B, C, D, E]}),
         ])
 
         const events = await db.repoPacks.listPacks({ interval: yearRange })
-        expectedTitles(['A', 'B', 'C', 'D', 'E'], events[0].events)
+        expectedIds([A, B, C, D, E], events[0].events.map(e => e.id))
     })
 
 

@@ -13,7 +13,7 @@ describe('Admin', () => {
     const yearRange = mkInterval('[2020-01-01 00:00, 2021-01-02 00:00)')
 
     test('find all by cat', async () => {
-        await syncEventsDb4Test([
+        const [A, B, C] = await syncEventsDb4Test([
                 getMockEvent({title: 'A', eventTime, category: 'movies', rating: 5}),
                 getMockEvent({title: 'B', eventTime, category: 'movies', rating: 20, anytime: true})
             ]
@@ -23,7 +23,7 @@ describe('Admin', () => {
     })
 
     test('find stats by cat', async () => {
-        await syncEventsDb4Test([
+        const [A, B, C] = await syncEventsDb4Test([
                 getMockEvent({title: 'A', eventTime, category: 'movies', rating: 5}),
                 getMockEvent({title: 'B', eventTime, category: 'theaters', rating: 20})
             ]
@@ -42,7 +42,7 @@ describe('Admin', () => {
     })
 
     test('find stats by reviewer', async () => {
-        await syncEventsDb4Test([
+        const [A, B, C] = await syncEventsDb4Test([
                 getMockEvent({title: 'A', eventTime: [date('2020-01-01 12:00')], reviewer: 'Лена'}),
                 getMockEvent({title: 'B', eventTime: [date('2020-05-01 12:00')], reviewer: 'Лена'}),
                 getMockEvent({title: 'C', eventTime: [date('2020-01-01 12:00')], reviewer: 'Аня'})
@@ -62,10 +62,16 @@ describe('Admin', () => {
     })
 
     test('find events reviewer', async () => {
-        await syncEventsDb4Test([
+        const [A, B, C] = await syncEventsDb4Test([
                 getMockEvent({title: 'A', eventTime: [date('2020-01-01 12:00')], reviewer: 'Лена'}),
                 getMockEvent({title: 'B', eventTime: [date('2020-05-01 12:00')], reviewer: 'Лена'}),
-                getMockEvent({title: 'C', eventTime: [date('2020-01-01 12:00')], reviewer: 'Аня', rating: 20, anytime: true}),
+                getMockEvent({
+                    title: 'C',
+                    eventTime: [date('2020-01-01 12:00')],
+                    reviewer: 'Аня',
+                    rating: 20,
+                    anytime: true
+                }),
                 getMockEvent({title: 'D', eventTime: [date('2020-01-01 12:00')], reviewer: 'Аня', rating: 1}),
             ]
         )
