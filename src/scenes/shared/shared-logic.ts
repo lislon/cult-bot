@@ -191,10 +191,15 @@ export function backToMainButtonTitle() {
 export async function replyWithBackToMainMarkup(ctx: ContextMessageUpdate, message: string = undefined) {
     const markupWithBackButton = Extra.HTML().markup(Markup.keyboard([Markup.button(backToMainButtonTitle())]).resize())
 
-    await ctx.replyWithHTML(message ?? i18SharedMsg('markup_back_decoy'), markupWithBackButton)
+    const msg = await ctx.replyWithHTML(message ?? i18SharedMsg('markup_back_decoy'), markupWithBackButton)
+    return msg.message_id
 }
 
-export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineButtons: InlineKeyboardButton[][], text: string) {
+export interface EditMessageAndButtonsOptions {
+    forceNewMsg?: boolean
+}
+
+export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineButtons: InlineKeyboardButton[][], text: string, options?: EditMessageAndButtonsOptions): Promise<number> {
     const markup: InlineKeyboardMarkup = {
         inline_keyboard: inlineButtons
     }
@@ -203,6 +208,14 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
         `Telegraf: "editMessageReplyMarkup" isn't available for "message::text"`,
         '400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message'
     ]
+    if (options?.forceNewMsg) {
+        const message = await ctx.replyWithHTML(text, {
+            reply_markup: markup,
+            disable_web_page_preview: true
+        })
+        return message.message_id
+    }
+
     try {
 
         await ctx.editMessageText(text, {
@@ -211,16 +224,22 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
             reply_markup: markup
         })
 
-
+        return getMsgId(ctx)
     } catch (e) {
         if (goodErrors.includes(e.message)) {
-            await ctx.replyWithHTML(text, {
+            logger.debug(e.message)
+            const message = await ctx.replyWithHTML(text, {
                 reply_markup: markup,
                 disable_web_page_preview: true
             })
+            return message.message_id
         } else {
             throw e
         }
     }
     // ctx.session.lastText = text
+}
+
+export function getMsgId(ctx: ContextMessageUpdate) {
+    return ctx.update.message?.message_id || ctx.update?.callback_query?.message?.message_id
 }

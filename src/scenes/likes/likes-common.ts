@@ -21,6 +21,8 @@ export interface BtnLikeDislikeParams {
     dislikesCount: number
 }
 
+export const LIKES_EVENT_ACTION_PREFIXES = ['like_', 'dislike_', 'favorite_']
+
 export function getLikesRow(ctx: ContextMessageUpdate, event: Pick<Event, 'id' | 'likes' | 'dislikes'>): CallbackButton[] {
     return [
         Markup.callbackButton(getLikeDislikeButtonText(ctx, event.likes, 'like'), `like_${event.id}`),

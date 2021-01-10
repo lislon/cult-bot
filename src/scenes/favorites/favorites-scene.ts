@@ -1,7 +1,7 @@
 import { BaseScene, Composer, Markup } from 'telegraf'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { db } from '../../database/db'
+import { db, LimitOffset } from '../../database/db'
 import { SceneRegister } from '../../middleware-utils'
 import { forceSaveUserDataInDb } from '../../lib/middleware/user-middleware'
 import { getLikeDislikeButtonText, updateLikeDislikeInlineButtons } from '../likes/likes-common'
@@ -20,7 +20,7 @@ import { leftDate, MomentIntervals, rightDate } from '../../lib/timetable/interv
 import { parseAndPredictTimetable, ParseAndPredictTimetableResult } from '../../lib/timetable/timetable-utils'
 import { first, last } from 'lodash'
 import { compareAsc, compareDesc, isAfter } from 'date-fns'
-import { CurrentPage, EventsPager, PagingConfig } from '../shared/events-pager'
+import { PagingConfig, PagingPager } from '../shared/paging-pager'
 import { addHtmlNiceUrls, cardFormat, formatTimetable } from '../shared/card-format'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { InlineKeyboardMarkup } from 'telegram-typings'
@@ -32,7 +32,6 @@ const scene = new BaseScene<ContextMessageUpdate>('favorites_scene')
 const {i18SharedMsg, i18Btn, i18Msg, i18SharedBtn, backButton, actionName} = i18nSceneHelper(scene)
 
 export interface FavoritesState {
-    favoriteIdsSnapshot: number[]
     viewType: 'compact' | 'detailed'
 }
 
@@ -40,6 +39,29 @@ export interface FavoriteEvent extends Event {
     parsedTimetable: ParseAndPredictTimetableResult
     firstDate: Date
     isFuture: boolean
+}
+
+function sortFavorites(events: FavoriteEvent[]) {
+    return events.sort((left, right) => {
+            if (left.isFuture === true && right.isFuture === true) {
+
+                if (left.parsedTimetable.timetable.anytime === false && right.parsedTimetable.timetable.anytime === false) {
+                    return compareAsc(left.firstDate, right.firstDate)
+                } else if (left.parsedTimetable.timetable.anytime === true) {
+                    return 1
+                } else if (right.parsedTimetable.timetable.anytime === true) {
+                    return -1
+                } else {
+                    return 0
+                }
+
+            } else if (left.isFuture === false && right.isFuture === false) {
+                return compareDesc(left.firstDate, right.firstDate)
+            } else {
+                return left.isFuture ? -1 : 1
+            }
+        }
+    )
 }
 
 async function getListOfFavorites(ctx: ContextMessageUpdate, eventIds: number[]): Promise<FavoriteEvent[]> {
@@ -58,26 +80,7 @@ async function getListOfFavorites(ctx: ContextMessageUpdate, eventIds: number[])
             isFuture: hasEventsInFuture(parsedTimetable.timeIntervals, ctx.now())
         } as FavoriteEvent
     })
-        .sort((left, right) => {
-                if (left.isFuture === true && right.isFuture === true) {
 
-                    if (left.parsedTimetable.timetable.anytime === false && right.parsedTimetable.timetable.anytime === false) {
-                        return compareAsc(left.firstDate, right.firstDate)
-                    } else if (left.parsedTimetable.timetable.anytime === true) {
-                        return 1
-                    } else if (right.parsedTimetable.timetable.anytime === true) {
-                        return -1
-                    } else {
-                        return 0
-                    }
-
-                } else if (left.isFuture === false && right.isFuture === false) {
-                    return compareDesc(left.firstDate, right.firstDate)
-                } else {
-                    return left.isFuture ? -1 : 1
-                }
-            }
-        )
     return eventsWithNearestDate
 }
 
@@ -128,7 +131,7 @@ async function formatListOfFavorites(ctx: ContextMessageUpdate, events: Favorite
 async function getMainMenu(ctx: ContextMessageUpdate) {
     let msg
     let buttons: CallbackButton[][] = []
-    const events = await getListOfFavorites(ctx, ctx.session.user.eventsFavorite)
+    const events = sortFavorites(await getListOfFavorites(ctx, ctx.session.user.eventsFavorite))
 
     const back = backButton(ctx)
     if (events.length > 0) {
@@ -164,29 +167,31 @@ function cardButtonsRow(ctx: ContextMessageUpdate, event: Event) {
     ]
 }
 
-class FavoritePaging implements PagingConfig {
-    async newQuery(ctx: ContextMessageUpdate): Promise<void> {
-        ctx.session.favorites.favoriteIdsSnapshot = ctx.session.user.eventsFavorite
+class FavoritePaging implements PagingConfig<number[]> {
+    limit = 3
+    sceneId = scene.id
+
+    async loadCardsByIds(ctx: ContextMessageUpdate, ids: number[]): Promise<Event[]> {
+        return await getListOfFavorites(ctx, ids)
     }
 
-    async nextPortion(ctx: ContextMessageUpdate, {limit, offset}: CurrentPage): Promise<Event[]> {
-        return (await getListOfFavorites(ctx, ctx.session.favorites.favoriteIdsSnapshot)).slice(offset, offset + limit)
+    async preloadIds(ctx: ContextMessageUpdate, snapshotFavoriteIds: number[], {offset, limit}: LimitOffset): Promise<number[]> {
+        return snapshotFavoriteIds.slice(offset, offset + limit)
     }
 
-    async getTotal(ctx: ContextMessageUpdate): Promise<number> {
-        return (await getListOfFavorites(ctx, ctx.session.favorites.favoriteIdsSnapshot)).length
+    async getTotal(ctx: ContextMessageUpdate, snapshotFavoriteIds: number[]): Promise<number> {
+        return snapshotFavoriteIds.length
     }
 
-    async cardButtons?(ctx: ContextMessageUpdate, event: Event): Promise<CallbackButton[][]> {
-        return [cardButtonsRow(ctx, event)]
+    async cardButtons?(ctx: ContextMessageUpdate, event: Event): Promise<CallbackButton[]> {
+        return cardButtonsRow(ctx, event)
     }
 
     lastEventEndButton(ctx: ContextMessageUpdate): CallbackButton[] {
         return [Markup.callbackButton(i18Btn(ctx, 'back_to_favorite_main'), actionName(`back_to_favorite_main`))]
     }
 
-
-    analytics(ctx: ContextMessageUpdate, events: Event[], {limit, offset}: CurrentPage) {
+    analytics(ctx: ContextMessageUpdate, events: Event[], {limit, offset}: LimitOffset) {
         const pageNumber = Math.floor(limit / offset) + 1
 
         const pageTitle = pageNumber > 1 ? ` [Страница ${pageNumber}]` : ''
@@ -197,16 +202,14 @@ class FavoritePaging implements PagingConfig {
     }
 }
 
-const eventPager = new EventsPager(new FavoritePaging())
+const eventPager = new PagingPager(new FavoritePaging())
 
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     const {
-        favoriteIdsSnapshot,
         viewType
     } = ctx.session.favorites || {}
 
     ctx.session.favorites = {
-        favoriteIdsSnapshot: SessionEnforcer.array(favoriteIdsSnapshot),
         viewType: SessionEnforcer.default(viewType, 'compact')
     }
 }
@@ -225,7 +228,7 @@ scene
         ctx.ua.pv({dp: `/favorites/`, dt: `Избранное`})
     })
     .leave((ctx: ContextMessageUpdate) => {
-        ctx.session.favorites.favoriteIdsSnapshot = undefined
+        eventPager.reset(ctx)
     })
     .action(/^favorite_(\d+)/, async (ctx: ContextMessageUpdate) => {
         const eventId = +ctx.match[1]
@@ -331,12 +334,14 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         .action(actionName('show_cards'), async ctx => {
             await ctx.answerCbQuery()
             await prepareSessionStateIfNeeded(ctx)
+
+            await eventPager.updateState(ctx, ctx.session.user.eventsFavorite)
             await eventPager.initialShowCards(ctx)
         })
         .action(actionName('back_to_favorite_main'), async ctx => {
             await ctx.answerCbQuery()
             const {msg, buttons} = await getMainMenu(ctx)
-            await editMessageAndButtons(ctx, buttons, msg)
+            await editMessageAndButtons(ctx, buttons, msg, {forceNewMsg: true})
         })
         .use(eventPager.middleware())
 }

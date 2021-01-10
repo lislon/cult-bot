@@ -4,7 +4,7 @@ import { i18nSceneHelper } from '../../util/scene-helper'
 import { i18n } from '../../util/i18n'
 import { SceneRegister } from '../../middleware-utils'
 import { displayEventsMenu, displayMainMenu, displayPackMenu } from './packs-menu'
-import { getEventsCount, getPacksCount, getPacksList, prepareSessionStateIfNeeded, scene } from './packs-common'
+import { getEventsCount, getPacksList, prepareSessionStateIfNeeded, scene } from './packs-common'
 import { logger } from '../../util/logger'
 import { replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 
@@ -36,26 +36,19 @@ scene
         ctx.session.packsScene.packSelectedIdx = +ctx.match[1]
         await displayPackMenu(ctx)
     })
-    .action(/^packs_scene[.]pack_(prev|next)$/, async (ctx: ContextMessageUpdate) => {
-        await ctx.answerCbQuery()
-        const c = loop(
-            ctx.session.packsScene.packSelectedIdx, getPacksCount(ctx), ctx.match[1]
-        )
-        ctx.session.packsScene.packSelectedIdx = c
-        await displayPackMenu(ctx)
-    })
     .action('packs_scene.pack_open', async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
         await displayEventsMenu(ctx)
     })
     .action(/^packs_scene[.]event_(prev|next)$/, async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
-        const c = loop(
-            ctx.session.packsScene.eventSelectedIdx, await getEventsCount(ctx), ctx.match[1]
-        )
-        ctx.session.packsScene.eventSelectedIdx = c
-
-        await displayEventsMenu(ctx)
+        if (await getEventsCount(ctx) !== 1) {
+            const c = loop(
+                ctx.session.packsScene.eventSelectedIdx, await getEventsCount(ctx), ctx.match[1]
+            )
+            ctx.session.packsScene.eventSelectedIdx = c
+            await displayEventsMenu(ctx)
+        }
     })
     .action('packs_scene.event_back', async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()

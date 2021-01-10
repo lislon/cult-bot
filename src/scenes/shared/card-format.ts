@@ -140,7 +140,7 @@ export function cardFormat(row: Event | EventWithOldVersion | EventFavorite, opt
     text += '\n'
     text += `${escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' '))}\n`
     if (options.showAdminInfo) {
-        text += `<i>${row.ext_id}, ${row.reviewer}, оценка ${row.rating}, просмотров ${row.views}</i>\n`
+        text += `<i>${row.ext_id}, ${row.reviewer}, оценка ${row.rating}</i>\n`
     }
 
     return text;

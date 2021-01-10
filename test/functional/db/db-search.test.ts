@@ -20,7 +20,7 @@ describe('Search', () => {
                 getMockEvent({title: 'event cat 15', eventTime, category: 'movies', rating: 15})
             ]
         )
-        expectedTitles(['event cat 15', 'event cat 5'], await db.repoSearch.search({
+        expectedTitles(['event cat 15', 'event cat 5'], await db.repoSearch.searchIds({
             query: 'event cat',
             interval: yearRange,
             limit: 100
@@ -38,7 +38,7 @@ describe('Search', () => {
                 getMockEvent({title: 'event next sat', eventTime: eventNextSat, category: 'movies', rating: 15})
             ]
         )
-        expectedTitles(['event sat', 'event sun'], await db.repoSearch.search({
+        expectedTitles(['event sat', 'event sun'], await db.repoSearch.searchIds({
             query: 'event',
             interval: mkInterval('[2020-01-04 00:00, 2020-01-06 00:00)')
         }))
@@ -49,7 +49,7 @@ describe('Search', () => {
                 getMockEvent({ext_id: 'ABC', title: 'event dog 5', eventTime, category: 'movies', rating: 5}),
             ]
         )
-        expectedTitles(['event dog 5'], await db.repoSearch.search({
+        expectedTitles(['event dog 5'], await db.repoSearch.searchIds({
             query: 'ABC',
             interval: yearRange,
             limit: 100,

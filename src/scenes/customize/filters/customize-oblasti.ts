@@ -50,8 +50,8 @@ export function oblastiOptionLogic(ctx: ContextMessageUpdate, selected: string) 
     }
 }
 
-export function cleanOblastiTag(ctx: ContextMessageUpdate) {
-    return ctx.session.customize.oblasti
+export function cleanOblastiTag(oblasti: string[]) {
+    return oblasti
         .flatMap(o => {
             if (o === 'exhibitions_perm.#научнотехнические') {
                 return [

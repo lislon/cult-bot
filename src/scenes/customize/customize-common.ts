@@ -1,23 +1,36 @@
-import { ContextMessageUpdate, EventFormat, MyInterval } from '../../interfaces/app-interfaces'
-import { Paging } from '../shared/paging'
-import { getNextWeekendRange, SessionEnforcer } from '../shared/shared-logic'
+import { ContextMessageUpdate, EventFormat, MyInterval, TagLevel2 } from '../../interfaces/app-interfaces'
+import { getNextWeekendRange, SessionEnforcer, UpdatableMessageState } from '../shared/shared-logic'
 import { mapUserInputToTimeIntervals } from './customize-utils'
 import { cleanOblastiTag } from './filters/customize-oblasti'
 
-export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
-    Paging.prepareSession(ctx)
+export type StageType = 'root' | 'time' | 'oblasti' | 'priorities' | 'format' | 'results'
 
+export interface CustomizeFilters {
+    format: string[]
+    cennosti: TagLevel2[]
+    oblasti: string[]
+    time: string[]
+}
+
+export interface CustomizeSceneState extends UpdatableMessageState, CustomizeFilters {
+    openedMenus: string[]
+    resultsFound?: number
+    currentStage: StageType
+    prevStage?: StageType
+    msgId?: number
+}
+
+export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     const {
         openedMenus,
         cennosti,
         time,
         resultsFound,
-        eventsCounterMsgId,
-        eventsCounterMsgText,
         oblasti,
         format,
         currentStage,
-        prevStage
+        prevStage,
+        msgId
     } = ctx.session.customize || {}
 
     ctx.session.customize = {
@@ -26,12 +39,10 @@ export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         oblasti: SessionEnforcer.array(oblasti),
         time: SessionEnforcer.array(time),
         format: SessionEnforcer.array(format),
-        eventsCounterMsgText,
         currentStage: currentStage || 'root',
-        prevStage,
         resultsFound: SessionEnforcer.number(resultsFound),
-
-        eventsCounterMsgId: SessionEnforcer.number(eventsCounterMsgId),
+        msgId: SessionEnforcer.number(msgId),
+        prevStage,
     }
 }
 
@@ -39,7 +50,7 @@ export function getNextWeekendRangeForCustom(now: Date): MyInterval {
     return getNextWeekendRange(now, '2weekends_only')
 }
 
-export function prepareRepositoryQuery(ctx: ContextMessageUpdate) {
+export function prepareRepositoryQuery(ctx: ContextMessageUpdate, filters: CustomizeFilters) {
     function mapFormatToDbQuery(format: string[]) {
         if (format === undefined || format.length !== 1) {
             return undefined
@@ -48,10 +59,10 @@ export function prepareRepositoryQuery(ctx: ContextMessageUpdate) {
     }
 
     return {
-        timeIntervals: mapUserInputToTimeIntervals(ctx.session.customize.time, getNextWeekendRangeForCustom(ctx.now())),
+        timeIntervals: mapUserInputToTimeIntervals(filters.time, getNextWeekendRangeForCustom(ctx.now())),
         weekendRange: getNextWeekendRangeForCustom(ctx.now()),
-        cennosti: ctx.session.customize.cennosti,
-        oblasti: cleanOblastiTag(ctx),
-        format: mapFormatToDbQuery(ctx.session.customize.format)
+        cennosti: filters.cennosti,
+        oblasti: cleanOblastiTag(filters.oblasti),
+        format: mapFormatToDbQuery(filters.format)
     }
 }

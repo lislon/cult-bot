@@ -1,23 +1,59 @@
-import { Event, EventCategory, MyInterval } from '../interfaces/app-interfaces'
+import { EventCategory, MyInterval } from '../interfaces/app-interfaces'
 import { TagCategory } from '../interfaces/db-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
 import { addMinutes } from 'date-fns'
-import { mapEvent, SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
+import { SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
+import { LimitOffset } from './db'
 
-export interface TopEventsQuery {
+export interface TopEventsDbQuery extends Partial<LimitOffset> {
     category: EventCategory
     interval: MyInterval
     oblasti?: string[]
-    limit?: number
-    offset?: number
 }
 
 export class TopEventsRepository {
     constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
-    public async getTop(query: TopEventsQuery): Promise<Event[]> {
+    public async getTopIds(query: TopEventsDbQuery): Promise<number[]> {
+        const {fixedTimeQuery, anyTimeQuery, queryCommonParams} = this.getQueryParts(query)
+
+        const finalQuery = `
+            (
+                SELECT cb.id
+                FROM ${fixedTimeQuery}
+                ORDER BY cb.rating DESC, cb.order_rnd
+            )
+            UNION ALL
+            (
+                select top30.id
+                from ${anyTimeQuery}
+                order by top30.order_rnd
+            ) limit $(limit) offset $(offset)
+        `
+
+        return await this.db.map(finalQuery,
+            {
+                ...queryCommonParams,
+                limit: query.limit || 3,
+                offset: query.offset || 0
+            }, row => +row.id)
+    }
+
+    public async getTopIdsCount(query: TopEventsDbQuery): Promise<number> {
+        const {fixedTimeQuery, anyTimeQuery, queryCommonParams} = this.getQueryParts(query)
+
+        const finalQuery = `
+        select
+            (SELECT COUNT(cb.id) FROM ${fixedTimeQuery}) +
+            (select COUNT(top30.id) from ${anyTimeQuery}) AS count
+        `
+
+        return await this.db.one(finalQuery, queryCommonParams, row => +row.count)
+    }
+
+    private getQueryParts(query: TopEventsDbQuery) {
         let adjustedIntervals = Object.create(query.interval)
         if (query.category === 'exhibitions') {
             adjustedIntervals = {
@@ -26,9 +62,7 @@ export class TopEventsRepository {
             }
         }
 
-        const primaryEvents = `
-            SELECT ${SELECT_ALL_EVENTS_FIELDS}
-            FROM cb_events cb
+        const fixedTimeQuery = `cb_events cb
             WHERE
                 EXISTS
                 (
@@ -39,15 +73,9 @@ export class TopEventsRepository {
                 AND cb.category = $(category)
                 AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
                 AND cb.is_anytime = false
-                AND cb.deleted_at IS NULL
-            ORDER BY cb.rating DESC, cb.order_rnd
-        `
+                AND cb.deleted_at IS NULL`
 
-        const secondaryEvents = `
-            select
-                top30.*
-            from
-                (select ${SELECT_ALL_EVENTS_FIELDS}
+        const anyTimeQuery = `(select ${SELECT_ALL_EVENTS_FIELDS}
                 from cb_events cb
                 where
                     EXISTS
@@ -62,20 +90,14 @@ export class TopEventsRepository {
                     AND cb.deleted_at IS NULL
                 order by
                     cb.rating desc
-                limit 30 ) as top30
-            order by top30.order_rnd
-        `
+                limit 30 ) as top30`
 
-        const finalQuery = `(${primaryEvents}) UNION ALL (${secondaryEvents}) limit $(limit) offset $(offset)`
-
-        return await this.db.map(finalQuery,
-            {
-                interval: mapToPgInterval(adjustedIntervals),
-                category: query.category,
-                oblasti: query.oblasti || [],
-                limit: query.limit || 3,
-                offset: query.offset || 0
-            }, mapEvent);
+        const queryCommonParams = {
+            interval: mapToPgInterval(adjustedIntervals),
+            category: query.category,
+            oblasti: query.oblasti || []
+        }
+        return {fixedTimeQuery, anyTimeQuery, queryCommonParams}
     }
 
     private async loadTags(cat: TagCategory) {
@@ -83,7 +105,7 @@ export class TopEventsRepository {
             ' SELECT t.name ' +
             ' FROM cb_tags t' +
             ' WHERE t.category = $1' +
-            ' ORDER BY t.name', [cat], (row) => row.name) as string[];
+            ' ORDER BY t.name', [cat], (row) => row.name) as string[]
     }
 }
 

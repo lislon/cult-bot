@@ -6,7 +6,7 @@ import { mskMoment } from '../../../src/util/moment-msk'
 
 export async function expectResults(number: number, [from, to]: string[]) {
     const range = {start: date(from), end: date(to)}
-    const top = await db.repoTopEvents.getTop({category: 'theaters', interval: range})
+    const top = await db.repoTopEvents.getTopIds({category: 'theaters', interval: range})
     expect(top.length).toEqual(number)
 }
 
@@ -29,7 +29,7 @@ describe('Top events', () => {
         })])
 
         const interval = mkInterval('[2020-01-01 15:00, 2020-01-03 15:00)')
-        expectedTitlesStrict(['A'], await db.repoTopEvents.getTop({category: 'theaters', interval: interval}))
+        expectedTitlesStrict(['A'], await db.repoTopEvents.getTopIds({category: 'theaters', interval: interval}))
     })
 
     test('do not show exhibition when less then 1 hours before close', async () => {
@@ -42,10 +42,10 @@ describe('Top events', () => {
 
 
         const uspeemRange = mkInterval('[2020-01-01 18:59,2020-01-02 00:00)')
-        const uspeemResult = await db.repoTopEvents.getTop({category: 'exhibitions', interval: uspeemRange})
+        const uspeemResult = await db.repoTopEvents.getTopIds({category: 'exhibitions', interval: uspeemRange})
 
         const apazdunRange = mkInterval('[2020-01-01 19:00,2020-01-02 00:00)')
-        const apazdunResult = await db.repoTopEvents.getTop({category: 'exhibitions', interval: apazdunRange})
+        const apazdunResult = await db.repoTopEvents.getTopIds({category: 'exhibitions', interval: apazdunRange})
 
         expect(uspeemResult.length).toEqual(1)
         expect(apazdunResult.length).toEqual(0)
@@ -70,7 +70,7 @@ describe('Top events', () => {
             })])
 
         const interval = mkInterval('[2020-01-01 15:00, 2020-01-03 15:00)')
-        expectedTitlesStrict(['A'], await db.repoTopEvents.getTop({
+        expectedTitlesStrict(['A'], await db.repoTopEvents.getTopIds({
             category: 'exhibitions',
             oblasti: ['exhibitions.#постоянныеколлекции'],
             interval: interval
@@ -97,7 +97,7 @@ describe('Top events', () => {
             })]
         )
         const interval = mkInterval('2020-01-01 00:00,2020-01-01 23:59)')
-        const events = await db.repoTopEvents.getTop({category: 'theaters', interval})
+        const events = await db.repoTopEvents.getTopIds({category: 'theaters', interval})
         expectedTitlesStrict(['PRIMARY', 'AUX'], events)
     })
 
@@ -124,7 +124,7 @@ describe('Top events', () => {
             ]
         )
         const interval = mkInterval('[2020-01-01 00:00, 2020-01-01 23:59)')
-        const events = await db.repoTopEvents.getTop({category: 'theaters', interval, limit: 2})
+        const events = await db.repoTopEvents.getTopIds({category: 'theaters', interval, limit: 2})
         expectedTitlesStrict(['2. BEST', '3. BETTER'], events)
     })
 
@@ -158,7 +158,7 @@ describe('Top events', () => {
             ]
         )
         const interval = mkInterval('[2020-01-01 00:00, 2020-01-01 23:59)')
-        const events = await db.repoTopEvents.getTop({category: 'theaters', interval, limit: 2, offset: 1})
+        const events = await db.repoTopEvents.getTopIds({category: 'theaters', interval, limit: 2, offset: 1})
         expectedTitlesStrict(['B - timed', 'C - online'], events)
     })
 
@@ -177,7 +177,7 @@ describe('Top events', () => {
             ]
         )
         const interval = mkInterval('[2020-01-01 00:00, 2020-01-01 10:00)')
-        expectedTitlesStrict(['A'], await db.repoTopEvents.getTop({category: 'theaters', interval}))
+        expectedTitlesStrict(['A'], await db.repoTopEvents.getTopIds({category: 'theaters', interval}))
     })
 })
 

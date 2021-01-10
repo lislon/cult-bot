@@ -1,15 +1,10 @@
 import { IDatabase, IMain } from 'pg-promise'
-import { Event, MyInterval } from '../interfaces/app-interfaces'
+import { MyInterval } from '../interfaces/app-interfaces'
 import { mapToPgInterval } from './db-utils'
 import { limitEventsToPage } from '../scenes/shared/shared-logic'
-import { mapEvent, SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
+import { LimitOffset } from './db'
 
-export interface PagingRequest {
-    limit?: number
-    offset?: number
-}
-
-export interface SearchRequest extends PagingRequest {
+export interface SearchRequest extends Partial<LimitOffset> {
     query: string
     interval: MyInterval
     allowSearchById?: boolean
@@ -24,11 +19,11 @@ export class SearchRepository {
         return await this.db.one(`SELECT COUNT(1) AS total FROM ${queryBody}`, queryParams, r => +r.total);
     }
 
-    public async search(request: SearchRequest): Promise<Event[]> {
+    public async searchIds(request: SearchRequest): Promise<number[]> {
         const {fts, queryBody, queryParams} = this.formatQueryParts(request)
 
         return await this.db.map(`
-            SELECT ${SELECT_ALL_EVENTS_FIELDS}, ts_rank_cd(${fts}, query) AS rank
+            SELECT id, ts_rank_cd(${fts}, query) AS rank
             FROM ${queryBody}
             ORDER BY rank DESC, cb.rating DESC, cb.order_rnd
             limit $(limit) offset $(offset)
@@ -37,7 +32,7 @@ export class SearchRepository {
                 ...queryParams,
                 limit: request.limit || limitEventsToPage,
                 offset: request.offset || 0
-            }, mapEvent);
+            }, row => +row.id)
     }
 
     private formatQueryParts(request: SearchRequest) {

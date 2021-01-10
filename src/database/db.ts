@@ -94,3 +94,7 @@ const dbCfg: IConnectionParameters<pg.IClient> & {} = {
 const db: BotDb = pgp(dbCfg); // database instance;
 
 export { db, pgp, dbCfg }
+export interface LimitOffset {
+    limit: number
+    offset: number
+}

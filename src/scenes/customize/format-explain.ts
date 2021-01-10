@@ -1,5 +1,5 @@
-import { ContextMessageUpdate, I18MsgFunction } from '../../interfaces/app-interfaces';
-import { ruFormat } from '../shared/shared-logic';
+import { ContextMessageUpdate, I18MsgFunction } from '../../interfaces/app-interfaces'
+import { ruFormat } from '../shared/shared-logic'
 import { addDays, startOfDay, startOfISOWeek } from 'date-fns/fp'
 import flow from 'lodash/fp/flow'
 import { getISODay } from 'date-fns'
@@ -85,11 +85,10 @@ export function formatExplainTime(ctx: ContextMessageUpdate, i18Msg: I18MsgFunct
         `${i18Msg(ctx, 'explain_filter.time')} СБ (${from}) - ВС (${to}): ${weekdays[0].join(', ')}`
     );
   }
-  lines.push('');
   return lines;
 }
 
-const MAX_LINE_LEN = 40;
+const MAX_LINE_LEN = 35
 
 export function formatExplainOblasti(ctx: ContextMessageUpdate, i18Msg: I18MsgFunction): string[] {
   const {oblasti} = ctx.session.customize;
@@ -113,7 +112,6 @@ export function formatExplainOblasti(ctx: ContextMessageUpdate, i18Msg: I18MsgFu
       }),
     ];
   }
-  lines.push('');
   return lines;
 }
 
@@ -139,7 +137,6 @@ export function formatExplainCennosti(ctx: ContextMessageUpdate, i18Msg: I18MsgF
       }),
     ];
   }
-  lines.push('');
   return lines;
 }
 
@@ -149,7 +146,7 @@ export function formatExplainFormat(ctx: ContextMessageUpdate, i18Msg: I18MsgFun
   if (formatNice.length !== 1) {
     return [];
   }
-  return [i18Msg(ctx, 'explain_filter.format', {format: formatNice.join(', ')}), ''];
+  return [i18Msg(ctx, 'explain_filter.format', {format: formatNice.join(', ')})]
 }
 
 export function filterPastIntervals(intervals: string[], now: Date | undefined) {

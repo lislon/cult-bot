@@ -171,7 +171,7 @@ export class EventsCommonRepository {
             select ${SELECT_ALL_EVENTS_FIELDS}
             from cb_events cb
             JOIN unnest('{$(eventIds:list)}'::int[]) WITH ORDINALITY t(id, ord) USING (id)
-            ORDER BY ord;
+            ORDER BY ord
         `, {eventIds}, mapEvent)
     }
 

@@ -1,9 +1,10 @@
 import { chidrensTags, EventFormat, moneyTags, MyInterval, TagLevel2 } from '../interfaces/app-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
+import { LimitOffset } from './db'
 
 
-export interface CustomFilter {
+export interface CustomFilter extends Partial<LimitOffset> {
     weekendRange: MyInterval
     timeIntervals?: MyInterval[]
     format?: EventFormat
@@ -23,11 +24,14 @@ export class CustomFilterRepository {
             cb.is_anytime ASC,
             cb.rating DESC,
             cb.title ASC
-        limit 50
+        limit $(limit)
+        offset $(offset)
     `
         return await this.db.map(sql,
             {
                 ...queryParams,
+                limit: customFilter.limit || 3,
+                offset: customFilter.offset || 0
             }, row => +row.id);
     }
 

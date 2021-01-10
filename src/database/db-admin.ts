@@ -19,8 +19,6 @@ export interface EventWithOldVersion extends Event {
     snapshotStatus: 'updated' | 'inserted' | 'unchanged'
 }
 
-const SELECT_ADMIN_EVENT_FIELDS = `${SELECT_ALL_EVENTS_FIELDS}, views`
-
 export class AdminRepository {
 
     private snapshotSelectQueryPart = `
@@ -89,7 +87,7 @@ export class AdminRepository {
     async findAllChangedEventsByCat(category: EventCategory, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<EventWithOldVersion[]> {
         const finalQuery = `
         select * FROM (
-            SELECT ${SELECT_ADMIN_EVENT_FIELDS}, ${this.snapshotSelectQueryPart}
+            SELECT ${SELECT_ALL_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
             FROM cb_events cb
             LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
             WHERE
@@ -117,7 +115,7 @@ export class AdminRepository {
     async findAllEventsByReviewer(reviewer: string, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<EventWithOldVersion[]> {
         const finalQuery = `
         select * FROM (
-            SELECT ${SELECT_ADMIN_EVENT_FIELDS}, ${this.snapshotSelectQueryPart}
+            SELECT ${SELECT_ALL_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
             FROM cb_events cb
             LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
             WHERE
@@ -142,12 +140,34 @@ export class AdminRepository {
             }, AdminRepository.mapToEventWithId) as EventWithOldVersion[]
     }
 
+    public async getAdminEventsByIds(eventIds: number[]): Promise<EventWithOldVersion[]> {
+        if (eventIds.length === 0) {
+            return []
+        }
+        return await this.db.map(`
+            select ${SELECT_ALL_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
+            from cb_events cb
+            LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
+            JOIN unnest('{$(eventIds:list)}'::int[]) WITH ORDINALITY t(s_id, ord) ON (cb.id = s_id)
+            ORDER BY ord
+        `, {eventIds}, AdminRepository.mapToEventWithId)
+    }
+
     async findSnapshotEvent(extId: string, version: 'current' | 'snapshot'): Promise<EventWithOldVersion> {
-        const table = version == 'current' ? 'cb_events' : 'cb_events_snapshot'
-        return await db.one(`
+        let q = ''
+        if (version === 'current') {
+            q = `
             SELECT *, 'updated' AS snapshot_status
-            FROM ${table}
-            WHERE ext_id = $1 AND deleted_at IS NULL`, extId, AdminRepository.mapToEventWithId)
+            FROM cb_events
+            WHERE ext_id = $1 AND deleted_at IS NULL`
+        } else {
+            q = `
+            SELECT *, 'updated' AS snapshot_status
+            FROM cb_events_snapshot
+            WHERE ext_id = $1`
+        }
+
+        return await db.one(q, extId, AdminRepository.mapToEventWithId)
     }
 
     async countTotalRows(): Promise<number> {

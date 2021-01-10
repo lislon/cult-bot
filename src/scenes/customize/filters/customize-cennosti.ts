@@ -21,7 +21,6 @@ export async function customizeCennosti(ctx: ContextMessageUpdate) {
         [menu.button('#новыеформы')],
         [menu.button('#успетьзачас')],
         [menu.button('#культурныйбазис')],
-        // [Markup.callbackButton(i18Btn('show_personalized_events', {count: await countFilteredEvents(ctx)}), actionName('show_filtered_events'))]
     ]
     return buttons
 }

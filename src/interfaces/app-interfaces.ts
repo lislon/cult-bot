@@ -1,11 +1,8 @@
 import { SceneContextMessageUpdate } from 'telegraf/typings/stage'
 import { I18n } from 'telegraf-i18n'
 import { TimetableSceneState } from '../scenes/timetable/timetable-scene'
-import { CustomizeSceneState } from '../scenes/customize/customize-scene'
 import { TimeIntervalSceneState } from '../scenes/time-interval/time-interval-scene'
 import { AdminSceneState } from '../scenes/admin/admin-scene'
-import { TopsSceneState } from '../scenes/tops/tops-scene'
-import { PagingState } from '../scenes/shared/paging'
 import { SearchSceneState } from '../scenes/search/search-scene'
 import { Visitor } from 'universal-analytics'
 import { PerformanceContext } from '../lib/middleware/performance-middleware'
@@ -15,7 +12,10 @@ import { UserState } from '../lib/middleware/user-middleware'
 import { HelpSceneState } from '../scenes/help/help-scene'
 import { PacksSceneState } from '../scenes/packs/packs-common'
 import { FavoritesState } from '../scenes/favorites/favorites-scene'
-import { EventsSliderState } from '../scenes/shared/events-slider'
+import { AllSlidersState } from '../scenes/shared/slider-pager'
+import { CustomizeSceneState } from '../scenes/customize/customize-common'
+import { PagingState } from '../scenes/shared/paging-pager'
+import { TopsSceneState } from '../scenes/tops/tops-common'
 
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
@@ -52,10 +52,10 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         feedbackScene: FeedbackSceneState
         favorites: FavoritesState
         analytics: AnalyticsState,
-        paging: PagingState
         user: UserState
         help: HelpSceneState,
-        slider: EventsSliderState
+        paging: PagingState<unknown>
+        slider: AllSlidersState
         language: 'en' | 'ru'
     }
     webhookReply: boolean
@@ -87,7 +87,6 @@ export interface Event {
     reviewer: string
     likes: number
     dislikes: number
-    views?: number
 }
 
 export type MyInterval = {

@@ -2,18 +2,10 @@ import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate, EventCategory, ExtIdAndId } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
-import {
-    getGoogleSpreadSheetURL,
-    getNextWeekendRange,
-    ruFormat,
-    showBotVersion,
-    warnAdminIfDateIsOverriden
-} from '../shared/shared-logic'
+import { getGoogleSpreadSheetURL, ruFormat, showBotVersion, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { db, IExtensions, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
-import { Paging } from '../shared/paging'
 import { isValid, parse, parseISO } from 'date-fns'
-import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
-import { StatByCat } from '../../database/db-admin'
+import { CallbackButton } from 'telegraf/typings/markup'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
 import { logger, loggerTransport } from '../../util/logger'
@@ -22,7 +14,7 @@ import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import { EventToSave } from '../../interfaces/db-interfaces'
 import { chunkString } from '../../util/chunk-split'
 import { formatMainAdminMenu, formatMessageForSyncReport } from './admin-format'
-import { menuCats, POSTS_PER_PAGE_ADMIN, SYNC_CONFIRM_TIMEOUT_SECONDS, totalValidationErrors } from './admin-common'
+import { getButtonsSwitch, menuCats, SYNC_CONFIRM_TIMEOUT_SECONDS, totalValidationErrors } from './admin-common'
 import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 import { Message, User } from 'telegram-typings'
 import { EventToRecover, SyncDiff } from '../../database/db-sync-repository'
@@ -36,13 +28,20 @@ import {
     prepareForPacksSync
 } from '../../dbsync/packsSyncLogic'
 import { Dictionary, keyBy } from 'lodash'
+import { AdminPager } from './admin-pager'
+import { PagingPager } from '../shared/paging-pager'
 import Timeout = NodeJS.Timeout
 
-const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
+const scene = new BaseScene<ContextMessageUpdate>('admin_scene')
 
-export interface AdminSceneState {
+const pager = new PagingPager(new AdminPager())
+
+export interface AdminSceneQueryState {
     cat?: EventCategory,
     reviewer?: string,
+}
+
+export interface AdminSceneState extends AdminSceneQueryState {
     overrideDate?: string
 }
 
@@ -266,12 +265,7 @@ scene
         const {msg, markup} = await formatMainAdminMenu(ctx)
         await ctx.replyWithMarkdown(msg, markup)
     })
-    .use(Paging.pagingMiddleware(actionName('show_more'),
-        async (ctx: ContextMessageUpdate) => {
-            Paging.increment(ctx, POSTS_PER_PAGE_ADMIN)
-            await showNextResults(ctx)
-            await ctx.answerCbQuery()
-        }))
+    .use(pager.middleware())
     .action(actionName('sync'), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
         await synchronizeDbByUser(ctx)
@@ -309,7 +303,12 @@ scene
         await ctx.answerCbQuery()
         await startNewPaging(ctx)
         ctx.session.adminScene.reviewer = ctx.match[1]
-        await showNextResults(ctx)
+
+        await pager.updateState(ctx, {
+            cat: ctx.session.adminScene.cat,
+            reviewer: ctx.session.adminScene.reviewer
+        })
+        await pager.initialShowCards(ctx)
     })
     .action('fake', async (ctx) => await ctx.answerCbQuery(i18Msg(ctx, 'just_a_button')))
 
@@ -318,77 +317,19 @@ menuCats.flatMap(m => m).forEach(menuItem => {
         await ctx.answerCbQuery()
         await startNewPaging(ctx)
         ctx.session.adminScene.cat = menuItem as EventCategory
-        await showNextResults(ctx)
+
+        await pager.updateState(ctx, {
+            cat: ctx.session.adminScene.cat,
+            reviewer: ctx.session.adminScene.reviewer
+        })
+        await pager.initialShowCards(ctx)
     })
 })
-
-async function getSearchedEvents(ctx: ContextMessageUpdate) {
-    const nextWeekEndRange = getNextWeekendRange(ctx.now())
-    if (ctx.session.adminScene.cat !== undefined) {
-        const stats: StatByCat[] = await db.repoAdmin.findChangedEventsByCatStats(nextWeekEndRange)
-        const total = stats.find(r => r.category === ctx.session.adminScene.cat)?.count || 0
-        const events = await db.repoAdmin.findAllChangedEventsByCat(ctx.session.adminScene.cat, nextWeekEndRange, POSTS_PER_PAGE_ADMIN, ctx.session.paging.pagingOffset)
-        return {total, events}
-    } else {
-        const stats = await db.repoAdmin.findStatsByReviewer(nextWeekEndRange)
-        const total = stats.find(r => r.reviewer === ctx.session.adminScene.reviewer)?.count || 0
-        const events = await db.repoAdmin.findAllEventsByReviewer(ctx.session.adminScene.reviewer, nextWeekEndRange, POSTS_PER_PAGE_ADMIN, ctx.session.paging.pagingOffset)
-        return {total, events}
-    }
-}
-
-function getButtonsSwitch(ctx: ContextMessageUpdate, extId: string, active: 'snapshot' | 'current' = 'current') {
-    return [Markup.callbackButton(
-        i18Btn(ctx, `switch_to_snapshot`,
-            {active_icon: active === 'snapshot' ? i18Btn(ctx, 'snapshot_active_icon') : ''}
-        ),
-        actionName(`snapshot_${extId.toLowerCase()}`)),
-        Markup.callbackButton(
-            i18Btn(ctx, 'switch_to_current',
-                {active_icon: active === 'current' ? i18Btn(ctx, 'current_active_icon') : ''}
-            ),
-            actionName(`current_${extId.toLowerCase()}`))
-    ]
-}
-
-async function showNextResults(ctx: ContextMessageUpdate) {
-    await prepareSessionStateIfNeeded(ctx)
-    const {total, events} = await getSearchedEvents(ctx)
-
-    const showMoreBtn = Markup.callbackButton(i18Btn(ctx, 'show_more', {
-        page: Math.ceil(ctx.session.paging.pagingOffset / POSTS_PER_PAGE_ADMIN) + 1,
-        total: Math.ceil(+total / POSTS_PER_PAGE_ADMIN)
-    }), actionName('show_more'))
-
-    let count = 0
-    for (const event of events) {
-
-        let buttons: InlineKeyboardButton[][] = []
-
-        if (event.snapshotStatus === 'updated') {
-            buttons = [...buttons,
-                getButtonsSwitch(ctx, event.ext_id, 'current')
-            ]
-        }
-
-        if (++count == events.length && events.length === POSTS_PER_PAGE_ADMIN) {
-            buttons = [...buttons, [showMoreBtn]]
-        }
-
-        await ctx.replyWithHTML(cardFormat(event, {showAdminInfo: true}), {
-            disable_web_page_preview: true,
-            reply_markup: buttons.length > 0 ? Markup.inlineKeyboard(buttons) : undefined
-        })
-        await sleep(200)
-    }
-}
-
 
 async function startNewPaging(ctx: ContextMessageUpdate) {
     await prepareSessionStateIfNeeded(ctx)
     ctx.session.adminScene.cat = undefined
     ctx.session.adminScene.reviewer = undefined
-    Paging.reset(ctx)
     await warnAdminIfDateIsOverriden(ctx)
 }
 
@@ -396,7 +337,6 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     if (!ctx.scene.current) {
         await ctx.scene.enter('admin_scene', undefined, true)
     }
-    Paging.prepareSession(ctx)
     if (ctx.session.adminScene === undefined) {
         ctx.session.adminScene = {
             cat: undefined,

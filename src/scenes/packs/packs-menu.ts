@@ -2,10 +2,8 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { Markup } from 'telegraf'
 import {
-    getCurPackIndex,
     getEventsCount,
     getPackEventSelected,
-    getPacksCount,
     getPacksCurEventIndex,
     getPackSelected,
     getPacksList,
@@ -57,18 +55,10 @@ export async function displayPackMenu(ctx: ContextMessageUpdate) {
 
     const buttons = [
         [
+            Markup.callbackButton(i18Btn(ctx, 'pack_back'), actionName(`pack_back`)),
             Markup.callbackButton(i18Btn(ctx, 'pack_card_open', {
                 packTitle: pack.title
             }), actionName(`pack_open`))
-        ],
-        [
-            Markup.callbackButton(i18Btn(ctx, 'pack_next', {
-                page: getCurPackIndex(ctx) + 1,
-                total: await getPacksCount(ctx)
-            }), actionName(`pack_next`))
-        ],
-        [
-            Markup.callbackButton(i18Btn(ctx, 'pack_back'), actionName(`pack_back`)),
         ]
     ]
 
@@ -93,60 +83,19 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
     const page = getPacksCurEventIndex(ctx) + 1
     const total = await getEventsCount(ctx)
 
-    // V1:
-    // const buttons = [
-    //     [
-    //         Markup.callbackButton(i18Btn(ctx, 'event_prev') + (page > 1 ? ` ${page}` : ``), actionName(`event_prev`)),
-    //         ...getLikesRow(ctx, {
-    //             eventId: event.id,
-    //             likesCount: event.likes,
-    //             dislikesCount: event.dislikes,
-    //         }),
-    //         Markup.callbackButton((total - page > 0 ? `${total - page} ` : ``) + i18Btn(ctx, 'event_next'), actionName(`event_next`)),
-    //     ],
-    //     [
-    //         Markup.callbackButton(i18Btn(ctx, 'event_back', {
-    //             packTitle: packTitleNoEmoji
-    //         }), actionName(`event_back`)),
-    //     ]
-    // ]
-    //
-    // V2:
-    // const buttons = [
-    //     [
-    //         Markup.callbackButton(i18Btn(ctx, 'event_prev'), actionName(`event_prev`)),
-    //         Markup.callbackButton(i18Btn(ctx, 'event_curr', {
-    //             page: getCurEventIndex(ctx) + 1,
-    //             total: await getEventsCount(ctx)
-    //         }), actionName(`event_curr_tip`)),
-    //         Markup.callbackButton(i18Btn(ctx, 'event_next'), actionName(`event_next`)),
-    //     ],
-    //     [
-    //         Markup.callbackButton(i18Btn(ctx, 'event_back', {
-    //             packTitle: ''
-    //         }), actionName(`event_back`)),
-    //         ...getLikesRow(ctx, {
-    //             eventId: event.id,
-    //             likesCount: event.likes,
-    //             dislikesCount: event.dislikes,
-    //         })
-    //     ]
-    // ]
-
-
     const buttons = [
         [
             Markup.callbackButton(i18Btn(ctx, 'event_prev'), actionName(`event_prev`)),
-            ...getLikesRow(ctx, event),
-            Markup.callbackButton(i18Btn(ctx, 'event_curr', {
-                page: getPacksCurEventIndex(ctx) + 1,
-                total: await getEventsCount(ctx)
-            }) + ' ' + i18Btn(ctx, 'event_next'), actionName(`event_next`)),
+            ...getLikesRow(ctx, event)
         ],
         [
             Markup.callbackButton(i18Btn(ctx, 'event_back', {
                 packTitle: packTitleNoEmoji
             }), actionName(`event_back`)),
+            Markup.callbackButton(i18Btn(ctx, 'event_curr', {
+                page: getPacksCurEventIndex(ctx) + 1,
+                total: await getEventsCount(ctx)
+            }) + ' ' + i18Btn(ctx, 'event_next'), actionName(`event_next`)),
         ]
     ]
 
