@@ -55,6 +55,7 @@
     "universal-analytics": "^0.4.23",
     "uuid": "^8.3.1",
     "winston": "^3.3.3",
+    "xml-js": "^1.6.11",
     "xstate": "^4.15.0"
   },
   "devDependencies": {

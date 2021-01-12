@@ -8,6 +8,7 @@ import { logger } from './util/logger'
 import { db } from './database/db'
 import { i18n } from './util/i18n'
 import { rawBot } from './bot'
+import { omit } from 'lodash'
 
 const app = express()
 
@@ -94,6 +95,19 @@ if (botConfig.BOT_DISABLED === false) {
 
 app.use(BotStart.expressMiddleware(rawBot))
 
+
+app.get('/event/:id', async (request: Request<{ id: number }>, response: Response) => {
+    const [event] = await db.repoEventsCommon.getFirstEvent()
+    if (event !== undefined) {
+        const convert = require('xml-js')
+        const options = {compact: true, ignoreComment: true, spaces: 4}
+        const result = convert.json2xml({event: omit(event, ['reviewer', 'likes', 'dislikes', 'order_rnd'])}, options)
+        return response.contentType('text/html').send(result)
+    } else {
+        return response.status(404).send()
+    }
+})
+
 app.use('/api', (request: Request, response: Response) => {
     response.send('hi')
 })
@@ -116,5 +130,7 @@ app.listen(botConfig.PORT, () => {
         } else {
             logger.info(`Bot is disabled or NODE_ENV (${botConfig.NODE_ENV}) is not production`)
         }
+    } else {
+        logger.info(`HTTP started on port ${botConfig.PORT}!`)
     }
 })

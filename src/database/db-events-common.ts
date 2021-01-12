@@ -163,6 +163,15 @@ export class EventsCommonRepository {
         `, {eventId}, (row) => [+row.likes, +row.dislikes])
     }
 
+    public async getFirstEvent(): Promise<Event[]> {
+        return await this.db.map(`
+            select ${SELECT_ALL_EVENTS_FIELDS}
+            from cb_events cb
+            LIMIT 1
+        `, {}, mapEvent)
+    }
+
+
     public async getEventsByIds(eventIds: number[]): Promise<Event[]> {
         if (eventIds.length === 0) {
             return []
