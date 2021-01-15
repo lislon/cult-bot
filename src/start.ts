@@ -9,21 +9,33 @@ import { db } from './database/db'
 import { i18n } from './util/i18n'
 import { rawBot } from './bot'
 import { omit } from 'lodash'
+import { redis } from './util/reddis'
 
 const app = express()
 
 async function notifyAdminsAboutRestart() {
+    const redisVersionKey = 'HEROKU_SLUG_COMMIT'
     try {
-        const admins = await db.repoUser.findAllDevs()
-        const text = i18n.t('ru', 'scenes.admin_scene.restart_report', {
-            version: botConfig.HEROKU_RELEASE_VERSION,
-            commit: botConfig.HEROKU_SLUG_COMMIT?.substring(botConfig.HEROKU_SLUG_COMMIT.length - 7)
-        })
-        for (const admin of admins) {
-            await rawBot.telegram.sendMessage(admin.id, text, {
-                parse_mode: 'HTML',
-                disable_notification: true
+        const version = await redis.get(redisVersionKey)
+        if (version !== botConfig.HEROKU_SLUG_COMMIT) {
+            await redis.set(redisVersionKey, botConfig.HEROKU_SLUG_COMMIT)
+            const admins = await db.repoUser.findAllDevs()
+
+            const text = i18n.t('ru', 'scenes.admin_scene.update_report', {
+                version: botConfig.HEROKU_RELEASE_VERSION,
+                commit: botConfig.HEROKU_SLUG_COMMIT?.substring(botConfig.HEROKU_SLUG_COMMIT.length - 7)
             })
+            for (const admin of admins) {
+                try {
+                    await rawBot.telegram.sendMessage(admin.tid, text, {
+                        parse_mode: 'HTML',
+                        disable_notification: true
+                    })
+                } catch (e) {
+                    logger.warn(`failed to send to admin.id = ${admin.id}`)
+                    logger.warn(e)
+                }
+            }
         }
     } catch (e) {
         logger.warn(e)

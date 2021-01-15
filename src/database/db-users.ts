@@ -79,7 +79,7 @@ export class UserRepository {
 
     public async findAllDevs(): Promise<UserDb[] | null> {
         return this.db.manyOrNone<UserDb>(`
-        SELECT id, ua_uuid
+        SELECT tid, ua_uuid
         FROM cb_users
         WHERE
          username IN($(devUsernames:csv))`,

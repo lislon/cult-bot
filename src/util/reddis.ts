@@ -3,7 +3,7 @@ import { botConfig } from './bot-config'
 import { Context } from 'telegraf'
 import { TelegrafContext } from 'telegraf/typings/context'
 import { RedisClient } from 'redis'
-
+import { promisify } from 'util'
 
 export interface MyRedisSession {
     middleware(): (ctx: any, next?: (() => any) | undefined) => any
@@ -54,5 +54,8 @@ function getRedis(): MyRedisSession {
 }
 
 export const redisSession: MyRedisSession = getRedis()
-export const redis = redisSession.client
+export const redis = {
+    get: promisify(redisSession.client.get.bind(redisSession.client)),
+    set: promisify(redisSession.client.set.bind(redisSession.client))
+}
 
