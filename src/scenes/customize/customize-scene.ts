@@ -7,7 +7,7 @@ import {
     EditMessageAndButtonsOptions,
     generatePlural,
     getMsgId,
-    replyWithBackToMainMarkup
+    replyDecoyNoButtons
 } from '../shared/shared-logic'
 import { formatExplainCennosti, formatExplainFormat, formatExplainOblasti, formatExplainTime } from './format-explain'
 import { resetSessionIfProblem } from './customize-utils'
@@ -58,7 +58,7 @@ const getRootKeyboard = async (ctx: ContextMessageUpdate): Promise<CallbackButto
         [btn('format', ctx.session.customize.format), btn('oblasti', ctx.session.customize.oblasti)],
         [btn('priorities', ctx.session.customize.cennosti), btn('time', ctx.session.customize.time)],
         [resetButton(ctx)],
-        isAnyFilterSelected(ctx) ? [backButton(ctx), showEventsBtn] : [showEventsBtn],
+        [backButton(ctx), showEventsBtn],
     ]
 }
 
@@ -223,13 +223,6 @@ async function countFoundEvents(ctx: ContextMessageUpdate) {
     return ctx.session.customize.resultsFound
 }
 
-// async function showMainMenu(ctx: ContextMessageUpdate, text = i18Msg(ctx, 'welcome')) {
-//     await ctx.replyWithHTML(text, Extra.markup(Markup.inlineKeyboard(await getMainKeyboard(ctx))))
-//
-//     ctx.ua.pv({dp: `/customize/`, dt: `Подобрать под мои интересы`})
-// }
-//
-
 async function answerCbEventsSelected(ctx: ContextMessageUpdate) {
     const count = await countFoundEvents(ctx)
     await ctx.answerCbQuery(i18Msg(ctx, count > 0 ? 'popup_selected' : 'popup_zero_selected',
@@ -244,7 +237,7 @@ function isThisMessageMatchesWithActiveFilter(ctx: ContextMessageUpdate) {
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
         prepareSessionStateIfNeeded(ctx)
-        await replyWithBackToMainMarkup(ctx)
+        await replyDecoyNoButtons(ctx)
         ctx.session.customize.resultsFound = undefined
         ctx.session.customize.msgId = await updateDialog(ctx, 'root', {forceNewMsg: true, restoreMessage: true})
         await invalidateSliderAndCounters(ctx, ctx.session.customize.msgId)

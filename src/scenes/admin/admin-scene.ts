@@ -2,7 +2,13 @@ import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate, EventCategory, ExtIdAndId } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
-import { getGoogleSpreadSheetURL, ruFormat, showBotVersion, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import {
+    getGoogleSpreadSheetURL,
+    replyDecoyBackButton,
+    ruFormat,
+    showBotVersion,
+    warnAdminIfDateIsOverriden
+} from '../shared/shared-logic'
 import { db, IExtensions, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
 import { isValid, parse, parseISO } from 'date-fns'
 import { CallbackButton } from 'telegraf/typings/markup'
@@ -262,6 +268,7 @@ scene
     })
     .enter(async (ctx: ContextMessageUpdate) => {
         await prepareSessionStateIfNeeded(ctx)
+        await replyDecoyBackButton(ctx)
         const {msg, markup} = await formatMainAdminMenu(ctx)
         await ctx.replyWithMarkdown(msg, markup)
     })

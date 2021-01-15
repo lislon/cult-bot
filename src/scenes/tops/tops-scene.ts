@@ -3,7 +3,7 @@ import { ContextMessageUpdate, EventCategory, MyInterval } from '../../interface
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import * as events from 'events'
 import { i18n } from '../../util/i18n'
-import { replyWithBackToMainMarkup, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { replyDecoyNoButtons, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { subSeconds } from 'date-fns/fp'
 import { isSameDay, isSameMonth, startOfDay } from 'date-fns'
 import { SceneRegister } from '../../middleware-utils'
@@ -113,7 +113,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
         }
 
         await ctx.replyWithHTML(i18Msg(ctx, templateName, {humanDateRange, ...tplData}),
-            {reply_markup: backMarkup(ctx)})
+            Extra.markup(Markup.removeKeyboard()))
 
         await sleep(70)
         const sliderState = await pager.updateState(ctx, ctx.session.topsScene, total, undefined)
@@ -131,7 +131,10 @@ function trackUa(ctx: ContextMessageUpdate) {
 
 async function goBack(ctx: ContextMessageUpdate) {
     await prepareSessionStateIfNeeded(ctx)
-    if (ctx.session.topsScene.isWatchingEvents || ctx.session.topsScene.isInSubMenu) {
+    if (ctx.session.topsScene.submenuSelected !== undefined) {
+        ctx.session.topsScene.submenuSelected = undefined
+        await showExhibitionsSubMenu(ctx)
+    } else if (ctx.session.topsScene.isWatchingEvents) {
         await ctx.scene.enter('tops_scene')
     } else {
         await ctx.scene.enter('main_scene')
@@ -170,7 +173,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             }
             ctx.session.topsScene.isWatchingEvents = true
             ctx.session.topsScene.isInSubMenu = false
-            await replyWithBackToMainMarkup(ctx)
+            await replyDecoyNoButtons(ctx)
             await showEventsFirstTime(ctx)
             trackUa(ctx)
         })

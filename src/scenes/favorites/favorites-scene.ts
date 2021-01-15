@@ -11,7 +11,7 @@ import {
     generatePlural,
     getMsgInlineKeyboard,
     parseAndUpdateBtn,
-    replyWithBackToMainMarkup,
+    replyDecoyNoButtons,
     ruFormat,
     SessionEnforcer,
     warnAdminIfDateIsOverriden
@@ -216,7 +216,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
-        await replyWithBackToMainMarkup(ctx)
+        await replyDecoyNoButtons(ctx)
 
 
         await warnAdminIfDateIsOverriden(ctx)

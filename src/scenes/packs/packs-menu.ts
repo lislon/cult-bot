@@ -54,12 +54,10 @@ export async function displayPackMenu(ctx: ContextMessageUpdate) {
     })
 
     const buttons = [
-        [
-            Markup.callbackButton(i18Btn(ctx, 'pack_back'), actionName(`pack_back`)),
-            Markup.callbackButton(i18Btn(ctx, 'pack_card_open', {
-                packTitle: pack.title
-            }), actionName(`pack_open`))
-        ]
+        [Markup.callbackButton(i18Btn(ctx, 'pack_card_open', {
+            packTitle: pack.title
+        }), actionName(`pack_open`))],
+        [Markup.callbackButton(i18Btn(ctx, 'pack_back'), actionName(`pack_back`))]
     ]
 
     await updateMenu(ctx, {

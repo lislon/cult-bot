@@ -1,7 +1,7 @@
 import { BaseScene, Composer } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { replyDecoyBackButton, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { SceneRegister } from '../../middleware-utils'
 import { PagingPager } from '../shared/paging-pager'
 import emojiRegex from 'emoji-regex'
@@ -30,7 +30,7 @@ const eventPager = new PagingPager(new SearchPagerConfig())
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
         await prepareSessionStateIfNeeded(ctx)
-        await replyWithBackToMainMarkup(ctx, i18Msg(ctx, 'please_search'))
+        await replyDecoyBackButton(ctx, i18Msg(ctx, 'please_search'))
 
         ctx.ua.pv({dp: `/search/`, dt: `Поиск`})
     })
