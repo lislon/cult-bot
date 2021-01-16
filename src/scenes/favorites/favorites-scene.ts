@@ -13,7 +13,6 @@ import {
     parseAndUpdateBtn,
     replyDecoyNoButtons,
     ruFormat,
-    SessionEnforcer,
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
 import { leftDate, MomentIntervals, rightDate } from '../../lib/timetable/intervals'
@@ -21,7 +20,7 @@ import { parseAndPredictTimetable, ParseAndPredictTimetableResult } from '../../
 import { first, last } from 'lodash'
 import { compareAsc, compareDesc, isAfter } from 'date-fns'
 import { PagingConfig, PagingPager } from '../shared/paging-pager'
-import { addHtmlNiceUrls, cardFormat, formatTimetable } from '../shared/card-format'
+import { addHtmlNiceUrls, cardFormat, formatUrl } from '../shared/card-format'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { InlineKeyboardMarkup } from 'telegram-typings'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
@@ -32,7 +31,7 @@ const scene = new BaseScene<ContextMessageUpdate>('favorites_scene')
 const {i18SharedMsg, i18Btn, i18Msg, i18SharedBtn, backButton, actionName} = i18nSceneHelper(scene)
 
 export interface FavoritesState {
-    viewType: 'compact' | 'detailed'
+
 }
 
 export interface FavoriteEvent extends Event {
@@ -90,31 +89,23 @@ function nearestDate(now: Date, event: FavoriteEvent) {
 
 async function formatListOfFavorites(ctx: ContextMessageUpdate, events: FavoriteEvent[]) {
     return events.map(event => {
+        const details = []
+        if (!fieldIsQuestionMarkOrEmpty(event.place)) {
+            details.push(`🌐 ${addHtmlNiceUrls(escapeHTML(event.place))}`)
+        }
+        if (!fieldIsQuestionMarkOrEmpty(event.url)) {
+            details.push(`${formatUrl(escapeHTML(event.url))}`)
+        }
+
         if (event.isFuture) {
             const date = event.parsedTimetable.timetable.anytime ? i18Msg(ctx, 'date_anytime') : ruFormat(nearestDate(ctx.now(), event), 'dd MMMM')
-            const timetable = formatTimetable(event).trimEnd()
 
-            if (ctx.session.favorites.viewType === 'detailed') {
-
-
-                const details = [timetable]
-                if (!fieldIsQuestionMarkOrEmpty(event.place)) {
-                    details.push(`🌐 ${addHtmlNiceUrls(escapeHTML(event.place))}\n`)
-                }
-
-                return i18Msg(ctx, 'event_item_detailed', {
-                    icon: i18SharedMsg(ctx, 'category_icons.' + event.category),
-                    title: event.title,
-                    details: details.join('\n'),
-                    date
-                })
-            } else {
-                return i18Msg(ctx, 'event_item', {
-                    icon: i18SharedMsg(ctx, 'category_icons.' + event.category),
-                    title: event.title,
-                    date
-                })
-            }
+            return i18Msg(ctx, 'event_item', {
+                icon: i18SharedMsg(ctx, 'category_icons.' + event.category),
+                title: event.title,
+                place: details.length > 0 ? `\n${details.join(', ')}\n` : '',
+                date
+            })
         } else {
 
             const date = event.parsedTimetable.timeIntervals.length === 0 ? '> 2 недель назад' : ruFormat(rightDate(last(event.parsedTimetable.timeIntervals)), 'dd MMMM')
@@ -122,6 +113,7 @@ async function formatListOfFavorites(ctx: ContextMessageUpdate, events: Favorite
             return i18Msg(ctx, 'event_item_past', {
                 icon: i18SharedMsg(ctx, 'category_icons.' + event.category),
                 title: event.title,
+                place: '',
                 date
             })
         }
@@ -138,14 +130,9 @@ async function getMainMenu(ctx: ContextMessageUpdate) {
         const wipeButton = Markup.callbackButton(i18Btn(ctx, 'wipe'), actionName('wipe'))
         const showCards = Markup.callbackButton(i18Btn(ctx, 'show_cards', {count: events.length}), actionName('show_cards'))
 
-        const viewType = Markup.callbackButton(i18Btn(ctx, 'view_type', {
-            viewType: i18Btn(ctx, ctx.session.favorites.viewType === 'compact' ? 'view_type_compact' : 'view_type_detailed')
-        }), actionName('view_type'))
-
-
         const hasOld = events.find(e => e.isFuture === false) !== undefined
 
-        buttons = [[...(hasOld ? [wipeButton] : []), viewType], [back, showCards]]
+        buttons = [[...(hasOld ? [wipeButton] : [])], [showCards], [back]]
 
         msg = i18Msg(ctx, 'main', {
             eventsPlural: generatePlural(ctx, 'event', events.length),
@@ -205,13 +192,10 @@ class FavoritePaging implements PagingConfig<number[]> {
 const eventPager = new PagingPager(new FavoritePaging())
 
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
-    const {
-        viewType
-    } = ctx.session.favorites || {}
-
-    ctx.session.favorites = {
-        viewType: SessionEnforcer.default(viewType, 'compact')
-    }
+    // const {
+    //
+    // } = ctx.session.favorites || {}
+    ctx.session.favorites = undefined
 }
 
 scene
@@ -297,21 +281,6 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                     parse_mode: 'HTML',
                     reply_markup: newKeyboard
                 })
-            }
-        })
-        .action(actionName('view_type'), async ctx => {
-            await ctx.answerCbQuery()
-            prepareSessionStateIfNeeded(ctx)
-            ctx.session.favorites.viewType = ctx.session.favorites.viewType === 'compact' ? 'detailed' : 'compact'
-
-            const {msg, buttons} = await getMainMenu(ctx)
-            await editMessageAndButtons(ctx, buttons, msg)
-
-
-            if (ctx.session.favorites.viewType === 'compact') {
-                ctx.ua.pv({dp: `/favorites/compact/`, dt: `Избранное (с форматом времени)`})
-            } else {
-                ctx.ua.pv({dp: `/favorites/detailed/`, dt: `Избранное`})
             }
         })
         .action(actionName('wipe'), async ctx => {

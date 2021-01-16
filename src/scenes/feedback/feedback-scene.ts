@@ -149,7 +149,10 @@ async function sendSurveyToOurGroup(ctx: ContextMessageUpdate, result: IsListeni
                 ...userSelected(ctx, ctx.session.feedbackScene.whyDontLike, 'q_why_not_like')
             })
         }
-        await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template)
+        await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, {
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        })
     }
 }
 

@@ -11,7 +11,7 @@ export function addHtmlNiceUrls(text: string) {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
 }
 
-function formatUrl(text: string) {
+export function formatUrl(text: string) {
     const niceUrls = addHtmlNiceUrls(text)
     if (niceUrls === text && text.match(/^https?:\/\//)) {
         return `<a href="${text}">(ссылка на событие)</a>`

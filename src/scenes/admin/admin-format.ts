@@ -74,7 +74,6 @@ export const formatMainAdminMenu = async (ctx: ContextMessageUpdate) => {
             Markup.callbackButton(i18Btn(ctx, 'sync'), actionName('sync')),
             Markup.callbackButton(i18Btn(ctx, 'version'), actionName('version')),
         ])
-        adminButtons.push([Markup.callbackButton(i18SharedBtn(ctx, 'back'), actionName('back'))])
 
         return {
             msg: i18Msg(ctx, 'welcome', {
@@ -84,8 +83,6 @@ export const formatMainAdminMenu = async (ctx: ContextMessageUpdate) => {
             markup: Extra.HTML().markup(Markup.inlineKeyboard(adminButtons))
         }
     })
-
-
 }
 
 function formatPacksReport(eventPackValidated: EventPackValidated[], ctx: ContextMessageUpdate) {

@@ -32,7 +32,7 @@ export class CustomizePagerConfig implements SliderConfig<CustomizeFilters> {
     }
 
     backButton(ctx: ContextMessageUpdate): CallbackButton {
-        return Markup.callbackButton(i18Btn(ctx, 'card_back'), actionName(`card_back`))
+        return Markup.callbackButton(i18Btn(ctx, 'back'), actionName(`card_back`))
     }
 
     analytics(ctx: ContextMessageUpdate, event: Event, {limit, offset}: LimitOffset, filters: CustomizeFilters): void {

@@ -166,7 +166,7 @@ function autoAppendLevel2Tags(data: Event, errorCallback: ErrorCallback, warning
             warningCallback([`Бот добавил тег ${tagFree}, тут тоже хорошо бы поправить`])
         }
     } else if (priceParsed.type === 'paid') {
-        if (priceParsed.max !== undefined && priceParsed.max <= CHEAP_PRICE_THRESHOLD && !tagCheapIncl) {
+        if (priceParsed.max !== undefined && priceParsed.min <= CHEAP_PRICE_THRESHOLD && !tagCheapIncl) {
             data.tag_level_2.push(tagCheap)
             warningCallback([`Бот добавил тег ${tagCheap}, тут тоже хорошо бы поправить`])
         } else if (priceParsed.min > CHEAP_PRICE_THRESHOLD && (tagCheapIncl || tagFreeIncl)) {

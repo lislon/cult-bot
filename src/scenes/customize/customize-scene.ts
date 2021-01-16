@@ -135,7 +135,7 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType, opti
 
     async function btnRow(): Promise<InlineKeyboardButton[]> {
         return [
-            Markup.callbackButton(i18Btn(ctx, 'back_to_filters'), actionName('back_to_filters')),
+            Markup.callbackButton(i18Btn(ctx, 'back'), actionName('back_to_filters')),
             Markup.callbackButton(await showGoToResultsButton(ctx), actionName('show_personalized_events'))
         ]
     }
