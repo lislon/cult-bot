@@ -70,7 +70,7 @@ export default {
             ...opts,
         })
     },
-    logger: updateLogger({colors: true}),
+    logger: updateLogger({log: (msg: string) => logger.debug(msg)}),
     session: sessionMechanism,
     sessionTmp: sessionTmp(),
     logMiddleware: logMiddleware,

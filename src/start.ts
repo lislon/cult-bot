@@ -64,7 +64,6 @@ class BotStart {
     }
 
     public static async startProdMode(bot: Telegraf<ContextMessageUpdate>) {
-        console.log('Starting a bot in production mode (simple-log) level=', logger.level)
         logger.info('Starting a bot in production mode');
         // If webhook not working, check fucking motherfucking UFW that probably blocks a port...
         BotStart.printDiagnostic()

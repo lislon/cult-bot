@@ -104,9 +104,6 @@ export class UserRepository {
             blocked_at: undefined
         }
         const sql = this.pgp.helpers.insert(rawData, this.columns) + ' returning id'
-        if (sql.length === 3) {
-            console.log(sql)
-        }
         return +(await this.db.one(sql))['id']
     }
 

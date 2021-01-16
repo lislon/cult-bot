@@ -172,7 +172,7 @@ supportFeedbackMiddleware
         setTimeout(startMailings, 0, ctx.telegram, +ctx.match[1])
     })
     .hears(/.+/, async (ctx: ContextMessageUpdate, next: any) => {
-        console.log(`support chat: (id=${ctx.chat.id}) ${ctx.message.text}`)
+        logger.error(`support chat: (id=${ctx.chat.id}) ${ctx.message.text}`)
 
         if (ctx.message?.reply_to_message?.message_id !== undefined) {
             // ctx.telegram.sendMessage()
