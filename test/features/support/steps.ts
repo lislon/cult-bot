@@ -128,6 +128,14 @@ When(/^I start bot with payload '(.+)'$/, async function (payload: string) {
     await this.start(payload)
 })
 
+When(/^I click slider next$/, async function () {
+    drainEvents.call(this)
+
+    const {buttons} = this.server.getListOfInlineButtonsFromLastMsg()
+    const btn = buttons.find((btn: any) => btn.text.includes('»'))
+    await this.clickInline(btn?.text ?? '»')
+})
+
 Then(/^Bot responds nothing$/, function (expected: string) {
     const nextReply = this.getNextMsg() as BotReply
     expect(nextReply).toBeUndefined()
@@ -189,6 +197,16 @@ Then(/^Bot edits inline buttons:$/, function (buttonsLayout: string) {
         expect('').toStrictEqual('Expected edited markup but none')
     }
     expectLayoutsSame(buttonsLayout, markup.extra.reply_markup)
+})
+
+Then(/^Bot edits slider with event '(.+)'/, function (eventTitle: string) {
+    const markup = this.getLastEditedInline() as BotReply
+    expect(markup.text).toContain(`<b>${eventTitle}</b>\n`)
+})
+Then(/^Bot responds with slider with event '(.+)'/, function (eventTitle: string) {
+    const markup = this.getNextMsg() as BotReply
+    expect(markup.text).toContain(`<b>${eventTitle}</b>\n`)
+    expect(markup.extra.reply_markup).toBeTruthy()
 })
 
 Then(/^Bot responds with event '(.+)'/, function (eventTitle: string) {

@@ -1,7 +1,7 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { BaseScene, Markup } from 'telegraf'
-import { SliderConfig } from '../shared/slider-pager'
+import { TotalOffset, SliderConfig } from '../shared/slider-pager'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { CustomizeFilters, prepareRepositoryQuery } from './customize-common'
 import { db, LimitOffset } from '../../database/db'
@@ -35,18 +35,24 @@ export class CustomizePagerConfig implements SliderConfig<CustomizeFilters> {
         return Markup.callbackButton(i18Btn(ctx, 'back'), actionName(`card_back`))
     }
 
-    analytics(ctx: ContextMessageUpdate, event: Event, {limit, offset}: LimitOffset, filters: CustomizeFilters): void {
-        const filtersStr = [
-            filters.format.length > 0 ? 'format' : undefined,
-            filters.oblasti.length > 0 ? 'oblasti' : undefined,
-            filters.cennosti.length > 0 ? 'cennosti' : undefined,
-            filters.time.length > 0 ? 'time' : undefined,
-        ].filter(s => s !== undefined).join('+').replace(/^$/, 'no_filters')
+    analytics(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset, filters: CustomizeFilters): void {
+        function extracted(format: string, oblasti: string, cennosti: string, time: string, noFilters: string) {
+            const filtersStr = [
+                filters.format.length > 0 ? format : undefined,
+                filters.oblasti.length > 0 ? oblasti : undefined,
+                filters.cennosti.length > 0 ? cennosti : undefined,
+                filters.time.length > 0 ? time : undefined,
+            ].filter(s => s !== undefined).join('+').replace(/^$/, noFilters)
+            return filtersStr;
+        }
+
+        const filtersStr = extracted('format', 'rubrics', 'cennosti', 'time', 'no_filters');
+        const filtersStrHuman = extracted('Формат', 'Рубрики', 'Ценности', 'Время', 'Без фильтра');
 
         // const pageTitle = pageNumber > 1 ? ` [Страница ${pageNumber}]` : ''
         ctx.ua.pv({
-            dp: `/favorites/${filtersStr}/p${offset + 1}/${event.ext_id}-${mySlugify(event.title)}/`,
-            dt: `Избранное > ${filtersStr} > ${event.title} [${offset + 1} / ${limit}]`.trim()
+            dp: `/customize/${filtersStr}/p${offset + 1}/${event.ext_id}-${mySlugify(event.title)}/`,
+            dt: `Подобрать под интересы > ${filtersStrHuman} > ${event.title} [${offset + 1}/${total}]`.trim()
         })
     }
 }

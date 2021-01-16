@@ -1,4 +1,4 @@
-import { SliderConfig } from '../shared/slider-pager'
+import { SliderConfig, TotalOffset } from '../shared/slider-pager'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { db, LimitOffset } from '../../database/db'
 import { CallbackButton } from 'telegraf/typings/markup'
@@ -36,12 +36,12 @@ export class TopsPagerConfig implements SliderConfig<TopEventsStageQuery> {
         return Markup.callbackButton(i18Btn(ctx, 'back_inline'), actionName(`back_inline`))
     }
 
-    analytics(ctx: ContextMessageUpdate, event: Event, {limit, offset}: LimitOffset, state: TopEventsStageQuery): void {
+    analytics(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset, state: TopEventsStageQuery): void {
         const {dp, dt} = analyticsTopParams(state)
 
         ctx.ua.pv({
             dp: `${dp}p${offset + 1}/${event.ext_id}-${mySlugify(event.title)}/`,
-            dt: `${dt} > ${event.title} [${offset + 1}/${limit}]`.trim()
+            dt: `${dt} > ${event.title} [${offset + 1}/${total}]`.trim()
         })
     }
 

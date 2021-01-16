@@ -13,11 +13,11 @@ const {i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
 
 function logLikes(plusLikes: number, ctx: ContextMessageUpdate, eventId: number, plusDislikes: number) {
     if (plusLikes > 0) {
-        logger.info(formatUserName(ctx) + ' liked ' + eventId)
+        logger.debug(formatUserName(ctx) + ' liked eventId=' + eventId)
     } else if (plusDislikes > 0) {
-        logger.info(formatUserName(ctx) + ' disliked' + eventId)
+        logger.debug(formatUserName(ctx) + ' disliked eventId=' + eventId)
     } else {
-        logger.info(formatUserName(ctx) + ' reverted like/dislike' + eventId)
+        logger.debug(formatUserName(ctx) + ' reverted like/dislike eventId=' + eventId)
     }
 }
 

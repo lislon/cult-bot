@@ -125,7 +125,7 @@ async function getMainMenu(ctx: ContextMessageUpdate) {
     let buttons: CallbackButton[][] = []
     const events = sortFavorites(await getListOfFavorites(ctx, ctx.session.user.eventsFavorite))
 
-    const back = backButton(ctx)
+    const back = backButton()
     if (events.length > 0) {
         const wipeButton = Markup.callbackButton(i18Btn(ctx, 'wipe'), actionName('wipe'))
         const showCards = Markup.callbackButton(i18Btn(ctx, 'show_cards', {count: events.length}), actionName('show_cards'))

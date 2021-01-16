@@ -15,10 +15,10 @@ Feature: Customize time
 
   Scenario: I can filter only temporary exhibition
     Given there is events:
-      | title   | category     | tag_level_1                     | timetable        |
-      | A       | exhibitions  | #постоянныеколлекции #доммузей  | вс: 21:59        |
-    When I click markup [Рубрики]
-    Then Bot responds 'Выберите рубрики' with inline buttons:
+      | title | category    | tag_level_1                    | timetable |
+      | A     | exhibitions | #постоянныеколлекции #доммузей | вс: 21:59 |
+    When I click inline [Рубрики]
+    Then Bot edits inline buttons:
       """
       [➕ Кино ]
       [➕ Концерты ]
@@ -27,6 +27,7 @@ Feature: Customize time
       [➕ Театр ]
       [➕ Мероприятия ]
       [➕ Прогулки ]
+      [◀️ Назад] [🎯 События (1)]
       """
     When I click inline [Постоянные коллекции]
     Then Bot edits inline buttons:
@@ -42,6 +43,7 @@ Feature: Customize time
       [➕ Театр ]
       [➕ Мероприятия ]
       [➕ Прогулки ]
+      [◀️ Назад] [🎯 События (1)]
       """
     When I click inline [Дом-музей]
     Then Bot edits inline buttons:
@@ -57,36 +59,34 @@ Feature: Customize time
       [➕ Театр ]
       [➕ Мероприятия ]
       [➕ Прогулки ]
+      [◀️ Назад] [🎯 События (1)]
       """
-    When I click markup [Назад [к фильтрам]]
-    Then Bot responds:
+    When I click inline [Назад]
+    Then Bot edits text:
     """
-    Текущая настройка фильтров:
+    Настройки фильтра:
 
-    📎 <b>Рубрики</b>:  Дом-музей
+    <code> </code>📎 <b>Рубрики</b>:  Дом-музей
 
-    <b>1 событие</b> найдено
+    🎯 1 событие выбрано
     """
-    When I click markup [Показать события]
-    Then Bot responds with event 'A'
+    When I click inline [🎯 События (1)]
+    Then Bot edits slider with event 'A'
 
   Scenario: I will see both #наука и #техника when select Научно-технические
     Given there is events:
-      | title   | category     | tag_level_1                    | timetable        |
-      | A       | exhibitions  | #постоянныеколлекции #наука    | вс: 21:59        |
-      | B       | exhibitions  | #постоянныеколлекции #техника  | вс: 21:59        |
-    When I click markup [Рубрики]
+      | title | category    | tag_level_1                   | timetable |
+      | A     | exhibitions | #постоянныеколлекции #наука   | вс: 21:59 |
+      | B     | exhibitions | #постоянныеколлекции #техника | вс: 21:59 |
+    When I click inline [Рубрики]
     When I click inline [Постоянные коллекции]
     When I click inline [Научно-технические]
-    When I click markup [Назад [к фильтрам]]
-    Then Bot responds:
-    """
-    Текущая настройка фильтров:
-
-    📎 <b>Рубрики</b>:  Научно-технические
-
-    <b>2 события</b> найдено
-    """
-    When I click markup [Показать события]
-    Then Bot responds with event 'A'
-    Then Bot responds with event 'B'
+    When I click inline [События (2)]
+    Then Bot edits slider with event 'A'
+    When I click slider next
+    Then Bot edits slider with event 'B'
+    Then Google analytics pageviews will be:
+      | dp                          | dt                                             |
+      | /customize/rubrics/         | Подобрать под интересы > Рубрики           |
+      | /customize/rubrics/p1/TEST-0-a/ | Подобрать под интересы > Рубрики > A [1/2] |
+      | /customize/rubrics/p2/TEST-1-b/ | Подобрать под интересы > Рубрики > B [2/2] |

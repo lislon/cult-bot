@@ -250,6 +250,11 @@ export class TelegramMockServer {
         }
         ctx.editMessageText = async (text: string, extra?: tt.ExtraEditMessage): Promise<tt.Message | boolean> => {
             await touchApiMock()
+
+            if (ctx.updateType !== 'callback_query') {
+                throw new Error(`Telegraf: "editMessageText" isn't available for "message::text"`)
+            }
+
             const lastReply = this.findLastReply()
             if (lastReply === undefined) {
                 return false

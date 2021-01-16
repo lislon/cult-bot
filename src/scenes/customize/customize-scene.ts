@@ -21,7 +21,6 @@ import { formatOptionLogic, getKeyboardFormat } from './filters/customize-format
 import { SliderPager } from '../shared/slider-pager'
 import { CustomizePagerConfig } from './customize-pager-config'
 import { db } from '../../database/db'
-import { logger } from '../../util/logger'
 
 const scene = new BaseScene<ContextMessageUpdate>('customize_scene')
 
@@ -58,7 +57,7 @@ const getRootKeyboard = async (ctx: ContextMessageUpdate): Promise<CallbackButto
         [btn('format', ctx.session.customize.format), btn('oblasti', ctx.session.customize.oblasti)],
         [btn('priorities', ctx.session.customize.cennosti), btn('time', ctx.session.customize.time)],
         [resetButton(ctx)],
-        [backButton(ctx), showEventsBtn],
+        [backButton(), showEventsBtn],
     ]
 }
 
@@ -345,24 +344,24 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         .action(actionName('format'), async (ctx: ContextMessageUpdate) => {
             await ctx.answerCbQuery()
             await withSubDialog(ctx, 'format')
-            ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под мои интересы > Формат`})
+            ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под интересы > Формат`})
         })
         .action(actionName('oblasti'), async (ctx: ContextMessageUpdate) => {
             await ctx.answerCbQuery()
             await withSubDialog(ctx, 'oblasti')
-            ctx.ua.pv({dp: `/customize/rubrics/`, dt: `Подобрать под мои интересы > Рубрики`})
+            ctx.ua.pv({dp: `/customize/rubrics/`, dt: `Подобрать под интересы > Рубрики`})
 
         })
         .action(actionName('priorities'), async (ctx: ContextMessageUpdate) => {
             await ctx.answerCbQuery()
             await withSubDialog(ctx, 'priorities')
-            ctx.ua.pv({dp: `/customize/priorities/`, dt: `Подобрать под мои интересы > Приоритеты`})
+            ctx.ua.pv({dp: `/customize/priorities/`, dt: `Подобрать под интересы > Приоритеты`})
 
         })
         .action(actionName('time'), async (ctx: ContextMessageUpdate) => {
             await ctx.answerCbQuery()
             await withSubDialog(ctx, 'time')
-            ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под мои интересы > Время`})
+            ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под интересы > Время`})
         })
         .action(actionName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
             prepareSessionStateIfNeeded(ctx)

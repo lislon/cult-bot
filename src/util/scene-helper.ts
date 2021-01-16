@@ -21,7 +21,7 @@ export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id
     }
 
     return {
-        backButton: (ctx: ContextMessageUpdate): CallbackButton => Markup.callbackButton(ctx.i18n.t('shared.keyboard.back'), backAction),
+        backButton: (): CallbackButton => Markup.callbackButton(i18n.t('ru', 'shared.keyboard.back'), backAction),
         actionName: (id: string) => `${scene.id}.${ReversableTranslit.translit(id)}`,
         revertActionName: (id: string) => {
             if (id.startsWith('#_')) {

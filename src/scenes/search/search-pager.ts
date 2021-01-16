@@ -1,10 +1,9 @@
-import { PagingConfig } from '../shared/paging-pager'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { db, LimitOffset } from '../../database/db'
 import { getNextWeekendRange } from '../shared/shared-logic'
 import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
-import { BaseScene, Markup } from 'telegraf'
-import { SliderConfig, SliderPager } from '../shared/slider-pager';
+import { BaseScene } from 'telegraf'
+import { SliderConfig, TotalOffset } from '../shared/slider-pager';
 import { CallbackButton } from 'telegraf/typings/markup';
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene')
@@ -40,17 +39,14 @@ export class SearchPagerConfig implements SliderConfig<string> {
     }
 
     backButton(ctx: ContextMessageUpdate): CallbackButton {
-        return backButton(ctx);
+        return backButton();
     }
 
-    analytics(ctx: ContextMessageUpdate, event: Event, {limit, offset}: LimitOffset, query: string): void {
-        const pageNumber = Math.floor(offset / limit) + 1
-
-        const pageTitle = pageNumber > 1 ? ` [Страница ${pageNumber}]` : ''
+    analytics(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset, query: string): void {
         ctx.ua.e('Search', 'query', ctx.session.search.request, undefined)
         ctx.ua.pv({
-            dp: `/search/${encodeURI(ctx.session.search.request)}/${pageNumber > 1 ? `p${pageNumber}/` : ''}?q=${encodeURIComponent(ctx.session.search.request)}`,
-            dt: `Поиск по '${ctx.session.search.request} ${pageTitle}' есть результаты`
+            dp: `/search/${encodeURI(ctx.session.search.request)}/p${offset + 1}/?q=${encodeURIComponent(ctx.session.search.request)}`,
+            dt: `Поиск по '${ctx.session.search.request}' [${offset + 1}/${total}]`
         })
     }
 }

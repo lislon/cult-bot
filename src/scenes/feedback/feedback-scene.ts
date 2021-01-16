@@ -14,17 +14,12 @@ const scene = new BaseScene<ContextMessageUpdate>('feedback_scene')
 const {actionName, i18nModuleBtnName, scanKeys, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
 
 function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>) {
-    // bot
-    // .hears(i18nModuleBtnName('go_back_to_customize'), async (ctx: ContextMessageUpdate) => {
-    //     await goBackToCustomize(ctx)
-    // })
-    // ;
-
 }
 
 async function sendFeedbackIfListening(ctx: ContextMessageUpdate) {
     if (ctx.session.feedbackScene.isListening !== undefined) {
         await sendFeedbackToOurGroup(ctx)
+        ctx.session.feedbackScene.isListening = undefined
     } else {
         await ctx.replyWithHTML(
             i18Msg(ctx, 'please_click_write_first', {button: i18Btn(ctx, 'survey.q_landing.send_letter')}),
@@ -71,17 +66,17 @@ scene
         await showMainMenu(ctx)
     })
     .action('/found/', async (ctx, next) => {
-        ctx.ua.pv({dp: `/feedback/take_survey`, dt: `Обратная связь > Опрос`})
+        ctx.ua.pv({dp: `/feedback/take_survey/`, dt: `Обратная связь > Опрос`})
         await next()
     })
     .action('/found/not_found/',  async (ctx, next) => {
-        ctx.ua.pv({dp: `/feedback/take_survey/not_found`, dt: `Обратная связь > Опрос > Не нашел событий`})
+        ctx.ua.pv({dp: `/feedback/take_survey/dislike/`, dt: `Обратная связь > Опрос > Не нашел событий`})
         prepareSessionStateIfNeeded(ctx)
         ctx.session.feedbackScene.isFound = false
         await next()
     })
     .action('/found/your_events/', async (ctx, next) => {
-        ctx.ua.pv({dp: `/feedback/take_survey/your_events`, dt: `Обратная связь > Опрос > Нашел события`})
+        ctx.ua.pv({dp: `/feedback/take_survey/like/`, dt: `Обратная связь > Опрос > Нашел события`})
         prepareSessionStateIfNeeded(ctx)
         ctx.session.feedbackScene.isFound = true
         await next()
@@ -171,7 +166,7 @@ function inlineBackButtonExtra(ctx: ContextMessageUpdate, where: 'feedback_main'
     if (where === 'feedback_main') {
         return Extra.HTML().markup(Markup.inlineKeyboard([[Markup.callbackButton(i18SharedBtn('back'), actionName('back_to_feedback_main'))]]))
     } else {
-        return Extra.HTML().markup(Markup.inlineKeyboard([[backButton(ctx)]]))
+        return Extra.HTML().markup(Markup.inlineKeyboard([[backButton()]]))
     }
 }
 

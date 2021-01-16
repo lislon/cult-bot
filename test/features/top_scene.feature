@@ -29,10 +29,10 @@ Feature: Tops scene
     Then Bot responds '<b>Временные выставки</b> на выходные 04-05 января:'
     Then Bot responds with event 'A'
     Then Google analytics pageviews will be:
-      | dp                      | dt                               |
-      | /top/                   | Рубрики                          |
-      | /top/exhibitions/       | Рубрики > Выставки               |
-      | /top/exhibitions/temp/  | Рубрики > Выставки > Временные   |
+      | dp                                 | dt                                       |
+      | /top/                              | Рубрики                                  |
+      | /top/exhibitions/                  | Рубрики > Выставки                       |
+      | /top/exhibitions/temp/p1/TEST-0-a/ | Рубрики > Выставки > Временные > A [1/1] |
 
 
   Scenario: I can see events in category 'permanent exhibitions'
@@ -50,7 +50,7 @@ Feature: Tops scene
   Scenario: When I click back in subcategory I get into tops menu
     When I click markup [~tops_scene.exhibitions]
     Then I click markup [Назад]
-    Then Bot responds '*Выберите*'
+    Then Bot responds '*Воспользуйтесь*'
 
   Scenario: When I click back in tops menu i will get to main scene
     Then I click markup [Назад]
@@ -62,21 +62,3 @@ Feature: Tops scene
     Then I click markup [~tops_scene.exhibitions_perm]
     Then Bot responds '*сегодня*'
 
-  Scenario: Top scene - I can toggle like event
-    Given now is 2020-01-05 12:00
-    When I click markup [~tops_scene.exhibitions]
-    Then I click markup [~tops_scene.exhibitions_temp]
-    Then Bot responds '*сегодня*'
-    Then Bot responds '*<b>A</b>*' with inline buttons:
-      """
-      [👍 0] [👎 0] [⭐]
-      [Показать еще]
-      """
-    When I click inline [👍 0]
-    Then Bot edits inline buttons:
-      """
-      [👍 1] [👎 0] [⭐]
-      [Показать еще]
-      """
-    When I click inline [Показать еще]
-    Then Bot responds '*На этом всё в данной подборке*'

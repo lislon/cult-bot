@@ -18,8 +18,8 @@ const content = (ctx: ContextMessageUpdate) => {
     const menu = [
         ['customize'],
         ['tops', 'packs'],
-        ['search', 'favorites'],
-        ...[(isAdmin(ctx) ? ['admin', 'feedback'] : ['feedback'])]
+        ...[(isAdmin(ctx) ? ['search', 'admin'] : ['search'])],
+        ['favorites', 'feedback'],
     ]
 
     const mainButtons = menu.map(row =>
@@ -114,7 +114,7 @@ function googleAnalyticsSource(ctx: ContextMessageUpdate & { startPayload: strin
 
 function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }) => {
-        logger.info([
+        logger.debug([
             `/start`,
             `id=${ctx.from.id}`,
             `first_name=${ctx.from.first_name}`,

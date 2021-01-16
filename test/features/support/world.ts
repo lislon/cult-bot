@@ -29,7 +29,7 @@ class CustomWorld {
 
     private bot = new Telegraf<ContextMessageUpdate>('')
     private now: Date = new Date()
-    private server = new TelegramMockServer()
+    public readonly server = new TelegramMockServer()
     private middlewaresBeforeScenes: MiddlewareFn<ContextMessageUpdate>[] = []
     private analyticsRecorder = new AnalyticsRecorder()
 
@@ -109,19 +109,22 @@ class CustomWorld {
 
     async clickInline(buttonText: string) {
         const {message, buttons} = this.server.getListOfInlineButtonsFromLastMsg()
-        const callbackData = buttons.find(btn => noImg(btn.text) === noImg(MarkupHelper.replaceI18nBtnsWithoutBraces(buttonText)))?.callback_data
-        if (callbackData === undefined) {
+        let matchButtons = buttons.filter(btn => noImg(btn.text) === noImg(MarkupHelper.replaceI18nBtnsWithoutBraces(buttonText)))
+        if (matchButtons.length > 1) {
+            matchButtons = buttons.filter(btn => btn.text === buttonText)
+        }
+        if (matchButtons.length === 0) {
             throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: ${buttons.map(b => `'${b.text}'`).join(', ')}`)
         }
 
-        await this.server.clickInline(this.bot, callbackData, message)
+        await this.server.clickInline(this.bot, matchButtons[0].callback_data, message)
     }
 
     async setNow(now: Date) {
         this.now = now
         const setDate = async (ctx: ContextMessageUpdate, next: any) => {
             ctx.session.adminScene = {
-                overrideDate: now.toISOString()
+                overrideDate: this.now.toISOString()
             }
             return await next()
         }

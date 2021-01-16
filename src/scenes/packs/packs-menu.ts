@@ -32,7 +32,7 @@ export async function displayMainMenu(ctx: ContextMessageUpdate) {
                 i18Btn(ctx, 'single_pack', {title}),
                 actionName(`pack_${idx}`))]
         }),
-        [backButton(ctx)]
+        [backButton()]
     ]
 
     await updateMenu(ctx, {

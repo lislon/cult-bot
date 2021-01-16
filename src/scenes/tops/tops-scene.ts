@@ -3,7 +3,7 @@ import { ContextMessageUpdate, EventCategory, MyInterval } from '../../interface
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import * as events from 'events'
 import { i18n } from '../../util/i18n'
-import { replyDecoyNoButtons, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { subSeconds } from 'date-fns/fp'
 import { isSameDay, isSameMonth, startOfDay } from 'date-fns'
 import { SceneRegister } from '../../middleware-utils'
@@ -117,7 +117,9 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
 
         await sleep(70)
         const sliderState = await pager.updateState(ctx, ctx.session.topsScene, total, undefined)
-        await pager.showOrUpdateSlider(ctx, sliderState)
+        await pager.showOrUpdateSlider(ctx, sliderState, {
+            forceNewMsg: true
+        })
     } else {
         await ctx.reply(i18Msg(ctx, 'nothing_found_in_interval', intervalTemplateParams(range)),
             Extra.HTML(true).markup(backMarkup(ctx))
@@ -174,7 +176,6 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             ctx.session.topsScene.isWatchingEvents = true
             ctx.session.topsScene.isInSubMenu = false
             await showEventsFirstTime(ctx)
-            trackUa(ctx)
         })
     }
     bot

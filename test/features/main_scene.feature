@@ -8,7 +8,7 @@ Feature: Main scene
       [~main_scene.customize]
       [~main_scene.tops] [~main_scene.packs]
       [~main_scene.search]
-      [~main_scene.feedback]
+      [~main_scene.favorites] [~main_scene.feedback]
       """
 
     Then Google analytics pageviews will be:
@@ -22,12 +22,12 @@ Feature: Main scene
   Scenario: I can click customize
     Given Scene is 'main_scene'
     When I click markup [~main_scene.customize]
+    Then Bot responds '👇'
     Then Bot responds '*фильтр*'
 
   Scenario: I can click packs
     Given Scene is 'main_scene'
     When I click markup [~main_scene.packs]
-    Then Bot responds '👇'
 
   Scenario: I can click rubrics
     Given Scene is 'main_scene'

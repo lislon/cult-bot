@@ -35,14 +35,14 @@ Feature: Packs scene
     Then Bot edits inline buttons:
       """
       [~packs_scene.pack_card_open]
-      [Назад]
+      [◀️ Назад]
       """
     Then I click inline [Посмотреть события]
     Then Bot edits text '*<b>A</b>*'
     Then Bot edits inline buttons:
       """
-      [«] [👍 0] [👎 0] [⭐] [1 / 2 »]
-      [◀️ Назад]
+      [«] [👍 0] [👎 0] [⭐]
+      [◀️ Назад] [1 / 2 »]
       """
     Then I click inline [Назад]
     Then Google analytics pageviews will be:

@@ -1,7 +1,7 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { MiddlewareFn } from 'telegraf/typings/composer'
 import { BaseScene, Composer, Markup } from 'telegraf'
-import { editMessageAndButtons, getMsgId } from './shared-logic'
+import { editMessageAndButtons, EditMessageAndButtonsOptions, getMsgId } from './shared-logic'
 import { getLikesRow } from '../likes/likes-common'
 import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
@@ -24,10 +24,15 @@ export interface AllSlidersState {
     sliders: SliderState<unknown>[]
 }
 
+export interface TotalOffset {
+    total: number
+    offset: number
+}
+
 export interface SliderConfig<Q, E extends Event = Event> extends PagingCommonConfig<Q, E> {
     backButton(ctx: ContextMessageUpdate): CallbackButton
 
-    analytics?(ctx: ContextMessageUpdate, event: Event, {limit, offset}: LimitOffset, state: Q): void
+    analytics?(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset, state: Q): void
 }
 
 function getSliderState(ctx: ContextMessageUpdate): AllSlidersState {
@@ -55,14 +60,14 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
         return this.getSliderStateIfExists(ctx)?.query
     }
 
-    async showOrUpdateSlider(ctx: ContextMessageUpdate, sliderState: SliderState<Q> = this.getSliderStateIfExists(ctx)) {
+    async showOrUpdateSlider(ctx: ContextMessageUpdate, sliderState: SliderState<Q> = this.getSliderStateIfExists(ctx), options?: EditMessageAndButtonsOptions) {
         if (sliderState === undefined) {
             throw new Error(`Should call updateState before showOrUpdateSlider`)
         }
-        return await this.showOrUpdateCard(ctx, sliderState)
+        return await this.showOrUpdateCard(ctx, sliderState, options)
     }
 
-    private async showOrUpdateCard(ctx: ContextMessageUpdate, state: SliderState<Q>): Promise<number> {
+    private async showOrUpdateCard(ctx: ContextMessageUpdate, state: SliderState<Q>, options?: EditMessageAndButtonsOptions): Promise<number> {
         const backButton: CallbackButton = await this.config.backButton(ctx)
 
         const cardId = await this.loadCardId(ctx, state, state.selectedIdx)
@@ -72,7 +77,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             const [event] = await this.config.loadCardsByIds(ctx, [cardId])
             if (event !== undefined) {
 
-                this.config.analytics?.(ctx, event, {offset: state.selectedIdx, limit: state.total}, state.query)
+                this.config.analytics?.(ctx, event, {offset: state.selectedIdx, total: state.total}, state.query)
 
                 const cardButtons: CallbackButton[] = this.config.cardButtons ? await this.config.cardButtons(ctx, event) : getLikesRow(ctx, event)
 
@@ -91,15 +96,15 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
 
                 const html = cardFormat(event, this.config.cardFormatOptions?.(ctx, event))
 
-                state.msgId = await editMessageAndButtons(ctx, buttons, html)
+                state.msgId = await editMessageAndButtons(ctx, buttons, html, options)
 
                 analyticRecordEventView(ctx, event)
             } else {
-                state.msgId = await editMessageAndButtons(ctx, [[backButton]], 'Данная карточка больше недоступна')
+                state.msgId = await editMessageAndButtons(ctx, [[backButton]], 'Данная карточка больше недоступна', options)
                 logger.warn(`Cannot load card by cardId = ${cardId}`)
             }
         } else {
-            state.msgId = await editMessageAndButtons(ctx, [[backButton]], 'Данная карточка больше недоступна')
+            state.msgId = await editMessageAndButtons(ctx, [[backButton]], 'Данная карточка больше недоступна', options)
             logger.warn(`Cannot load cardIds. state = ${JSON.stringify(state)}`)
         }
         return state.msgId

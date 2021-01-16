@@ -46,7 +46,7 @@ const content = (ctx: ContextMessageUpdate) => {
     for (let startHour = MIN_HOUR; startHour <= MAX_HOUR; startHour++) {
         rows.push([getButtonForSlot(ctx, startHour, ctx.session.timeInterval.intervals)])
     }
-    // rows.push([backButton(ctx)])
+    // rows.push([backButton()])
 
     return {
         msg: i18Msg('interval_select', { weekday: ctx.session.timeInterval.weekday }),
