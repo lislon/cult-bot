@@ -13,21 +13,23 @@ Feature: Customize time
     Given Scene is 'customize_scene'
 
   Scenario: I can see number of events when click on time
-    Then Bot responds '*настройте*' with markup buttons:
+    Then Bot responds '👇'
+    Then Bot responds '*Отбор событий*' with inline buttons:
       """
-      [Рубрики] [Приоритеты]
-      [Время] [Формат]
-      [Показать события]
-      [Назад]
+      [Формат] [Рубрики]
+      [Приоритеты] [Время]
+      [Сброс]
+      [Назад] [События (0)]
       """
 
   Scenario: I want select to events by time on friday
     Given now is 2020-01-03 12:00
-    When I click markup [#️⃣ Время]
-    Then Bot responds 'Выберите дату и время' with inline buttons:
+    When I click inline [#️⃣ Время]
+    Then Bot edits inline buttons:
       """
       [➕ Суббота (04.01) ]
       [➕ Воскресенье (05.01) ]
+      [◀️ Назад] [⚠️ События (0)]
       """
 
   Scenario: I want select to events by time on sunday
@@ -36,10 +38,12 @@ Feature: Customize time
       | title   | category  | timetable      |
       | A       | movies    | вс: 21:59      |
       | B       | movies    | вс: 22:00      |
-    When I click markup [#️⃣ Время]
-    Then Bot responds 'Выберите дату и время' with inline buttons:
+    When I click inline [#️⃣ Время]
+    Then Bot edits text '*время*'
+    Then Bot edits inline buttons:
       """
       [➕ Воскресенье (05.01) ]
+      [◀️ Назад] [🎯 События (2)]
       """
     When I click inline [➕ Воскресенье (05.01)]
     Then Bot edits inline buttons:
@@ -51,6 +55,7 @@ Feature: Customize time
       [🌇 15:00-19:00 ]
       [🏙 19:00-22:00 ]
       [🌃 22:00-24:00 ]
+      [◀️ Назад] [🎯 События (2)]
       """
     When I click inline [🌃 22:00-24:00]
     Then Bot edits inline buttons:
@@ -62,50 +67,62 @@ Feature: Customize time
       [🌇 15:00-19:00 ]
       [🏙 19:00-22:00 ]
       [🌃 22:00-24:00 ✔]
+      [◀️ Назад] [🎯 События (1)]
       """
-    When I click markup [Назад [к фильтрам]]
-    Then Bot responds:
+    Then Bot responds with cb '1 событие выбрано'
+    When I click inline [Назад]
+    Then Bot edits text:
     """
-    Текущая настройка фильтров:
+    Настройки фильтра:
 
-    🕒 <b>Время</b>:  ВС (05.01): 22.00-24.00
+    <code> </code>🕒 <b>Время</b>:  ВС (05.01): 22.00-24.00
 
-    <b>1 событие</b> найдено
+    🎯 1 событие выбрано
     """
 
   Scenario: When I selected filter saturday 22-24, then some time passed and today is sunday, these selections should gone
     Given now is 2020-01-04 12:00
-    * I click markup [#️⃣ Время]
+    * I click inline [#️⃣ Время]
     * I click inline [➕ Суббота (04.01)]
     * I click inline [🌃 22:00-24:00]
     * now is 2020-01-05 12:00
-    * I click markup [Назад [к фильтрам]]
-    Then Bot responds '*настройте*'
+    * I click inline [Назад]
+    Then Bot edits text '*Нет событий, подходящих под заданный фильтр*'
 
   Scenario: I don't want to see buttons with time in past
     Given now is 2020-01-05 21:50
-    * I click markup [#️⃣ Время]
+    * I click inline [#️⃣ Время]
     * I click inline [➕ Воскресенье (05.01)]
     Then Bot edits inline buttons:
       """
       [➖ Воскресенье (05.01) ]
       [🏙 19:00-22:00 ]
       [🌃 22:00-24:00 ]
+      [◀️ Назад] [⚠️ События (0)]
       """
 
   Scenario: I selected time slot, but it passed
     Given now is 2020-01-05 10:00
-    When I click markup [#️⃣ Время]
+    When I click inline [#️⃣ Время]
     * I click inline [➕ Воскресенье (05.01)]
     * I click inline [🌅 06:00-12:00]
     * I click inline [🏞 12:00-15:00]
     * now is 2020-01-05 13:00
-    * I click markup [Назад [к фильтрам]]
-    Then Bot responds:
+    * I click inline [Назад]
+    Then Bot edits text:
       """
-      Текущая настройка фильтров:
+      Настройки фильтра:
 
-      🕒 <b>Время</b>:  ВС (05.01): 12.00-15.00
+      <code> </code>🕒 <b>Время</b>:  ВС (05.01): 12.00-15.00
 
-      <b>0 событий</b> найдено
-    """
+      ⚠️  Нет событий, подходящих под заданный фильтр. Попробуйте выбрать другой вариант
+      """
+    Then Bot edits inline buttons:
+      """
+      [Формат] [Рубрики]
+      [Приоритеты] [Время ✔]
+      [Сброс]
+      [Назад] [События (0)]
+      """
+    When I click inline [События (0)]
+    Then Bot responds with cb '*строгий*'

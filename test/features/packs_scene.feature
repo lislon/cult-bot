@@ -34,18 +34,17 @@ Feature: Packs scene
       """
     Then Bot edits inline buttons:
       """
-      [Посмотреть события]
-      [Следующая подборка » (2 / 2)]
-      [Назад [к подборокам]]
+      [~packs_scene.pack_card_open]
+      [Назад]
       """
     Then I click inline [Посмотреть события]
     Then Bot edits text '*<b>A</b>*'
     Then Bot edits inline buttons:
       """
       [«] [👍 0] [👎 0] [⭐] [1 / 2 »]
-      [◀️ Назад [P1]]
+      [◀️ Назад]
       """
-    Then I click inline [Назад [P1]]
+    Then I click inline [Назад]
     Then Google analytics pageviews will be:
       | dp                | dt                 |
       | /packs/           | Подборки           |

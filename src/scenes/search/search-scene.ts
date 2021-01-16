@@ -6,6 +6,7 @@ import { SceneRegister } from '../../middleware-utils'
 import { PagingPager } from '../shared/paging-pager'
 import emojiRegex from 'emoji-regex'
 import { SearchPagerConfig } from './search-pager'
+import { SliderPager } from '../shared/slider-pager';
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
@@ -25,7 +26,7 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     }
 }
 
-const eventPager = new PagingPager(new SearchPagerConfig())
+const eventSlider = new SliderPager(new SearchPagerConfig())
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
@@ -37,7 +38,7 @@ scene
     .leave(async (ctx: ContextMessageUpdate) => {
         ctx.session.search = undefined
     })
-    .use(eventPager.middleware())
+    .use(eventSlider.middleware())
     .hears(/^[^/].*$/, async (ctx, next) => {
         if (ctx.match[0].match(emojiRegex())) {
             await next()
@@ -45,13 +46,20 @@ scene
         }
         ctx.session.search.request = ctx.match[0]
         await warnAdminIfDateIsOverriden(ctx)
-        await eventPager.updateState(ctx, ctx.session.search.request)
-        await eventPager.initialShowCards(ctx)
+        const state = await eventSlider.updateState(ctx, ctx.session.search.request)
+        if (state.total > 0) {
+            await ctx.replyWithHTML(i18Msg(ctx, 'here_your_results', {
+                query: ctx.session.search.request
+            }))
+            await eventSlider.showOrUpdateSlider(ctx, state)
+        } else {
+            await ctx.replyWithHTML(i18Msg(ctx, 'no_results'))
+        }
     })
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
-        .action(actionName('back_to_main'), async (ctx) => {
+        .action(actionName('back'), async (ctx) => {
             await ctx.answerCbQuery()
             await ctx.scene.enter('main_scene')
         })

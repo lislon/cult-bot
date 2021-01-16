@@ -74,6 +74,7 @@ export class TelegramMockServer {
     private lastMsgId = 0;
     private lastCtx: ContextMessageUpdate
     private botIsBlocked = false
+    private lastCbQuery: string|true = undefined
 
     ctx(): ContextMessageUpdate {
         return this.lastCtx
@@ -108,6 +109,10 @@ export class TelegramMockServer {
                 }
             }
         }
+    }
+
+    getLastCbQuery(): string {
+        return this.lastCbQuery === true ? undefined : this.lastCbQuery
     }
 
     getLastEditedInline(): BotReply {
@@ -153,11 +158,15 @@ export class TelegramMockServer {
                 data: callbackData
             }
         }))
-
+        this.lastCbQuery = undefined
         try {
             await bot.middleware()(this.lastCtx, undefined)
         } catch (e) {
             await (bot as any).handleError(e, this.lastCtx)
+            return
+        }
+        if (this.lastCbQuery === undefined) {
+            throw new Error('cbQuery is empty after click')
         }
     }
 
@@ -217,7 +226,11 @@ export class TelegramMockServer {
             this.replies = [...this.replies, {text: message, extra, message: this.lastMsg}]
             return this.lastMsg
         }
-        ctx.answerCbQuery = async (_) => {
+        ctx.answerCbQuery = async (text) => {
+            if (this.lastCbQuery !== undefined) {
+                throw new Error('Double cbQuery answer')
+            }
+            this.lastCbQuery = text === undefined ? true : text
             await touchApiMock()
             return Promise.resolve(true)
         }

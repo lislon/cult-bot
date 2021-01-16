@@ -173,7 +173,6 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             }
             ctx.session.topsScene.isWatchingEvents = true
             ctx.session.topsScene.isInSubMenu = false
-            await replyDecoyNoButtons(ctx)
             await showEventsFirstTime(ctx)
             trackUa(ctx)
         })

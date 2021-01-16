@@ -144,6 +144,20 @@ Then(/^Bot responds:$/, function (expected: string) {
     expectTextMatches(nextReply, expected)
 })
 
+Then(/^Bot responds '(.+)' with no markup buttons$/, function (expected: string) {
+    const nextReply = this.getNextMsg() as BotReply
+    expectTextMatches(nextReply, expected)
+    expect(nextReply.extra.reply_markup).toStrictEqual({ remove_keyboard: true })
+})
+
+Then(/^Bot responds with cb '(.+)'$/, function (expected: string) {
+    if (expected.startsWith('*') && expected.endsWith('*')) {
+        expect(this.getLastCbQuery()).toContain(expected.substring(1, expected.length - 1))
+    } else {
+        expect(this.getLastCbQuery()).toStrictEqual(expected)
+    }
+})
+
 Then(/^Bot responds '(.+)' with markup buttons:$/, function (expected: string, buttonsLayout: string) {
     const nextReply = this.getNextMsg() as BotReply
     expectTextMatches(nextReply, expected)

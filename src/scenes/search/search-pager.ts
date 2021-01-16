@@ -4,11 +4,13 @@ import { db, LimitOffset } from '../../database/db'
 import { getNextWeekendRange } from '../shared/shared-logic'
 import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { BaseScene, Markup } from 'telegraf'
+import { SliderConfig, SliderPager } from '../shared/slider-pager';
+import { CallbackButton } from 'telegraf/typings/markup';
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
 
-export class SearchPagerConfig implements PagingConfig<string> {
+export class SearchPagerConfig implements SliderConfig<string> {
     readonly limit = 1
     readonly sceneId = scene.id
 
@@ -37,23 +39,18 @@ export class SearchPagerConfig implements PagingConfig<string> {
         await ctx.replyWithHTML(i18Msg(ctx, 'no_results'))
     }
 
-    analytics(ctx: ContextMessageUpdate, events: Event[], {limit, offset}: LimitOffset) {
+    backButton(ctx: ContextMessageUpdate): CallbackButton {
+        return backButton(ctx);
+    }
+
+    analytics(ctx: ContextMessageUpdate, event: Event, {limit, offset}: LimitOffset, query: string): void {
         const pageNumber = Math.floor(offset / limit) + 1
 
         const pageTitle = pageNumber > 1 ? ` [Страница ${pageNumber}]` : ''
-        const resultsTitle = `${events.length > 0 ? ' есть результаты' : 'ничего не найдено'}`
         ctx.ua.e('Search', 'query', ctx.session.search.request, undefined)
         ctx.ua.pv({
             dp: `/search/${encodeURI(ctx.session.search.request)}/${pageNumber > 1 ? `p${pageNumber}/` : ''}?q=${encodeURIComponent(ctx.session.search.request)}`,
-            dt: `Поиск по '${ctx.session.search.request} ${pageTitle}' ${resultsTitle}`
-        })
-    }
-
-    async onLastEvent(ctx: ContextMessageUpdate) {
-        await ctx.replyWithHTML(i18Msg(ctx, 'last_event'), {
-            reply_markup: Markup.inlineKeyboard([[
-                Markup.callbackButton(i18Btn(ctx, 'back_to_main'), actionName('back_to_main'))
-            ]])
+            dt: `Поиск по '${ctx.session.search.request} ${pageTitle}' есть результаты`
         })
     }
 }

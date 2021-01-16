@@ -132,6 +132,9 @@ class CustomWorld {
     useBeforeScenes(middleware: MiddlewareFn<ContextMessageUpdate>) {
         this.middlewaresBeforeScenes.push(middleware)
     }
+    getLastCbQuery(): string {
+        return this.server.getLastCbQuery()
+    }
 
     getNextMsg(): BotReply {
         const next = this.server.replyIterator().next()

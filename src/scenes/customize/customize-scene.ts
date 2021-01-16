@@ -188,7 +188,7 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType, opti
         })
     }
     const msgId = await editMessageAndButtons(ctx, inlineButtons, msg, options)
-    logger.info('msgId: ' + msgId)
+    // logger.info('msgId: ' + msgId)
     return msgId
 }
 
