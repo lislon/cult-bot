@@ -40,7 +40,7 @@
     "parsimmon": "^1.16.0",
     "pg": "^8.4.2",
     "pg-monitor": "^1.4.1",
-    "pg-promise": "^10.6.1",
+    "pg-promise": "^10.9.1",
     "plural-ru": "^2.0.2",
     "redis-cli": "^2.0.0",
     "request": "^2.88.2",
