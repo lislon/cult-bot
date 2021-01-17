@@ -1,0 +1,5 @@
+ALTER TABLE cb_events_snapshot ADD COLUMN IF NOT EXISTS likes_fake int8 NOT NULL DEFAULT 0;
+ALTER TABLE cb_events_snapshot ADD COLUMN IF NOT EXISTS dislikes_fake int8 NOT NULL DEFAULT 0;
+
+ALTER TABLE cb_events ADD COLUMN IF NOT EXISTS popularity int4 NOT NULL DEFAULT 0;
+ALTER TABLE cb_events_snapshot ADD COLUMN IF NOT EXISTS popularity int4 NOT NULL DEFAULT 0;

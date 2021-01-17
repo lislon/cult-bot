@@ -171,3 +171,35 @@ export function mkEditCellDate(sheetId: number, date: Date, column: number, row:
         }
     }
 }
+
+export function mkEditCellValue(sheetId: number, value: string, column: number, row: number): Schema$Request {
+    return {
+        updateCells: {
+            range: {
+                sheetId: sheetId,
+                startRowIndex: row,
+                endRowIndex: row + 1,
+                startColumnIndex: column - 1,
+                endColumnIndex: column
+            },
+            fields: 'userEnteredValue',
+            rows: [
+                {
+                    values: [
+                        {
+                            userEnteredValue: {
+                                stringValue: value
+                            },
+                            // userEnteredFormat: {
+                            //     numberFormat: {
+                            //         type: 'DATE',
+                            //         // pattern: 'yyyy-mm-dd hh:mm:ss'
+                            //     }
+                            // }
+                        },
+                    ]
+                }
+            ]
+        }
+    }
+}

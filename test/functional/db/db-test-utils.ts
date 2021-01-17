@@ -78,7 +78,10 @@ export function getMockEvent({
         timeIntervals: eventTime,
         is_anytime: anytime,
         order_rnd: order_rnd,
-        dateDeleted: dateDeleted
+        dateDeleted: dateDeleted,
+        fakeDislikes: 0,
+        fakeLikes: 0,
+        popularity: 1
     }
 }
 

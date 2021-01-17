@@ -15,9 +15,14 @@ export class StatByReviewer {
     count: string
 }
 
-export interface EventWithOldVersion extends Event {
+export interface AdminEvent extends Event {
     snapshotStatus: 'updated' | 'inserted' | 'unchanged'
+    popularity: number
+    fakeLikes: number
+    fakeDislikes: number
 }
+
+const SELECT_ADMIN_EVENTS_FIELDS = [SELECT_ALL_EVENTS_FIELDS, 'cb.popularity', 'cb.likes_fake', 'cb.dislikes_fake'].join(',')
 
 export class AdminRepository {
 
@@ -84,10 +89,10 @@ export class AdminRepository {
             }) as StatByReviewer[];
     }
 
-    async findAllChangedEventsByCat(category: EventCategory, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<EventWithOldVersion[]> {
+    async findAllChangedEventsByCat(category: EventCategory, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<AdminEvent[]> {
         const finalQuery = `
         select * FROM (
-            SELECT ${SELECT_ALL_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
+            SELECT ${SELECT_ADMIN_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
             FROM cb_events cb
             LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
             WHERE
@@ -109,13 +114,13 @@ export class AdminRepository {
                 category,
                 limit,
                 offset
-            }, AdminRepository.mapToEventWithId) as EventWithOldVersion[];
+            }, AdminRepository.mapToEventWithId) as AdminEvent[]
     }
 
-    async findAllEventsByReviewer(reviewer: string, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<EventWithOldVersion[]> {
+    async findAllEventsByReviewer(reviewer: string, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<AdminEvent[]> {
         const finalQuery = `
         select * FROM (
-            SELECT ${SELECT_ALL_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
+            SELECT ${SELECT_ADMIN_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
             FROM cb_events cb
             LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
             WHERE
@@ -137,15 +142,15 @@ export class AdminRepository {
                 reviewer,
                 limit,
                 offset
-            }, AdminRepository.mapToEventWithId) as EventWithOldVersion[]
+            }, AdminRepository.mapToEventWithId) as AdminEvent[]
     }
 
-    public async getAdminEventsByIds(eventIds: number[]): Promise<EventWithOldVersion[]> {
+    public async getAdminEventsByIds(eventIds: number[]): Promise<AdminEvent[]> {
         if (eventIds.length === 0) {
             return []
         }
         return await this.db.map(`
-            select ${SELECT_ALL_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
+            select ${SELECT_ADMIN_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
             from cb_events cb
             LEFT JOIN cb_events_snapshot cbs ON (cbs.ext_id = cb.ext_id)
             JOIN unnest('{$(eventIds:list)}'::int[]) WITH ORDINALITY t(s_id, ord) ON (cb.id = s_id)
@@ -153,7 +158,7 @@ export class AdminRepository {
         `, {eventIds}, AdminRepository.mapToEventWithId)
     }
 
-    async findSnapshotEvent(extId: string, version: 'current' | 'snapshot'): Promise<EventWithOldVersion> {
+    async findSnapshotEvent(extId: string, version: 'current' | 'snapshot'): Promise<AdminEvent> {
         let q = ''
         if (version === 'current') {
             q = `
@@ -180,8 +185,15 @@ export class AdminRepository {
                 (select COUNT(id) from migrations m2 ) AS count`, undefined, (c => +c.count))
     }
 
-    private static mapToEventWithId(row: any ): EventWithOldVersion {
-        const newRow = { ...row, id: +row.id, snapshotStatus: row.snapshot_status }
+    private static mapToEventWithId(row: any): AdminEvent {
+        const newRow: AdminEvent = {
+            ...row,
+            id: +row.id,
+            snapshotStatus: row.snapshot_status,
+            fakeLikes: +row.likes_fake,
+            fakeDislikes: +row.dislikes_fake,
+            popularity: +row.popularity
+        }
         delete row.snapshot_status
         return newRow
     }

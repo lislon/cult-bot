@@ -89,6 +89,13 @@ export interface Event {
     dislikes: number
 }
 
+export interface Event2 extends Event {
+    popularity: number
+    fake_likes: number
+    fake_dislikes: number
+}
+
+
 export type MyInterval = {
     start: Date
     end: Date

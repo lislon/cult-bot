@@ -171,7 +171,7 @@ export async function formatMessageForSyncReport(errors: SpreadSheetValidationEr
             errors: errors
                 .filter(e => e.extIds.length > 0)
                 .map(e => i18Msg(ctx, 'sync_error_row', {
-                    sheetName: e.sheetName,
+                    sheetName: e.sheetTitle,
                     extIds: e.extIds.join(', ')
                 }))
                 .join('\n')

@@ -22,7 +22,9 @@ export interface DbEvent {
     order_rnd: number
     ext_id: string
     updated_at: Date,
-    deleted_at: Date|null
+    deleted_at: Date | null
+    likes_fake: number
+    dislikes_fake: number
 }
 
 export interface EventToSave {
@@ -31,7 +33,10 @@ export interface EventToSave {
     timeIntervals: MomentIntervals
     is_anytime: boolean
     order_rnd?: number
-    dateDeleted?: Date|null
+    dateDeleted?: Date | null
+    popularity: number
+    fakeLikes: number
+    fakeDislikes: number
 }
 
 export type TagCategory = 'tag_level_1' | 'tag_level_2' | 'tag_level_3'

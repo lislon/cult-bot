@@ -7,13 +7,13 @@ import { i18nSceneHelper } from '../../util/scene-helper'
 import { PagingConfig } from '../shared/paging-pager'
 import { db, LimitOffset } from '../../database/db'
 import { CallbackButton } from 'telegraf/typings/markup'
-import { EventWithOldVersion } from '../../database/db-admin'
+import { AdminEvent } from '../../database/db-admin'
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
 
 
-export class AdminPager implements PagingConfig<AdminSceneQueryState, EventWithOldVersion> {
+export class AdminPager implements PagingConfig<AdminSceneQueryState, AdminEvent> {
     readonly limit = POSTS_PER_PAGE_ADMIN
     readonly sceneId = scene.id
 
@@ -22,7 +22,7 @@ export class AdminPager implements PagingConfig<AdminSceneQueryState, EventWithO
         return total
     }
 
-    async loadCardsByIds(ctx: ContextMessageUpdate, eventIds: number[]): Promise<EventWithOldVersion[]> {
+    async loadCardsByIds(ctx: ContextMessageUpdate, eventIds: number[]): Promise<AdminEvent[]> {
         return await db.repoAdmin.getAdminEventsByIds(eventIds)
     }
 
@@ -31,13 +31,13 @@ export class AdminPager implements PagingConfig<AdminSceneQueryState, EventWithO
         return events.map(e => e.id)
     }
 
-    cardFormatOptions(ctx: ContextMessageUpdate, event: EventWithOldVersion): CardOptions {
+    cardFormatOptions(ctx: ContextMessageUpdate, event: AdminEvent): CardOptions {
         return {
             showAdminInfo: true
         }
     }
 
-    async cardButtons(ctx: ContextMessageUpdate, event: EventWithOldVersion): Promise<CallbackButton[]> {
+    async cardButtons(ctx: ContextMessageUpdate, event: AdminEvent): Promise<CallbackButton[]> {
         if (event.snapshotStatus === 'updated') {
             return getButtonsSwitch(ctx, event.ext_id, 'current')
         }

@@ -14,7 +14,7 @@ export class SnapshotRepository {
         await this.db.tx(async (dbTx: ITask<IExtensions> & IExtensions) => {
             await dbTx.none('TRUNCATE cb_events_snapshot')
             await dbTx.none('TRUNCATE cb_events_snapshot_meta')
-            const columns = [
+            const columnsToCopy = [
                 'id',
                 'title',
                 'category',
@@ -34,9 +34,12 @@ export class SnapshotRepository {
                 'is_anytime',
                 'geotag',
                 'ext_id',
-                'created_at'
+                'created_at',
+                'likes_fake',
+                'dislikes_fake',
+                'popularity',
             ]
-            await dbTx.none(`INSERT INTO cb_events_snapshot (${columns.join(', ')}) (SELECT ${columns.join(', ')} FROM cb_events cb WHERE cb.deleted_at IS NULL)`)
+            await dbTx.none(`INSERT INTO cb_events_snapshot (${columnsToCopy.join(', ')}) (SELECT ${columnsToCopy.join(', ')} FROM cb_events cb WHERE cb.deleted_at IS NULL)`)
             await dbTx.none(this.pgp.helpers.insert({
                 created_by: createdBy,
                 created_at: date

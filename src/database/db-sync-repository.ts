@@ -108,7 +108,9 @@ export const eventColumnsDef = [
     fieldInt('order_rnd'),
     fieldStr('ext_id'),
     fieldTimestamptzNullable('updated_at'),
-    fieldTimestamptzNullable('deleted_at')
+    fieldTimestamptzNullable('deleted_at'),
+    fieldInt('likes_fake'),
+    fieldInt('dislikes_fake'),
 ]
 
 export class EventsSyncRepository {
@@ -329,6 +331,8 @@ export class EventsSyncRepository {
             tag_level_1: encodeTagsLevel1(event.primaryData.category, event.primaryData.tag_level_1),
             is_anytime: event.is_anytime,
             order_rnd: event.order_rnd !== undefined ? event.order_rnd : generateRandomOrder(),
+            likes_fake: event.fakeLikes,
+            dislikes_fake: event.fakeDislikes,
             updated_at: updatedAt,
             deleted_at: event.dateDeleted
         };

@@ -31,7 +31,7 @@ export function fieldInt(column: string) {
     return {
         name: column,
         skip: (c: { value: any }) => c.value === null || c.value === undefined,
-        init: (c: { value: any }) => +c.value
+        init: ({value, exists}: { value: any, exists: boolean }) => exists ? +value : undefined
     };
 }
 

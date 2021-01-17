@@ -14,6 +14,7 @@ import { SnapshotRepository } from './db-snapshot'
 import { EventsSyncRepository } from './db-sync-repository'
 import { PacksRepository } from './db-packs'
 import { EventsCommonRepository } from './db-events-common'
+import { LikesRepository } from './db-likes'
 
 export interface IExtensions {
     repoSync: EventsSyncRepository,
@@ -26,6 +27,7 @@ export interface IExtensions {
     repoFeedback: FeedbackRepository
     repoPacks: PacksRepository
     repoEventsCommon: EventsCommonRepository
+    repoLikes: LikesRepository
 }
 
 export type BotDb = IDatabase<IExtensions> & IExtensions;
@@ -43,6 +45,7 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoSnapshot = new SnapshotRepository(dbEx, pgp)
         dbEx.repoPacks = new PacksRepository(dbEx, pgp)
         dbEx.repoEventsCommon = new EventsCommonRepository(dbEx, pgp)
+        dbEx.repoLikes = new LikesRepository(dbEx, pgp)
     },
 
     query(e) {

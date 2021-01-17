@@ -5,6 +5,7 @@ import {
     ExcelColumnNameEvents,
     ExcelRowEvents,
     ExcelRowResult,
+    ExcelSheetResult,
     processExcelRow
 } from './parseSheetRow'
 import { sheets_v4 } from 'googleapis'
@@ -20,7 +21,7 @@ import { ExcelUpdater } from './ExcelUpdater'
 import Sheets = sheets_v4.Sheets
 
 export interface SpreadSheetValidationError {
-    sheetName: string,
+    sheetTitle: string,
     extIds: string[]
 }
 export interface ExcelParseResult {
@@ -65,40 +66,23 @@ function getDueDate(mapped: ExcelRowResult) {
     }
 }
 
-export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheets): Promise<ExcelParseResult> {
-    const errors: SpreadSheetValidationError[] = []
-
-    const ranges = Object.values(CAT_TO_SHEET_NAME).map(name => `${name}!A1:AA`);
+export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, spreadsheetId: string) {
+    const ranges = Object.values(CAT_TO_SHEET_NAME).map(name => `${name}!A1:AA`)
 
     logger.debug(`Loading from excel [${ranges}]...`)
-
-    const spreadsheetId = botConfig.GOOGLE_DOCS_ID;
     const [sheetsMetaData, sheetsData] = await Promise.all([
         excel.spreadsheets.get({spreadsheetId, ranges}),
         excel.spreadsheets.values.batchGet({spreadsheetId, ranges})
-    ]);
+    ])
 
-    logger.debug('Saving to db...')
-    const rawEvents: EventToSave[] = []
+    const sheetsParsedRows = sheetsData.data.valueRanges.map((sheet, sheetNo: number) => {
+        const sheetId = sheetsMetaData.data.sheets[sheetNo].properties.sheetId
 
-    // let max = 1;
-
-    const excelUpdater = new ExcelUpdater(excel, EXCEL_COLUMNS_EVENTS)
-
-    sheetsData.data.valueRanges.forEach((sheet, sheetNo: number) => {
-        const sheetId = sheetsMetaData.data.sheets[sheetNo].properties.sheetId;
-        const numOfRows = sheet.values?.length
-
-        const columnToClearFormat: ExcelColumnNameEvents[] = [
-            'ext_id', 'publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3', 'due_date'
-        ]
-
-        columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, 1, numOfRows))
         // Print columns A and E, which correspond to indices 0 and 4.
 
         const parsedRows = sheet.values
-            .map((row: string[], rowNo: number) => {
-                if (rowNo == 0) {
+            .map((row: string[], rowNumber: number) => {
+                if (rowNumber == 0) {
                     if (JSON.stringify(row) !== JSON.stringify(Object.values(EXCEL_COLUMNS_EVENTS))) {
                         throw new WrongExcelColumnsError({
                             listName: sheetsMetaData.data.sheets[sheetNo].properties.title,
@@ -111,17 +95,44 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
 
                 const keyValueRow = mapRowToColumnObject(row)
 
-                const mapped = processExcelRow(keyValueRow, getSheetCategory(sheetNo), new Date(), rowNo)
-                return mapped
+                return processExcelRow(keyValueRow, getSheetCategory(sheetNo), new Date(), rowNumber)
             })
             .filter(e => e !== undefined)
+        return {
+            sheetId,
+            totalNumberOfRows: sheet.values?.length,
+            rows: parsedRows,
+            sheetTitle: sheetsMetaData.data.sheets[sheetNo].properties.title
+        } as ExcelSheetResult
+    })
+    return sheetsParsedRows
+}
 
-        validateUnique(parsedRows)
+export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheets): Promise<ExcelParseResult> {
+    const sheetsParsedRows = await parseRawSheetsEventSpreedsheet(excel, botConfig.GOOGLE_DOCS_ID)
+    logger.debug('Saving to db...')
+
+    const errors: SpreadSheetValidationError[] = []
+    const rawEvents: EventToSave[] = []
+
+    // let max = 1;
+
+    const excelUpdater = new ExcelUpdater(excel, EXCEL_COLUMNS_EVENTS)
+
+    const columnToClearFormat: ExcelColumnNameEvents[] = [
+        'ext_id', 'publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3', 'due_date'
+    ]
+
+    sheetsParsedRows.forEach(({rows, sheetId, totalNumberOfRows, sheetTitle}) => {
+
+        columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, 1, totalNumberOfRows))
+
+        validateUnique(rows)
         const erroredExtIds: string[] = []
 
-        parsedRows.forEach((mapped: ExcelRowResult) => {
+        rows.forEach((mapped: ExcelRowResult) => {
 
-            const rowNo = mapped.rowNumber;
+            const rowNo = mapped.rowNumber
 
             if (mapped.publish) {
 
@@ -165,7 +176,10 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
                         primaryData: mapped.data,
                         timetable: mapped.timetable,
                         timeIntervals: mapped.timeIntervals,
-                        is_anytime: mapped.data.timetable.includes('в любое время')
+                        is_anytime: mapped.data.timetable.includes('в любое время'),
+                        popularity: mapped.popularity,
+                        fakeLikes: mapped.fakeLikes || 0,
+                        fakeDislikes: mapped.fakeDislikes || 0,
                     });
                     excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
 
@@ -182,29 +196,20 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
             if (!isEqual(mapped.dueDate, dueDate)) {
                 excelUpdater.editCellDate(sheetId, 'due_date', rowNo, dueDate)
             }
-       })
+        })
 
         errors.push({
-            sheetName: sheetsMetaData.data.sheets[sheetNo].properties.title,
+            sheetTitle,
             extIds: erroredExtIds
         })
     })
 
-    // syncResult.syncDiff = await db.repoSync.syncDatabase(rows)
-    //
-    // logger.info([
-    //     `Database updated.`,
-    //     `Insertion done.`,
-    //     `inserted={${listExtIds(syncResult.syncDiff.insertedEvents)}}`,
-    //     `updated={${listExtIds(syncResult.syncDiff.updatedEvents)}}`,
-    //     `deleted={${syncResult.syncDiff.deletedEvents.map(d => d.ext_id).join(',')}}`
-    // ].join(' '));
-    await excelUpdater.update(spreadsheetId);
-    // logger.debug(`Excel updated`);
+    await excelUpdater.update(botConfig.GOOGLE_DOCS_ID)
+
     return {
         errors,
         rawEvents
-    };
+    }
 }
 
 

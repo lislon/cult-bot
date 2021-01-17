@@ -4,7 +4,7 @@ import { getOnlyHumanTimetable } from '../../dbsync/parseSheetRow'
 import { cleanTagLevel1 } from '../../util/tag-level1-encoder'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
 import { i18n } from '../../util/i18n'
-import { EventWithOldVersion } from '../../database/db-admin'
+import { AdminEvent } from '../../database/db-admin'
 import { formatPrice, parsePrice } from '../../lib/price-parser'
 
 export function addHtmlNiceUrls(text: string) {
@@ -66,7 +66,7 @@ export interface EventFavorite extends Event {
     isFuture: boolean
 }
 
-function filterTagLevel2(row: Event | EventWithOldVersion) {
+function filterTagLevel2(row: Event | AdminEvent) {
     return row.tag_level_2.filter(t => !t.startsWith('#_'))
 }
 
@@ -74,9 +74,9 @@ function isFavoriteCard(row: Event | EventFavorite): row is EventFavorite {
     return (row as EventFavorite).isFuture !== undefined
 }
 
-export function cardFormat(row: Event | EventWithOldVersion | EventFavorite, options: CardOptions = {showAdminInfo: false}) {
-    let text = ``;
-    const rowWithOldVersion = row as EventWithOldVersion
+export function cardFormat(row: Event | AdminEvent | EventFavorite, options: CardOptions = {showAdminInfo: false}) {
+    let text = ``
+    const rowWithOldVersion = row as AdminEvent
     if (rowWithOldVersion.snapshotStatus !== undefined) {
         if (rowWithOldVersion.snapshotStatus === 'inserted') {
             text += '<b>[NEW]</b> '

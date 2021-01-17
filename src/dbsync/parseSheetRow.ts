@@ -26,8 +26,10 @@ export const EXCEL_COLUMNS_EVENTS = {
     rating: 'Оценка',
     reviewer: 'Кто описал',
     wasOrNot: 'Была/не была',
-    entry_date: 'Дата обновления',
-    due_date: 'Due date'
+    popularity: 'Популярность',
+    fake_likes: 'Лайки',
+    fake_dislikes: 'Дизлайки',
+    due_date: 'Due date',
 }
 
 export type ExcelColumnNameEvents = keyof typeof EXCEL_COLUMNS_EVENTS
@@ -42,7 +44,15 @@ export const CAT_TO_SHEET_NAME: { [key in EventCategory]?: string } = {
     'events': 'Мероприятия',
     'movies': 'Кино',
     'walks': 'Прогулки'
+}
 
+export type Popularity = 1 | 2 | 3
+
+export interface ExcelSheetResult {
+    totalNumberOfRows: number
+    sheetId: number
+    sheetTitle: string
+    rows: ExcelRowResult[]
 }
 
 export interface ExcelRowResult {
@@ -64,6 +74,9 @@ export interface ExcelRowResult {
     rowNumber: number
     data: Event
     dueDate: Date
+    popularity?: Popularity
+    fakeLikes?: number
+    fakeDislikes?: number
 }
 
 function preparePublish(data: Event, result: ExcelRowResult) {
@@ -84,7 +97,6 @@ export function getOnlyHumanTimetable(timetable: string) {
 }
 
 type ErrorCallback = (errors: string[]) => void
-type WarningCallback = (warnings: string[]) => void
 
 function validateTagLevel1(event: Event, errorCallback: ErrorCallback) {
     if (event.category === 'exhibitions') {
@@ -179,11 +191,11 @@ function autoAppendLevel2Tags(data: Event, errorCallback: ErrorCallback, warning
     return data
 }
 
-export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCategory, now: Date, rowNo: number): ExcelRowResult {
+export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCategory, now: Date, rowNumber: number): ExcelRowResult {
 
-    const notNull = (s: string) => s === undefined ? '' : s.trim();
-    const notNullOrUnknown = (s: string) => s === undefined ? '' : s;
-    const forceDigit = (n: string) => n === undefined ? 0 : +n;
+    const notNull = (s: string) => s === undefined ? '' : s.trim()
+    const notNullOrUnknown = (s: string) => s === undefined ? '' : s
+    const forceDigit = (n: string, def: number = 0) => n === undefined ? def : +n
     const splitTags = (s: string) => s.split(/\s+|(?<=[^\s])(?=#)/)
 
     const data: Event = {
@@ -224,8 +236,11 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
         },
         dueDate: notNull(row.due_date) ? parseISO(notNull(row.due_date)) : undefined,
         timeIntervals: [],
-        rowNumber: rowNo,
-        data
+        rowNumber,
+        data,
+        popularity: row.popularity === '' ? undefined : +row.popularity as Popularity,
+        fakeLikes: row.fake_likes === '' ? undefined : +row.fake_likes,
+        fakeDislikes: row.fake_dislikes === '' ? undefined : +row.fake_dislikes
     }
     const predictTimetableResult = parseAndPredictTimetable(data.timetable, now)
 

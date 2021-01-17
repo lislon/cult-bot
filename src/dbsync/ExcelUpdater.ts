@@ -1,5 +1,5 @@
 import { sheets_v4 } from 'googleapis'
-import { CellColor, mkAnnotateCell, mkClearFormat, mkColorCell, mkEditCellDate } from './googlesheets'
+import { CellColor, mkAnnotateCell, mkClearFormat, mkColorCell, mkEditCellDate, mkEditCellValue } from './googlesheets'
 import { botConfig } from '../util/bot-config'
 import Schema$Request = sheets_v4.Schema$Request
 
@@ -36,15 +36,18 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
         this.requests.push(mkAnnotateCell(sheetId, note, this.getColumnIndex(column), rowNo))
     }
 
-
-    async update(spreadsheetId: string = botConfig.GOOGLE_DOCS_ID ) {
+    async update(spreadsheetId: string = botConfig.GOOGLE_DOCS_ID) {
         await this.excel.spreadsheets.batchUpdate({
             spreadsheetId,
             requestBody: {requests: this.requests}
-        });
+        })
     }
 
     editCellDate(sheetId: number, column: K, rowNo: number, value: Date) {
         this.requests.push(mkEditCellDate(sheetId, value, this.getColumnIndex(column), rowNo))
+    }
+
+    editCellValue(sheetId: number, column: K, rowNo: number, value: string) {
+        this.requests.push(mkEditCellValue(sheetId, value, this.getColumnIndex(column), rowNo))
     }
 }
