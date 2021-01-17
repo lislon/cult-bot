@@ -20,7 +20,8 @@
     "db:down-test": "cross-env DATABASE_URL=postgres://cult-test:cult-test@localhost:5434/cult-test db-migrate down",
     "db:new": "cross-env TZ=Europe/Moscow db-migrate create",
     "cron:refresh-events": "cross-env TZ=Europe/Moscow node dist/cron/run-refresh",
-    "cron:reset-mailing-counters": "cross-env TZ=Europe/Moscow node dist/cron/reset-mailing-counters"
+    "cron:reset-mailing-counters": "cross-env TZ=Europe/Moscow node dist/cron/reset-mailing-counters",
+    "cron:increment-fake-likes": "cross-env TZ=Europe/Moscow node dist/cron/increment-fake-likes"
   },
   "dependencies": {
     "anymatch": "^3.1.1",
@@ -39,7 +40,7 @@
     "parsimmon": "^1.16.0",
     "pg": "^8.4.2",
     "pg-monitor": "^1.4.1",
-    "pg-promise": "^10.6.1",
+    "pg-promise": "^10.9.1",
     "plural-ru": "^2.0.2",
     "redis-cli": "^2.0.0",
     "request": "^2.88.2",
