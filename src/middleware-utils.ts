@@ -70,7 +70,7 @@ export default {
             ...opts,
         })
     },
-    logger: updateLogger({log: (msg: string) => logger.debug(msg)}),
+    logger: updateLogger({log: (msg: string) => logger.info(msg)}),
     session: sessionMechanism,
     sessionTmp: sessionTmp(),
     logMiddleware: logMiddleware,

@@ -1,30 +1,31 @@
 import { BaseScene, Composer, Markup } from 'telegraf'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { db, LimitOffset } from '../../database/db'
+import { db } from '../../database/db'
 import { SceneRegister } from '../../middleware-utils'
 import { forceSaveUserDataInDb } from '../../lib/middleware/user-middleware'
-import { getLikeDislikeButtonText, updateLikeDislikeInlineButtons } from '../likes/likes-common'
+import { updateLikeDislikeInlineButtons } from '../likes/likes-common'
 import {
     editMessageAndButtons,
     extraInlineMenu,
     generatePlural,
-    getMsgInlineKeyboard,
     parseAndUpdateBtn,
     replyDecoyNoButtons,
     ruFormat,
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
-import { leftDate, MomentIntervals, rightDate } from '../../lib/timetable/intervals'
-import { parseAndPredictTimetable, ParseAndPredictTimetableResult } from '../../lib/timetable/timetable-utils'
+import { rightDate } from '../../lib/timetable/intervals'
+import { ParseAndPredictTimetableResult } from '../../lib/timetable/timetable-utils'
 import { first, last } from 'lodash'
 import { compareAsc, compareDesc, isAfter } from 'date-fns'
-import { PagingConfig, PagingPager } from '../shared/paging-pager'
-import { addHtmlNiceUrls, cardFormat, formatUrl } from '../shared/card-format'
+import { addHtmlNiceUrls, formatUrl } from '../shared/card-format'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { InlineKeyboardMarkup } from 'telegram-typings'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
 import { escapeHTML } from '../../util/string-utils'
+import { SliderPager } from '../shared/slider-pager'
+import { FavoritesPagerConfig } from './favorites-pager-config'
+import { getListOfFavorites } from './favorites-common'
 
 const scene = new BaseScene<ContextMessageUpdate>('favorites_scene')
 
@@ -61,26 +62,6 @@ function sortFavorites(events: FavoriteEvent[]) {
             }
         }
     )
-}
-
-async function getListOfFavorites(ctx: ContextMessageUpdate, eventIds: number[]): Promise<FavoriteEvent[]> {
-    function hasEventsInFuture(timeIntervals: MomentIntervals, date: Date) {
-        return timeIntervals.length > 0 && isAfter(rightDate(last(timeIntervals)), date)
-    }
-
-    const events = await db.repoEventsCommon.getEventsByIds(eventIds)
-
-    const eventsWithNearestDate = events.map(e => {
-        const parsedTimetable = parseAndPredictTimetable(e.timetable, ctx.now())
-        return {
-            ...e,
-            parsedTimetable,
-            firstDate: parsedTimetable.timeIntervals.length > 0 ? leftDate(first(parsedTimetable.timeIntervals)) : new Date(0),
-            isFuture: hasEventsInFuture(parsedTimetable.timeIntervals, ctx.now())
-        } as FavoriteEvent
-    })
-
-    return eventsWithNearestDate
 }
 
 function nearestDate(now: Date, event: FavoriteEvent) {
@@ -146,50 +127,6 @@ async function getMainMenu(ctx: ContextMessageUpdate) {
     return {msg, buttons}
 }
 
-function cardButtonsRow(ctx: ContextMessageUpdate, event: Event) {
-    return [
-        Markup.callbackButton(getLikeDislikeButtonText(ctx, event.likes, 'like'), `like_${event.id}`),
-        Markup.callbackButton(getLikeDislikeButtonText(ctx, event.dislikes, 'dislike'), `dislike_${event.id}`),
-        Markup.callbackButton(i18Btn(ctx, 'remove_favorite'), `favorite_${event.id}`),
-    ]
-}
-
-class FavoritePaging implements PagingConfig<number[]> {
-    limit = 3
-    sceneId = scene.id
-
-    async loadCardsByIds(ctx: ContextMessageUpdate, ids: number[]): Promise<Event[]> {
-        return await getListOfFavorites(ctx, ids)
-    }
-
-    async preloadIds(ctx: ContextMessageUpdate, snapshotFavoriteIds: number[], {offset, limit}: LimitOffset): Promise<number[]> {
-        return snapshotFavoriteIds.slice(offset, offset + limit)
-    }
-
-    async getTotal(ctx: ContextMessageUpdate, snapshotFavoriteIds: number[]): Promise<number> {
-        return snapshotFavoriteIds.length
-    }
-
-    async cardButtons?(ctx: ContextMessageUpdate, event: Event): Promise<CallbackButton[]> {
-        return cardButtonsRow(ctx, event)
-    }
-
-    lastEventEndButton(ctx: ContextMessageUpdate): CallbackButton[] {
-        return [Markup.callbackButton(i18Btn(ctx, 'back_to_favorite_main'), actionName(`back_to_favorite_main`))]
-    }
-
-    analytics(ctx: ContextMessageUpdate, events: Event[], {limit, offset}: LimitOffset) {
-        const pageNumber = Math.floor(limit / offset) + 1
-
-        const pageTitle = pageNumber > 1 ? ` [Страница ${pageNumber}]` : ''
-        ctx.ua.pv({
-            dp: `/favorites/${pageNumber > 1 ? `p${pageNumber}/` : ''}`,
-            dt: `Избранное > Актуальные карточки ${pageTitle}`.trim()
-        })
-    }
-}
-
-const eventPager = new PagingPager(new FavoritePaging())
 
 function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     // const {
@@ -212,7 +149,6 @@ scene
         ctx.ua.pv({dp: `/favorites/`, dt: `Избранное`})
     })
     .leave((ctx: ContextMessageUpdate) => {
-        eventPager.reset(ctx)
     })
     .action(/^favorite_(\d+)/, async (ctx: ContextMessageUpdate) => {
         const eventId = +ctx.match[1]
@@ -224,15 +160,16 @@ scene
 
                 let newKeyboard = (ctx.update.callback_query.message as any)?.reply_markup as InlineKeyboardMarkup
 
-                newKeyboard = await parseAndUpdateBtn(newKeyboard, /^(like|dislike|favorite)_/, (btn) => undefined)
+                // newKeyboard = await parseAndUpdateBtn(newKeyboard, /^(like|dislike|favorite)_/, (btn) => undefined)
+
+                newKeyboard = await parseAndUpdateBtn(newKeyboard, /^(favorite)_/, (btn) => {
+                    return Markup.callbackButton(i18Btn(ctx, 'restore'), actionName(`restore_${eventId}`))
+                })
 
                 await ctx.editMessageText(i18Msg(ctx, 'deleted_card', {
                     title: event.title,
                     icon: i18SharedMsg(ctx, 'category_icons.' + event.category),
-                }), extraInlineMenu([
-                    [Markup.callbackButton(i18Btn(ctx, 'restore'), actionName(`restore_${eventId}`))],
-                    ...(newKeyboard.inline_keyboard as CallbackButton[][])
-                ]))
+                }), extraInlineMenu(newKeyboard.inline_keyboard as CallbackButton[][]))
             }
         }
     })
@@ -249,6 +186,8 @@ async function toggleFavoriteButtonLogic(ctx: ContextMessageUpdate, eventId: num
     forceSaveUserDataInDb(ctx)
 }
 
+const eventPager = new SliderPager(new FavoritesPagerConfig())
+
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
         .action(/^favorite_(\d+)/, async (ctx: ContextMessageUpdate) => {
@@ -259,29 +198,30 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
         .action(/^favorites_scene.restore_(\d+)/, async (ctx: ContextMessageUpdate) => {
             await ctx.answerCbQuery()
-            const eventId = +ctx.match[1]
-
-            const [event] = await db.repoEventsCommon.getEventsByIds([eventId])
-            if (event !== undefined) {
-
-                if (!ctx.session.user.eventsFavorite.includes(eventId)) {
-                    ctx.session.user.eventsFavorite.push(eventId)
-                }
-
-                const card = cardFormat(event)
-
-                const originalKeyboard = getMsgInlineKeyboard(ctx)
-
-                const newKeyboard = await parseAndUpdateBtn(originalKeyboard, /restore/, () => {
-                    return cardButtonsRow(ctx, event)
-                })
-
-                await ctx.editMessageText(card, {
-                    disable_web_page_preview: true,
-                    parse_mode: 'HTML',
-                    reply_markup: newKeyboard
-                })
-            }
+            await eventPager.showOrUpdateSlider(ctx)
+            // const eventId = +ctx.match[1]
+            //
+            // const [event] = await db.repoEventsCommon.getEventsByIds([eventId])
+            // if (event !== undefined) {
+            //
+            //     if (!ctx.session.user.eventsFavorite.includes(eventId)) {
+            //         ctx.session.user.eventsFavorite.push(eventId)
+            //     }
+            //
+            //     const card = cardFormat(event)
+            //
+            //     const originalKeyboard = getMsgInlineKeyboard(ctx)
+            //
+            //     const newKeyboard = await parseAndUpdateBtn(originalKeyboard, /restore/, () => {
+            //         return cardButtonsRow(ctx, event)
+            //     })
+            //
+            //     await ctx.editMessageText(card, {
+            //         disable_web_page_preview: true,
+            //         parse_mode: 'HTML',
+            //         reply_markup: newKeyboard
+            //     })
+            // }
         })
         .action(actionName('wipe'), async ctx => {
             const events = await getListOfFavorites(ctx, ctx.session.user.eventsFavorite)
@@ -304,8 +244,8 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             await ctx.answerCbQuery()
             await prepareSessionStateIfNeeded(ctx)
 
-            await eventPager.updateState(ctx, ctx.session.user.eventsFavorite)
-            await eventPager.initialShowCards(ctx)
+            const state = await eventPager.updateState(ctx, ctx.session.user.eventsFavorite)
+            await eventPager.showOrUpdateSlider(ctx, state)
         })
         .action(actionName('back_to_favorite_main'), async ctx => {
             await ctx.answerCbQuery()

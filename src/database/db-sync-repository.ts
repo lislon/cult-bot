@@ -271,9 +271,9 @@ export class EventsSyncRepository {
 
     public async shuffle(): Promise<void> {
         await db.none(`
-            UPDATE cb_events cb
-            SET cb.order_rnd = CEIL(random() * 1000000)
-            WHERE cb.deleted_at IS NULL
+            UPDATE cb_events
+            SET order_rnd = CEIL(random() * 1000000)
+            WHERE deleted_at IS NULL
         `)
     }
 
