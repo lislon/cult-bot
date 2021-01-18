@@ -1,11 +1,11 @@
 import { DbEvent, EventToSave } from '../interfaces/db-interfaces'
 import { encodeTagsLevel1 } from '../util/tag-level1-encoder'
-import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise';
+import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise'
 import { db } from './db'
 import md5 from 'md5'
 import { MomentIntervals } from '../lib/timetable/intervals'
 import { logger } from '../util/logger'
-import { keyBy } from 'lodash';
+import { keyBy } from 'lodash'
 
 function generateRandomOrder() {
     return Math.ceil(Math.random() * 1000000)
@@ -302,9 +302,9 @@ export class EventsSyncRepository {
 
     public async shuffle(): Promise<void> {
         await db.none(`
-            UPDATE cb_events cb
-            SET cb.order_rnd = CEIL(random() * 1000000)
-            WHERE cb.deleted_at IS NULL
+            UPDATE cb_events
+            SET order_rnd = CEIL(random() * 1000000)
+            WHERE deleted_at IS NULL
         `)
     }
 
