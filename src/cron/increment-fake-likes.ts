@@ -15,7 +15,7 @@ type LikeDislikes = { likes: number, dislikes: number }
 
 export function fakeFunction(event: Pick<AdminEvent, 'rating' | 'popularity'>, existing: LikeDislikes): LikeDislikes {
     return {
-        likes: event.rating * (event.popularity ?? 1),
+        likes: Math.floor(event.rating * ((event.popularity ?? 1) / 5.0 * 3.0)),
         dislikes: 20 - event.rating
     }
 
