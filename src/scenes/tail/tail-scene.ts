@@ -3,7 +3,7 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { isAdmin } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { logger } from '../../util/logger'
-import { backToMainButtonTitle } from '../shared/shared-logic'
+import { backToMainButtonTitle, buttonIsOldGoToMain } from '../shared/shared-logic'
 
 const tail = new Composer<ContextMessageUpdate>()
 
@@ -51,7 +51,7 @@ tail
     })
     .action(/.+/, async (ctx) => {
         await ctx.answerCbQuery()
-        await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.unknown_action')});
+        await buttonIsOldGoToMain(ctx)
         logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [callback_data=${ctx.update?.callback_query?.data}] Аварийный выход`)
     })
 

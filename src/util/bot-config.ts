@@ -28,6 +28,10 @@ export class BotConfig {
     public readonly MAILINGS_PER_SECOND: number
     public readonly LOG_PAGE_VIEWS_IN_DB: boolean
 
+    public readonly SLIDER_STATE_TTL_SECONDS: number
+    public readonly SLIDER_MAX_STATES_SAVED: number
+
+
     /**
      * Chat used to receive user feedback and send reply to it.
      */
@@ -64,6 +68,9 @@ export class BotConfig {
         this.MAILINGS_PER_WEEK_MAX = +process.env.MAILINGS_PER_WEEK_MAX || 2
         this.MAILINGS_PER_SECOND = +process.env.MAILINGS_PER_SECOND || 4
         this.LOG_PAGE_VIEWS_IN_DB = !!process.env.LOG_PAGE_VIEWS_IN_DB || true
+
+        this.SLIDER_STATE_TTL_SECONDS = +process.env.SLIDER_STATE_TTL_SECONDS || 3600 * 8
+        this.SLIDER_MAX_STATES_SAVED = +process.env.SLIDER_MAX_STATES_SAVED || 5
     }
 }
 

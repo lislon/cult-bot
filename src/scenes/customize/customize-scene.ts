@@ -210,7 +210,11 @@ async function invalidateSliderAndCounters(ctx: ContextMessageUpdate, msgId: num
     ctx.session.customize.resultsFound = undefined
     const {format, oblasti, cennosti, time} = ctx.session.customize
     const state = {format, oblasti, cennosti, time}
-    await eventSlider.updateState(ctx, state, await countFoundEvents(ctx), msgId ?? getMsgId(ctx))
+    await eventSlider.updateState(ctx, {
+        state,
+        total: await countFoundEvents(ctx),
+        msgId: msgId ?? getMsgId(ctx)
+    })
 }
 
 async function countFoundEvents(ctx: ContextMessageUpdate) {
@@ -334,7 +338,11 @@ async function restoreOldCustomize(ctx: ContextMessageUpdate) {
         ctx.session.customize = {...ctx.session.customize, ...restoreState}
         await ctx.scene.enter(scene.id, {}, true)
         const msgId = await updateDialog(ctx, 'root', {restoreMessage: true, forceNewMsg: true})
-        await eventSlider.updateState(ctx, restoreState, await countFoundEvents(ctx), msgId)
+        await eventSlider.updateState(ctx, {
+            state: restoreState,
+            total: await countFoundEvents(ctx),
+            msgId
+        })
     }
 }
 

@@ -444,7 +444,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
         .command(['level_silly', 'level_debug', 'level_error'], async (ctx) => {
             loggerTransport.level = ctx.message.text.replace(/^\/[^_]+_/, '')
-            await ctx.replyWithHTML(i18Msg(ctx, 'log_level_selected', {level: logger.level}))
+            await ctx.replyWithHTML(i18Msg(ctx, 'log_level_selected', {level: loggerTransport.level}))
             if (loggerTransport.level === 'silly') {
                 pgLogVerbose()
             } else {

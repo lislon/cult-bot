@@ -23,6 +23,7 @@ export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id
     return {
         backButton: (): CallbackButton => Markup.callbackButton(i18n.t('ru', 'shared.keyboard.back'), backAction),
         actionName: (id: string) => `${scene.id}.${ReversableTranslit.translit(id)}`,
+        actionNameRegex: (id: RegExp) => new RegExp(`^${scene.id}[.]${id.source}`),
         revertActionName: (id: string) => {
             if (id.startsWith('#_')) {
                 // this is needed to handle menu buttons with #_tags like this

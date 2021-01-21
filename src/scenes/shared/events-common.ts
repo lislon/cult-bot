@@ -26,7 +26,7 @@ export interface PagingCommonConfig<Q, E> {
 
     cardButtons?(ctx: ContextMessageUpdate, event: E): Promise<CallbackButton[]>
 
-    preloadIds(ctx: ContextMessageUpdate, query: Q, limitOffset: LimitOffset): Promise<number[]>
+    preloadIds(ctx: ContextMessageUpdate, limitOffset: LimitOffset, query: Q): Promise<number[]>
 
     loadCardsByIds(ctx: ContextMessageUpdate, eventIds: number[]): Promise<E[]>
 }
@@ -49,10 +49,10 @@ export class EventsPagerSliderBase<Q, C extends PagingCommonConfig<Q, E>, E exte
 
         if (index >= rightEnd || index < state.savedIdsOffset) {
             state.savedIdsOffset = index - index % maxIdSaved
-            state.savedIds = await this.config.preloadIds(ctx, state.query, {
+            state.savedIds = await this.config.preloadIds(ctx, {
                 limit: maxIdSaved,
                 offset: state.savedIdsOffset
-            })
+            }, state.query)
             // state.total = await this.config.getTotal(ctx, state.query)
         }
 

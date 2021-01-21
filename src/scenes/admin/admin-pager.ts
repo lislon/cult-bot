@@ -26,7 +26,7 @@ export class AdminPager implements PagingConfig<AdminSceneQueryState, AdminEvent
         return await db.repoAdmin.getAdminEventsByIds(eventIds)
     }
 
-    async preloadIds(ctx: ContextMessageUpdate, query: AdminSceneQueryState, limitOffset: LimitOffset): Promise<number[]> {
+    async preloadIds(ctx: ContextMessageUpdate, limitOffset: LimitOffset, query: AdminSceneQueryState): Promise<number[]> {
         const {events} = await getSearchedEvents(ctx, query, limitOffset)
         return events.map(e => e.id)
     }

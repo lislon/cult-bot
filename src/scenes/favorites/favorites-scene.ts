@@ -4,8 +4,9 @@ import { i18nSceneHelper } from '../../util/scene-helper'
 import { db } from '../../database/db'
 import { SceneRegister } from '../../middleware-utils'
 import { forceSaveUserDataInDb } from '../../lib/middleware/user-middleware'
-import { updateLikeDislikeInlineButtons } from '../likes/likes-common'
+import { isEventInFavorites, updateLikeDislikeInlineButtons } from '../likes/likes-common'
 import {
+    buttonIsOldGoToMain,
     editMessageAndButtons,
     extraInlineMenu,
     generatePlural,
@@ -17,19 +18,19 @@ import {
 import { rightDate } from '../../lib/timetable/intervals'
 import { ParseAndPredictTimetableResult } from '../../lib/timetable/timetable-utils'
 import { first, last } from 'lodash'
-import { compareAsc, compareDesc, isAfter } from 'date-fns'
-import { addHtmlNiceUrls, formatUrl } from '../shared/card-format'
+import { isAfter } from 'date-fns'
+import { addHtmlNiceUrls, cardFormat, formatUrl } from '../shared/card-format'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { InlineKeyboardMarkup } from 'telegram-typings'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
 import { escapeHTML } from '../../util/string-utils'
 import { SliderPager } from '../shared/slider-pager'
 import { FavoritesPagerConfig } from './favorites-pager-config'
-import { getListOfFavorites } from './favorites-common'
+import { loadEventsAsFavorite, removeFavoriteButton, sortFavorites } from './favorites-common'
 
 const scene = new BaseScene<ContextMessageUpdate>('favorites_scene')
 
-const {i18SharedMsg, i18Btn, i18Msg, i18SharedBtn, backButton, actionName} = i18nSceneHelper(scene)
+const {i18SharedMsg, i18Btn, i18Msg, i18SharedBtn, backButton, actionName, actionNameRegex} = i18nSceneHelper(scene)
 
 export interface FavoritesState {
 
@@ -39,29 +40,6 @@ export interface FavoriteEvent extends Event {
     parsedTimetable: ParseAndPredictTimetableResult
     firstDate: Date
     isFuture: boolean
-}
-
-function sortFavorites(events: FavoriteEvent[]) {
-    return events.sort((left, right) => {
-            if (left.isFuture === true && right.isFuture === true) {
-
-                if (left.parsedTimetable.timetable.anytime === false && right.parsedTimetable.timetable.anytime === false) {
-                    return compareAsc(left.firstDate, right.firstDate)
-                } else if (left.parsedTimetable.timetable.anytime === true) {
-                    return 1
-                } else if (right.parsedTimetable.timetable.anytime === true) {
-                    return -1
-                } else {
-                    return 0
-                }
-
-            } else if (left.isFuture === false && right.isFuture === false) {
-                return compareDesc(left.firstDate, right.firstDate)
-            } else {
-                return left.isFuture ? -1 : 1
-            }
-        }
-    )
 }
 
 function nearestDate(now: Date, event: FavoriteEvent) {
@@ -104,7 +82,7 @@ async function formatListOfFavorites(ctx: ContextMessageUpdate, events: Favorite
 async function getMainMenu(ctx: ContextMessageUpdate) {
     let msg
     let buttons: CallbackButton[][] = []
-    const events = sortFavorites(await getListOfFavorites(ctx, ctx.session.user.eventsFavorite))
+    const events = sortFavorites(await loadEventsAsFavorite(ctx.session.user.eventsFavorite, ctx.now()))
 
     const back = backButton()
     if (events.length > 0) {
@@ -113,7 +91,7 @@ async function getMainMenu(ctx: ContextMessageUpdate) {
 
         const hasOld = events.find(e => e.isFuture === false) !== undefined
 
-        buttons = [[...(hasOld ? [wipeButton] : [])], [showCards], [back]]
+        buttons = [[showCards], [...(hasOld ? [wipeButton] : [])], [back]]
 
         msg = i18Msg(ctx, 'main', {
             eventsPlural: generatePlural(ctx, 'event', events.length),
@@ -150,29 +128,6 @@ scene
     })
     .leave((ctx: ContextMessageUpdate) => {
     })
-    .action(/^favorite_(\d+)/, async (ctx: ContextMessageUpdate) => {
-        const eventId = +ctx.match[1]
-
-        await toggleFavoriteButtonLogic(ctx, eventId)
-        if (!ctx.session.user.eventsFavorite.includes(eventId)) {
-            const [event] = await db.repoEventsCommon.getEventsByIds([eventId])
-            if (event !== undefined) {
-
-                let newKeyboard = (ctx.update.callback_query.message as any)?.reply_markup as InlineKeyboardMarkup
-
-                // newKeyboard = await parseAndUpdateBtn(newKeyboard, /^(like|dislike|favorite)_/, (btn) => undefined)
-
-                newKeyboard = await parseAndUpdateBtn(newKeyboard, /^(favorite)_/, (btn) => {
-                    return Markup.callbackButton(i18Btn(ctx, 'restore'), actionName(`restore_${eventId}`))
-                })
-
-                await ctx.editMessageText(i18Msg(ctx, 'deleted_card', {
-                    title: event.title,
-                    icon: i18SharedMsg(ctx, 'category_icons.' + event.category),
-                }), extraInlineMenu(newKeyboard.inline_keyboard as CallbackButton[][]))
-            }
-        }
-    })
 
 async function toggleFavoriteButtonLogic(ctx: ContextMessageUpdate, eventId: number) {
     const [{title}] = await db.repoEventsCommon.getEventsByIds([eventId])
@@ -188,6 +143,14 @@ async function toggleFavoriteButtonLogic(ctx: ContextMessageUpdate, eventId: num
 
 const eventPager = new SliderPager(new FavoritesPagerConfig())
 
+function removeFromFavorite(ctx: ContextMessageUpdate, eventId: number) {
+    ctx.session.user.eventsFavorite = ctx.session.user.eventsFavorite.filter(e => e !== eventId)
+}
+
+async function updatePagerState(ctx: ContextMessageUpdate) {
+    return await eventPager.updateState(ctx, {invalidateOtherSliders: true})
+}
+
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
         .action(/^favorite_(\d+)/, async (ctx: ContextMessageUpdate) => {
@@ -196,35 +159,56 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             await toggleFavoriteButtonLogic(ctx, eventId)
             await db.task(async dbtask => await updateLikeDislikeInlineButtons(ctx, dbtask, eventId))
         })
-        .action(/^favorites_scene.restore_(\d+)/, async (ctx: ContextMessageUpdate) => {
-            await ctx.answerCbQuery()
-            await eventPager.showOrUpdateSlider(ctx)
-            // const eventId = +ctx.match[1]
-            //
-            // const [event] = await db.repoEventsCommon.getEventsByIds([eventId])
-            // if (event !== undefined) {
-            //
-            //     if (!ctx.session.user.eventsFavorite.includes(eventId)) {
-            //         ctx.session.user.eventsFavorite.push(eventId)
-            //     }
-            //
-            //     const card = cardFormat(event)
-            //
-            //     const originalKeyboard = getMsgInlineKeyboard(ctx)
-            //
-            //     const newKeyboard = await parseAndUpdateBtn(originalKeyboard, /restore/, () => {
-            //         return cardButtonsRow(ctx, event)
-            //     })
-            //
-            //     await ctx.editMessageText(card, {
-            //         disable_web_page_preview: true,
-            //         parse_mode: 'HTML',
-            //         reply_markup: newKeyboard
-            //     })
-            // }
+        .action(actionNameRegex(/(restore|remove)_(\d+)/), async (ctx: ContextMessageUpdate) => {
+            const action = ctx.match[1] as 'restore' | 'remove'
+            const eventId = +ctx.match[2]
+
+            const [event] = await loadEventsAsFavorite([eventId], ctx.now())
+
+            if (eventPager.isThisSliderValid(ctx)) {
+
+                if (event !== undefined) {
+
+                    let cardBtnIsFresh = true
+
+                    if (!isEventInFavorites(ctx, eventId) && action === 'restore') {
+                        ctx.session.user.eventsFavorite.push(eventId)
+                        cardBtnIsFresh = false
+                    } else if (isEventInFavorites(ctx, eventId) && action === 'remove') {
+                        removeFromFavorite(ctx, eventId)
+                        eventPager.getSliderState(ctx)
+
+                        cardBtnIsFresh = false
+                    }
+
+                    if (!cardBtnIsFresh) {
+                        await updatePagerState(ctx)
+
+                        const card = cardFormat(event, {deleted: !isEventInFavorites(ctx, eventId)})
+                        let newKeyboard = (ctx.update.callback_query.message as any)?.reply_markup as InlineKeyboardMarkup
+
+                        newKeyboard = await parseAndUpdateBtn(newKeyboard, /(restore|remove)/, () => {
+                            return removeFavoriteButton(ctx, event)
+                        })
+
+                        await ctx.editMessageText(card, {
+                            disable_web_page_preview: true,
+                            parse_mode: 'HTML',
+                            reply_markup: newKeyboard
+                        })
+                    } else {
+                        await ctx.answerCbQuery('Уже ок')
+                    }
+
+                } else {
+                    await buttonIsOldGoToMain(ctx)
+                }
+            } else {
+                await eventPager.answerCbSliderIsOld(ctx)
+            }
         })
         .action(actionName('wipe'), async ctx => {
-            const events = await getListOfFavorites(ctx, ctx.session.user.eventsFavorite)
+            const events = await loadEventsAsFavorite(ctx.session.user.eventsFavorite, ctx.now())
             const pastEvents = events.filter(e => !e.isFuture)
 
             await ctx.answerCbQuery(i18Msg(ctx, 'cb_answer_wiped', {
@@ -237,14 +221,13 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             if (pastEvents.length > 0) {
                 const {msg, buttons} = await getMainMenu(ctx)
                 await editMessageAndButtons(ctx, buttons, msg)
-
             }
         })
         .action(actionName('show_cards'), async ctx => {
             await ctx.answerCbQuery()
             await prepareSessionStateIfNeeded(ctx)
 
-            const state = await eventPager.updateState(ctx, ctx.session.user.eventsFavorite)
+            const state = await updatePagerState(ctx)
             await eventPager.showOrUpdateSlider(ctx, state)
         })
         .action(actionName('back_to_favorite_main'), async ctx => {

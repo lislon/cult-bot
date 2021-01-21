@@ -1,7 +1,7 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { CallbackButton } from 'telegraf/typings/markup'
 import { BaseScene, Markup } from 'telegraf'
-import { TotalOffset, SliderConfig } from '../shared/slider-pager'
+import { SliderConfig, TotalOffset } from '../shared/slider-pager'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { CustomizeFilters, prepareRepositoryQuery } from './customize-common'
 import { db, LimitOffset } from '../../database/db'
@@ -18,9 +18,9 @@ export class CustomizePagerConfig implements SliderConfig<CustomizeFilters> {
         return await db.repoEventsCommon.getEventsByIds(eventIds)
     }
 
-    async preloadIds(ctx: ContextMessageUpdate, filters: CustomizeFilters, limitOffset: LimitOffset): Promise<number[]> {
+    async preloadIds(ctx: ContextMessageUpdate, limitOffset: LimitOffset, query: CustomizeFilters): Promise<number[]> {
         return await db.repoCustomEvents.findEventIdsCustomFilter({
-            ...prepareRepositoryQuery(ctx, filters),
+            ...prepareRepositoryQuery(ctx, query),
             ...limitOffset
         })
     }

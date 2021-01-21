@@ -20,7 +20,7 @@ export class TopsPagerConfig implements SliderConfig<TopEventsStageQuery> {
 
     readonly sceneId = scene.id
 
-    async preloadIds(ctx: ContextMessageUpdate, query: TopEventsStageQuery, limitOffset: LimitOffset): Promise<number[]> {
+    async preloadIds(ctx: ContextMessageUpdate, limitOffset: LimitOffset, query: TopEventsStageQuery): Promise<number[]> {
         return await getTopEventIds(ctx, query, getTopRangeInterval(ctx), limitOffset)
     }
 

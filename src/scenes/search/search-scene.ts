@@ -3,10 +3,9 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { replyDecoyBackButton, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { SceneRegister } from '../../middleware-utils'
-import { PagingPager } from '../shared/paging-pager'
 import emojiRegex from 'emoji-regex'
 import { SearchPagerConfig } from './search-pager'
-import { SliderPager } from '../shared/slider-pager';
+import { SliderPager } from '../shared/slider-pager'
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
@@ -46,7 +45,7 @@ scene
         }
         ctx.session.search.request = ctx.match[0]
         await warnAdminIfDateIsOverriden(ctx)
-        const state = await eventSlider.updateState(ctx, ctx.session.search.request)
+        const state = await eventSlider.updateState(ctx, {state: ctx.session.search.request})
         if (state.total > 0) {
             await ctx.replyWithHTML(i18Msg(ctx, 'here_your_results', {
                 query: ctx.session.search.request

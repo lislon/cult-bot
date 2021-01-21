@@ -245,6 +245,10 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
     // ctx.session.lastText = text
 }
 
-export function getMsgId(ctx: ContextMessageUpdate) {
+export function getMsgId(ctx: ContextMessageUpdate): number {
     return ctx.update.message?.message_id || ctx.update?.callback_query?.message?.message_id
+}
+
+export async function buttonIsOldGoToMain(ctx: ContextMessageUpdate) {
+    await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.unknown_action')})
 }

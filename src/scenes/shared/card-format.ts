@@ -58,8 +58,9 @@ function getCardHeaderCat(row: Event) {
 }
 
 export interface CardOptions {
-    showAdminInfo: boolean
+    showAdminInfo?: boolean
     packs?: boolean
+    deleted?: boolean
 }
 
 export interface EventFavorite extends Event {
@@ -97,20 +98,24 @@ export function cardFormat(row: Event | AdminEvent | EventFavorite, options: Car
     //
     // }
 
-    text += `${getCardHeaderCat(row)} <b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>`
+    function strikeIfDeleted(text: string) {
+        return options.deleted ? `<s>${text}</s>` : text
+    }
+
+    text += strikeIfDeleted(`${getCardHeaderCat(row)} <b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>`)
 
     text += '\n'
     text += '\n'
 
     if (isFuture) {
-        text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`
+        text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`)
     } else {
-        text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b> <i>(прошло)</i>`
+        text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b> <i>(прошло)</i>`)
     }
 
     text += '\n'
     text += '\n'
-    text += `${addHtmlNiceUrls(escapeHTML(row.description))} \n`
+    text += `${strikeIfDeleted(addHtmlNiceUrls(escapeHTML(row.description)))} \n`
     text += '\n'
 
     if (!fieldIsQuestionMarkOrEmpty(row.place)) {
@@ -138,10 +143,10 @@ export function cardFormat(row: Event | AdminEvent | EventFavorite, options: Car
         text += `${formatUrl(escapeHTML(row.url))}\n`
     }
     text += '\n'
-    text += `${escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' '))}\n`
-    if (options.showAdminInfo) {
+    text += `${strikeIfDeleted(escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' ')))}\n`
+    if (options.showAdminInfo === true) {
         text += `<i>${row.ext_id}, ${row.reviewer}, оценка ${row.rating}</i>\n`
     }
 
-    return text;
+    return text
 }

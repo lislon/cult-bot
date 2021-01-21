@@ -116,7 +116,10 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
             Extra.markup(Markup.removeKeyboard()))
 
         await sleep(70)
-        const sliderState = await pager.updateState(ctx, ctx.session.topsScene, total, undefined)
+        const sliderState = await pager.updateState(ctx, {
+            state: ctx.session.topsScene,
+            total
+        })
         await pager.showOrUpdateSlider(ctx, sliderState, {
             forceNewMsg: true
         })

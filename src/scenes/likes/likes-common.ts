@@ -27,11 +27,11 @@ export function getLikesRow(ctx: ContextMessageUpdate, event: Pick<Event, 'id' |
     return [
         Markup.callbackButton(getLikeDislikeButtonText(ctx, event.likes, 'like'), `like_${event.id}`),
         Markup.callbackButton(getLikeDislikeButtonText(ctx, event.dislikes, 'dislike'), `dislike_${event.id}`),
-        Markup.callbackButton(getFavoriteBtnText(ctx, isFavoriteEvent(event.id, ctx)), `favorite_${event.id}`),
+        Markup.callbackButton(getFavoriteBtnText(ctx, isEventInFavorites(ctx, event.id)), `favorite_${event.id}`),
     ]
 }
 
-export function isFavoriteEvent(eventId: number, ctx: ContextMessageUpdate) {
+export function isEventInFavorites(ctx: ContextMessageUpdate, eventId: number) {
     return ctx.session.user.eventsFavorite.includes(+eventId)
 }
 
@@ -49,7 +49,7 @@ export async function updateLikeDislikeInlineButtons(ctx: ContextMessageUpdate, 
     })
 
     newKeyboard = await parseAndUpdateBtn(newKeyboard, /^(favorite)_/, (btn) => {
-        return {...btn, text: getFavoriteBtnText(ctx, isFavoriteEvent(eventId, ctx))}
+        return {...btn, text: getFavoriteBtnText(ctx, isEventInFavorites(ctx, eventId))}
     })
 
     if (JSON.stringify(newKeyboard) !== JSON.stringify(originalKeyboard)) {
