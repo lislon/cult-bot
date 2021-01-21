@@ -24,7 +24,7 @@ const content = (ctx: ContextMessageUpdate) => {
 
     const mainButtons = menu.map(row =>
         row.map(btnName => {
-            return Markup.button(i18Btn(ctx, btnName));
+            return Markup.button(i18Btn(ctx, btnName))
         })
     );
 

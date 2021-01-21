@@ -27,32 +27,35 @@ export const filterOnlyFeedbackChat = Composer.filter((ctx) =>
 interface FormattedMailedMessages {
     text: string
     btns: CallbackButton[][]
+    webPreview: boolean
 }
 
-async function formatMessage(ctx: ContextMessageUpdate, msg: Message, allPacks: ScenePack[]): Promise<FormattedMailedMessages> {
+async function formatMessage(ctx: ContextMessageUpdate, msg: Message, allPacks: ScenePack[], webPreview: boolean): Promise<FormattedMailedMessages> {
     let text = parseTelegramMessageToHtml(msg)
-    const matchButtonAtEnd = text.match(/\[\s*(.+)\s*\]\s*$/)
-    if (matchButtonAtEnd) {
-        const searchForPackTitle = matchButtonAtEnd[1]
+    const matchButtonAtEnd = text.match(/^\s*\[.+\]\s*$/gm)
+    const btns: CallbackButton[][] = [];
 
-        const packData = allPacks.find(p => p.title.toLowerCase() === searchForPackTitle.toLowerCase().trim())
-        if (packData !== undefined) {
-            const btns = [[Markup.callbackButton(packData.title, `packs_scene.direct_${packData.id}`)]]
-            text = text.replace(/\[.+\]\s*$/, '')
-            return {text, btns}
+    (matchButtonAtEnd || []).forEach((btnMatch: string) => {
+        const searchForPackTitle = btnMatch.replace(/^\s*\[\s*/, '').replace(/\s*\]\s*$/, '').toLowerCase().trim()
+
+        let replaceOnTo = ''
+        if (searchForPackTitle === 'подборки' || searchForPackTitle === 'подборка') {
+            btns.push([Markup.callbackButton(' 📚 Подборки', `packs_scene.direct_menu`)])
         } else {
+            const packData = allPacks.find(p => p.title.toLowerCase() === searchForPackTitle)
 
-            const allPacks = await db.repoPacks.listPacks({
-                interval: getNextWeekRange(ctx.now())
-            })
-
-            text = text.replace(/\[.+\]\s*$/, i18Msg(ctx, 'pack_not_found', {
-                title: searchForPackTitle,
-            }))
+            if (packData !== undefined) {
+                btns.push([Markup.callbackButton(packData.title, `packs_scene.direct_${packData.id}`)])
+            } else {
+                replaceOnTo = i18Msg(ctx, 'pack_not_found', {
+                    title: searchForPackTitle,
+                })
+            }
         }
-    }
+        text = text.replace(btnMatch, replaceOnTo).trimEnd()
+    })
 
-    return {text, btns: []}
+    return {text, btns, webPreview}
 }
 
 function i18MsgSupport(id: string, templateData?: any) {
@@ -82,7 +85,7 @@ async function startMailings(telegram: Telegram, mailingId: number) {
     for (const user of users) {
         try {
             await telegram.sendMessage(user.tid, mailMsg.text, Extra.HTML()
-                .webPreview(false)
+                .webPreview(mailMsg.webPreview)
                 .markup(Markup.inlineKeyboard(mailMsg.btns)
                 ))
 
@@ -133,7 +136,8 @@ supportFeedbackMiddleware
         }
         await next()
     })
-    .hears(/^(s|ы|send|послать)\s*$/i, async (ctx: ContextMessageUpdate, next: any) => {
+    .hears(/^(s|ы)(i|ш?)\s*$/i, async (ctx: ContextMessageUpdate) => {
+        const webPreview = ctx.match[2] !== ''
         if (ctx.message?.reply_to_message?.message_id !== undefined) {
             const messageId = ctx.message.reply_to_message.message_id
 
@@ -141,11 +145,11 @@ supportFeedbackMiddleware
                 interval: getNextWeekRange(new Date())
             })
 
-            const messageToSend = await formatMessage(ctx, ctx.message.reply_to_message, allPacks)
-            const users = await db.repoUser.listUsersForMailing(botConfig.MAILINGS_PER_WEEK_MAX);
+            const messageToSend = await formatMessage(ctx, ctx.message.reply_to_message, allPacks, webPreview)
+            const users = await db.repoUser.listUsersForMailing(botConfig.MAILINGS_PER_WEEK_MAX)
             mailingMessages = {[messageId]: messageToSend}
 
-            await ctx.replyWithHTML(messageToSend.text, Extra.markup(
+            await ctx.replyWithHTML(messageToSend.text, Extra.webPreview(messageToSend.webPreview).markup(
                 Markup.inlineKeyboard(messageToSend.btns)
             ))
 

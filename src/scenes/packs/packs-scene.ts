@@ -76,6 +76,10 @@ scene
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
+        .action(/packs_scene.direct_menu/, async (ctx) => {
+            await ctx.answerCbQuery()
+            await displayMainMenu(ctx)
+        })
         .action(/packs_scene.direct_(\d+)/, async (ctx) => {
             await ctx.answerCbQuery()
             const packs = await getPacksList(ctx)

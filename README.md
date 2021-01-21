@@ -100,7 +100,7 @@ heroku pg:backups:restore -a cult-hub-bot-<env>
 #### Option B: With restoration with rollback (Harder, data will be saved)
 ```
 heroku releases:rollback -a cult-hub-bot-<env>
-heroku run -- yarn db:down -a cult-hub-bot-<env>
+heroku run -a cult-hub-bot-<env> -- yarn db:down
 ```
 
 heroku container:run web bash
@@ -113,6 +113,11 @@ heroku addons:open scheduler -a cult-hub-bot-dev
 ```
  - Add cron job `npm run cron:refresh-events` `everyday` at `03:00 UTC`. 
    This job will rotate random events order in cb_events to allow consistent paging. Also it will update timetable for recurrent events
+
+### Reset malings
+```
+heroku run -a cult-hub-bot-<env> -- cron:reset-mailing-counters
+```
 
 ### Db migrations
 
