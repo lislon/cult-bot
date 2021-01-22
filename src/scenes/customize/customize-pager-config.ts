@@ -25,6 +25,10 @@ export class CustomizePagerConfig implements SliderConfig<CustomizeFilters> {
         })
     }
 
+    noCardsText(ctx: ContextMessageUpdate) {
+        return i18Msg(ctx, 'slider_is_empty')
+    }
+
     async getTotal(ctx: ContextMessageUpdate, filters: CustomizeFilters): Promise<number> {
         return await db.repoCustomEvents.countEventsCustomFilter({
             ...prepareRepositoryQuery(ctx, filters),

@@ -1,9 +1,8 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { CardOptions } from './card-format'
 import { CallbackButton } from 'telegraf/typings/markup'
-import { LimitOffset } from '../../database/db'
-
-const MAX_IDS_SAVED = 10
+import { LimitOffsetLast } from '../../database/db'
+import { botConfig } from '../../util/bot-config'
 
 export interface PagerSliderState<Q> {
     selectedIdx: number
@@ -26,7 +25,7 @@ export interface PagingCommonConfig<Q, E> {
 
     cardButtons?(ctx: ContextMessageUpdate, event: E): Promise<CallbackButton[]>
 
-    preloadIds(ctx: ContextMessageUpdate, limitOffset: LimitOffset, query: Q): Promise<number[]>
+    preloadIds(ctx: ContextMessageUpdate, limitOffset: LimitOffsetLast, query: Q): Promise<number[]>
 
     loadCardsByIds(ctx: ContextMessageUpdate, eventIds: number[]): Promise<E[]>
 }
@@ -43,13 +42,15 @@ export class EventsPagerSliderBase<Q, C extends PagingCommonConfig<Q, E>, E exte
             throw new Error(`Out of index: ` + JSON.stringify(state))
         }
 
-        const maxIdSaved = this.config.maxIdsToCache?.(ctx) || MAX_IDS_SAVED
+        const maxIdSaved = this.config.maxIdsToCache?.(ctx) || botConfig.SLIDER_MAX_IDS_CACHED
 
         const rightEnd = state.savedIdsOffset + state.savedIds.length
+        const currentId = state.savedIds[index - state.savedIdsOffset]
 
         if (index >= rightEnd || index < state.savedIdsOffset) {
             state.savedIdsOffset = index - index % maxIdSaved
             state.savedIds = await this.config.preloadIds(ctx, {
+                lastId: currentId,
                 limit: maxIdSaved,
                 offset: state.savedIdsOffset
             }, state.query)

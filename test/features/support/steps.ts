@@ -11,7 +11,8 @@ import { parseAndPredictTimetable } from '../../../src/lib/timetable/timetable-u
 import { allCategories, ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
 import { botConfig } from '../../../src/util/bot-config'
-import { last } from 'lodash'
+import { clone, last } from 'lodash'
+import { InlineKeyboardMarkup } from 'telegram-typings'
 
 function clean(str: string) {
     return str
@@ -79,7 +80,7 @@ Given(/^there is events:$/, async function (table: DataTable) {
         return getMockEvent({...row, eventTime: timetableResult.timeIntervals})
     })
 
-    const [A, B, C] = await syncEventsDb4Test(mockEvents)
+    await syncEventsDb4Test(mockEvents)
 })
 
 Given(/^there is packs:$/, async function (table: DataTable) {
@@ -107,6 +108,9 @@ Given(/^I blocked the bot$/, async function () {
     await this.blockBotByUser()
 })
 
+Given(/^bot config ([A-Z_]+)=(\d+)$/, async function (key: string, intValue: number) {
+    (botConfig as any)[key] = +intValue
+})
 
 When(/^I type '(.+)'$/, async function (text: string) {
     drainEvents.call(this)
@@ -199,11 +203,18 @@ Then(/^Bot edits inline buttons:$/, function (buttonsLayout: string) {
     expectLayoutsSame(buttonsLayout, markup.extra.reply_markup)
 })
 
-Then(/^Bot edits slider with event '(.+)'/, function (eventTitle: string) {
+Then(/^Bot edits slider with event '(.+)'$/, function (eventTitle: string) {
     const markup = this.getLastEditedInline() as BotReply
     expect(markup.text).toContain(`<b>${eventTitle}</b>\n`)
 })
-Then(/^Bot responds with slider with event '(.+)'/, function (eventTitle: string) {
+
+Then(/^Bot edits slider with event '(.+)' \[(\d+)\/(\d+)\]$/, function (eventTitle: string, page: number, total: number) {
+    const markup = this.getLastEditedInline() as BotReply
+    expect(markup.text).toContain(`<b>${eventTitle}</b>\n`)
+    expect((markup.extra.reply_markup as InlineKeyboardMarkup).inline_keyboard[1][1].text).toContain(`${page} / ${total} »`)
+})
+
+Then(/^Bot responds with slider with event '(.+)'$/, function (eventTitle: string) {
     const markup = this.getNextMsg() as BotReply
     expect(markup.text).toContain(`<b>${eventTitle}</b>\n`)
     expect(markup.extra.reply_markup).toBeTruthy()
@@ -258,10 +269,11 @@ Then(/^Google analytics params will be:$/, function (table: DataTable) {
     })
 })
 
-
+const ORIGINAL_BOT_CONFIG: typeof botConfig = clone(botConfig)
 
 Before(async () => {
     await db.none(`TRUNCATE cb_events CASCADE`)
+    botConfig.setFromKeyValue(ORIGINAL_BOT_CONFIG)
 })
 Before(function (testCase: ITestCaseHookParameter) {
     this.initTestCase(testCase)

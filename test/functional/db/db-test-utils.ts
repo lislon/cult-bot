@@ -15,6 +15,7 @@ export interface MockEvent {
     eventTime: MomentIntervals
     category: EventCategory
     address: string
+    timetable: string
     tag_level_1: string[]
     tag_level_2: TagLevel2[]
     rating: number
@@ -34,19 +35,20 @@ export interface MockPackForSave {
 
 
 export function getMockEvent({
-        ext_id = '',
-        eventTime = [],
-        title = 'Event title',
-        category = 'theaters',
-        address = '',
-        tag_level_1 = [],
-        tag_level_2 = [],
-        rating = 5,
-        anytime = false,
-        order_rnd = undefined,
-        reviewer = '',
-        dateDeleted = undefined
-    }: Partial<MockEvent> = {}
+                                 ext_id = '',
+                                 eventTime = [],
+                                 title = 'Event title',
+                                 category = 'theaters',
+                                 address = '',
+                                 timetable = 'пн-вт: 15:00-18:00',
+                                 tag_level_1 = [],
+                                 tag_level_2 = [],
+                                 rating = 5,
+                                 anytime = false,
+                                 order_rnd = undefined,
+                                 reviewer = '',
+                                 dateDeleted = undefined
+                             }: Partial<MockEvent> = {}
 ): EventToSave {
     const event: Event = {
         ext_id: ext_id,
@@ -55,7 +57,7 @@ export function getMockEvent({
         title: title,
         place: '',
         address: address,
-        timetable: 'пн-вт: 15:00-18:00',
+        timetable: timetable,
         duration: '',
         price: '',
         notes: '',

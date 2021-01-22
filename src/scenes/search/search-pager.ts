@@ -34,12 +34,16 @@ export class SearchPagerConfig implements SliderConfig<string> {
         }))
     }
 
+    noCardsText(ctx: ContextMessageUpdate) {
+        return i18Msg(ctx, 'slider_is_empty')
+    }
+
     async noResults(ctx: ContextMessageUpdate) {
         await ctx.replyWithHTML(i18Msg(ctx, 'no_results'))
     }
 
     backButton(ctx: ContextMessageUpdate): CallbackButton {
-        return backButton();
+        return backButton()
     }
 
     analytics(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset, query: string): void {

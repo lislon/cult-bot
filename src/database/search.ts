@@ -25,7 +25,7 @@ export class SearchRepository {
         return await this.db.map(`
             SELECT id, ts_rank_cd(${fts}, query) AS rank
             FROM ${queryBody}
-            ORDER BY rank DESC, cb.rating DESC, cb.order_rnd
+            ORDER BY rank DESC, cb.rating DESC, cb.title
             limit $(limit) offset $(offset)
         `,
             {

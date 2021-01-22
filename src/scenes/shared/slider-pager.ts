@@ -1,7 +1,7 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { MiddlewareFn } from 'telegraf/typings/composer'
 import { BaseScene, Composer, Markup } from 'telegraf'
-import { editMessageAndButtons, EditMessageAndButtonsOptions, getMsgId } from './shared-logic'
+import { editMessageAndButtons, EditMessageAndButtonsOptions, getMsgId, parseAndUpdateBtn } from './shared-logic'
 import { getLikesRow } from '../likes/likes-common'
 import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
@@ -12,7 +12,7 @@ import { botConfig } from '../../util/bot-config'
 import { InlineKeyboardMarkup } from 'telegram-typings'
 
 const scene = new BaseScene<ContextMessageUpdate>('')
-const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg} = i18nSceneHelper(scene)
+const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18SharedMsg} = i18nSceneHelper(scene)
 
 export interface SliderState<Q> extends PagerSliderState<Q> {
     msgId: number
@@ -66,6 +66,11 @@ export interface UpdateData<Q> {
     invalidateOtherSliders?: boolean
 }
 
+interface ButtonsAndText {
+    text: string
+    buttons: CallbackButton[][]
+}
+
 export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBase<Q, SliderConfig<Q, E>, E> {
 
     async updateState(ctx: ContextMessageUpdate, updateData: UpdateData<Q>): Promise<SliderState<Q>> {
@@ -97,48 +102,79 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
         return await this.showOrUpdateCard(ctx, sliderState, options)
     }
 
-    private async showEmptyCard(ctx: ContextMessageUpdate, options?: EditMessageAndButtonsOptions): Promise<number> {
-        const backButton: CallbackButton = await this.config.backButton(ctx)
-        return await editMessageAndButtons(ctx, [[backButton]], this.config.noCardsText?.(ctx) ?? i18Msg(ctx, 'slider.no_more_cards'), options)
+    private async getEmptyCard(ctx: ContextMessageUpdate, options?: EditMessageAndButtonsOptions) {
+        return {
+            buttons: [[await this.config.backButton(ctx)]],
+            text: this.config.noCardsText?.(ctx) ?? i18SharedMsg(ctx, 'slider.no_more_cards')
+        }
     }
 
     private async showOrUpdateCard(ctx: ContextMessageUpdate, state: SliderState<Q>, options?: EditMessageAndButtonsOptions): Promise<number> {
-        const backButton: CallbackButton = await this.config.backButton(ctx)
-
         const cardId = await this.loadCardId(ctx, state, state.selectedIdx)
 
-        if (cardId !== undefined) {
+        const {buttons, text} = (cardId !== undefined) ? await this.handleExistingCard(ctx, cardId, state) : await this.handleOutOfBoundsCard(ctx, state)
 
-            const [event] = await this.config.loadCardsByIds(ctx, [cardId])
-            if (event !== undefined) {
+        state.msgId = await editMessageAndButtons(ctx, buttons, text, options)
 
-                this.config.analytics?.(ctx, event, {offset: state.selectedIdx, total: state.total}, state.query)
-
-                const cardButtons: CallbackButton[] = this.config.cardButtons ? await this.config.cardButtons(ctx, event) : getLikesRow(ctx, event)
-
-                const prevButton = Markup.callbackButton(i18nSharedBtnName('slider_keyboard.prev'), this.btnActionPrev)
-                const nextButton = Markup.callbackButton(getBtnPosition(state.selectedIdx + 1, state.total), this.btnActionNext)
-
-                const buttons: CallbackButton[][] = [
-                    [prevButton, ...cardButtons],
-                    [backButton, nextButton]
-                ]
-
-                const html = cardFormat(event, this.config.cardFormatOptions?.(ctx, event))
-
-                state.msgId = await editMessageAndButtons(ctx, buttons, html, options)
-
-                analyticRecordEventView(ctx, event)
-            } else {
-                state.msgId = await editMessageAndButtons(ctx, [[backButton]], i18Msg(ctx, 'slider.card_content_not_available'), options)
-                ctx.logger.warn(`Cannot load card by cardId = ${cardId}`)
-            }
-        } else {
-            state.msgId = await editMessageAndButtons(ctx, [[backButton]], i18Msg(ctx, 'slider.card_content_not_available'), options)
-            ctx.logger.warn(`Cannot load cardIds. state = ${JSON.stringify(state)}`)
-        }
         ctx.logger.silly(`showOrUpdateCard msgId=${state.msgId}`)
         return state.msgId
+    }
+
+    private async handleExistingCard(ctx: ContextMessageUpdate, cardId: number, state: SliderState<Q>): Promise<ButtonsAndText> {
+        const backButton: CallbackButton = await this.config.backButton(ctx)
+        const [event] = await this.config.loadCardsByIds(ctx, [cardId])
+        if (event !== undefined) {
+
+            this.config.analytics?.(ctx, event, {offset: state.selectedIdx, total: state.total}, state.query)
+
+            const cardButtons: CallbackButton[] = this.config.cardButtons ? await this.config.cardButtons(ctx, event) : getLikesRow(ctx, event)
+
+            const prevButton = Markup.callbackButton(i18nSharedBtnName('slider_keyboard.prev'), this.btnActionPrev)
+            const nextButton = Markup.callbackButton(getBtnPosition(state.selectedIdx + 1, state.total), this.btnActionNext)
+
+            const buttons: CallbackButton[][] = [
+                [prevButton, ...cardButtons],
+                [backButton, nextButton]
+            ]
+
+            const text = cardFormat(event, this.config.cardFormatOptions?.(ctx, event))
+            return {buttons, text}
+            analyticRecordEventView(ctx, event)
+        } else {
+            ctx.logger.warn(`Cannot load card by cardId = ${cardId}`)
+            return {buttons: [[backButton]], text: i18SharedMsg(ctx, 'slider.card_content_not_available')}
+        }
+    }
+
+    private async handleOutOfBoundsCard(ctx: ContextMessageUpdate, state: SliderState<Q>): Promise<ButtonsAndText> {
+        state.total = await this.config.getTotal(ctx, state.query)
+        state.savedIds = []
+        state.savedIdsOffset = 0
+        state.selectedIdx = 0
+        if (state.total === 0) {
+            ctx.logger.warn(`Cannot load cardIds. state = ${JSON.stringify(state)}. Total=${state.total}. Show empty card`)
+            return this.getEmptyCard(ctx)
+        } else {
+            const cardId = await this.loadCardId(ctx, state, state.selectedIdx)
+            if (cardId !== undefined) {
+                const buttonsAndText = await this.handleExistingCard(ctx, cardId, state)
+                buttonsAndText.text += i18SharedMsg(ctx, `slider.reset_to_zero_postfix`)
+
+                buttonsAndText.buttons = (await parseAndUpdateBtn(
+                    {inline_keyboard: buttonsAndText.buttons},
+                    /^slider_keyboard[.].+[.]next$/, (btn) => {
+                        btn.text = `* ${btn.text}`
+                        return btn
+                    })).inline_keyboard as CallbackButton[][]
+
+                return buttonsAndText
+            } else {
+                return {
+                    buttons: [[await this.config.backButton(ctx)]],
+                    text: i18SharedMsg(ctx, 'slider.card_content_not_available')
+                }
+            }
+        }
     }
 
     private get btnActionNext() {
@@ -162,7 +198,8 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             leftRightLogic(state)
             await ctx.answerCbQuery()
             if (state.total === 0) {
-                await this.showEmptyCard(ctx)
+                const {text, buttons} = await this.getEmptyCard(ctx)
+                state.msgId = await editMessageAndButtons(ctx, buttons, text)
             } else if (state.total !== 1 || !buttonTextEquals1Of1()) {
                 await this.showOrUpdateCard(ctx, state)
             }

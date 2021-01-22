@@ -94,10 +94,16 @@ const dbCfg: IConnectionParameters<pg.IClient> & {} = {
     ssl: botConfig.HEROKU_APP_ID === undefined ? undefined : {rejectUnauthorized: false},
 }
 
-const db: BotDb = pgp(dbCfg); // database instance;
+const db: BotDb = pgp(dbCfg) // database instance;
 
 export { db, pgp, dbCfg }
+
 export interface LimitOffset {
     limit: number
     offset: number
+}
+
+
+export interface LimitOffsetLast<T = number> extends LimitOffset {
+    lastId: T
 }

@@ -3,74 +3,80 @@ import { config } from 'dotenv'
 type Envs = 'development' | 'production' | 'test'
 
 export class BotConfig {
-    public readonly DATABASE_URL: string
-    public readonly DATABASE_MAX_POOL: number
-    public readonly GOOGLE_ANALYTICS_ID: string | undefined
-    public readonly GOOGLE_ANALYTICS_COUNT_ADMINS: boolean
-    public readonly GOOGLE_DOCS_ID: string
-    public readonly HEROKU_APP_NAME: string | undefined
-    public readonly HEROKU_APP_ID: string | undefined
-    public readonly HEROKU_RELEASE_VERSION: string|undefined
-    public readonly HEROKU_SLUG_COMMIT: string|undefined
-    public readonly HEROKU_RELEASE_CREATED_AT: string|undefined
+    public DATABASE_URL: string
+    public DATABASE_MAX_POOL: number
+    public GOOGLE_ANALYTICS_ID: string | undefined
+    public GOOGLE_ANALYTICS_COUNT_ADMINS: boolean
+    public GOOGLE_DOCS_ID: string
+    public HEROKU_APP_NAME: string | undefined
+    public HEROKU_APP_ID: string | undefined
+    public HEROKU_RELEASE_VERSION: string | undefined
+    public HEROKU_SLUG_COMMIT: string | undefined
+    public HEROKU_RELEASE_CREATED_AT: string | undefined
 
 
-    public readonly PORT: number
-    public readonly TELEGRAM_TOKEN: string
-    public readonly WEBHOOK_PORT: number
-    public readonly REDIS_URL: string
-    public readonly NODE_ENV: Envs
-    public readonly DEBUG: string | undefined
-    public readonly BOT_DISABLED: boolean
-    public readonly LOG_LEVEL: string
+    public PORT: number
+    public TELEGRAM_TOKEN: string
+    public WEBHOOK_PORT: number
+    public REDIS_URL: string
+    public NODE_ENV: Envs
+    public DEBUG: string | undefined
+    public BOT_DISABLED: boolean
+    public LOG_LEVEL: string
 
-    public readonly MAILINGS_PER_WEEK_MAX: number
-    public readonly MAILINGS_PER_SECOND: number
-    public readonly LOG_PAGE_VIEWS_IN_DB: boolean
+    public MAILINGS_PER_WEEK_MAX: number
+    public MAILINGS_PER_SECOND: number
+    public LOG_PAGE_VIEWS_IN_DB: boolean
 
-    public readonly SLIDER_STATE_TTL_SECONDS: number
-    public readonly SLIDER_MAX_STATES_SAVED: number
+    public SLIDER_STATE_TTL_SECONDS: number
+    public SLIDER_MAX_STATES_SAVED: number
+    public SLIDER_MAX_IDS_CACHED: number
 
 
     /**
      * Chat used to receive user feedback and send reply to it.
      */
-    public readonly SUPPORT_FEEDBACK_CHAT_ID?: number
+    public SUPPORT_FEEDBACK_CHAT_ID?: number
 
     constructor() {
         config()
-        this.DATABASE_URL = process.env.DATABASE_URL
-        this.DATABASE_MAX_POOL = process.env.DATABASE_MAX_POOL === undefined ? 18 : +process.env.DATABASE_MAX_POOL
+        this.setFromKeyValue(process.env)
+    }
 
-        this.GOOGLE_ANALYTICS_ID = process.env.GOOGLE_ANALYTICS_ID
-        this.GOOGLE_ANALYTICS_COUNT_ADMINS = !!process.env.GOOGLE_ANALYTICS_COUNT_ADMINS || false
-        this.GOOGLE_DOCS_ID = process.env.GOOGLE_DOCS_ID
+    public setFromKeyValue(envVars: any) {
+        this.DATABASE_URL = envVars.DATABASE_URL
+        this.DATABASE_MAX_POOL = envVars.DATABASE_MAX_POOL === undefined ? 18 : +envVars.DATABASE_MAX_POOL
 
-        this.HEROKU_APP_NAME = process.env.HEROKU_APP_NAME || 'localhost'
-        this.HEROKU_APP_ID = process.env.HEROKU_APP_ID
-        this.HEROKU_RELEASE_VERSION = process.env.HEROKU_RELEASE_VERSION
-        this.HEROKU_SLUG_COMMIT = process.env.HEROKU_SLUG_COMMIT
-        this.HEROKU_RELEASE_CREATED_AT = process.env.HEROKU_RELEASE_CREATED_AT
+        this.GOOGLE_ANALYTICS_ID = envVars.GOOGLE_ANALYTICS_ID
+        this.GOOGLE_ANALYTICS_COUNT_ADMINS = !!envVars.GOOGLE_ANALYTICS_COUNT_ADMINS || false
+        this.GOOGLE_DOCS_ID = envVars.GOOGLE_DOCS_ID
 
-        this.PORT = +process.env.PORT
-        this.TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN
-        this.WEBHOOK_PORT = +process.env.WEBHOOK_PORT
-        this.REDIS_URL = process.env.REDIS_URL
-        this.NODE_ENV = process.env.NODE_ENV === undefined ? 'development' : process.env.NODE_ENV as Envs
-        this.DEBUG = process.env.DEBUG
-        this.BOT_DISABLED = !!process.env.BOT_DISABLED
-        this.LOG_LEVEL = process.env.LOG_LEVEL
+        this.HEROKU_APP_NAME = envVars.HEROKU_APP_NAME || 'localhost'
+        this.HEROKU_APP_ID = envVars.HEROKU_APP_ID
+        this.HEROKU_RELEASE_VERSION = envVars.HEROKU_RELEASE_VERSION
+        this.HEROKU_SLUG_COMMIT = envVars.HEROKU_SLUG_COMMIT
+        this.HEROKU_RELEASE_CREATED_AT = envVars.HEROKU_RELEASE_CREATED_AT
+
+        this.PORT = +envVars.PORT
+        this.TELEGRAM_TOKEN = envVars.TELEGRAM_TOKEN
+        this.WEBHOOK_PORT = +envVars.WEBHOOK_PORT
+        this.REDIS_URL = envVars.REDIS_URL
+        this.NODE_ENV = envVars.NODE_ENV === undefined ? 'development' : envVars.NODE_ENV as Envs
+        this.DEBUG = envVars.DEBUG
+        this.BOT_DISABLED = !!envVars.BOT_DISABLED
+        this.LOG_LEVEL = envVars.LOG_LEVEL
         if (this.LOG_LEVEL === undefined) {
             this.LOG_LEVEL = (this.NODE_ENV === 'production' || this.NODE_ENV === 'test') ? 'info' : 'debug'
         }
 
-        this.SUPPORT_FEEDBACK_CHAT_ID = +process.env.SUPPORT_FEEDBACK_CHAT_ID || undefined
-        this.MAILINGS_PER_WEEK_MAX = +process.env.MAILINGS_PER_WEEK_MAX || 2
-        this.MAILINGS_PER_SECOND = +process.env.MAILINGS_PER_SECOND || 4
-        this.LOG_PAGE_VIEWS_IN_DB = !!process.env.LOG_PAGE_VIEWS_IN_DB || true
+        this.SUPPORT_FEEDBACK_CHAT_ID = +envVars.SUPPORT_FEEDBACK_CHAT_ID || undefined
+        this.MAILINGS_PER_WEEK_MAX = +envVars.MAILINGS_PER_WEEK_MAX || 2
+        this.MAILINGS_PER_SECOND = +envVars.MAILINGS_PER_SECOND || 4
+        this.LOG_PAGE_VIEWS_IN_DB = !!envVars.LOG_PAGE_VIEWS_IN_DB || true
 
-        this.SLIDER_STATE_TTL_SECONDS = +process.env.SLIDER_STATE_TTL_SECONDS || 3600 * 8
-        this.SLIDER_MAX_STATES_SAVED = +process.env.SLIDER_MAX_STATES_SAVED || 5
+        this.SLIDER_STATE_TTL_SECONDS = +envVars.SLIDER_STATE_TTL_SECONDS || 3600 * 8
+        this.SLIDER_MAX_STATES_SAVED = +envVars.SLIDER_MAX_STATES_SAVED || 5
+        this.SLIDER_MAX_IDS_CACHED = +envVars.SLIDER_MAX_IDS_CACHED || 10
     }
 }
 
