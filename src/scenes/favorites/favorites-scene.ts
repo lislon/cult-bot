@@ -11,7 +11,7 @@ import {
     extraInlineMenu,
     generatePlural,
     parseAndUpdateBtn,
-    replyDecoyNoButtons,
+    replyWithBackToMainMarkup,
     ruFormat,
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
@@ -115,7 +115,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
-        await replyDecoyNoButtons(ctx)
+        await replyWithBackToMainMarkup(ctx)
 
 
         await warnAdminIfDateIsOverriden(ctx)

@@ -37,7 +37,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 }
 
 function shouldCountStatForUser(ctx: ContextMessageUpdate) {
-    return botConfig.GOOGLE_ANALYTICS_COUNT_ADMINS === true || (!isAdmin(ctx) && ctx.from.username !== 'JohnyDebt')
+    return botConfig.GOOGLE_ANALYTICS_COUNT_ADMINS === true || !isAdmin(ctx)
 }
 
 export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) => {

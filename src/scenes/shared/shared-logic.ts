@@ -185,15 +185,10 @@ export async function updateMenu(ctx: ContextMessageUpdate, upd: UpdateMenu, sta
 }
 
 export function backToMainButtonTitle() {
-    return i18SharedBtn('markup_back').trim()
+    return i18SharedBtn('markup_back')
 }
 
-export async function replyDecoyNoButtons(ctx: ContextMessageUpdate, message: string = undefined) {
-    const msg = await ctx.replyWithHTML(message ?? i18SharedMsg('markup_back_decoy'), Extra.markup(Markup.removeKeyboard()))
-    return msg.message_id
-}
-
-export async function replyDecoyBackButton(ctx: ContextMessageUpdate, message: string = undefined) {
+export async function replyWithBackToMainMarkup(ctx: ContextMessageUpdate, message: string = undefined) {
     const markupWithBackButton = Extra.HTML().markup(Markup.keyboard([Markup.button(backToMainButtonTitle())]).resize())
 
     const msg = await ctx.replyWithHTML(message ?? i18SharedMsg('markup_back_decoy'), markupWithBackButton)

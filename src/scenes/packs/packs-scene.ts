@@ -6,7 +6,7 @@ import { SceneRegister } from '../../middleware-utils'
 import { displayEventsMenu, displayMainMenu, displayPackMenu } from './packs-menu'
 import { getEventsCount, getPacksList, prepareSessionStateIfNeeded, scene } from './packs-common'
 import { logger } from '../../util/logger'
-import { replyDecoyNoButtons, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
 
@@ -22,7 +22,7 @@ scene
     .enter(async (ctx: ContextMessageUpdate) => {
         await warnAdminIfDateIsOverriden(ctx)
 
-        await replyDecoyNoButtons(ctx)
+        await replyWithBackToMainMarkup(ctx)
         await displayMainMenu(ctx)
     })
     .leave(async (ctx) => {

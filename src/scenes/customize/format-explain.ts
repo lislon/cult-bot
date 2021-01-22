@@ -141,16 +141,12 @@ export function formatExplainCennosti(ctx: ContextMessageUpdate, i18Msg: I18MsgF
 }
 
 export function formatExplainFormat(ctx: ContextMessageUpdate, i18Msg: I18MsgFunction): string[] {
-  const {format} = ctx.session.customize
-  const formatSection = format.map((o) => i18Msg(ctx, `explain_filter.format_section.${o}`))
-  const formatIcon = format.map((o) => i18Msg(ctx, `explain_filter.format_icon.${o}`))
-  if (formatSection.length !== 1) {
-    return []
+  const {format} = ctx.session.customize;
+  const formatNice = format.map((o) => i18Msg(ctx, `explain_filter.format_section.${o}`));
+  if (formatNice.length !== 1) {
+    return [];
   }
-  return [i18Msg(ctx, 'explain_filter.format', {
-    formatIcon: formatIcon.join(''),
-    formatSection: formatSection.join('')
-  })]
+  return [i18Msg(ctx, 'explain_filter.format', {format: formatNice.join(', ')})]
 }
 
 export function filterPastIntervals(intervals: string[], now: Date | undefined) {

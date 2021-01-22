@@ -4,8 +4,6 @@ import { i18nSceneHelper } from '../../util/scene-helper'
 import { i18nButtonText, keyAnswers, optionSet } from './survey-utils'
 import { IsListening } from './feedback-scene'
 import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
-import { Extra, Markup } from 'telegraf'
-import { backToMainButtonTitle } from '../shared/shared-logic'
 
 const {
     actionName,
@@ -40,40 +38,21 @@ function doInviteToEnterText(msgId: string, isListening: IsListening, extra?: Ex
     }
 }
 
-function getBackInlineExtra() {
-    return Extra.markup(Markup.inlineKeyboard([[backButton()]]))
-}
-
-function getBackMarkupExtra() {
-    return Extra.markup(Markup.keyboard([[Markup.button(backToMainButtonTitle())]]).resize())
-}
+landingMenu.interact(i18nModuleBtnName('survey.q_landing.send_letter'), 'act', {
+    do: doInviteToEnterText('survey.write_now', 'text'),
+    joinLastRow: true
+})
 
 landingMenu.submenu(i18nModuleBtnName('survey.q_landing.take_survey'), 'found', menuIsFoundEvent, {
     joinLastRow: true,
 })
 
-//
-landingMenu.interact(i18nModuleBtnName('survey.q_landing.send_letter'), 'act', {
-    do: doInviteToEnterText('survey.write_now', 'text', getBackMarkupExtra()),
-    joinLastRow: false
-})
 
-
-
-landingMenu.interact(i18nSharedBtnName('back'), 'back', {
-    do: async (ctx: ContextMessageUpdate) => {
-        await ctx.answerCbQuery()
-        await ctx.scene.enter('main_scene')
-        return false
-    },
-    joinLastRow: false
-})
-
-
-const OPT_SAME_ROW = {joinLastRow: true}
+const OPT_SAME_ROW = { joinLastRow: true }
 menuIsFoundEvent.submenu(i18nModuleBtnName('survey.q_found_events.no'), 'not_found', menuNegative, OPT_SAME_ROW)
 menuIsFoundEvent.submenu(i18nModuleBtnName('survey.q_found_events.yes'), 'your_events', menuPositive, OPT_SAME_ROW)
 menuIsFoundEvent.navigate(i18nSharedBtnName('back'), '..')
+
 
 
 menuNegative.select('not_like', keyAnswers(`q_why_not_like`), {
@@ -82,7 +61,7 @@ menuNegative.select('not_like', keyAnswers(`q_why_not_like`), {
 })
 menuNegative.interact(i18nModuleBtnName('survey.q_why_not_like.comment'),
     'write_not_like', {
-        do: doInviteToEnterText('survey.write_now_not_like', 'dislike', getBackMarkupExtra()),
+        do: doInviteToEnterText('survey.write_now_not_like', 'dislike'),
     })
 
 menuNegative.navigate(i18nSharedBtnName('back'), '..')
@@ -103,7 +82,7 @@ function selectAtLeastOne(predicate: (ctx: ContextMessageUpdate) => boolean, res
 menuNegative.interact(i18nModuleBtnName('finish_survey'), 'end_sorry',
     {
         ...OPT_SAME_ROW,
-        do: selectAtLeastOne(ctx => ctx.session.feedbackScene.whyDontLike.length > 0, 'end_sorry', getBackInlineExtra()),
+        do: selectAtLeastOne(ctx => ctx.session.feedbackScene.whyDontLike.length > 0, 'end_sorry'),
     })
 
 
@@ -112,13 +91,13 @@ menuPositive.select('important', keyAnswers(`q_what_is_important`), {
     buttonText: i18nButtonText('q_what_is_important'),
 })
 menuPositive.interact(i18nModuleBtnName('survey.q_what_is_important.comment'), 'write_important', {
-    do: doInviteToEnterText('survey.write_now_important', 'like', getBackMarkupExtra()),
+    do: doInviteToEnterText('survey.write_now_important', 'like'),
 })
 menuPositive.navigate(i18nSharedBtnName('back'), '..')
 menuPositive.interact(i18nModuleBtnName('finish_survey'), 'end_nice',
     {
         ...OPT_SAME_ROW,
-        do: selectAtLeastOne(ctx => ctx.session.feedbackScene.whatImportant.length > 0, 'end_nice', getBackInlineExtra()),
+        do: selectAtLeastOne(ctx => ctx.session.feedbackScene.whatImportant.length > 0, 'end_nice'),
     })
 
 export const menuMiddleware = new MenuMiddleware('/', landingMenu)

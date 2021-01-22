@@ -3,7 +3,7 @@ import { ContextMessageUpdate, EventCategory, MyInterval } from '../../interface
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import * as events from 'events'
 import { i18n } from '../../util/i18n'
-import { ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { replyWithBackToMainMarkup, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { subSeconds } from 'date-fns/fp'
 import { isSameDay, isSameMonth, startOfDay } from 'date-fns'
 import { SceneRegister } from '../../middleware-utils'
@@ -113,7 +113,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
         }
 
         await ctx.replyWithHTML(i18Msg(ctx, templateName, {humanDateRange, ...tplData}),
-            Extra.markup(Markup.removeKeyboard()))
+            {reply_markup: backMarkup(ctx)})
 
         await sleep(70)
         const sliderState = await pager.updateState(ctx, {
@@ -178,6 +178,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             }
             ctx.session.topsScene.isWatchingEvents = true
             ctx.session.topsScene.isInSubMenu = false
+            await replyWithBackToMainMarkup(ctx)
             await showEventsFirstTime(ctx)
         })
     }
