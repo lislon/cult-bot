@@ -3,7 +3,6 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { db } from '../../database/db'
 import { SceneRegister } from '../../middleware-utils'
-import { logger } from '../../util/logger'
 import { formatUserName } from '../../util/misc-utils'
 import { updateLikeDislikeInlineButtons } from './likes-common'
 
@@ -13,11 +12,11 @@ const {i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
 
 function logLikes(plusLikes: number, ctx: ContextMessageUpdate, eventId: number, plusDislikes: number) {
     if (plusLikes > 0) {
-        logger.debug(formatUserName(ctx) + ' liked eventId=' + eventId)
+        ctx.logger.debug(formatUserName(ctx) + ' liked eventId=' + eventId)
     } else if (plusDislikes > 0) {
-        logger.debug(formatUserName(ctx) + ' disliked eventId=' + eventId)
+        ctx.logger.debug(formatUserName(ctx) + ' disliked eventId=' + eventId)
     } else {
-        logger.debug(formatUserName(ctx) + ' reverted like/dislike eventId=' + eventId)
+        ctx.logger.debug(formatUserName(ctx) + ' reverted like/dislike eventId=' + eventId)
     }
 }
 

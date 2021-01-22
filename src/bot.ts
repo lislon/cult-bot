@@ -38,9 +38,13 @@ const stage = new Stage([], {
 })
 
 
+// .use(middlewares.logMiddleware('analyticsMiddleware'))
+
 bot
     .use(performanceMiddleware('total'))
     .use(middlewares.i18n)
+    .use(middlewares.loggerInject)
+    .use(middlewares.loggerUserInput)
     .use(middlewares.logger)
     .use(middlewares.telegrafThrottler())
     .use(middlewares.session)
@@ -49,13 +53,6 @@ bot
     .use(middlewares.userMiddleware)
     .use(middlewares.dateTime)
     .use(middlewares.analyticsMiddleware)
-    .hears(/.+/, async (ctx, next) => {
-        logger.info(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [text=${ctx.message.text}]`)
-
-        return await next()
-    })
-
-// .use(middlewares.logMiddleware('analyticsMiddleware'))
 
 myRegisterScene(bot, stage, [
     mainScene,

@@ -2,7 +2,6 @@ import { Composer } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { isAdmin } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
-import { logger } from '../../util/logger'
 import { backToMainButtonTitle, buttonIsOldGoToMain } from '../shared/shared-logic'
 
 const tail = new Composer<ContextMessageUpdate>()
@@ -10,11 +9,11 @@ const tail = new Composer<ContextMessageUpdate>()
 const backButtonsCatch = new Composer<ContextMessageUpdate>()
 backButtonsCatch
     .hears(backToMainButtonTitle(), async ctx => {
-        logger.debug('main catch: %s', ctx.match[0])
+        ctx.logger.debug('main catch: %s', ctx.match[0])
         await ctx.scene.enter('main_scene')
     })
     .hears(/(\s|^)Назад(\s|$)|◀️/, async ctx => {
-        logger.debug('main catch: %s', ctx.match[0])
+        ctx.logger.debug('main catch: %s', ctx.match[0])
         await ctx.scene.enter('main_scene')
     })
     .action(/[.]back$/, async (ctx) => {
@@ -25,7 +24,7 @@ backButtonsCatch
 //     .filter((id: string) => id.match(/^(shared|scenes[.][^.]+)[.]keyboard[.](back)$/))
 //     .forEach((id: string) => {
 //         backButtonsCatch.hears(match(id), async (ctx) => {
-//             logger.debug('main catch: %s', id)
+//             ctx.logger.debug('main catch: %s', id)
 //             await ctx.scene.enter('main_scene');
 //         });
 //     })
@@ -47,12 +46,12 @@ tail
     .use(backButtonsCatch)
     .hears(/.+/, async (ctx) => {
         await ctx.replyWithHTML('Введена непонятная команда. Вернемся вначало? /menu')
-        logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [text=${ctx.message.text}] Введена непонятная команда`)
+        ctx.logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [text=${ctx.message.text}] Введена непонятная команда`)
     })
     .action(/.+/, async (ctx) => {
         await ctx.answerCbQuery()
         await buttonIsOldGoToMain(ctx)
-        logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [callback_data=${ctx.update?.callback_query?.data}] Аварийный выход`)
+        ctx.logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [callback_data=${ctx.update?.callback_query?.data}] Аварийный выход`)
     })
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {

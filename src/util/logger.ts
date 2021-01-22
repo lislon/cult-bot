@@ -21,7 +21,7 @@ function prepareMessage(ctx: ContextMessageUpdate, msg: string, ...data: any[]) 
 
 const {combine, timestamp, printf} = format;
 function getFormat() {
-    if (botConfig.NODE_ENV === 'development') {
+    if (botConfig.NODE_ENV === 'development' || botConfig.NODE_ENV === 'test') {
         return combine(
             format.errors({stack: true}),
             format.colorize(),
@@ -29,7 +29,7 @@ function getFormat() {
             format.splat(),
             format.simple(),
             printf(({timestamp, level, message, stack}) => {
-                return `[${timestamp}] [${level}] ${message}${stack ? '- ' + stack : ''}`;
+                return `[${timestamp}] [${level}] ${message}${stack ? '- ' + stack : ''}`
             })
         )
     } else {
@@ -42,6 +42,7 @@ function getFormat() {
 export const loggerTransport = new winston.transports.Console({
     level: botConfig.LOG_LEVEL
 })
+
 export const logger = winston.createLogger({
     transports: [
         loggerTransport

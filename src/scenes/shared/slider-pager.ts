@@ -7,7 +7,6 @@ import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { CallbackButton } from 'telegraf/typings/markup'
-import { logger } from '../../util/logger'
 import { EventsPagerSliderBase, PagerSliderState, PagingCommonConfig } from './events-common'
 import { botConfig } from '../../util/bot-config'
 import { InlineKeyboardMarkup } from 'telegram-typings'
@@ -85,10 +84,10 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
 
     private invalidateOtherSceneSliders(ctx: ContextMessageUpdate, latestState: SliderState<Q>) {
         const state = getSliderState(ctx)
-        logger.silly(`msgId: ${getMsgId(ctx)}`)
-        logger.silly(`invalidateSliders old: ${state.sliders.filter(s => s.sceneId === this.config.sceneId).map(s => s.msgId || 'undefined').join(',')}`)
+        ctx.logger.silly(`msgId: ${getMsgId(ctx)}`)
+        ctx.logger.silly(`invalidateSliders old: ${state.sliders.filter(s => s.sceneId === this.config.sceneId).map(s => s.msgId || 'undefined').join(',')}`)
         state.sliders = state.sliders.filter(s => s.sceneId !== this.config.sceneId || s === latestState)
-        logger.silly(`invalidateSliders new: ${state.sliders.filter(s => s.sceneId === this.config.sceneId).map(s => s.msgId || 'undefined').join(',')}`)
+        ctx.logger.silly(`invalidateSliders new: ${state.sliders.filter(s => s.sceneId === this.config.sceneId).map(s => s.msgId || 'undefined').join(',')}`)
     }
 
     async showOrUpdateSlider(ctx: ContextMessageUpdate, sliderState: SliderState<Q> = this.getSliderStateIfExists(ctx), options?: EditMessageAndButtonsOptions) {
@@ -132,13 +131,13 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                 analyticRecordEventView(ctx, event)
             } else {
                 state.msgId = await editMessageAndButtons(ctx, [[backButton]], i18Msg(ctx, 'slider.card_content_not_available'), options)
-                logger.warn(`Cannot load card by cardId = ${cardId}`)
+                ctx.logger.warn(`Cannot load card by cardId = ${cardId}`)
             }
         } else {
             state.msgId = await editMessageAndButtons(ctx, [[backButton]], i18Msg(ctx, 'slider.card_content_not_available'), options)
-            logger.warn(`Cannot load cardIds. state = ${JSON.stringify(state)}`)
+            ctx.logger.warn(`Cannot load cardIds. state = ${JSON.stringify(state)}`)
         }
-        logger.silly(`showOrUpdateCard msgId=${state.msgId}`)
+        ctx.logger.silly(`showOrUpdateCard msgId=${state.msgId}`)
         return state.msgId
     }
 
@@ -189,7 +188,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             .filter(state => state.msgId !== getMsgId(ctx))
         getSliderState(ctx).sliders = [newState, ...stateWithoutCurrentMsgId].slice(0, botConfig.SLIDER_MAX_STATES_SAVED)
 
-        logger.silly(`saveOrReplaceSliderState msgId=${msgId}`)
+        ctx.logger.silly(`saveOrReplaceSliderState msgId=${msgId}`)
         return newState
     }
 

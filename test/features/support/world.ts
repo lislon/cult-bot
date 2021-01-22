@@ -15,7 +15,7 @@ import { AnalyticsRecorder } from './AnalyticsRecorder'
 import { tailScene } from '../../../src/scenes/tail/tail-scene'
 import { MarkupHelper } from '../lib/MarkupHelper'
 import { searchScene } from '../../../src/scenes/search/search-scene'
-import { botErrorHandler } from '../../../src/util/error-handler';
+import { botErrorHandler } from '../../../src/util/error-handler'
 import { likesScene } from '../../../src/scenes/likes/likes-scene'
 import { favoritesScene } from '../../../src/scenes/favorites/favorites-scene'
 
@@ -38,6 +38,7 @@ class CustomWorld {
 
         this.bot.use(
             middlewares.i18n,
+            middlewares.loggerInject,
             middlewares.telegrafThrottler({
                 in: {
                     maxConcurrent: undefined,

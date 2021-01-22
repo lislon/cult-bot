@@ -28,7 +28,10 @@ function doInviteToEnterText(msgId: string, isListening: IsListening, extra?: Ex
         } else if (isListening === 'like') {
             ctx.ua.pv({dp: `/feedback/take_survey/like/custom/`, dt: `Обратная связь > Опрос > Нашел события > Свой вариант`})
         } else if (isListening === 'dislike') {
-            ctx.ua.pv({dp: `/feedback/take_survey/dislike/custom/`, dt: `Обратная связь > Опрос > Не нашел событий > Свой вариант`})
+            ctx.ua.pv({
+                dp: `/feedback/take_survey/dislike/custom/`,
+                dt: `Обратная связь > Опрос > Не нашел событий > Свой вариант`
+            })
         }
         await ctx.answerCbQuery()
         await deleteMenuFromContext(ctx)
@@ -38,17 +41,17 @@ function doInviteToEnterText(msgId: string, isListening: IsListening, extra?: Ex
     }
 }
 
+landingMenu.submenu(i18nModuleBtnName('survey.q_landing.take_survey'), 'found', menuIsFoundEvent, {
+    joinLastRow: false,
+})
+
 landingMenu.interact(i18nModuleBtnName('survey.q_landing.send_letter'), 'act', {
     do: doInviteToEnterText('survey.write_now', 'text'),
-    joinLastRow: true
-})
-
-landingMenu.submenu(i18nModuleBtnName('survey.q_landing.take_survey'), 'found', menuIsFoundEvent, {
-    joinLastRow: true,
+    joinLastRow: false
 })
 
 
-const OPT_SAME_ROW = { joinLastRow: true }
+const OPT_SAME_ROW = {joinLastRow: true}
 menuIsFoundEvent.submenu(i18nModuleBtnName('survey.q_found_events.no'), 'not_found', menuNegative, OPT_SAME_ROW)
 menuIsFoundEvent.submenu(i18nModuleBtnName('survey.q_found_events.yes'), 'your_events', menuPositive, OPT_SAME_ROW)
 menuIsFoundEvent.navigate(i18nSharedBtnName('back'), '..')

@@ -2,7 +2,13 @@ import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate, EventCategory, ExtIdAndId } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
-import { getGoogleSpreadSheetURL, ruFormat, showBotVersion, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import {
+    getGoogleSpreadSheetURL,
+    replyWithBackToMainMarkup,
+    ruFormat,
+    showBotVersion,
+    warnAdminIfDateIsOverriden
+} from '../shared/shared-logic'
 import { db, IExtensions, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
 import { isValid, parse, parseISO } from 'date-fns'
 import { CallbackButton } from 'telegraf/typings/markup'
@@ -133,14 +139,14 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 
         } else {
 
-            logger.info([
+            ctx.logger.info([
                 `Database updated.`,
                 `Insertion done.`,
                 `inserted={${listExtIds(dbDiff.insertedEvents)}}`,
                 `recovered={${listExtIds(dbDiff.recoveredEvents)}}`,
                 `updated={${listExtIds(dbDiff.updatedEvents)}}`,
                 `deleted={${dbDiff.deletedEvents.map(d => d.ext_id).join(',')}}`
-            ].join(' '));
+            ].join(' '))
 
             const msg = i18Msg(ctx, `sync_stats_title`, {
                 body,
@@ -231,10 +237,10 @@ class GlobalSync {
         if (this.user === undefined || this.user.id === user.id) {
             this.startTimer()
             this.user = user
-            logger.debug('Lock done')
+            ctx.logger.debug('Lock done')
             return undefined
         }
-        logger.debug('Lock fail')
+        ctx.logger.debug('Lock fail')
         return this.user
     }
 
@@ -254,7 +260,7 @@ const GLOBAL_SYNC_STATE = new GlobalSync()
 scene
     .use(async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
         if (!isAdmin(ctx)) {
-            logger.warn('User is not more admin. Redirect it to main_scene')
+            ctx.logger.warn('User is not more admin. Redirect it to main_scene')
             await ctx.scene.enter('main_scene')
         } else {
             await next()
@@ -262,6 +268,7 @@ scene
     })
     .enter(async (ctx: ContextMessageUpdate) => {
         await prepareSessionStateIfNeeded(ctx)
+        await replyWithBackToMainMarkup(ctx)
         const {msg, markup} = await formatMainAdminMenu(ctx)
         await ctx.replyWithMarkdown(msg, markup)
     })

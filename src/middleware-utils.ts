@@ -1,4 +1,3 @@
-import updateLogger from 'telegraf-update-logger'
 import telegrafThrottler from 'telegraf-throttler'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { parseISO } from 'date-fns'
@@ -11,6 +10,8 @@ import { logger } from './util/logger'
 import { i18n } from './util/i18n'
 import { MyRedisSession, redisSession } from './util/reddis'
 import { botConfig } from './util/bot-config'
+import { formatUserName } from './util/misc-utils'
+import { loggerMiddleware } from './lib/middleware/logger-middleware'
 
 let sessionMechanism: MyRedisSession
 
@@ -59,6 +60,13 @@ function logMiddleware(str: string) {
     }
 }
 
+function loggerInjectMiddleware() {
+    return (ctx: ContextMessageUpdate, next: any) => {
+        ctx.logger = logger.child({user: formatUserName(ctx)})
+        return Promise.resolve(next())
+    }
+}
+
 export default {
     i18n: i18n.middleware(),
     dateTime: dateTimeMiddleware,
@@ -70,7 +78,8 @@ export default {
             ...opts,
         })
     },
-    logger: updateLogger({log: (msg: string) => logger.info(msg)}),
+    loggerInject: loggerInjectMiddleware(),
+    loggerUserInput: loggerMiddleware(),
     session: sessionMechanism,
     sessionTmp: sessionTmp(),
     logMiddleware: logMiddleware,

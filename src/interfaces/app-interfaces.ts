@@ -16,6 +16,7 @@ import { AllSlidersState } from '../scenes/shared/slider-pager'
 import { CustomizeSceneState } from '../scenes/customize/customize-common'
 import { PagingState } from '../scenes/shared/paging-pager'
 import { TopsSceneState } from '../scenes/tops/tops-common'
+import { Logger } from 'winston'
 
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
@@ -58,6 +59,7 @@ export interface ContextMessageUpdate extends SceneContextMessageUpdate {
         slider: AllSlidersState
         language: 'en' | 'ru'
     }
+    logger: Logger
     webhookReply: boolean
     ua: Visitor
     perf: PerformanceContext

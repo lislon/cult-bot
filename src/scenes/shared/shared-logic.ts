@@ -10,7 +10,6 @@ import { Extra, Markup } from 'telegraf'
 import { ExtraReplyMessage, InlineKeyboardMarkup } from 'telegraf/typings/telegram-types'
 import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
 import slugify from 'slugify'
-import { logger } from '../../util/logger'
 import { i18SharedBtn, i18SharedMsg } from '../../util/scene-helper'
 
 const YEAR_2020_WEEKENDS = [parseISO('2021-01-01 00:00:00'), parseISO('2021-01-11 00:00:00')]
@@ -169,7 +168,7 @@ export async function updateMenu(ctx: ContextMessageUpdate, upd: UpdateMenu, sta
     } else {
 
         if (state.lastText === upd.text && JSON.stringify(state.lastMarkup) === JSON.stringify(upd.buttons)) {
-            logger.debug('message not changed')
+            ctx.logger.debug('message not changed')
             return
         }
 
@@ -227,7 +226,7 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
         return getMsgId(ctx)
     } catch (e) {
         if (goodErrors.includes(e.message)) {
-            logger.debug(e.message)
+            ctx.logger.debug(e.message)
             const message = await ctx.replyWithHTML(text, {
                 reply_markup: markup,
                 disable_web_page_preview: true

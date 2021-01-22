@@ -5,7 +5,6 @@ import { i18n } from '../../util/i18n'
 import { SceneRegister } from '../../middleware-utils'
 import { displayEventsMenu, displayMainMenu, displayPackMenu } from './packs-menu'
 import { getEventsCount, getPacksList, prepareSessionStateIfNeeded, scene } from './packs-common'
-import { logger } from '../../util/logger'
 import { replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
@@ -69,7 +68,7 @@ scene
                 await displayPackMenu(ctx)
             }
         } catch (e) {
-            logger.warn(e)
+            ctx.logger.warn(e)
             await ctx.scene.enter('main_scene')
         }
     })

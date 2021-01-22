@@ -57,7 +57,7 @@ const getRootKeyboard = async (ctx: ContextMessageUpdate): Promise<CallbackButto
         [btn('format', ctx.session.customize.format), btn('oblasti', ctx.session.customize.oblasti)],
         [btn('priorities', ctx.session.customize.cennosti), btn('time', ctx.session.customize.time)],
         [resetButton(ctx)],
-        isAnyFilterSelected(ctx) ? [backButton(), showEventsBtn] : [showEventsBtn],
+        [backButton(), showEventsBtn],
     ]
 }
 
@@ -187,7 +187,7 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType, opti
         })
     }
     const msgId = await editMessageAndButtons(ctx, inlineButtons, msg, options)
-    logger.info('msgId: ' + msgId)
+    ctx.logger.silly('msgId: ' + msgId)
     return msgId
 }
 

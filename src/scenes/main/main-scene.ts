@@ -5,7 +5,6 @@ import { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
 import { db } from '../../database/db'
 import { generatePlural, getNextWeekendRange } from '../shared/shared-logic'
-import { logger } from '../../util/logger'
 
 const scene = new BaseScene<ContextMessageUpdate>('main_scene');
 
@@ -110,7 +109,7 @@ function googleAnalyticsSource(ctx: ContextMessageUpdate & { startPayload: strin
 
 function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }) => {
-        logger.debug([
+        ctx.logger.debug([
             `/start`,
             `id=${ctx.from.id}`,
             `first_name=${ctx.from.first_name}`,
@@ -133,7 +132,7 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
                 eventPlural: generatePlural(ctx, 'event_prepositional', count)
             }))
         } catch (e) {
-            logger.error(e)
+            ctx.logger.error(e)
         }
         if (!quick) await sleep(1000)
 

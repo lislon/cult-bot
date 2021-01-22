@@ -7,7 +7,6 @@ import { createReadStream } from 'fs'
 import path from 'path'
 import { redisSession } from '../../util/reddis'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
-import { logger } from '../../util/logger'
 
 const scene = new BaseScene<ContextMessageUpdate>('help_scene');
 const {i18Msg} = i18nSceneHelper(scene)
@@ -49,13 +48,13 @@ function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>) {
 function preSceneGlobalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
     bot
         .hears(/.+/, async (ctx, next) => {
-            logger.silly('helper: hears')
+            ctx.logger.silly('helper: hears')
             try {
                 throttleActionsToShowHelpForNewComers(ctx)
             } finally {
-                logger.silly('helper: finally throttleActionsToShowHelpForNewComers')
+                ctx.logger.silly('helper: finally throttleActionsToShowHelpForNewComers')
                 await next()
-                logger.silly('helper: finally done')
+                ctx.logger.silly('helper: finally done')
             }
         })
         .action(/.+/, async (ctx, next) => {

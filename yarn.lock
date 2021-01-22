@@ -6830,13 +6830,6 @@ telegraf-throttler@^0.3.0:
   dependencies:
     bottleneck "^2.19.5"
 
-telegraf-update-logger@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/telegraf-update-logger/-/telegraf-update-logger-1.2.0.tgz#1f79a944f95c7def8dac059a76ac2d387f9347a7"
-  integrity sha512-UxlALl20XJ0yMJ5TOms/okPyBXkVxguNYx47A++ZYPzPlPNerJioI00HV8ylEjel0C2XSIrC7Kw/eU2WfVp3Jw==
-  dependencies:
-    chalk "^4.1.0"
-
 telegraf@^3.38.0:
   version "3.38.0"
   resolved "https://registry.yarnpkg.com/telegraf/-/telegraf-3.38.0.tgz#745b447547a8e6cdb626055e4d616058aaae0759"
