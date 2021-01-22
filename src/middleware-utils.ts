@@ -79,7 +79,7 @@ export default {
         })
     },
     loggerInject: loggerInjectMiddleware(),
-    loggerUserInput: loggerMiddleware(),
+    logger: loggerMiddleware(),
     session: sessionMechanism,
     sessionTmp: sessionTmp(),
     logMiddleware: logMiddleware,

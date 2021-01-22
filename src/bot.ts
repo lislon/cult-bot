@@ -44,7 +44,7 @@ bot
     .use(performanceMiddleware('total'))
     .use(middlewares.i18n)
     .use(middlewares.loggerInject)
-    .use(middlewares.loggerUserInput)
+    .use(middlewares.logger)
     .use(middlewares.logger)
     .use(middlewares.telegrafThrottler())
     .use(middlewares.session)

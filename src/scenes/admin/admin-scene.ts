@@ -36,6 +36,7 @@ import {
 import { Dictionary, keyBy } from 'lodash'
 import { AdminPager } from './admin-pager'
 import { PagingPager } from '../shared/paging-pager'
+import { botConfig } from '../../util/bot-config'
 import Timeout = NodeJS.Timeout
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene')
@@ -449,6 +450,40 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                 pgLogVerbose()
             } else {
                 pgLogOnlyErrors()
+            }
+        })
+        .command('bot_config', async (ctx) => {
+            function maskInfo(key: string, value: string) {
+                const maskedValue = value
+                if (key.includes('URL') || key.includes('PASS') || key.includes('KEY') || key.includes('TOKEN')) {
+                    return '***'
+                }
+                return maskedValue
+            }
+
+            const cmdKeyValue = ctx.message.text.split(' ')
+
+            function convertValue(value: string) {
+                if (value === 'true') {
+                    return true
+                } else if (value === 'false') {
+                    return false
+                } else if (!isNaN(+value)) {
+                    return +value
+                }
+                return value
+            }
+
+            if (cmdKeyValue.length === 3) {
+                const [, key, value] = cmdKeyValue
+                if (key in botConfig) {
+                    (botConfig as any)[key] = convertValue(value)
+                    await ctx.replyWithHTML(`Success!`)
+                } else {
+                    await ctx.replyWithHTML(`Key ${key} not exists in botConfig`)
+                }
+            } else {
+                await ctx.replyWithHTML(`<code>${(JSON.stringify(botConfig, maskInfo, 2))}</code>`)
             }
         })
         .action(/admin_scene[.]snapshot_(\w+)$/, async (ctx) => {
