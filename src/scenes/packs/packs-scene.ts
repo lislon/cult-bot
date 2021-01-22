@@ -85,7 +85,9 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             const packs = await getPacksList(ctx)
             await ctx.scene.enter('packs_scene', {}, true)
 
-            ctx.session.packsScene.packSelectedIdx = packs.findIndex(p => p.id === +ctx.match[1])
+            doNotUpdateInlineMenu(ctx)
+            const directPackId = +ctx.match[1]
+            ctx.session.packsScene.packSelectedIdx = packs.findIndex(p => p.id === directPackId)
             if (ctx.session.packsScene.packSelectedIdx === -1) {
                 await ctx.replyWithHTML(i18Msg(ctx, 'direct_not_available'))
                 await displayMainMenu(ctx)
