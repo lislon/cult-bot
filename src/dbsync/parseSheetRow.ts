@@ -29,6 +29,7 @@ export const EXCEL_COLUMNS_EVENTS = {
     popularity: 'Популярность',
     fake_likes: 'Лайки',
     fake_dislikes: 'Дизлайки',
+    random: 'Random',
     due_date: 'Due date',
 }
 
@@ -239,8 +240,8 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
         rowNumber,
         data,
         popularity: row.popularity === '' ? undefined : +row.popularity as Popularity,
-        fakeLikes: row.fake_likes === '' ? undefined : +row.fake_likes,
-        fakeDislikes: row.fake_dislikes === '' ? undefined : +row.fake_dislikes
+        fakeLikes: row.fake_likes === '' || row.fake_likes === undefined ? undefined : +(row.fake_likes.replace(/\D/g, '')),
+        fakeDislikes: row.fake_dislikes === '' || row.fake_dislikes === undefined ? undefined : +(row.fake_dislikes.replace(/\D/g, ''))
     }
     const predictTimetableResult = parseAndPredictTimetable(data.timetable, now)
 
