@@ -3,6 +3,7 @@ import { ContextMessageUpdate, EventCategory, ExtIdAndId } from '../../interface
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
 import {
+    chunkanize,
     getGoogleSpreadSheetURL,
     replyWithBackToMainMarkup,
     ruFormat,
@@ -18,18 +19,17 @@ import { logger, loggerTransport } from '../../util/logger'
 import { STICKER_CAT_THUMBS_UP } from '../../util/stickers'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import { EventToSave } from '../../interfaces/db-interfaces'
-import { chunkString } from '../../util/chunk-split'
 import { formatMainAdminMenu, formatMessageForSyncReport } from './admin-format'
 import { getButtonsSwitch, menuCats, SYNC_CONFIRM_TIMEOUT_SECONDS, totalValidationErrors } from './admin-common'
 import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 import { Message, User } from 'telegram-typings'
 import { EventToRecover, SyncDiff } from '../../database/db-sync-repository'
 import { ITask } from 'pg-promise'
-import { parseAndValidateGoogleSpreadsheets } from '../../dbsync/parserSpresdsheetEvents'
+import { parseAndValidateGoogleSpreadsheets, SpreadSheetValidationError } from '../../dbsync/parserSpresdsheetEvents'
 import { authToExcel } from '../../dbsync/googlesheets'
 import {
-    EventPackForSavePrepared,
     eventPacksEnrichWithIds,
+    EventPackValidated,
     getOnlyValid,
     prepareForPacksSync
 } from '../../dbsync/packsSyncLogic'
@@ -37,6 +37,10 @@ import { Dictionary, keyBy } from 'lodash'
 import { AdminPager } from './admin-pager'
 import { PagingPager } from '../shared/paging-pager'
 import { botConfig } from '../../util/bot-config'
+import { adminIds, adminUsernames } from '../../util/admins-list'
+import { i18n } from '../../util/i18n'
+import { rawBot } from '../../bot'
+import { formatUserName2 } from '../../util/misc-utils'
 import Timeout = NodeJS.Timeout
 
 const scene = new BaseScene<ContextMessageUpdate>('admin_scene')
@@ -55,14 +59,7 @@ export interface AdminSceneState extends AdminSceneQueryState {
 const {actionName, i18SharedBtn, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 async function replyWithHTMLMaybeChunk(ctx: ContextMessageUpdate, msg: string, extra?: ExtraReplyMessage) {
-    const MAX_TELEGRAM_MESSAGE_LENGTH = 4096
-    const chunks: string[] = chunkString(msg, MAX_TELEGRAM_MESSAGE_LENGTH)
-
-    let last: Message = undefined
-    for (let i = 0; i < chunks.length; i++) {
-        last = await ctx.replyWithHTML(chunks[i], i === chunks.length - 1 ? extra : {disable_notification: true})
-    }
-    return last
+    return await chunkanize(msg, async (text, msgExtra) => await ctx.replyWithHTML(text, msgExtra), extra)
 }
 
 function listExtIds(eventToSaves: EventToSave[]): string {
@@ -114,7 +111,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 
             const eventPacks = await prepareForPacksSync(excel, getExistingIdsFrom(dbDiff))
 
-            GLOBAL_SYNC_STATE.chargeEventsSync(dbDiff, getOnlyValid(eventPacks))
+            GLOBAL_SYNC_STATE.chargeEventsSync(dbDiff, eventPacks, syncResult.errors)
 
             const askUserToConfirm = dbDiff.deletedEvents.length
                 + dbDiff.recoveredEvents
@@ -149,7 +146,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
                 `deleted={${dbDiff.deletedEvents.map(d => d.ext_id).join(',')}}`
             ].join(' '))
 
-            const msg = i18Msg(ctx, `sync_stats_title`, {
+            const msg = i18Msg(ctx, `sync_stats_message`, {
                 body,
                 rows: await db.repoAdmin.countTotalRows()
             })
@@ -178,9 +175,10 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 class GlobalSync {
     private timeoutId: Timeout
     private syncDiff: SyncDiff
-    private eventPacks: EventPackForSavePrepared[]
+    private eventPacks: EventPackValidated[]
     private confirmIdMsg: Message
     private user: User
+    private validationErrors: SpreadSheetValidationError[] = []
 
     public async executeSync(dbTx: ITask<IExtensions> & IExtensions) {
         logger.debug('hasData?', this.syncDiff !== undefined)
@@ -188,8 +186,10 @@ class GlobalSync {
         try {
             logger.debug('hasData?', this.syncDiff !== undefined)
             await dbTx.repoSync.syncDiff(this.syncDiff, dbTx)
-            const eventPackForSaves = eventPacksEnrichWithIds(this.eventPacks, getExistingIdsFrom(this.syncDiff))
+            const eventPackForSaves = eventPacksEnrichWithIds(getOnlyValid(this.eventPacks), getExistingIdsFrom(this.syncDiff))
             await dbTx.repoPacks.sync(eventPackForSaves)
+
+            await this.notifyAdminsAboutSync()
 
             logger.debug('Sync done')
         } finally {
@@ -208,6 +208,7 @@ class GlobalSync {
         this.user = undefined
         this.confirmIdMsg = undefined
         this.eventPacks = undefined
+        this.validationErrors = []
     }
 
     public isRunning(ctx: ContextMessageUpdate) {
@@ -245,18 +246,52 @@ class GlobalSync {
         return this.user
     }
 
-    chargeEventsSync(dbDiff: SyncDiff, eventPacks: EventPackForSavePrepared[]) {
+    chargeEventsSync(dbDiff: SyncDiff, eventPacks: EventPackValidated[], validationErrors: SpreadSheetValidationError[]) {
         logger.debug('Charge')
         this.syncDiff = dbDiff
         this.eventPacks = eventPacks
+        this.validationErrors = validationErrors
     }
 
     saveConfirmIdMessage(msg: Message) {
         this.confirmIdMsg = msg
     }
+
+
+    private async notifyAdminsAboutSync() {
+        const admins = (await db.repoUser.findUsersByUsernamesOrIds(adminUsernames, adminIds))
+            .filter(u => u.tid !== this.user.id)
+
+        const ctx: ContextMessageUpdate = {} as ContextMessageUpdate
+        i18n.middleware()(ctx, () => Promise.resolve())
+
+        const text = i18n.t('ru', 'scenes.admin_scene.sync_report', {
+            body: await formatMessageForSyncReport(this.validationErrors, this.syncDiff, this.eventPacks, ctx),
+            rows: await db.repoAdmin.countTotalRows(),
+            user: formatUserName2(this.user)
+        })
+        for (const admin of admins) {
+            try {
+                await chunkanize(text, async (chunk, extra) => {
+                    return await rawBot.telegram.sendMessage(admin.tid, chunk, extra)
+                }, {
+                    parse_mode: 'HTML',
+                    disable_notification: true
+                })
+                await sleep(200)
+            } catch (e) {
+                logger.warn(`failed to send to admin.id = ${admin.id}`)
+                logger.warn(e)
+            }
+        }
+    }
 }
 
 const GLOBAL_SYNC_STATE = new GlobalSync()
+
+async function replySyncNoTransaction(ctx: ContextMessageUpdate) {
+    await ctx.replyWithHTML(i18Msg(ctx, 'sync_no_transaction', {minutes: Math.ceil(SYNC_CONFIRM_TIMEOUT_SECONDS / 60)}))
+}
 
 scene
     .use(async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
@@ -289,7 +324,7 @@ scene
             await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]))
             await ctx.replyWithHTML(i18Msg(ctx, 'sync_cancelled'))
         } else {
-            await ctx.replyWithHTML(i18Msg(ctx, 'sync_no_transaction'))
+            await replySyncNoTransaction(ctx)
         }
     })
     .action(actionName('sync_confirm'), async (ctx: ContextMessageUpdate) => {
@@ -303,7 +338,7 @@ scene
                 rows: await db.repoAdmin.countTotalRows()
             }))
         } else {
-            await ctx.replyWithHTML(i18Msg(ctx, 'sync_no_transaction'))
+            await replySyncNoTransaction(ctx)
         }
     })
     .action(new RegExp(`${actionName('r_')}(.+)`), async (ctx: ContextMessageUpdate) => {
@@ -387,7 +422,7 @@ async function switchCard(ctx: ContextMessageUpdate, version: 'current' | 'snaps
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     const adminGlobalCommands = new Composer<ContextMessageUpdate>()
         .command('adminGlobalCommands', async (ctx: ContextMessageUpdate) => {
-            await ctx.scene.enter('admin_scene');
+            await ctx.scene.enter('admin_scene')
         })
         .command('time_now', async (ctx: ContextMessageUpdate) => {
             ctx.session.adminScene.overrideDate = undefined

@@ -1,5 +1,4 @@
 import { ColumnSet, IDatabase, IMain } from 'pg-promise'
-import { devUsernames } from '../util/admins-list'
 import { fieldInt, fieldInt8Array, fieldStr, fieldTimestamptzNullable } from './db-utils'
 
 interface UserRow {
@@ -73,18 +72,24 @@ export class UserRepository {
                         events_favorite: row.events_favorite
                     }
                 }
-                return row;
+                return row
             })
     }
 
-    public async findAllDevs(): Promise<UserDb[] | null> {
-        return this.db.manyOrNone<UserDb>(`
+    public async findUsersByUsernamesOrIds(usernames: string[], tids: number[] = []): Promise<UserDb[] | null> {
+        return this.db.map<UserDb>(`
         SELECT tid, ua_uuid
         FROM cb_users
         WHERE
-         username IN($(devUsernames:csv))`,
+         username IN($(usernames:csv)) OR tid IN($(tids:csv))`,
             {
-                devUsernames
+                usernames,
+                tids
+            }, row => {
+                return {
+                    tid: +row.tid,
+                    ua_uuid: row.ua_uuid
+                }
             })
     }
 

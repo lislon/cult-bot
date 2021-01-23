@@ -10,6 +10,7 @@ import { i18n } from './util/i18n'
 import { rawBot } from './bot'
 import { omit } from 'lodash'
 import { redis } from './util/reddis'
+import { adminIds, adminUsernames } from './util/admins-list'
 
 const app = express()
 
@@ -19,7 +20,7 @@ async function notifyAdminsAboutRestart() {
         const version = await redis.get(redisVersionKey)
         if (version !== botConfig.HEROKU_SLUG_COMMIT) {
             await redis.set(redisVersionKey, botConfig.HEROKU_SLUG_COMMIT)
-            const admins = await db.repoUser.findAllDevs()
+            const admins = await db.repoUser.findUsersByUsernamesOrIds(adminUsernames, adminIds)
 
             const text = i18n.t('ru', 'scenes.admin_scene.update_report', {
                 version: botConfig.HEROKU_RELEASE_VERSION,

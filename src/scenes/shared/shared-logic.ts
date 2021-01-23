@@ -11,6 +11,8 @@ import { ExtraReplyMessage, InlineKeyboardMarkup } from 'telegraf/typings/telegr
 import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
 import slugify from 'slugify'
 import { i18SharedBtn, i18SharedMsg } from '../../util/scene-helper'
+import { Message } from 'telegram-typings'
+import { chunkString } from '../../util/chunk-split'
 
 const YEAR_2020_WEEKENDS = [parseISO('2021-01-01 00:00:00'), parseISO('2021-01-11 00:00:00')]
 const START_SHOW_WEEKENDS_FROM = parseISO('2020-12-28 00:00:00')
@@ -245,4 +247,14 @@ export function getMsgId(ctx: ContextMessageUpdate): number {
 
 export async function buttonIsOldGoToMain(ctx: ContextMessageUpdate) {
     await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.unknown_action')})
+}
+
+export async function chunkanize(msg: string, callback: (text: string, extra?: ExtraReplyMessage) => Promise<Message>, extra: ExtraReplyMessage = undefined): Promise<Message> {
+    const MAX_TELEGRAM_MESSAGE_LENGTH = 4096
+    const chunks: string[] = chunkString(msg, MAX_TELEGRAM_MESSAGE_LENGTH)
+    let last: Message = undefined
+    for (let i = 0; i < chunks.length; i++) {
+        last = await callback(chunks[i], i === chunks.length - 1 ? extra : {disable_notification: true})
+    }
+    return last
 }
