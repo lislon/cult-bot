@@ -22,16 +22,20 @@ import { Logger } from 'winston'
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
 export const allCategories: EventCategory[] = ['theaters', 'exhibitions', 'movies', 'events', 'walks', 'concerts']
 
-export type TagLevel2 = '#сдетьми0+'
+export type TagLevel2 = '#компанией'
+    | '#сдетьми0+'
     | '#сдетьми6+'
     | '#сдетьми12+'
     | '#сдетьми16+'
-    | '#ЗОЖ'
     | '#комфорт'
-    | '#премьера'
-    | '#доступноподеньгам'
+    | '#новыеформы'
     | '#бесплатно'
+    | '#доступноподеньгам'
+    | '#успетьзачас'
+    | '#навоздухе'
+    | '#премьера'
     | '#_недешево'
+
 
 export const moneyTags: TagLevel2[] = ['#доступноподеньгам', '#бесплатно', '#_недешево']
 export const chidrensTags: TagLevel2[] = ['#сдетьми0+', '#сдетьми6+', '#сдетьми12+', '#сдетьми16+']

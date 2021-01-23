@@ -17,7 +17,6 @@ export async function customizeCennosti(ctx: ContextMessageUpdate) {
         [menu.button('#премьера')],
         [menu.button('#навоздухе')],
         [menu.button('#компанией')],
-        [menu.button('#ЗОЖ')],
         [menu.button('#новыеформы')],
         [menu.button('#успетьзачас')],
         [menu.button('#культурныйбазис')],

@@ -41,13 +41,18 @@ describe('Filtering', () => {
 
     test('search only by cennosti works', async () => {
         const [A, B, C] = await syncEventsDb4Test([
-            getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_2: ['#ЗОЖ', '#комфорт', '#премьера']}),
-            getMockEvent({title: 'B', category: 'theaters', eventTime, tag_level_2: ['#ЗОЖ', '#комфорт']}),
-            getMockEvent({title: 'C', category: 'concerts', eventTime, tag_level_2: ['#ЗОЖ']})
+            getMockEvent({
+                title: 'A',
+                category: 'theaters',
+                eventTime,
+                tag_level_2: ['#компанией', '#комфорт', '#премьера']
+            }),
+            getMockEvent({title: 'B', category: 'theaters', eventTime, tag_level_2: ['#компанией', '#комфорт']}),
+            getMockEvent({title: 'C', category: 'concerts', eventTime, tag_level_2: ['#компанией']})
         ])
 
         expectedIds([A, B], await db.repoCustomEvents.findEventIdsCustomFilter({
-            cennosti: ['#ЗОЖ', '#комфорт'],
+            cennosti: ['#компанией', '#комфорт'],
             weekendRange
         }))
     }, 1000000)
@@ -56,7 +61,7 @@ describe('Filtering', () => {
     test('search without tags works', async () => {
         const [A, B, C] = await syncEventsDb4Test([
             getMockEvent({title: 'A', category: 'theaters', eventTime}),
-            getMockEvent({title: 'B', category: 'concerts', eventTime, tag_level_2: ['#ЗОЖ']})
+            getMockEvent({title: 'B', category: 'concerts', eventTime, tag_level_2: ['#компанией']})
         ])
 
         expectedIds([A, B], await db.repoCustomEvents.findEventIdsCustomFilter({weekendRange}))
@@ -106,7 +111,7 @@ describe('Filtering', () => {
         const [A, B, C] = await syncEventsDb4Test([
             getMockEvent({title: 'A', eventTime, tag_level_2: ['#доступноподеньгам']}),
             getMockEvent({title: 'B', eventTime, tag_level_2: ['#бесплатно']}),
-            getMockEvent({title: 'C', eventTime, tag_level_2: ['#ЗОЖ', '#_недешево']})
+            getMockEvent({title: 'C', eventTime, tag_level_2: ['#компанией', '#_недешево']})
         ])
         expectedIds([B, C], await db.repoCustomEvents.findEventIdsCustomFilter({
             cennosti: ['#_недешево', '#бесплатно'],
