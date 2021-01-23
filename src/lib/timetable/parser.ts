@@ -70,9 +70,9 @@ const timetableLang = P.createLanguage({
     AnyTime: () => P
         .alt(P.string('в любое время'))
         .desc('Фраза "в любое время"'),
-    Date: (r) => P.seq(r.DayOfMonth, r._, r.Month, r._, r.Year)
+    Date: (r) => P.seq(r.DayOfMonth, r.__, r.Month, r._, r.Year)
         .map(([dayOfMonth, , month, , year]) => {
-            return `${year}-${month}-${dayOfMonth}`;
+            return `${year}-${month}-${dayOfMonth}`
         }),
     ['hh']: () => P.regexp(/^\d{1,2}/),
     ['hh:mm']: (r) => P.seq(r['hh'], P.regexp(/[:.]\d{2}/).fallback(':00'))
@@ -153,6 +153,7 @@ const timetableLang = P.createLanguage({
     To: () => P.string('до').desc('фраза "до"'),
     ToDate: () => P.alt(P.string('до'), P.string('по')),
     _: () => P.regex(/[^\S\r\n]*/).desc('пробелы'),
+    __: () => P.regex(/[^\S\r\n]+/).desc('пробелы'),
 })
 
 

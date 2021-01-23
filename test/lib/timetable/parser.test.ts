@@ -263,8 +263,10 @@ describe('parser', () => {
         ],
         ['16 декабря 2020 — 01 декабря 2020: 12:00–20:00',
             [`Дата '2020-12-16' должна быть меньше, чем '2020-12-01'`]
-        ]
-
+        ],
+        ['23января: 19:00',
+            ['После строки "23" я ожидала:', ' - Интервал дат', ' - пробелы', 'И текст "января: 19:00" не подходит к вышеперечисленному']
+        ],
     ])('%s', (text: string, expected: any) => {
         if (expected) {
             expected.dateRangesTimetable = expected.dateRangesTimetable || []
@@ -279,7 +281,7 @@ describe('parser', () => {
             // JSON.stringify to avoid bug: 'Received: serializes to the same string'
             expect(JSON.stringify(actual.errors)).toStrictEqual(JSON.stringify(expected))
         }
-    });
+    })
 
     test('year rollolver', () => {
         const actual = parseTimetable('1 января: 12:00', date('2020-07-02'))
@@ -289,4 +291,4 @@ describe('parser', () => {
             fail('Not success')
         }
     })
-});
+})
