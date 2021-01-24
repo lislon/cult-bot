@@ -56,8 +56,8 @@ const getRootKeyboard = async (ctx: ContextMessageUpdate): Promise<CallbackButto
     return [
         [btn('format', ctx.session.customize.format), btn('oblasti', ctx.session.customize.oblasti)],
         [btn('priorities', ctx.session.customize.cennosti), btn('time', ctx.session.customize.time)],
-        [resetButton(ctx)],
-        [backButton(), showEventsBtn],
+        ...(isAnyFilterSelected(ctx) ? [[resetButton(ctx)]] : []),
+        [...(isAnyFilterSelected(ctx) ? [backButton(), showEventsBtn] : [backButton()])],
     ]
 }
 

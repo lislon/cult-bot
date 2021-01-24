@@ -18,8 +18,7 @@ Feature: Customize time
       """
       [Формат] [Рубрики]
       [Приоритеты] [Время]
-      [Сброс]
-      [Назад] [События (0)]
+      [Назад]
       """
 
   Scenario: I want select to events by time on friday
