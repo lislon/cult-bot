@@ -7,12 +7,13 @@ Feature: Packs scene
       | A     | exhibitions | пн-вс: 15:00          |
       | B     | exhibitions | пн-вс: 15:00          |
       | C     | exhibitions | пн-вс: 15:00          |
+      | D     | exhibitions | пн-вс: 15:00          |
       | D_old | exhibitions | 1 октября 2019: 15:00 |
     Given there is packs:
-      | title | desc    | events      | weight |
-      | P1    | P1 desc | A, B, D_old |  0     |
-      | P2    | P2 desc | C           |  -10   |
-      | P3    | P3 desc | D_old       |  0     |
+      | title | desc    | events         | weight |
+      | P1    | P1 desc | A, B, C, D_old | 0      |
+      | P2    | P2 desc | A, C           | -10    |
+      | P3    | P3 desc | A, D_old       | 0      |
     Given Scene is 'packs_scene'
 
   Scenario: I can see 2 events in first pack
@@ -30,7 +31,7 @@ Feature: Packs scene
 
       P1 desc
 
-      В подборке 2 события
+      В подборке 3 события
       """
     Then Bot edits inline buttons:
       """
@@ -42,7 +43,7 @@ Feature: Packs scene
     Then Bot edits inline buttons:
       """
       [«] [👍 0] [👎 0] [⭐]
-      [◀️ Назад] [1 / 2 »]
+      [◀️ Назад] [1 / 3 »]
       """
     Then I click inline [Назад]
     Then Google analytics pageviews will be:

@@ -85,6 +85,7 @@ export class PacksRepository {
                 ORDER BY cb.is_anytime ASC, cbet.first_entrance ASC, cb.rating DESC, cb.title ASC
             ) pe on (pe.id = any(p.event_ids))
             GROUP BY p.id
+            HAVING COUNT(pe.id) >= 2
             ORDER BY p.weight ASC, p.title ASC
             `, { interval: mapToPgInterval(query.interval) },
             r => {

@@ -20,18 +20,32 @@ describe('Packs', () => {
     })
 
     test('packs will be filtered by date', async () => {
-        const [aId, bId] = await syncEventsDb4Test([
+        const [aId, bId, cId] = await syncEventsDb4Test([
             getMockEvent({title: 'A', eventTime}),
-            getMockEvent({title: 'B', eventTime: eventTimeOutRange}),
+            getMockEvent({title: 'B', eventTime}),
+            getMockEvent({title: 'C', eventTime: eventTimeOutRange}),
         ])
 
         await db.repoPacks.sync([
-            getMockPack({ title: 'A pack', eventIds: [ aId ] }),
-            getMockPack({ title: 'B back', eventIds: [ bId ] })
+            getMockPack({title: 'A pack', eventIds: [aId, bId]}),
+            getMockPack({title: 'B back', eventIds: [aId, cId]}),
         ])
         const list = await db.repoPacks.listPacks({interval: yearRange})
         expectedPacksTitle(['A pack'], list)
     })
+
+    test('packs with single event will not be shown', async () => {
+        const [aId, bId] = await syncEventsDb4Test([
+            getMockEvent({title: 'A', eventTime}),
+        ])
+
+        await db.repoPacks.sync([
+            getMockPack({title: 'A pack', eventIds: [aId]})
+        ])
+        const list = await db.repoPacks.listPacks({interval: yearRange})
+        expectedPacksTitle([], list)
+    })
+
 
     test('events in packs will be sorted', async () => {
 
