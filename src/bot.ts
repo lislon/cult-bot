@@ -45,7 +45,6 @@ bot
     .use(middlewares.i18n)
     .use(middlewares.loggerInject)
     .use(middlewares.logger)
-    .use(middlewares.logger)
     .use(middlewares.telegrafThrottler())
     .use(middlewares.session)
     .use(middlewares.sessionTmp)
