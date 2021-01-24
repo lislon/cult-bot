@@ -103,7 +103,6 @@ export interface LimitOffset {
     offset: number
 }
 
-
 export interface LimitOffsetLast<T = number> extends LimitOffset {
     lastId: T
 }

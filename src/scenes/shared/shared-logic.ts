@@ -174,7 +174,7 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
     if (options?.forceNewMsg) {
         const message = await ctx.replyWithHTML(text, {
             reply_markup: markup,
-            disable_web_page_preview: true
+            disable_web_page_preview: !botConfig.SLIDER_INSTA_VIEW
         })
         return message.message_id
     }
@@ -183,7 +183,7 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
 
         await ctx.editMessageText(text, {
             parse_mode: 'HTML',
-            disable_web_page_preview: true,
+            disable_web_page_preview: !botConfig.SLIDER_INSTA_VIEW,
             reply_markup: markup
         })
 
@@ -193,7 +193,7 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
             ctx.logger.debug(e.message)
             const message = await ctx.replyWithHTML(text, {
                 reply_markup: markup,
-                disable_web_page_preview: true
+                disable_web_page_preview: !botConfig.SLIDER_INSTA_VIEW
             })
             return message.message_id
         } else {
