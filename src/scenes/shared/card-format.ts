@@ -6,7 +6,6 @@ import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
 import { i18n } from '../../util/i18n'
 import { AdminEvent } from '../../database/db-admin'
 import { formatPrice, parsePrice } from '../../lib/price-parser'
-import { botConfig } from '../../util/bot-config'
 
 export function addHtmlNiceUrls(text: string) {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
@@ -109,11 +108,7 @@ export function cardFormat(row: Event | AdminEvent | EventFavorite, options: Car
     text += '\n'
 
     if (isFuture) {
-        if (botConfig.SLIDER_INSTA_VIEW) {
-            text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`)
-        } else {
-            text += strikeIfDeleted(`<b><a href="">${addHtmlNiceUrls(escapeHTML(row.title))}</a></b>`)
-        }
+        text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`)
     } else {
         text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b> <i>(прошло)</i>`)
     }
