@@ -1,6 +1,7 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { db } from '../../database/db'
 import { countInteractions } from './analytics-middleware'
+import { botConfig } from '../../util/bot-config'
 
 const UPDATE_EVERY_N_SECONDS = 5 * 60
 
@@ -9,6 +10,7 @@ export interface UserState {
     lastDbUpdated: number
     uaUuid?: string
     eventsFavorite: number[]
+    version: string
 }
 
 
@@ -40,6 +42,7 @@ async function prepareSessionIfNeeded(ctx: ContextMessageUpdate) {
     if (ctx.session.user === undefined) {
         ctx.session.user = {
             lastDbUpdated: 0,
+            version: botConfig.HEROKU_RELEASE_VERSION,
             id: 0,
             uaUuid: undefined,
             eventsFavorite: []

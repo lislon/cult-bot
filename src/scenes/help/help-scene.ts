@@ -48,13 +48,10 @@ function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>) {
 function preSceneGlobalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
     bot
         .hears(/.+/, async (ctx, next) => {
-            ctx.logger.silly('helper: hears')
             try {
                 throttleActionsToShowHelpForNewComers(ctx)
             } finally {
-                ctx.logger.silly('helper: finally throttleActionsToShowHelpForNewComers')
                 await next()
-                ctx.logger.silly('helper: finally done')
             }
         })
         .action(/.+/, async (ctx, next) => {

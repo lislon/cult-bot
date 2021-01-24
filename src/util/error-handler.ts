@@ -25,7 +25,7 @@ export async function botErrorHandler(error: any, ctx: ContextMessageUpdate) {
                 await ctx.replyWithHTML(ctx.i18n.t('root.something_went_wrong_admin', {
                     error: error.toString().substr(0, 4000),
                     time: (new Date()).toString(),
-                    session: JSON.stringify(ctx.session, undefined, 2).substring(0, 3500)
+                    session: JSON.stringify(ctx.session || {}, undefined, 2).substring(0, 3500)
                 }))
             } else {
                 await ctx.replyWithHTML(ctx.i18n.t('root.something_went_wrong'))

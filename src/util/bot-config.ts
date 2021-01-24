@@ -31,6 +31,7 @@ export class BotConfig {
     public SLIDER_STATE_TTL_SECONDS: number
     public SLIDER_MAX_STATES_SAVED: number
     public SLIDER_MAX_IDS_CACHED: number
+    public SLIDER_INSTA_VIEW: boolean
 
 
     /**
@@ -77,6 +78,7 @@ export class BotConfig {
         this.SLIDER_STATE_TTL_SECONDS = +envVars.SLIDER_STATE_TTL_SECONDS || 3600 * 8
         this.SLIDER_MAX_STATES_SAVED = +envVars.SLIDER_MAX_STATES_SAVED || 5
         this.SLIDER_MAX_IDS_CACHED = +envVars.SLIDER_MAX_IDS_CACHED || 10
+        this.SLIDER_INSTA_VIEW = !!envVars.SLIDER_INSTA_VIEW || false
     }
 }
 

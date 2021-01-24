@@ -187,7 +187,6 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType, opti
         })
     }
     const msgId = await editMessageAndButtons(ctx, inlineButtons, msg, options)
-    ctx.logger.silly('msgId: ' + msgId)
     return msgId
 }
 
@@ -241,7 +240,8 @@ async function answerCbEventsSelected(ctx: ContextMessageUpdate) {
 
 
 function isThisMessageMatchesWithActiveFilter(ctx: ContextMessageUpdate) {
-    return ctx.session.customize.msgId === undefined || ctx.session.customize.msgId === getMsgId(ctx)
+    const activeSlider = eventSlider.getActiveSliderState(ctx)
+    return activeSlider && activeSlider.msgId === getMsgId(ctx)
 }
 
 scene
@@ -249,8 +249,8 @@ scene
         prepareSessionStateIfNeeded(ctx)
         await replyWithBackToMainMarkup(ctx)
         ctx.session.customize.resultsFound = undefined
-        ctx.session.customize.msgId = await updateDialog(ctx, 'root', {forceNewMsg: true, restoreMessage: true})
-        await invalidateSliderAndCounters(ctx, ctx.session.customize.msgId)
+        const msgId = await updateDialog(ctx, 'root', {forceNewMsg: true, restoreMessage: true})
+        await invalidateSliderAndCounters(ctx, msgId)
     })
     .leave((ctx: ContextMessageUpdate) => {
         ctx.session.customize = undefined
@@ -322,17 +322,18 @@ scene
             if (ctx.session.customize.currentStage === 'root') {
                 await ctx.scene.enter('main_scene')
             } else {
-                await updateDialog(ctx, 'root')
+                const newMsgId = await updateDialog(ctx, 'root', {forceNewMsg: true})
+                eventSlider.cloneActiveStateWithNewMsgId(ctx, newMsgId)
             }
         })
     })
 
 async function editMessageNotifyUserItsOld(ctx: ContextMessageUpdate) {
-    await editMessageAndButtons(ctx, [], 'Это сообщение уже старое. Сорян')
+    await editMessageAndButtons(ctx, [], i18Msg(ctx, 'message_is_old'))
 }
 
 async function editMessageNotifyUserViewBelow(ctx: ContextMessageUpdate) {
-    await editMessageAndButtons(ctx, [], '👇 Этот фильтр уже устарел. Отмотайте, пожалуйста чат вниз, чтобы восстановить его')
+    await editMessageAndButtons(ctx, [], i18Msg(ctx, 'filter_is_old_scroll_down'))
 }
 
 async function restoreOldCustomize(ctx: ContextMessageUpdate) {
@@ -392,6 +393,8 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                     await ctx.answerCbQuery(i18Msg(ctx, 'cb_no_events_found'))
                 }
             } else {
+                ctx.logger.debug(`isThisMessageMatchesWithActiveFilter = false`)
+
                 await ctx.answerCbQuery()
                 await restoreOldCustomize(ctx)
             }

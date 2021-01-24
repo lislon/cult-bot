@@ -6,6 +6,7 @@ import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
 import { i18n } from '../../util/i18n'
 import { AdminEvent } from '../../database/db-admin'
 import { formatPrice, parsePrice } from '../../lib/price-parser'
+import { botConfig } from '../../util/bot-config'
 
 export function addHtmlNiceUrls(text: string) {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
@@ -39,7 +40,7 @@ export function formatTimetable(event: Event) {
     return formatCinemaUrls(cutYear(humanTimetable))
 }
 
-function formatEventDuration(text: string) {
+export function formatEventDuration(text: string) {
     const m = text.match(/(\d+)\s*мин[^ ]*/)
     if (m && +m[1] >= 60) {
         const rawMinutes = +m[1]
@@ -51,7 +52,7 @@ function formatEventDuration(text: string) {
     return text
 }
 
-function getCardHeaderCat(row: Event) {
+export function getCardHeaderCat(row: Event) {
     const icon = i18n.t(`ru`, `shared.category_icons.${row.category}`)
     const title = i18n.t(`ru`, `shared.category_single_title.${row.category}`)
     return `${icon} <b>${title.toUpperCase()}</b>`
@@ -67,7 +68,7 @@ export interface EventFavorite extends Event {
     isFuture: boolean
 }
 
-function filterTagLevel2(row: Event | AdminEvent) {
+export function filterTagLevel2(row: Event | AdminEvent) {
     return row.tag_level_2.filter(t => !t.startsWith('#_'))
 }
 
@@ -108,7 +109,11 @@ export function cardFormat(row: Event | AdminEvent | EventFavorite, options: Car
     text += '\n'
 
     if (isFuture) {
-        text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`)
+        if (botConfig.SLIDER_INSTA_VIEW) {
+            text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`)
+        } else {
+            text += strikeIfDeleted(`<b><a href="">${addHtmlNiceUrls(escapeHTML(row.title))}</a></b>`)
+        }
     } else {
         text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b> <i>(прошло)</i>`)
     }

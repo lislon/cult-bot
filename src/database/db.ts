@@ -83,7 +83,7 @@ pgMonitor.setLog((msg, info) => {
     if (info.event === 'error') {
         logger.error(text)
     } else {
-        logger.debug(text)
+        logger.silly(text)
     }
     info.display = false
 })

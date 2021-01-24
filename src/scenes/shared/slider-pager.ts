@@ -10,6 +10,7 @@ import { CallbackButton } from 'telegraf/typings/markup'
 import { EventsPagerSliderBase, PagerSliderState, PagingCommonConfig } from './events-common'
 import { botConfig } from '../../util/bot-config'
 import { InlineKeyboardMarkup } from 'telegram-typings'
+import { clone } from 'lodash'
 
 const scene = new BaseScene<ContextMessageUpdate>('')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18SharedMsg} = i18nSceneHelper(scene)
@@ -17,7 +18,7 @@ const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18SharedMsg} = i18nS
 export interface SliderState<Q> extends PagerSliderState<Q> {
     msgId: number
     sceneId: string
-    ttl: number
+    createdAt: number
 }
 
 export interface AllSlidersState {
@@ -32,7 +33,7 @@ export interface TotalOffset {
 export interface SliderConfig<Q, E extends Event = Event> extends PagingCommonConfig<Q, E> {
     noCardsText?(ctx: ContextMessageUpdate): string
 
-    backButton(ctx: ContextMessageUpdate): CallbackButton
+    backButtonCallbackData(ctx: ContextMessageUpdate): string
 
     analytics?(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset, state: Q): void
 }
@@ -50,12 +51,10 @@ function getSliderState(ctx: ContextMessageUpdate): AllSlidersState {
     return ctx.session.slider
 }
 
-function getBtnPosition(page: number, total: number) {
-    return i18nSharedBtnName('slider_keyboard.next', {
-        position: i18nSharedBtnName('slider_keyboard.position', {
-            page: page,
-            total: total
-        })
+function getPositionText(page: number, total: number) {
+    return i18nSharedBtnName('slider_keyboard.position', {
+        page: page,
+        total: total
     })
 }
 
@@ -104,9 +103,13 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
 
     private async getEmptyCard(ctx: ContextMessageUpdate, options?: EditMessageAndButtonsOptions) {
         return {
-            buttons: [[await this.config.backButton(ctx)]],
+            buttons: [[await this.getBackButton(ctx)]],
             text: this.config.noCardsText?.(ctx) ?? i18SharedMsg(ctx, 'slider.no_more_cards')
         }
+    }
+
+    private async getBackButton(ctx: ContextMessageUpdate) {
+        return Markup.callbackButton(i18nSharedBtnName('slider_keyboard.back'), await this.config.backButtonCallbackData(ctx))
     }
 
     private async showOrUpdateCard(ctx: ContextMessageUpdate, state: SliderState<Q>, options?: EditMessageAndButtonsOptions): Promise<number> {
@@ -121,7 +124,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
     }
 
     private async handleExistingCard(ctx: ContextMessageUpdate, cardId: number, state: SliderState<Q>): Promise<ButtonsAndText> {
-        const backButton: CallbackButton = await this.config.backButton(ctx)
+        const backButton: CallbackButton = await this.getBackButton(ctx)
         const [event] = await this.config.loadCardsByIds(ctx, [cardId])
         if (event !== undefined) {
 
@@ -129,12 +132,14 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
 
             const cardButtons: CallbackButton[] = this.config.cardButtons ? await this.config.cardButtons(ctx, event) : getLikesRow(ctx, event)
 
+
             const prevButton = Markup.callbackButton(i18nSharedBtnName('slider_keyboard.prev'), this.btnActionPrev)
-            const nextButton = Markup.callbackButton(getBtnPosition(state.selectedIdx + 1, state.total), this.btnActionNext)
+            const position = Markup.callbackButton(getPositionText(state.selectedIdx + 1, state.total), this.btnActionPosition)
+            const nextButton = Markup.callbackButton(i18nSharedBtnName('slider_keyboard.next'), this.btnActionNext)
 
             const buttons: CallbackButton[][] = [
-                [prevButton, ...cardButtons],
-                [backButton, nextButton]
+                [backButton, ...cardButtons],
+                [prevButton, position, nextButton]
             ]
 
             const text = cardFormat(event, this.config.cardFormatOptions?.(ctx, event))
@@ -170,7 +175,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                 return buttonsAndText
             } else {
                 return {
-                    buttons: [[await this.config.backButton(ctx)]],
+                    buttons: [[await this.getBackButton(ctx)]],
                     text: i18SharedMsg(ctx, 'slider.card_content_not_available')
                 }
             }
@@ -181,15 +186,19 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
         return `slider_keyboard.${this.config.sceneId}.next`
     }
 
+    private get btnActionPosition() {
+        return `slider_keyboard.${this.config.sceneId}.position`
+    }
+
     private get btnActionPrev() {
         return `slider_keyboard.${this.config.sceneId}.prev`
     }
 
     private async nextPrev(ctx: ContextMessageUpdate, leftRightLogic: (state: SliderState<Q>) => void) {
 
-        function buttonTextEquals1Of1() {
+        function onlyOneEventLeftAccordingToButtons() {
             const keyboard = (ctx.update.callback_query.message as any)?.reply_markup as InlineKeyboardMarkup
-            const oneOfOneBtn = keyboard.inline_keyboard.flatMap(rows => rows).find(row => row.text === getBtnPosition(1, 1))
+            const oneOfOneBtn = keyboard.inline_keyboard.flatMap(rows => rows).find(row => row.text === getPositionText(1, 1))
             return oneOfOneBtn !== undefined
         }
 
@@ -200,7 +209,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             if (state.total === 0) {
                 const {text, buttons} = await this.getEmptyCard(ctx)
                 state.msgId = await editMessageAndButtons(ctx, buttons, text)
-            } else if (state.total !== 1 || !buttonTextEquals1Of1()) {
+            } else if (state.total !== 1 || !onlyOneEventLeftAccordingToButtons()) {
                 await this.showOrUpdateCard(ctx, state)
             }
         } else {
@@ -213,7 +222,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
         const newState: SliderState<Q> = {
             msgId,
             sceneId: this.config.sceneId,
-            ttl: nowUnix + botConfig.SLIDER_STATE_TTL_SECONDS * 1000,
+            createdAt: nowUnix,
             query: query,
             selectedIdx: 0,
             savedIds: [],
@@ -221,7 +230,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             total: 0,
         }
         const stateWithoutCurrentMsgId = getSliderState(ctx).sliders
-            .filter(({ttl}) => ttl >= nowUnix)
+            .filter(this.isNotExpired)
             .filter(state => state.msgId !== getMsgId(ctx))
         getSliderState(ctx).sliders = [newState, ...stateWithoutCurrentMsgId].slice(0, botConfig.SLIDER_MAX_STATES_SAVED)
 
@@ -230,13 +239,18 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
     }
 
     private getSliderStateIfExists(ctx: ContextMessageUpdate): SliderState<Q> {
-        const nowUnix = new Date().getTime()
+        const sliderState = this.getValidStageSliders(ctx).find(s => s.msgId === getMsgId(ctx)) as SliderState<Q>
+        return sliderState
+    }
 
-        function isValidSlider(s: SliderState<unknown>) {
-            return s.ttl === undefined || s.ttl >= nowUnix
-        }
+    private getValidStageSliders(ctx: ContextMessageUpdate): SliderState<Q>[] {
+        return (getSliderState(ctx).sliders)
+            .filter(s => s.sceneId === this.config.sceneId)
+            .filter(this.isNotExpired) as SliderState<Q>[]
+    }
 
-        return getSliderState(ctx).sliders.find(s => s.msgId === getMsgId(ctx) && isValidSlider(s)) as SliderState<Q>
+    private isNotExpired(s: SliderState<unknown>) {
+        return s.createdAt + botConfig.SLIDER_STATE_TTL_SECONDS * 1000 >= new Date().getTime()
     }
 
     public middleware(): MiddlewareFn<ContextMessageUpdate> {
@@ -259,6 +273,9 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                         }
                     })
                 })
+                .action(this.btnActionPosition, async ctx => {
+                    await ctx.answerCbQuery()
+                })
         ).middleware()
     }
 
@@ -268,6 +285,25 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
 
     public isThisSliderValid(ctx: ContextMessageUpdate) {
         return this.getSliderStateIfExists(ctx) !== undefined
+    }
+
+    public getActiveSliderState(ctx: ContextMessageUpdate): SliderState<Q> | undefined {
+        const [activeSlider] = this.getValidStageSliders(ctx)
+        return activeSlider
+    }
+
+    public cloneActiveStateWithNewMsgId(ctx: ContextMessageUpdate, msgId: number) {
+        const activeSliderState = this.getActiveSliderState(ctx)
+
+        if (activeSliderState !== undefined) {
+            const stateWithoutCurrentMsgId = getSliderState(ctx).sliders
+                .filter(this.isNotExpired)
+            getSliderState(ctx).sliders = [{
+                ...clone(activeSliderState),
+                msgId
+            }, ...stateWithoutCurrentMsgId].slice(0, botConfig.SLIDER_MAX_STATES_SAVED)
+            ctx.logger.silly(`cloneActiveStateWithNewMsgId (msgId=${activeSliderState.msgId} -> ${msgId}`)
+        }
     }
 
     public async answerCbSliderIsOld(ctx: ContextMessageUpdate) {

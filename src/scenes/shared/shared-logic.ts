@@ -146,45 +146,7 @@ export function getMsgInlineKeyboard(ctx: ContextMessageUpdate) {
     return (ctx.update.callback_query.message as any)?.reply_markup as InlineKeyboardMarkup
 }
 
-export interface UpdatableMessageState {
-    msgId?: number
-    lastText?: string
-    lastMarkup?: CallbackButton[][]
-}
-
-export interface UpdateMenu {
-    text: string,
-    buttons: CallbackButton[][]
-}
-
 // @deprec -> editMessageAndButtons
-export async function updateMenu(ctx: ContextMessageUpdate, upd: UpdateMenu, state: UpdatableMessageState) {
-
-    let response;
-    if (state.msgId === undefined) {
-        response = await ctx.replyWithHTML(upd.text, {
-                ...Extra.markup(Markup.inlineKeyboard(upd.buttons)),
-                disable_web_page_preview: true
-            }
-        )
-    } else {
-
-        if (state.lastText === upd.text && JSON.stringify(state.lastMarkup) === JSON.stringify(upd.buttons)) {
-            ctx.logger.debug('message not changed')
-            return
-        }
-
-        response = await ctx.editMessageText(upd.text, Extra.HTML()
-            .webPreview(false)
-            .markup(Markup.inlineKeyboard(upd.buttons)))
-    }
-    if (typeof response !== 'boolean') {
-        state.msgId = response.message_id
-        state.lastText = upd.text
-        state.lastMarkup = upd.buttons
-    }
-}
-
 export function backToMainButtonTitle() {
     return i18SharedBtn('markup_back')
 }
@@ -242,7 +204,7 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
 }
 
 export function getMsgId(ctx: ContextMessageUpdate): number {
-    return ctx.update.message?.message_id || ctx.update?.callback_query?.message?.message_id
+    return ctx.update.message?.message_id || ctx.update.callback_query?.message?.message_id
 }
 
 export async function buttonIsOldGoToMain(ctx: ContextMessageUpdate) {

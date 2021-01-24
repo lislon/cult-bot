@@ -38,8 +38,8 @@ export class FavoritesPagerConfig implements SliderConfig<void> {
         return favoriteCardButtonsRow(ctx, event)
     }
 
-    backButton(ctx: ContextMessageUpdate): CallbackButton {
-        return backButton()
+    backButtonCallbackData(ctx: ContextMessageUpdate): string {
+        return backButton().callback_data
     }
 
     analytics(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset): void {

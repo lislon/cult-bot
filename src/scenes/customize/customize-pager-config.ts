@@ -1,6 +1,5 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
-import { CallbackButton } from 'telegraf/typings/markup'
-import { BaseScene, Markup } from 'telegraf'
+import { BaseScene } from 'telegraf'
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { CustomizeFilters, prepareRepositoryQuery } from './customize-common'
@@ -35,8 +34,8 @@ export class CustomizePagerConfig implements SliderConfig<CustomizeFilters> {
         })
     }
 
-    backButton(ctx: ContextMessageUpdate): CallbackButton {
-        return Markup.callbackButton(i18Btn(ctx, 'back'), actionName(`card_back`))
+    backButtonCallbackData(ctx: ContextMessageUpdate): string {
+        return actionName(`card_back`)
     }
 
     analytics(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset, filters: CustomizeFilters): void {

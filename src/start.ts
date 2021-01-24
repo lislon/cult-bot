@@ -8,9 +8,10 @@ import { logger } from './util/logger'
 import { db } from './database/db'
 import { i18n } from './util/i18n'
 import { rawBot } from './bot'
-import { omit } from 'lodash'
 import { redis } from './util/reddis'
 import { adminIds, adminUsernames } from './util/admins-list'
+import { Event } from './template/Event'
+import ReactDOMServer from 'react-dom/server'
 
 const app = express()
 
@@ -113,7 +114,8 @@ app.get('/event/:id', async (request: Request<{ id: number }>, response: Respons
     if (event !== undefined) {
         const convert = require('xml-js')
         const options = {compact: true, ignoreComment: true, spaces: 4}
-        const result = convert.json2xml({event: omit(event, ['reviewer', 'likes', 'dislikes', 'order_rnd'])}, options)
+        // const result = convert.json2xml({event: omit(event, ['reviewer', 'likes', 'dislikes', 'order_rnd'])}, options)
+        const result = ReactDOMServer.renderToString(Event(event))
         return response.contentType('text/html').send(result)
     } else {
         return response.status(404).send()

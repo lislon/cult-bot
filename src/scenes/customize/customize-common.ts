@@ -1,5 +1,5 @@
 import { ContextMessageUpdate, EventFormat, MyInterval, TagLevel2 } from '../../interfaces/app-interfaces'
-import { getNextWeekendRange, SessionEnforcer, UpdatableMessageState } from '../shared/shared-logic'
+import { getNextWeekendRange, SessionEnforcer } from '../shared/shared-logic'
 import { mapUserInputToTimeIntervals } from './customize-utils'
 import { cleanOblastiTag } from './filters/customize-oblasti'
 
@@ -12,12 +12,11 @@ export interface CustomizeFilters {
     time: string[]
 }
 
-export interface CustomizeSceneState extends UpdatableMessageState, CustomizeFilters {
+export interface CustomizeSceneState extends CustomizeFilters {
     openedMenus: string[]
     resultsFound?: number
     currentStage: StageType
     prevStage?: StageType
-    msgId?: number
 }
 
 export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
@@ -29,8 +28,7 @@ export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         oblasti,
         format,
         currentStage,
-        prevStage,
-        msgId
+        prevStage
     } = ctx.session.customize || {}
 
     ctx.session.customize = {
@@ -41,7 +39,6 @@ export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         format: SessionEnforcer.array(format),
         currentStage: currentStage || 'root',
         resultsFound: SessionEnforcer.number(resultsFound),
-        msgId: SessionEnforcer.number(msgId),
         prevStage,
     }
 }

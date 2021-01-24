@@ -2,7 +2,7 @@ import { ContextMessageUpdate, Event, MyInterval } from '../../interfaces/app-in
 import { BaseScene } from 'telegraf'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { ScenePack } from '../../database/db-packs'
-import { SessionEnforcer, UpdatableMessageState } from '../shared/shared-logic'
+import { SessionEnforcer } from '../shared/shared-logic'
 import { db } from '../../database/db'
 import { addDays, max, startOfDay, startOfISOWeek } from 'date-fns/fp'
 import flow from 'lodash/fp/flow'
@@ -13,7 +13,7 @@ export const scene = new BaseScene<ContextMessageUpdate>('packs_scene');
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
 
 
-export interface PacksSceneState extends UpdatableMessageState {
+export interface PacksSceneState {
     packs: ScenePack[]
     packSelectedIdx?: number
     eventSelectedIdx?: number
@@ -25,7 +25,6 @@ export function getNextRangeForPacks(now: Date): MyInterval {
         end: flow(startOfISOWeek, startOfDay, addMonths(1))(now)
     }
 }
-
 
 export async function getPacksList(ctx: ContextMessageUpdate): Promise<ScenePack[]> {
     prepareSessionStateIfNeeded(ctx)
@@ -58,28 +57,17 @@ export async function getPackEventSelected(ctx: ContextMessageUpdate): Promise<E
 
 export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     const {
-        msgId,
-        lastText,
-        lastMarkup,
         packSelectedIdx,
         eventSelectedIdx,
         packs
     } = ctx.session.packsScene || {}
 
     ctx.session.packsScene = {
-        msgId,
-        lastText,
-        lastMarkup,
         packs,
         packSelectedIdx: SessionEnforcer.number(packSelectedIdx),
         eventSelectedIdx: SessionEnforcer.number(eventSelectedIdx),
     }
 }
-
-export function getCurPackIndex(ctx: ContextMessageUpdate) {
-    return ctx.session.packsScene.packSelectedIdx || 0
-}
-
 export function getPacksCount(ctx: ContextMessageUpdate) {
     return ctx.session.packsScene.packs.length
 }

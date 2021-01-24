@@ -12,7 +12,7 @@ import {
     scene
 } from './packs-common'
 import { cardFormat } from '../shared/card-format'
-import { generatePlural, mySlugify, updateMenu } from '../shared/shared-logic'
+import { editMessageAndButtons, generatePlural, mySlugify } from '../shared/shared-logic'
 import emojiRegex from 'emoji-regex'
 import { getLikesRow } from '../likes/likes-common'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
@@ -35,10 +35,13 @@ export async function displayMainMenu(ctx: ContextMessageUpdate) {
         [backButton()]
     ]
 
-    await updateMenu(ctx, {
+    await editMessageAndButtons(ctx, {
         text: i18Msg(ctx, 'welcome'),
         buttons
-    }, ctx.session.packsScene)
+    }.buttons, {
+        text: i18Msg(ctx, 'welcome'),
+        buttons
+    }.text)
 }
 
 export async function displayPackMenu(ctx: ContextMessageUpdate) {
@@ -60,10 +63,13 @@ export async function displayPackMenu(ctx: ContextMessageUpdate) {
         [Markup.callbackButton(i18Btn(ctx, 'pack_back'), actionName(`pack_back`))]
     ]
 
-    await updateMenu(ctx, {
+    await editMessageAndButtons(ctx, {
         text: text,
         buttons
-    }, ctx.session.packsScene)
+    }.buttons, {
+        text: text,
+        buttons
+    }.text)
 }
 
 export async function displayEventsMenu(ctx: ContextMessageUpdate) {
@@ -97,11 +103,17 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
         ]
     ]
 
-    await updateMenu(ctx, {
+    await editMessageAndButtons(ctx, {
         text: cardFormat(event, {
             showAdminInfo: false,
             packs: true
         }),
         buttons
-    }, ctx.session.packsScene)
+    }.buttons, {
+        text: cardFormat(event, {
+            showAdminInfo: false,
+            packs: true
+        }),
+        buttons
+    }.text)
 }

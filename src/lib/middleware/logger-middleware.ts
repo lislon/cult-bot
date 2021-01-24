@@ -1,6 +1,7 @@
 import { Update } from 'telegram-typings'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import chalk from 'chalk'
+import { logger } from '../../util/logger'
 
 const DEFAULT_COLORS = {
     id: chalk.blue,
@@ -164,7 +165,11 @@ function format(update: Update, options: any = {}) {
 
 export function loggerMiddleware() {
     return (ctx: ContextMessageUpdate, next: any) => {
-        ctx.logger.info(format(ctx.update))
+        if (ctx.logger !== undefined) {
+            ctx.logger.info(format(ctx.update))
+        } else {
+            logger.info(format(ctx.update))
+        }
         return Promise.resolve(next())
     }
 }

@@ -4,7 +4,6 @@ import { getNextWeekendRange } from '../shared/shared-logic'
 import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { BaseScene } from 'telegraf'
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
-import { CallbackButton } from 'telegraf/typings/markup'
 
 const scene = new BaseScene<ContextMessageUpdate>('search_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
@@ -42,8 +41,8 @@ export class SearchPagerConfig implements SliderConfig<string> {
         await ctx.replyWithHTML(i18Msg(ctx, 'no_results'))
     }
 
-    backButton(ctx: ContextMessageUpdate): CallbackButton {
-        return backButton()
+    backButtonCallbackData(ctx: ContextMessageUpdate): string {
+        return backButton().callback_data
     }
 
     analytics(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset, query: string): void {

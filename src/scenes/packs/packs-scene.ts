@@ -14,7 +14,7 @@ function loop(index: number | undefined, count: number, dir: string) {
 }
 
 function doNotUpdateInlineMenu(ctx: ContextMessageUpdate) {
-    ctx.session.packsScene.msgId = undefined
+    // ctx.session.packsScene.msgId = undefined
 }
 
 scene

@@ -1,8 +1,7 @@
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { db, LimitOffset } from '../../database/db'
-import { CallbackButton } from 'telegraf/typings/markup'
-import { BaseScene, Markup } from 'telegraf'
+import { BaseScene } from 'telegraf'
 import {
     analyticsTopParams,
     getTopEventCount,
@@ -32,8 +31,8 @@ export class TopsPagerConfig implements SliderConfig<TopEventsStageQuery> {
         return await db.repoEventsCommon.getEventsByIds(eventIds)
     }
 
-    backButton(ctx: ContextMessageUpdate): CallbackButton {
-        return Markup.callbackButton(i18Btn(ctx, 'back_inline'), actionName(`back_inline`))
+    backButtonCallbackData(ctx: ContextMessageUpdate): string {
+        return actionName(`back_inline`)
     }
 
     analytics(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset, state: TopEventsStageQuery): void {
