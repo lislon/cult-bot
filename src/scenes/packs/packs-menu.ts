@@ -12,7 +12,7 @@ import {
     scene
 } from './packs-common'
 import { cardFormat } from '../shared/card-format'
-import { editMessageAndButtons, generatePlural, mySlugify } from '../shared/shared-logic'
+import { editMessageAndButtons, EditMessageAndButtonsOptions, generatePlural, mySlugify } from '../shared/shared-logic'
 import emojiRegex from 'emoji-regex'
 import { getLikesRow } from '../likes/likes-common'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
@@ -21,7 +21,7 @@ import { analyticRecordEventView } from '../../lib/middleware/analytics-middlewa
 const {actionName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
 
 
-export async function displayMainMenu(ctx: ContextMessageUpdate) {
+export async function displayMainMenu(ctx: ContextMessageUpdate, options?: EditMessageAndButtonsOptions) {
     const packs = await getPacksList(ctx)
     resetPackIndex(ctx)
     ctx.ua.pv({dp: `/packs/`, dt: `Подборки`})
@@ -35,16 +35,10 @@ export async function displayMainMenu(ctx: ContextMessageUpdate) {
         [backButton()]
     ]
 
-    await editMessageAndButtons(ctx, {
-        text: i18Msg(ctx, 'welcome'),
-        buttons
-    }.buttons, {
-        text: i18Msg(ctx, 'welcome'),
-        buttons
-    }.text)
+    await editMessageAndButtons(ctx, buttons, i18Msg(ctx, 'welcome'), options)
 }
 
-export async function displayPackMenu(ctx: ContextMessageUpdate) {
+export async function displayPackMenu(ctx: ContextMessageUpdate, options?: EditMessageAndButtonsOptions) {
     const pack = await getPackSelected(ctx)
     resetPacksEventIndex(ctx)
 
@@ -63,13 +57,7 @@ export async function displayPackMenu(ctx: ContextMessageUpdate) {
         [Markup.callbackButton(i18Btn(ctx, 'pack_back'), actionName(`pack_back`))]
     ]
 
-    await editMessageAndButtons(ctx, {
-        text: text,
-        buttons
-    }.buttons, {
-        text: text,
-        buttons
-    }.text)
+    await editMessageAndButtons(ctx, buttons, text, options)
 }
 
 export async function displayEventsMenu(ctx: ContextMessageUpdate) {
@@ -89,17 +77,18 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
 
     const buttons = [
         [
-            Markup.callbackButton(i18Btn(ctx, 'event_prev'), actionName(`event_prev`)),
-            ...getLikesRow(ctx, event)
-        ],
-        [
             Markup.callbackButton(i18Btn(ctx, 'event_back', {
                 packTitle: packTitleNoEmoji
             }), actionName(`event_back`)),
+            ...getLikesRow(ctx, event)
+        ],
+        [
+            Markup.callbackButton(i18Btn(ctx, 'event_prev'), actionName(`event_prev`)),
             Markup.callbackButton(i18Btn(ctx, 'event_curr', {
                 page: getPacksCurEventIndex(ctx) + 1,
                 total: await getEventsCount(ctx)
-            }) + ' ' + i18Btn(ctx, 'event_next'), actionName(`event_next`)),
+            }), actionName(`event_curr`)),
+            Markup.callbackButton(i18Btn(ctx, 'event_next'), actionName(`event_next`)),
         ]
     ]
 

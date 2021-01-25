@@ -14,15 +14,17 @@ function loop(index: number | undefined, count: number, dir: string) {
 }
 
 function doNotUpdateInlineMenu(ctx: ContextMessageUpdate) {
-    // ctx.session.packsScene.msgId = undefined
 }
 
+// ctx.session.packsScene.msgId = undefined
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
         await warnAdminIfDateIsOverriden(ctx)
 
         await replyWithBackToMainMarkup(ctx)
-        await displayMainMenu(ctx)
+        await displayMainMenu(ctx, {
+            forceNewMsg: true
+        })
     })
     .leave(async (ctx) => {
         ctx.session.packsScene = undefined
@@ -53,7 +55,7 @@ scene
         await ctx.answerCbQuery()
         await displayPackMenu(ctx)
     })
-    .action(actionName('event_curr_tip'), async (ctx: ContextMessageUpdate) => {
+    .action(actionName('event_curr'), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery(i18Msg(ctx, 'event_curr_tip'))
     })
     .hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
@@ -63,9 +65,13 @@ scene
             if (ctx.session.packsScene.packSelectedIdx === undefined) {
                 await ctx.scene.enter('main_scene')
             } else if (ctx.session.packsScene.eventSelectedIdx === undefined) {
-                await displayMainMenu(ctx)
+                await displayMainMenu(ctx, {
+                    forceNewMsg: true
+                })
             } else {
-                await displayPackMenu(ctx)
+                await displayPackMenu(ctx, {
+                    forceNewMsg: true
+                })
             }
         } catch (e) {
             ctx.logger.warn(e)

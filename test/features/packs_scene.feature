@@ -42,8 +42,8 @@ Feature: Packs scene
     Then Bot edits text '*<b>A</b>*'
     Then Bot edits inline buttons:
       """
-      [«] [👍 0] [👎 0] [⭐]
-      [◀️ Назад] [1 / 3 »]
+      [◀️ Назад] [👍 0] [👎 0] [⭐]
+      [«] [1 / 3] [»]
       """
     Then I click inline [Назад]
     Then Google analytics pageviews will be:
