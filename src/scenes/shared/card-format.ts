@@ -113,10 +113,19 @@ export function cardFormat(row: Event | AdminEvent | EventFavorite, options: Car
         text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b> <i>(прошло)</i>`)
     }
 
+    if (options.deleted) {
+        text += '\n'.repeat(7)
+        text += 'Событие убрано из избранного.'
+        text += '\n'.repeat(7)
+        text += 'Чтобы вернуть его, нажмите на ↩️'
+        return text
+    }
+
     text += '\n'
     text += '\n'
     text += `${strikeIfDeleted(addHtmlNiceUrls(escapeHTML(row.description)))} \n`
     text += '\n'
+
 
     if (!fieldIsQuestionMarkOrEmpty(row.place)) {
         text += `🌐 ${addHtmlNiceUrls(escapeHTML(row.place))}\n`
