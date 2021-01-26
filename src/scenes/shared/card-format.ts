@@ -152,8 +152,7 @@ export function cardFormat(row: Event | AdminEvent | EventFavorite, options: Car
         text += `${formatUrl(escapeHTML(row.url))}\n`
     }
     text += '\n'
-    const tags = [...row.tag_level_3, ...filterTagLevel2(row)].map(tag => `<a href="https://t.me/fbiwwbwm_dev_bot?start=tag${tag}">${escapeHTML(tag)}</a>`)
-    text += `${tags.join(' ')}\n`
+    text += `${strikeIfDeleted(escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' ')))}\n`
     if (options.showAdminInfo === true) {
         text += `<i>${row.ext_id}, ${row.reviewer}, оценка ${row.rating}</i>\n`
     }
