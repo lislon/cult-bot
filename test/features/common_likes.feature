@@ -12,30 +12,30 @@ Feature: Likes
     Then Bot responds '*января*'
     Then Bot responds '*<b>A</b>*' with inline buttons:
       """
-      [◀️ Назад] [👍 0] [👎 0] [⭐]
+      [◀️] [👍 0] [👎 0] [⭐]
       [«] [1 / 1] [»]
       """
     When I click inline [👍 0]
     Then Bot edits inline buttons:
       """
-      [◀️ Назад] [👍 1] [👎 0] [⭐]
+      [◀️] [👍 1] [👎 0] [⭐]
       [«] [1 / 1] [»]
       """
     When I click inline [👍 1]
     Then Bot edits inline buttons:
       """
-      [◀️ Назад] [👍 0] [👎 0] [⭐]
+      [◀️] [👍 0] [👎 0] [⭐]
       [«] [1 / 1] [»]
       """
     When I click inline [👎 0]
     Then Bot edits inline buttons:
       """
-      [◀️ Назад] [👍 0] [👎 1] [⭐]
+      [◀️] [👍 0] [👎 1] [⭐]
       [«] [1 / 1] [»]
       """
     When I click inline [👍 0]
     Then Bot edits inline buttons:
       """
-      [◀️ Назад] [👍 1] [👎 0] [⭐]
+      [◀️] [👍 1] [👎 0] [⭐]
       [«] [1 / 1] [»]
       """

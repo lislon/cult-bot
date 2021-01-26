@@ -2,8 +2,7 @@ import { BaseScene, Composer, Extra, Markup } from 'telegraf'
 import { ContextMessageUpdate, EventCategory, MyInterval } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import * as events from 'events'
-import { i18n } from '../../util/i18n'
-import { ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { backToMainButtonTitle, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { subSeconds } from 'date-fns/fp'
 import { isSameDay, isSameMonth, startOfDay } from 'date-fns'
 import { SceneRegister } from '../../middleware-utils'
@@ -25,10 +24,7 @@ const pager = new SliderPager<TopEventsStageQuery>(new TopsPagerConfig())
 
 
 const backMarkup = (ctx: ContextMessageUpdate) => {
-    const {i18SharedBtn} = sceneHelper(ctx)
-
-    const btn = Markup.button(i18SharedBtn('back'))
-
+    const btn = Markup.button(backToMainButtonTitle())
     return Markup.keyboard([btn]).resize()
 }
 
@@ -37,7 +33,6 @@ const content = (ctx: ContextMessageUpdate) => {
         ['theaters', 'exhibitions'],
         ['movies', 'events'],
         ['walks', 'concerts'],
-        ['back'],
     ]
 
     const mainButtons = topLevelMenu.map(row =>
@@ -47,7 +42,7 @@ const content = (ctx: ContextMessageUpdate) => {
     )
     return {
         msg: i18Msg(ctx, 'select_category'),
-        markupMainMenu: Extra.HTML(true).markup(Markup.keyboard(mainButtons).resize())
+        markupMainMenu: Extra.HTML(true).markup(Markup.keyboard([...mainButtons, [Markup.button(backToMainButtonTitle())]]).resize())
     }
 }
 
@@ -70,7 +65,7 @@ async function showExhibitionsSubMenu(ctx: ContextMessageUpdate) {
     const subMenu = [
         ['exhibitions_perm'],
         ['exhibitions_temp'],
-        ['back'],
+        ['back_exhibitions'],
     ]
 
     const buttons = subMenu.map(row =>
@@ -160,8 +155,8 @@ scene
     .leave(async (ctx) => {
         ctx.session.topsScene = undefined
     })
-    .hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
-        await goBack(ctx)
+    .hears(i18nModuleBtnName('back_exhibitions'), async (ctx: ContextMessageUpdate) => {
+        await ctx.scene.enter('tops_scene')
     })
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {

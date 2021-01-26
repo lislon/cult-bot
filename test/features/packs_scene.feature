@@ -42,10 +42,10 @@ Feature: Packs scene
     Then Bot edits text '*<b>A</b>*'
     Then Bot edits inline buttons:
       """
-      [◀️ Назад] [👍 0] [👎 0] [⭐]
+      [◀️] [👍 0] [👎 0] [⭐]
       [«] [1 / 3] [»]
       """
-    Then I click inline [Назад]
+    Then I click inline [◀️]
     Then Google analytics pageviews will be:
       | dp                | dt                 |
       | /packs/           | Подборки           |

@@ -316,17 +316,18 @@ scene
             await restoreOldCustomize(ctx)
         }
     })
-    .hears(i18nModuleBtnName('back'), async (ctx: ContextMessageUpdate) => {
-        await resetSessionIfProblem(ctx, async () => {
-            prepareSessionStateIfNeeded(ctx)
-            if (ctx.session.customize.currentStage === 'root') {
-                await ctx.scene.enter('main_scene')
-            } else {
-                const newMsgId = await updateDialog(ctx, 'root', {forceNewMsg: true})
-                eventSlider.cloneActiveStateWithNewMsgId(ctx, newMsgId)
-            }
-        })
-    })
+// .hears(i18nModuleBtnName('back'), async (ctx: ContextMessageUpdate) => {
+//     await resetSessionIfProblem(ctx, async () => {
+//         prepareSessionStateIfNeeded(ctx)
+//         await ctx.scene.enter('main_scene')
+//         // if (ctx.session.customize.currentStage === 'root') {
+//         //     await ctx.scene.enter('main_scene')
+//         // } else {
+//         //     const newMsgId = await updateDialog(ctx, 'root', {forceNewMsg: true})
+//         //     eventSlider.cloneActiveStateWithNewMsgId(ctx, newMsgId)
+//         // }
+//     })
+// })
 
 async function editMessageNotifyUserItsOld(ctx: ContextMessageUpdate) {
     await editMessageAndButtons(ctx, [], i18Msg(ctx, 'message_is_old'))

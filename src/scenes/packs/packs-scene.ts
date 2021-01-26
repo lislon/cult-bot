@@ -1,10 +1,9 @@
 import { Composer } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { i18n } from '../../util/i18n'
 import { SceneRegister } from '../../middleware-utils'
 import { displayEventsMenu, displayMainMenu, displayPackMenu } from './packs-menu'
-import { getEventsCount, getPacksList, prepareSessionStateIfNeeded, scene } from './packs-common'
+import { getEventsCount, getPacksList, scene } from './packs-common'
 import { replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
@@ -58,32 +57,32 @@ scene
     .action(actionName('event_curr'), async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery(i18Msg(ctx, 'event_curr_tip'))
     })
-    .hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
-        await prepareSessionStateIfNeeded(ctx)
-        doNotUpdateInlineMenu(ctx)
-        try {
-            if (ctx.session.packsScene.packSelectedIdx === undefined) {
-                await ctx.scene.enter('main_scene')
-            } else if (ctx.session.packsScene.eventSelectedIdx === undefined) {
-                await displayMainMenu(ctx, {
-                    forceNewMsg: true
-                })
-            } else {
-                await displayPackMenu(ctx, {
-                    forceNewMsg: true
-                })
-            }
-        } catch (e) {
-            ctx.logger.warn(e)
-            await ctx.scene.enter('main_scene')
-        }
-    })
+// .hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
+//     await prepareSessionStateIfNeeded(ctx)
+//     doNotUpdateInlineMenu(ctx)
+//     try {
+//         if (ctx.session.packsScene.packSelectedIdx === undefined) {
+//             await ctx.scene.enter('main_scene')
+//         } else if (ctx.session.packsScene.eventSelectedIdx === undefined) {
+//             await displayMainMenu(ctx, {
+//                 forceNewMsg: true
+//             })
+//         } else {
+//             await displayPackMenu(ctx, {
+//                 forceNewMsg: true
+//             })
+//         }
+//     } catch (e) {
+//         ctx.logger.warn(e)
+//         await ctx.scene.enter('main_scene')
+//     }
+// })
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
         .action(/packs_scene.direct_menu/, async (ctx) => {
             await ctx.answerCbQuery()
-            await displayMainMenu(ctx)
+            await displayMainMenu(ctx, {forceNewMsg: true})
         })
         .action(/packs_scene.direct_(\d+)/, async (ctx) => {
             await ctx.answerCbQuery()
@@ -95,9 +94,9 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             ctx.session.packsScene.packSelectedIdx = packs.findIndex(p => p.id === directPackId)
             if (ctx.session.packsScene.packSelectedIdx === -1) {
                 await ctx.replyWithHTML(i18Msg(ctx, 'direct_not_available'))
-                await displayMainMenu(ctx)
+                await displayMainMenu(ctx, {forceNewMsg: true})
             } else {
-                await displayPackMenu(ctx)
+                await displayPackMenu(ctx, {forceNewMsg: true})
             }
         })
 }

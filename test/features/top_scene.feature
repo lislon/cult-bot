@@ -14,7 +14,7 @@ Feature: Tops scene
       [~tops_scene.theaters] [~tops_scene.exhibitions]
       [~tops_scene.movies] [~tops_scene.events]
       [~tops_scene.walks] [~tops_scene.concerts]
-      [~tops_scene.back]
+      [◀️ В главное меню]
       """
 
   Scenario: I can see events in category 'temporary exhibitions'
@@ -23,7 +23,7 @@ Feature: Tops scene
       """
       [~tops_scene.exhibitions_perm]
       [~tops_scene.exhibitions_temp]
-      [~tops_scene.back]
+      [~tops_scene.back_exhibitions]
       """
     Then I click markup [~tops_scene.exhibitions_temp]
     Then Bot responds '<b>Временные выставки</b> на выходные 04-05 января:'
@@ -41,7 +41,7 @@ Feature: Tops scene
       """
       [~tops_scene.exhibitions_perm]
       [~tops_scene.exhibitions_temp]
-      [~tops_scene.back]
+      [~tops_scene.back_exhibitions]
       """
     Then I click markup [~tops_scene.exhibitions_perm]
     Then Bot responds '<b>Постоянные коллекции</b> на выходные 04-05 января:'
@@ -49,11 +49,12 @@ Feature: Tops scene
 
   Scenario: When I click back in subcategory I get into tops menu
     When I click markup [~tops_scene.exhibitions]
-    Then I click markup [Назад]
-    Then Bot responds '*Воспользуйтесь*'
+    Then I click markup [~tops_scene.back_exhibitions]
+    Then Bot responds '*Выберите рубрику*'
+    Then I will be on scene 'tops_scene'
 
   Scenario: When I click back in tops menu i will get to main scene
-    Then I click markup [Назад]
+    Then I click markup [В главное меню]
     Then I will be on scene 'main_scene'
 
   Scenario: I see today message on last day of weekend

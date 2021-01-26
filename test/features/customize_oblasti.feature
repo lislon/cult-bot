@@ -27,7 +27,7 @@ Feature: Customize time
       [➕ Театр ]
       [➕ Мероприятия ]
       [➕ Прогулки ]
-      [◀️ Назад] [🎯 События (1)]
+      [◀️ Назад] [🎯 1 найдено]
       """
     When I click inline [Постоянные коллекции]
     Then Bot edits inline buttons:
@@ -43,7 +43,7 @@ Feature: Customize time
       [➕ Театр ]
       [➕ Мероприятия ]
       [➕ Прогулки ]
-      [◀️ Назад] [🎯 События (1)]
+      [◀️ Назад] [🎯 1 найдено]
       """
     When I click inline [Дом-музей]
     Then Bot edits inline buttons:
@@ -59,7 +59,7 @@ Feature: Customize time
       [➕ Театр ]
       [➕ Мероприятия ]
       [➕ Прогулки ]
-      [◀️ Назад] [🎯 События (1)]
+      [◀️ Назад] [🎯 1 найдено]
       """
     When I click inline [Назад]
     Then Bot edits text:
@@ -68,9 +68,9 @@ Feature: Customize time
 
     <code> </code>📎 <b>Рубрики</b>:  Дом-музей
 
-    🎯 1 событие выбрано
+    🎯 1 событие найдено
     """
-    When I click inline [🎯 События (1)]
+    When I click inline [🎯 1 найдено]
     Then Bot edits slider with event 'A'
 
   Scenario: I will see both #наука и #техника when select Научно-технические
@@ -81,7 +81,7 @@ Feature: Customize time
     When I click inline [Рубрики]
     When I click inline [Постоянные коллекции]
     When I click inline [Научно-технические]
-    When I click inline [События (2)]
+    When I click inline [2 найдено]
     Then Bot edits slider with event 'A'
     When I click slider next
     Then Bot edits slider with event 'B'

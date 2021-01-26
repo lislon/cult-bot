@@ -28,7 +28,7 @@ Feature: Customize time
       """
       [➕ Суббота (04.01) ]
       [➕ Воскресенье (05.01) ]
-      [◀️ Назад] [⚠️ События (0)]
+      [◀️ Назад] [⚠️ 0 найдено]
       """
 
   Scenario: I want select to events by time on sunday
@@ -42,7 +42,7 @@ Feature: Customize time
     Then Bot edits inline buttons:
       """
       [➕ Воскресенье (05.01) ]
-      [◀️ Назад] [🎯 События (2)]
+      [◀️ Назад] [🎯 2 найдено]
       """
     When I click inline [➕ Воскресенье (05.01)]
     Then Bot edits inline buttons:
@@ -54,7 +54,7 @@ Feature: Customize time
       [🌇 15:00-19:00 ]
       [🏙 19:00-22:00 ]
       [🌃 22:00-24:00 ]
-      [◀️ Назад] [🎯 События (2)]
+      [◀️ Назад] [🎯 2 найдено]
       """
     When I click inline [🌃 22:00-24:00]
     Then Bot edits inline buttons:
@@ -66,9 +66,9 @@ Feature: Customize time
       [🌇 15:00-19:00 ]
       [🏙 19:00-22:00 ]
       [🌃 22:00-24:00 ✔]
-      [◀️ Назад] [🎯 События (1)]
+      [◀️ Назад] [🎯 1 найдено]
       """
-    Then Bot responds with cb '1 событие выбрано'
+    Then Bot responds with cb '1 событие найдено'
     When I click inline [Назад]
     Then Bot edits text:
     """
@@ -76,7 +76,7 @@ Feature: Customize time
 
     <code> </code>🕒 <b>Время</b>:  ВС (05.01): 22.00-24.00
 
-    🎯 1 событие выбрано
+    🎯 1 событие найдено
     """
 
   Scenario: When I selected filter saturday 22-24, then some time passed and today is sunday, these selections should gone
@@ -97,7 +97,7 @@ Feature: Customize time
       [➖ Воскресенье (05.01) ]
       [🏙 19:00-22:00 ]
       [🌃 22:00-24:00 ]
-      [◀️ Назад] [⚠️ События (0)]
+      [◀️ Назад] [⚠️ 0 найдено]
       """
 
   Scenario: I selected time slot, but it passed
@@ -121,7 +121,7 @@ Feature: Customize time
       [Формат] [Рубрики]
       [Приоритеты] [Время ✔]
       [Сброс]
-      [Назад] [События (0)]
+      [Назад] [0 найдено]
       """
-    When I click inline [События (0)]
+    When I click inline [0 найдено]
     Then Bot responds with cb '*строгий*'

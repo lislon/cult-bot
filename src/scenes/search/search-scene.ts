@@ -50,7 +50,9 @@ scene
             await ctx.replyWithHTML(i18Msg(ctx, 'here_your_results', {
                 query: ctx.session.search.request
             }))
-            await eventSlider.showOrUpdateSlider(ctx, state)
+            await eventSlider.showOrUpdateSlider(ctx, state, {
+                forceNewMsg: true
+            })
         } else {
             await ctx.replyWithHTML(i18Msg(ctx, 'no_results'))
         }
