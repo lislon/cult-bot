@@ -18,7 +18,7 @@ const content = (ctx: ContextMessageUpdate) => {
         ['customize'],
         ['tops', 'packs'],
         ...[(isAdmin(ctx) ? ['search', 'admin'] : ['search'])],
-        ['favorites', 'feedback'],
+        ['feedback', 'favorites'],
     ]
 
     const mainButtons = menu.map(row =>
