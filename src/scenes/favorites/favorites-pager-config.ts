@@ -9,7 +9,7 @@ import { CardOptions } from '../shared/card-format'
 import { isEventInFavorites } from '../likes/likes-common'
 
 const scene = new BaseScene<ContextMessageUpdate>('favorites_scene')
-const {backButton, i18Msg} = i18nSceneHelper(scene)
+const {backButton, i18Msg, actionName} = i18nSceneHelper(scene)
 
 export class FavoritesPagerConfig implements SliderConfig<void> {
     readonly sceneId = scene.id
@@ -39,7 +39,7 @@ export class FavoritesPagerConfig implements SliderConfig<void> {
     }
 
     backButtonCallbackData(ctx: ContextMessageUpdate): string {
-        return backButton().callback_data
+        return actionName('back_to_favorite_main')
     }
 
     analytics(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset): void {
