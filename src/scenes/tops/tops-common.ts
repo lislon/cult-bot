@@ -20,7 +20,7 @@ export interface TopsSceneState extends TopEventsStageQuery {
     isInSubMenu: boolean
 }
 
-function getOblasti(ctx: ContextMessageUpdate, query: TopEventsStageQuery) {
+function getRubrics(ctx: ContextMessageUpdate, query: TopEventsStageQuery) {
     if (query.submenuSelected !== undefined) {
         return encodeTagsLevel1('exhibitions', [i18Msg(ctx, `exhibitions_tags.${query.submenuSelected}`)])
     }
@@ -35,7 +35,7 @@ export async function getTopEventIds(ctx: ContextMessageUpdate, query: TopEvents
     return await db.repoTopEvents.getTopIds({
         category: query.cat,
         interval: range,
-        oblasti: getOblasti(ctx, query),
+        rubrics: getRubrics(ctx, query),
         ...limitOffset,
     })
 }
@@ -44,7 +44,7 @@ export async function getTopEventCount(ctx: ContextMessageUpdate, query: TopEven
     return await db.repoTopEvents.getTopIdsCount({
         category: query.cat,
         interval: range,
-        oblasti: getOblasti(ctx, query),
+        rubrics: getRubrics(ctx, query),
     })
 }
 

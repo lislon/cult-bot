@@ -73,7 +73,7 @@ describe('Top events', () => {
         const interval = mkInterval('[2020-01-01 15:00, 2020-01-03 15:00)')
         const events = await db.repoTopEvents.getTopIds({
             category: 'exhibitions',
-            oblasti: ['exhibitions.#постоянныеколлекции'],
+            rubrics: ['exhibitions.#постоянныеколлекции'],
             interval: interval
         })
         expect([A]).toStrictEqual(events)

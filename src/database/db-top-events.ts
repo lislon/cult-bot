@@ -9,7 +9,7 @@ import { LimitOffset } from './db'
 export interface TopEventsDbQuery extends Partial<LimitOffset> {
     category: EventCategory
     interval: MyInterval
-    oblasti?: string[]
+    rubrics?: string[]
 }
 
 export class TopEventsRepository {
@@ -71,7 +71,7 @@ export class TopEventsRepository {
                     where ${rangeHalfOpenIntersect('$(interval)::tstzrange', 'cbet.entrance')} AND cbet.event_id = cb.id
                 )
                 AND cb.category = $(category)
-                AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
+                AND (cb.tag_level_1 && $(rubrics) OR $(rubrics) = '{}')
                 AND cb.is_anytime = false
                 AND cb.deleted_at IS NULL`
 
@@ -85,7 +85,7 @@ export class TopEventsRepository {
                         where ${rangeHalfOpenIntersect('$(interval)::tstzrange', 'cbet.entrance')} AND cbet.event_id = cb.id
                     )
                     and cb.category =  $(category)
-                    AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
+                    AND (cb.tag_level_1 && $(rubrics) OR $(rubrics) = '{}')
                     and cb.is_anytime = true
                     AND cb.deleted_at IS NULL
                 order by
@@ -95,7 +95,7 @@ export class TopEventsRepository {
         const queryCommonParams = {
             interval: mapToPgInterval(adjustedIntervals),
             category: query.category,
-            oblasti: query.oblasti || []
+            rubrics: query.rubrics || []
         }
         return {fixedTimeQuery, anyTimeQuery, queryCommonParams}
     }

@@ -39,18 +39,18 @@ export class CustomizePagerConfig implements SliderConfig<CustomizeFilters> {
     }
 
     analytics(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset, filters: CustomizeFilters): void {
-        function extracted(format: string, oblasti: string, cennosti: string, time: string, noFilters: string) {
+        function extracted(format: string, rubrics: string, priorities: string, time: string, noFilters: string) {
             const filtersStr = [
                 filters.format.length > 0 ? format : undefined,
-                filters.oblasti.length > 0 ? oblasti : undefined,
-                filters.cennosti.length > 0 ? cennosti : undefined,
+                filters.rubrics.length > 0 ? rubrics : undefined,
+                filters.priorities.length > 0 ? priorities : undefined,
                 filters.time.length > 0 ? time : undefined,
             ].filter(s => s !== undefined).join('+').replace(/^$/, noFilters)
-            return filtersStr;
+            return filtersStr
         }
 
-        const filtersStr = extracted('format', 'rubrics', 'cennosti', 'time', 'no_filters');
-        const filtersStrHuman = extracted('Формат', 'Рубрики', 'Ценности', 'Время', 'Без фильтра');
+        const filtersStr = extracted('format', 'rubrics', 'priorities', 'time', 'no_filters')
+        const filtersStrHuman = extracted('Формат', 'Рубрики', 'Ценности', 'Время', 'Без фильтра')
 
         // const pageTitle = pageNumber > 1 ? ` [Страница ${pageNumber}]` : ''
         ctx.ua.pv({

@@ -16,30 +16,30 @@ describe('Filtering', () => {
         await cleanDb()
     })
 
-    test('search only by oblasti works', async () => {
+    test('search only by rubrics works', async () => {
         const [A, B, C] = await syncEventsDb4Test([
             getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_1: ['#A', '#B', '#C']}),
             getMockEvent({title: 'B', category: 'theaters', eventTime, tag_level_1: ['#A', '#B']}),
             getMockEvent({title: 'C', category: 'theaters', eventTime, tag_level_1: ['#A']})
         ])
         expectedIds([A, B, C], await db.repoCustomEvents.findEventIdsCustomFilter({
-            oblasti: ['theaters.#A', 'theaters.#B'],
+            rubrics: ['theaters.#A', 'theaters.#B'],
             weekendRange
         }))
 
     }, 1000000)
 
-    test('no oblasti means all oblasti', async () => {
+    test('no rubrics means all rubrics', async () => {
         const [A, B, C] = await syncEventsDb4Test([
             getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_1: ['#A', '#B', '#C']}),
             getMockEvent({title: 'B', category: 'theaters', eventTime, tag_level_1: ['#A', '#B']}),
             getMockEvent({title: 'C', category: 'theaters', eventTime, tag_level_1: ['#A']})
         ])
 
-        expectedIds([A, B, C], await db.repoCustomEvents.findEventIdsCustomFilter({oblasti: [], weekendRange}))
+        expectedIds([A, B, C], await db.repoCustomEvents.findEventIdsCustomFilter({rubrics: [], weekendRange}))
     }, 1000000)
 
-    test('search only by cennosti works', async () => {
+    test('search only by priorities works', async () => {
         const [A, B, C] = await syncEventsDb4Test([
             getMockEvent({
                 title: 'A',
@@ -52,7 +52,7 @@ describe('Filtering', () => {
         ])
 
         expectedIds([A, B], await db.repoCustomEvents.findEventIdsCustomFilter({
-            cennosti: ['#компанией', '#комфорт'],
+            priorities: ['#компанией', '#комфорт'],
             weekendRange
         }))
     }, 1000000)
@@ -114,7 +114,7 @@ describe('Filtering', () => {
             getMockEvent({title: 'C', eventTime, tag_level_2: ['#компанией', '#_недешево']})
         ])
         expectedIds([B, C], await db.repoCustomEvents.findEventIdsCustomFilter({
-            cennosti: ['#_недешево', '#бесплатно'],
+            priorities: ['#_недешево', '#бесплатно'],
             weekendRange
         }))
 
@@ -144,26 +144,29 @@ describe('Логика с детьми', () => {
     test('Если выбран 16+, то ищем два тега: 16+ и 12+', async () => {
         await expectedIds([D16, D12], await db.repoCustomEvents.findEventIdsCustomFilter({
             weekendRange,
-            cennosti: ['#сдетьми16+']
+            priorities: ['#сдетьми16+']
         }))
     }, 1000000)
 
     test('Если выбран 12+, то ищем 12+ и 6+', async () => {
         expectedIds([D12, D6], await db.repoCustomEvents.findEventIdsCustomFilter({
             weekendRange,
-            cennosti: ['#сдетьми12+']
+            priorities: ['#сдетьми12+']
         }))
     }, 1000000)
 
     test('Если выбран 6+, то ищем 6+ и 0+', async () => {
         expectedIds([D6, D0], await db.repoCustomEvents.findEventIdsCustomFilter({
             weekendRange,
-            cennosti: ['#сдетьми6+']
+            priorities: ['#сдетьми6+']
         }))
     }, 1000000)
 
     test('Если выбран 0+, то ищем только 0+', async () => {
-        expectedIds([D0], await db.repoCustomEvents.findEventIdsCustomFilter({weekendRange, cennosti: ['#сдетьми0+']}))
+        expectedIds([D0], await db.repoCustomEvents.findEventIdsCustomFilter({
+            weekendRange,
+            priorities: ['#сдетьми0+']
+        }))
     }, 1000000)
 })
 

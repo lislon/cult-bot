@@ -9,13 +9,13 @@ import {
     getMsgId,
     replyWithBackToMainMarkup
 } from '../shared/shared-logic'
-import { formatExplainCennosti, formatExplainFormat, formatExplainOblasti, formatExplainTime } from './format-explain'
+import { formatExplainFormat, formatExplainpriorities, formatExplainRubrics, formatExplainTime } from './format-explain'
 import { resetSessionIfProblem } from './customize-utils'
 import { SceneRegister } from '../../middleware-utils'
 import { isEmpty } from 'lodash'
 import { prepareRepositoryQuery, prepareSessionStateIfNeeded, StageType } from './customize-common'
-import { cennostiOptionLogic, customizeCennosti } from './filters/customize-cennosti'
-import { customizeOblasti, oblastiOptionLogic } from './filters/customize-oblasti'
+import { customizepriorities, prioritiesOptionLogic } from './filters/customize-priorities'
+import { customizeRubrics, rubricsOptionLogic } from './filters/customize-rubrics'
 import { getKeyboardTime, timeOptionLogic } from './filters/customize-time'
 import { formatOptionLogic, getKeyboardFormat } from './filters/customize-format'
 import { SliderPager } from '../shared/slider-pager'
@@ -38,7 +38,7 @@ async function showFilteredEventsButton(ctx: ContextMessageUpdate) {
 
 function isAnyFilterSelected(ctx: ContextMessageUpdate): boolean {
     const state = ctx.session.customize
-    return (state.format.length + state.oblasti.length + state.cennosti.length + state.time.length) > 0
+    return (state.format.length + state.rubrics.length + state.priorities.length + state.time.length) > 0
 }
 
 function resetButton(ctx: ContextMessageUpdate) {
@@ -54,8 +54,8 @@ const getRootKeyboard = async (ctx: ContextMessageUpdate): Promise<CallbackButto
 
     const showEventsBtn = await showFilteredEventsButton(ctx)
     return [
-        [btn('format', ctx.session.customize.format), btn('oblasti', ctx.session.customize.oblasti)],
-        [btn('priorities', ctx.session.customize.cennosti), btn('time', ctx.session.customize.time)],
+        [btn('format', ctx.session.customize.format), btn('rubrics', ctx.session.customize.rubrics)],
+        [btn('priorities', ctx.session.customize.priorities), btn('time', ctx.session.customize.time)],
         ...(isAnyFilterSelected(ctx) ? [[resetButton(ctx)]] : []),
         [...(isAnyFilterSelected(ctx) ? [backButton(), showEventsBtn] : [backButton()])],
     ]
@@ -69,8 +69,8 @@ function resetOpenMenus(ctx: ContextMessageUpdate) {
 function resetFilter(ctx: ContextMessageUpdate) {
     prepareSessionStateIfNeeded(ctx)
     const state = ctx.session.customize
-    state.oblasti = []
-    state.cennosti = []
+    state.rubrics = []
+    state.priorities = []
     state.time = []
     state.format = []
 }
@@ -86,8 +86,8 @@ function getExplainFilterBody(ctx: ContextMessageUpdate): string {
 
     lines = [
         prepareLine(formatExplainFormat(ctx, i18Msg)),
-        prepareLine(formatExplainOblasti(ctx, i18Msg)),
-        prepareLine(formatExplainCennosti(ctx, i18Msg)),
+        prepareLine(formatExplainRubrics(ctx, i18Msg)),
+        prepareLine(formatExplainpriorities(ctx, i18Msg)),
         prepareLine(formatExplainTime(ctx, i18Msg))
     ].filter(s => s !== '')
 
@@ -147,8 +147,8 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType, opti
         results: undefined,
         root: async () => await getRootKeyboard(ctx),
         format: async () => [...await getKeyboardFormat(ctx), await btnRow()],
-        oblasti: async () => [...await customizeOblasti(ctx), await btnRow()],
-        priorities: async () => [...await customizeCennosti(ctx), await btnRow()],
+        rubrics: async () => [...await customizeRubrics(ctx), await btnRow()],
+        priorities: async () => [...await customizepriorities(ctx), await btnRow()],
         time: async () => [...await getKeyboardTime(ctx), await btnRow()],
     }
 
@@ -207,8 +207,8 @@ async function checkOrUncheckMenuState(ctx: ContextMessageUpdate) {
 
 async function invalidateSliderAndCounters(ctx: ContextMessageUpdate, msgId: number = undefined) {
     ctx.session.customize.resultsFound = undefined
-    const {format, oblasti, cennosti, time} = ctx.session.customize
-    const state = {format, oblasti, cennosti, time}
+    const {format, rubrics, priorities, time} = ctx.session.customize
+    const state = {format, rubrics, priorities, time}
     await eventSlider.updateState(ctx, {
         state,
         total: await countFoundEvents(ctx),
@@ -263,23 +263,23 @@ scene
     })
     .action(/customize_scene[.]o_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
         await checkOrUncheckMenuState(ctx)
-        await updateDialog(ctx, 'oblasti')
+        await updateDialog(ctx, 'rubrics')
     })
     .action(/customize_scene[.]t_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
         await checkOrUncheckMenuState(ctx)
         await updateDialog(ctx, 'time')
     })
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
-        cennostiOptionLogic(ctx, ctx.match[1])
+        prioritiesOptionLogic(ctx, ctx.match[1])
         await invalidateSliderAndCounters(ctx)
         await answerCbEventsSelected(ctx)
         await updateDialog(ctx, 'priorities')
     })
     .action(/customize_scene[.]o_(.+)/, async (ctx: ContextMessageUpdate) => {
-        oblastiOptionLogic(ctx, ctx.match[1])
+        rubricsOptionLogic(ctx, ctx.match[1])
         await invalidateSliderAndCounters(ctx)
         await answerCbEventsSelected(ctx)
-        await updateDialog(ctx, 'oblasti')
+        await updateDialog(ctx, 'rubrics')
     })
     .action(/customize_scene[.]t_(.+)/, async (ctx: ContextMessageUpdate) => {
         timeOptionLogic(ctx, ctx.match[1])
@@ -363,9 +363,9 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             await withSubDialog(ctx, 'format')
             ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под интересы > Формат`})
         })
-        .action(actionName('oblasti'), async (ctx: ContextMessageUpdate) => {
+        .action(actionName('rubrics'), async (ctx: ContextMessageUpdate) => {
             await ctx.answerCbQuery()
-            await withSubDialog(ctx, 'oblasti')
+            await withSubDialog(ctx, 'rubrics')
             ctx.ua.pv({dp: `/customize/rubrics/`, dt: `Подобрать под интересы > Рубрики`})
 
         })

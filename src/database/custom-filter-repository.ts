@@ -8,8 +8,8 @@ export interface CustomFilter extends Partial<LimitOffset> {
     weekendRange: MyInterval
     timeIntervals?: MyInterval[]
     format?: EventFormat
-    oblasti?: string[]
-    cennosti?: TagLevel2[]
+    rubrics?: string[]
+    priorities?: TagLevel2[]
 }
 export class CustomFilterRepository {
     constructor(private db: IDatabase<any>, private pgp: IMain) {
@@ -46,8 +46,8 @@ export class CustomFilterRepository {
 
 }
 
-function childAlternativesLogic(cennosti: TagLevel2[]): TagLevel2[] {
-    const childTag = cennosti.find(c => chidrensTags.includes(c))
+function childAlternativesLogic(priorities: TagLevel2[]): TagLevel2[] {
+    const childTag = priorities.find(c => chidrensTags.includes(c))
 
     switch (childTag) {
         case '#сдетьми0+':
@@ -62,8 +62,9 @@ function childAlternativesLogic(cennosti: TagLevel2[]): TagLevel2[] {
             return []
     }
 }
-function priceTagsAlternativesLogic(cennosti: TagLevel2[]): TagLevel2[] {
-    return cennosti.filter(c => moneyTags.includes(c))
+
+function priceTagsAlternativesLogic(priorities: TagLevel2[]): TagLevel2[] {
+    return priorities.filter(c => moneyTags.includes(c))
 }
 
 
@@ -88,8 +89,8 @@ function doQueryCore(customFilter: CustomFilter) {
                         )
                     )
             )
-            AND (cb.tag_level_1 && $(oblasti) OR $(oblasti) = '{}')
-            AND (cb.tag_level_2 @> $(cennosti) OR $(cennosti) = '{}')
+            AND (cb.tag_level_1 && $(rubrics) OR $(rubrics) = '{}')
+            AND (cb.tag_level_2 @> $(priorities) OR $(priorities) = '{}')
             AND (cb.tag_level_2 && $(childTagsAlternatives) OR $(childTagsAlternatives) = '{}')
             AND (cb.tag_level_2 && $(priceTagsAlternatives) OR $(priceTagsAlternatives) = '{}')
             AND (
@@ -99,17 +100,17 @@ function doQueryCore(customFilter: CustomFilter) {
                 )
             `
 
-    const cennosti = customFilter.cennosti || []
-    const cennostiFilteredFromHardTags = cennosti
+    const priorities = customFilter.priorities || []
+    const prioritiesFilteredFromHardTags = priorities
         .filter(t => !t.startsWith('#_'))
         .filter(c => !chidrensTags.includes(c))
         .filter(c => !moneyTags.includes(c))
 
     const queryParams = {
-        oblasti: customFilter.oblasti || [],
-        cennosti: cennostiFilteredFromHardTags || [],
-        childTagsAlternatives: childAlternativesLogic(cennosti),
-        priceTagsAlternatives: priceTagsAlternativesLogic(cennosti),
+        rubrics: customFilter.rubrics || [],
+        priorities: prioritiesFilteredFromHardTags || [],
+        childTagsAlternatives: childAlternativesLogic(priorities),
+        priceTagsAlternatives: priceTagsAlternativesLogic(priorities),
         weekendRange: mapToPgInterval(customFilter.weekendRange),
         format: customFilter.format,
         timeIntervals: (customFilter.timeIntervals || []).map(i => mapToPgInterval(i)),

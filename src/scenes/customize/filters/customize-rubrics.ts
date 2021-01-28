@@ -7,11 +7,11 @@ const scene = new BaseScene<ContextMessageUpdate>('customize_scene')
 
 const {backButton, actionName, i18nModuleBtnName, revertActionName, scanKeys, i18nSharedBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
 
-export async function customizeOblasti(ctx: ContextMessageUpdate) {
-    const menu = new DropdownMenu(ctx, ctx.session.customize.oblasti, ctx.session.customize.openedMenus, 'oblasti_section')
+export async function customizeRubrics(ctx: ContextMessageUpdate) {
+    const menu = new DropdownMenu(ctx, ctx.session.customize.rubrics, ctx.session.customize.openedMenus, 'rubrics_section')
 
     const getSectionFromI18n = (section: string): [string][] => {
-        return scanKeys(`keyboard.oblasti_section.${section}`).map(t => [t.replace(/^[^#]+/, '')])
+        return scanKeys(`keyboard.rubrics_section.${section}`).map(t => [t.replace(/^[^#]+/, '')])
     }
 
     const buttons = [
@@ -40,18 +40,18 @@ export async function customizeOblasti(ctx: ContextMessageUpdate) {
     return buttons
 }
 
-export function oblastiOptionLogic(ctx: ContextMessageUpdate, selected: string) {
+export function rubricsOptionLogic(ctx: ContextMessageUpdate, selected: string) {
     const [cat, tag] = selected.split('.')
     const tagRus = `${cat}.${revertActionName(tag)}`
-    if (ctx.session.customize.oblasti.includes(tagRus)) {
-        ctx.session.customize.oblasti = ctx.session.customize.oblasti.filter(s => s !== tagRus)
+    if (ctx.session.customize.rubrics.includes(tagRus)) {
+        ctx.session.customize.rubrics = ctx.session.customize.rubrics.filter(s => s !== tagRus)
     } else {
-        ctx.session.customize.oblasti.push(tagRus)
+        ctx.session.customize.rubrics.push(tagRus)
     }
 }
 
-export function cleanOblastiTag(oblasti: string[]) {
-    return oblasti
+export function cleanRubricsTag(rubrics: string[]) {
+    return rubrics
         .flatMap(o => {
             if (o === 'exhibitions_perm.#научнотехнические') {
                 return [

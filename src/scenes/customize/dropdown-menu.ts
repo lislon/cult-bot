@@ -8,7 +8,7 @@ const scene = new BaseScene<ContextMessageUpdate>('customize_scene')
 
 const {backButton, actionName, i18nModuleBtnName, revertActionName, scanKeys, i18nSharedBtnName, i18Btn} = i18nSceneHelper(scene)
 
-export type SectionName = 'oblasti_section' | 'cennosti_section' | 'time_section' | 'format_section'
+export type SectionName = 'rubrics_section' | 'priorities_section' | 'time_section' | 'format_section'
 
 export class DropdownMenu {
     private readonly selected: string[]
@@ -34,9 +34,9 @@ export class DropdownMenu {
 
     private actionName(postfix: string) {
         switch (this.section) {
-            case 'cennosti_section':
+            case 'priorities_section':
                 return actionName(`p_${postfix}`)
-            case 'oblasti_section':
+            case 'rubrics_section':
                 return actionName(`o_${postfix}`)
             case 'time_section':
                 return actionName(`t_${postfix}`)
@@ -48,7 +48,7 @@ export class DropdownMenu {
     }
 
     dropDownButtons(menuTitle: string, submenus: string[][], menuTitleData = {}): InlineKeyboardButton[][] {
-        const decorateTag = (tag: string) => ['oblasti_section', 'time_section'].includes(this.section)
+        const decorateTag = (tag: string) => ['rubrics_section', 'time_section'].includes(this.section)
             ? `${menuTitle.replace('menu_', '')}.${tag}`
             : tag
 

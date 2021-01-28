@@ -1,14 +1,14 @@
 import { ContextMessageUpdate, EventFormat, MyInterval, TagLevel2 } from '../../interfaces/app-interfaces'
 import { getNextWeekendRange, SessionEnforcer } from '../shared/shared-logic'
 import { mapUserInputToTimeIntervals } from './customize-utils'
-import { cleanOblastiTag } from './filters/customize-oblasti'
+import { cleanRubricsTag } from './filters/customize-rubrics'
 
-export type StageType = 'root' | 'time' | 'oblasti' | 'priorities' | 'format' | 'results'
+export type StageType = 'root' | 'time' | 'rubrics' | 'priorities' | 'format' | 'results'
 
 export interface CustomizeFilters {
     format: string[]
-    cennosti: TagLevel2[]
-    oblasti: string[]
+    priorities: TagLevel2[]
+    rubrics: string[]
     time: string[]
 }
 
@@ -22,19 +22,20 @@ export interface CustomizeSceneState extends CustomizeFilters {
 export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     const {
         openedMenus,
-        cennosti,
+        priorities,
         time,
         resultsFound,
         oblasti,
+        rubrics,
         format,
         currentStage,
         prevStage
-    } = ctx.session.customize || {}
+    } = (ctx.session.customize || {}) as (CustomizeSceneState & { oblasti: string })
 
     ctx.session.customize = {
         openedMenus: SessionEnforcer.array(openedMenus),
-        cennosti: SessionEnforcer.array(cennosti).filter(s => s !== '#ЗОЖ') as TagLevel2[],
-        oblasti: SessionEnforcer.array(oblasti),
+        priorities: SessionEnforcer.array(priorities).filter(s => s !== '#ЗОЖ') as TagLevel2[],
+        rubrics: SessionEnforcer.array(rubrics || oblasti),
         time: SessionEnforcer.array(time),
         format: SessionEnforcer.array(format),
         currentStage: currentStage || 'root',
@@ -58,8 +59,8 @@ export function prepareRepositoryQuery(ctx: ContextMessageUpdate, filters: Custo
     return {
         timeIntervals: mapUserInputToTimeIntervals(filters.time, getNextWeekendRangeForCustom(ctx.now())),
         weekendRange: getNextWeekendRangeForCustom(ctx.now()),
-        cennosti: filters.cennosti,
-        oblasti: cleanOblastiTag(filters.oblasti),
+        priorities: filters.priorities,
+        rubrics: cleanRubricsTag(filters.rubrics),
         format: mapFormatToDbQuery(filters.format)
     }
 }

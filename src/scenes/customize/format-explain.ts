@@ -90,52 +90,52 @@ export function formatExplainTime(ctx: ContextMessageUpdate, i18Msg: I18MsgFunct
 
 const MAX_LINE_LEN = 35
 
-export function formatExplainOblasti(ctx: ContextMessageUpdate, i18Msg: I18MsgFunction): string[] {
-  const {oblasti} = ctx.session.customize;
-  const oblastiNice = oblasti.map((o) =>
-      i18Msg(ctx, `explain_filter.oblasti_section.${o}`, {}, i18Msg(ctx, `keyboard.oblasti_section.${o}`))
-  );
-  if (oblastiNice.length === 0) {
-    return [];
+export function formatExplainRubrics(ctx: ContextMessageUpdate, i18Msg: I18MsgFunction): string[] {
+  const {rubrics} = ctx.session.customize
+  const rubricsNice = rubrics.map((o) =>
+      i18Msg(ctx, `explain_filter.rubrics_section.${o}`, {}, i18Msg(ctx, `keyboard.rubrics_section.${o}`))
+  )
+  if (rubricsNice.length === 0) {
+    return []
   }
-  let lines: string[] = [];
+  let lines: string[] = []
 
-  if (oblastiNice.join(', ').length <= MAX_LINE_LEN) {
-    lines.push(i18Msg(ctx, 'explain_filter.oblasti') + ' ' + oblastiNice.join(', '));
+  if (rubricsNice.join(', ').length <= MAX_LINE_LEN) {
+    lines.push(i18Msg(ctx, 'explain_filter.rubrics') + ' ' + rubricsNice.join(', '))
   } else {
-    lines.push(i18Msg(ctx, 'explain_filter.oblasti'));
+    lines.push(i18Msg(ctx, 'explain_filter.rubrics'))
 
     lines = [
       ...lines,
-      ...oblastiNice.map((o) => {
-        return ' - ' + o;
+      ...rubricsNice.map((o) => {
+        return ' - ' + o
       }),
-    ];
+    ]
   }
   return lines;
 }
 
-export function formatExplainCennosti(ctx: ContextMessageUpdate, i18Msg: I18MsgFunction): string[] {
-  const {cennosti} = ctx.session.customize;
-  const cennostiNice = cennosti.map((o) =>
-      i18Msg(ctx, `explain_filter.cennosti_section.${o}`, {}, i18Msg(ctx, `keyboard.cennosti_section.${o}`))
-  );
-  if (cennostiNice.length === 0) {
-    return [];
+export function formatExplainpriorities(ctx: ContextMessageUpdate, i18Msg: I18MsgFunction): string[] {
+  const {priorities} = ctx.session.customize
+  const prioritiesNice = priorities.map((o) =>
+      i18Msg(ctx, `explain_filter.priorities_section.${o}`, {}, i18Msg(ctx, `keyboard.priorities_section.${o}`))
+  )
+  if (prioritiesNice.length === 0) {
+    return []
   }
-  let lines: string[] = [];
+  let lines: string[] = []
 
-  if (cennostiNice.join(', ').length <= MAX_LINE_LEN) {
-    lines.push(i18Msg(ctx, 'explain_filter.cennosti') + ' ' + cennostiNice.join(', '));
+  if (prioritiesNice.join(', ').length <= MAX_LINE_LEN) {
+    lines.push(i18Msg(ctx, 'explain_filter.priorities') + ' ' + prioritiesNice.join(', '))
   } else {
-    lines.push(i18Msg(ctx, 'explain_filter.cennosti'));
+    lines.push(i18Msg(ctx, 'explain_filter.priorities'))
 
     lines = [
       ...lines,
-      ...cennostiNice.map((o) => {
-        return ' - ' + o;
+      ...prioritiesNice.map((o) => {
+        return ' - ' + o
       }),
-    ];
+    ]
   }
   return lines;
 }
