@@ -211,7 +211,7 @@ supportFeedbackMiddleware
         await ctx.deleteMessage(+ctx.match[1])
         await ctx.deleteMessage(+ctx.match[2])
     })
-    .action(/&mailing_start_(\d+)$/, async (ctx: ContextMessageUpdate) => {
+    .action(/^mailing_start_(\d+)$/, async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
         const mailingId = +ctx.match[1]
         await startMailing(ctx, mailingId)
