@@ -10,7 +10,7 @@ import { isBlockedError } from '../../util/error-handler'
 import { logger } from '../../util/logger'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { parseTelegramMessageToHtml } from '../message-parser/message-parser'
-import { extraInlineMenu, getNextWeekRange, mySlugify, ruFormat } from '../../scenes/shared/shared-logic'
+import { editMessageAndButtons, getNextWeekRange, mySlugify, ruFormat } from '../../scenes/shared/shared-logic'
 import { ScenePack } from '../../database/db-packs'
 import { formatUserName } from '../../util/misc-utils'
 import ua from 'universal-analytics'
@@ -129,6 +129,13 @@ async function startMailings(telegram: Telegram, mailingId: number) {
 
 let mailingMessages: Record<number, FormattedMailedMessages> = {}
 
+async function startMailing(ctx: ContextMessageUpdate, mailingId: number) {
+    await editMessageAndButtons(ctx, [], i18MsgSupport(`mailing_started`, {
+        name: formatUserName(ctx)
+    }))
+    setTimeout(startMailings, 0, ctx.telegram, mailingId)
+}
+
 supportFeedbackMiddleware
     .command('stat', async (ctx: ContextMessageUpdate, next: any) => {
         if (botConfig.SUPPORT_FEEDBACK_CHAT_ID !== undefined) {
@@ -136,8 +143,9 @@ supportFeedbackMiddleware
         }
         await next()
     })
-    .hears(/^(s|ы)(i|ш?)\s*$/i, async (ctx: ContextMessageUpdate) => {
-        const webPreview = ctx.match[2] !== ''
+    .hears(/^(s|ы)(i|ш)?(f)?\s*$/i, async (ctx: ContextMessageUpdate) => {
+        const webPreview = ctx.match[2] !== undefined
+        const force = ctx.match[3] === 'f'
         if (ctx.message?.reply_to_message?.message_id !== undefined) {
             const messageId = ctx.message.reply_to_message.message_id
 
@@ -153,27 +161,29 @@ supportFeedbackMiddleware
                 Markup.inlineKeyboard(messageToSend.btns)
             ))
 
-
-            let msg = ''
-            if (messageToSend.btns.length > 0) {
-                msg = i18Msg(ctx, 'ready_to_send')
+            if (force === true) {
+                await startMailing(ctx, messageId)
             } else {
-                const list = allPacks.map(p => ` [ ${p.title} ]`).join('\n')
-                msg = i18Msg(ctx, 'ready_to_send_with_packs', {list})
+                let msg = ''
+                if (messageToSend.btns.length > 0) {
+                    msg = i18Msg(ctx, 'ready_to_send')
+                } else {
+                    const list = allPacks.map(p => ` [ ${p.title} ]`).join('\n')
+                    msg = i18Msg(ctx, 'ready_to_send_with_packs', {list})
+                }
+                await ctx.replyWithHTML(msg, Extra.markup(
+                    Markup.inlineKeyboard([Markup.callbackButton(i18Btn(ctx, 'mailing_start', {
+                        users: users.length,
+                        env: botConfig.HEROKU_APP_NAME.replace(/.+-(\w+)$/, '$1').toUpperCase()
+                    }), 'mailing_start_' + messageId)])
+                ))
             }
-            await ctx.replyWithHTML(msg, Extra.markup(
-                Markup.inlineKeyboard([Markup.callbackButton(i18Btn(ctx, 'mailing_start', {
-                    users: users.length
-                }), 'mailing_start_' + messageId)])
-            ))
         }
     })
     .action(/mailing_start_(\d+)/, async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
-        await ctx.editMessageText(i18MsgSupport(`mailing_started`, {
-            name: formatUserName(ctx)
-        }), extraInlineMenu([]))
-        setTimeout(startMailings, 0, ctx.telegram, +ctx.match[1])
+        const mailingId = +ctx.match[1]
+        await startMailing(ctx, mailingId)
     })
     .hears(/.+/, async (ctx: ContextMessageUpdate, next: any) => {
         logger.error(`support chat: (id=${ctx.chat.id}) ${ctx.message.text}`)
