@@ -88,3 +88,7 @@ export function resetPacksEventIndex(ctx: ContextMessageUpdate) {
 export function resetPackIndex(ctx: ContextMessageUpdate) {
     ctx.session.packsScene.packSelectedIdx = undefined
 }
+
+export function resetPacksCache(ctx: ContextMessageUpdate) {
+    ctx.session.packsScene = undefined
+}

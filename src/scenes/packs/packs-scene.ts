@@ -3,7 +3,7 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { displayEventsMenu, displayMainMenu, displayPackMenu } from './packs-menu'
-import { getEventsCount, getPacksList, scene } from './packs-common'
+import { getEventsCount, getPacksList, resetPacksCache, scene } from './packs-common'
 import { replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
@@ -86,6 +86,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
         .action(/packs_scene.direct_(\d+)/, async (ctx) => {
             await ctx.answerCbQuery()
+            resetPacksCache(ctx)
             const packs = await getPacksList(ctx)
             await ctx.scene.enter('packs_scene', {}, true)
 
