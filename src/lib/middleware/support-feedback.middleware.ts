@@ -10,7 +10,13 @@ import { isBlockedError } from '../../util/error-handler'
 import { logger } from '../../util/logger'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { parseTelegramMessageToHtml } from '../message-parser/message-parser'
-import { editMessageAndButtons, getNextWeekRange, mySlugify, ruFormat } from '../../scenes/shared/shared-logic'
+import {
+    editMessageAndButtons,
+    getMsgId,
+    getNextWeekRange,
+    mySlugify,
+    ruFormat
+} from '../../scenes/shared/shared-logic'
 import { ScenePack } from '../../database/db-packs'
 import { formatUserName } from '../../util/misc-utils'
 import ua from 'universal-analytics'
@@ -30,10 +36,11 @@ interface FormattedMailedMessages {
     webPreview: boolean
 }
 
-async function formatMessage(ctx: ContextMessageUpdate, msg: Message, allPacks: ScenePack[], webPreview: boolean): Promise<FormattedMailedMessages> {
+async function formatMessage(ctx: ContextMessageUpdate, msg: Message, allPacks: ScenePack[], webPreview: boolean): Promise<FormattedMailedMessages & { hasErrors: boolean }> {
     let text = parseTelegramMessageToHtml(msg)
     const matchButtonAtEnd = text.match(/^\s*\[.+\]\s*$/gm)
-    const btns: CallbackButton[][] = [];
+    const btns: CallbackButton[][] = []
+    let hasErrors = false;
 
     (matchButtonAtEnd || []).forEach((btnMatch: string) => {
         const searchForPackTitle = btnMatch.replace(/^\s*\[\s*/, '').replace(/\s*\]\s*$/, '').toLowerCase().trim()
@@ -50,12 +57,13 @@ async function formatMessage(ctx: ContextMessageUpdate, msg: Message, allPacks: 
                 replaceOnTo = i18Msg(ctx, 'pack_not_found', {
                     title: searchForPackTitle,
                 })
+                hasErrors = true
             }
         }
         text = text.replace(btnMatch, replaceOnTo).trimEnd()
     })
 
-    return {text, btns, webPreview}
+    return {text, btns, webPreview, hasErrors}
 }
 
 function i18MsgSupport(id: string, templateData?: any) {
@@ -157,37 +165,58 @@ supportFeedbackMiddleware
             const users = await db.repoUser.listUsersForMailing(botConfig.MAILINGS_PER_WEEK_MAX)
             mailingMessages = {[messageId]: messageToSend}
 
-            await ctx.replyWithHTML(messageToSend.text, Extra.webPreview(messageToSend.webPreview).markup(
+            const previewMessage = await ctx.replyWithHTML(messageToSend.text, Extra.webPreview(messageToSend.webPreview).markup(
                 Markup.inlineKeyboard(messageToSend.btns)
             ))
 
             if (force === true) {
                 await startMailing(ctx, messageId)
             } else {
+                const startMailing = Markup.callbackButton(i18Btn(ctx, 'mailing_start', {
+                    users: users.length,
+                    env: botConfig.HEROKU_APP_NAME.replace(/.+-(\w+)$/, '$1').toUpperCase()
+                }), 'mailing_start_' + messageId)
+
+                const cancel = Markup.callbackButton(i18Btn(ctx, 'cancel'), `mailing_cancel_${previewMessage.message_id}_${getMsgId(ctx)}`)
+                const spacer = Markup.callbackButton(i18Btn(ctx, 'spacer'), `mailing_dummy`)
+
+                let btns: CallbackButton[][] = []
                 let msg = ''
-                if (messageToSend.btns.length > 0) {
-                    msg = i18Msg(ctx, 'ready_to_send')
+                if (messageToSend.hasErrors) {
+                    msg = i18Msg(ctx, 'has_errors')
+                    btns = [[cancel]]
                 } else {
-                    const list = allPacks.map(p => ` [ ${p.title} ]`).join('\n')
-                    msg = i18Msg(ctx, 'ready_to_send_with_packs', {list})
+                    btns = [[cancel], [spacer], [startMailing]]
+                    if (messageToSend.btns.length > 0) {
+                        msg = i18Msg(ctx, 'ready_to_send')
+                    } else {
+                        const list = allPacks.map(p => ` [ ${p.title} ]`).join('\n')
+                        msg = i18Msg(ctx, 'ready_to_send_with_packs', {list})
+                    }
                 }
+
+
                 await ctx.replyWithHTML(msg, Extra.markup(
-                    Markup.inlineKeyboard([Markup.callbackButton(i18Btn(ctx, 'mailing_start', {
-                        users: users.length,
-                        env: botConfig.HEROKU_APP_NAME.replace(/.+-(\w+)$/, '$1').toUpperCase()
-                    }), 'mailing_start_' + messageId)])
+                    Markup.inlineKeyboard(btns)
                 ))
             }
         }
     })
-    .action(/mailing_start_(\d+)/, async (ctx: ContextMessageUpdate) => {
+    .action(/^mailing_dummy$/, async (ctx: ContextMessageUpdate) => {
+        await ctx.answerCbQuery()
+    })
+    .action(/^mailing_cancel_(\d+)_(\d+)$/, async (ctx: ContextMessageUpdate) => {
+        await ctx.answerCbQuery()
+        await ctx.deleteMessage(getMsgId(ctx))
+        await ctx.deleteMessage(+ctx.match[1])
+        await ctx.deleteMessage(+ctx.match[2])
+    })
+    .action(/&mailing_start_(\d+)$/, async (ctx: ContextMessageUpdate) => {
         await ctx.answerCbQuery()
         const mailingId = +ctx.match[1]
         await startMailing(ctx, mailingId)
     })
     .hears(/.+/, async (ctx: ContextMessageUpdate, next: any) => {
-        logger.error(`support chat: (id=${ctx.chat.id}) ${ctx.message.text}`)
-
         if (ctx.message?.reply_to_message?.message_id !== undefined) {
             // ctx.telegram.sendMessage()
             const dbQuery = {
