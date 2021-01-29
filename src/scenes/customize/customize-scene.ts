@@ -258,30 +258,36 @@ scene
         // ctx.session.customize.currentStage = 'root'
     })
     .action(/customize_scene[.]p_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
+        prepareSessionStateIfNeeded(ctx)
         await checkOrUncheckMenuState(ctx)
         await updateDialog(ctx, 'priorities')
     })
     .action(/customize_scene[.]o_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
+        prepareSessionStateIfNeeded(ctx)
         await checkOrUncheckMenuState(ctx)
         await updateDialog(ctx, 'rubrics')
     })
     .action(/customize_scene[.]t_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
+        prepareSessionStateIfNeeded(ctx)
         await checkOrUncheckMenuState(ctx)
         await updateDialog(ctx, 'time')
     })
     .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
+        prepareSessionStateIfNeeded(ctx)
         prioritiesOptionLogic(ctx, ctx.match[1])
         await invalidateSliderAndCounters(ctx)
         await answerCbEventsSelected(ctx)
         await updateDialog(ctx, 'priorities')
     })
     .action(/customize_scene[.]o_(.+)/, async (ctx: ContextMessageUpdate) => {
+        prepareSessionStateIfNeeded(ctx)
         rubricsOptionLogic(ctx, ctx.match[1])
         await invalidateSliderAndCounters(ctx)
         await answerCbEventsSelected(ctx)
         await updateDialog(ctx, 'rubrics')
     })
     .action(/customize_scene[.]t_(.+)/, async (ctx: ContextMessageUpdate) => {
+        prepareSessionStateIfNeeded(ctx)
         timeOptionLogic(ctx, ctx.match[1])
         await invalidateSliderAndCounters(ctx)
 
@@ -289,6 +295,7 @@ scene
         await updateDialog(ctx, 'time')
     })
     .action(/customize_scene[.]f_(.+)/, async (ctx: ContextMessageUpdate) => {
+        prepareSessionStateIfNeeded(ctx)
         formatOptionLogic(ctx, ctx.match[1])
         await invalidateSliderAndCounters(ctx)
 
