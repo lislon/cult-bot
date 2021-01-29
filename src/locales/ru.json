@@ -451,7 +451,7 @@
       "use_arrows": "Используйте стрелки « и » для листания"
     },
     "keyboard": {
-      "markup_back": "◀️ В главное меню",
+      "markup_back": " ⏪ В главное меню",
       "back": "◀️ Назад",
       "checkbox_on": " ✔",
       "checkbox_off": " ",
