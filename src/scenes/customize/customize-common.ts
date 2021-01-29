@@ -26,15 +26,16 @@ export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         time,
         resultsFound,
         oblasti,
+        cennosti,
         rubrics,
         format,
         currentStage,
         prevStage
-    } = (ctx.session.customize || {}) as (CustomizeSceneState & { oblasti: string })
+    } = (ctx.session.customize || {}) as (CustomizeSceneState & { oblasti: string; cennosti: string })
 
     ctx.session.customize = {
         openedMenus: SessionEnforcer.array(openedMenus),
-        priorities: SessionEnforcer.array(priorities).filter(s => s !== '#ЗОЖ') as TagLevel2[],
+        priorities: SessionEnforcer.array(priorities || cennosti).filter(s => s !== '#ЗОЖ') as TagLevel2[],
         rubrics: SessionEnforcer.array(rubrics || oblasti),
         time: SessionEnforcer.array(time),
         format: SessionEnforcer.array(format),

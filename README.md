@@ -84,9 +84,12 @@ heroku pg:backups:capture -a cult-hub-bot-<env>
 ```
 
 ### Release
+1. Backup database
 ```
 heroku pg:backups:capture -a cult-hub-bot-<env>
 ```
+2. Backup excel file
+3. Go to heroku and promote new env 
 
 ### Rollback to previous release
 
