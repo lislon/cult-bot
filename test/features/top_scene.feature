@@ -26,7 +26,11 @@ Feature: Tops scene
       [~tops_scene.back_exhibitions]
       """
     Then I click markup [~tops_scene.exhibitions_temp]
-    Then Bot responds '<b>Временные выставки</b> на выходные 04-05 января:'
+    Then Bot responds:
+      """
+      <b>Временные выставки</b> на выходные:
+      04-05 января
+      """
     Then Bot responds with event 'A'
     Then Google analytics pageviews will be:
       | dp                                 | dt                                       |
@@ -44,7 +48,11 @@ Feature: Tops scene
       [~tops_scene.back_exhibitions]
       """
     Then I click markup [~tops_scene.exhibitions_perm]
-    Then Bot responds '<b>Постоянные коллекции</b> на выходные 04-05 января:'
+    Then Bot responds:
+      """
+      <b>Постоянные коллекции</b> на выходные:
+      04-05 января
+      """
     Then Bot responds with event 'B'
 
   Scenario: When I click back in subcategory I get into tops menu
@@ -61,5 +69,5 @@ Feature: Tops scene
     Given now is 2020-01-05 12:00
     When I click markup [~tops_scene.exhibitions]
     Then I click markup [~tops_scene.exhibitions_perm]
-    Then Bot responds '*сегодня*'
+    Then Bot responds '*на 05 января*'
 

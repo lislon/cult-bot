@@ -13,7 +13,7 @@ const CELL_BG_COLORS = {
     green: {red: 0.95, green: 1, blue: 0.95},
     lightred: {red: 1, green: 0.95, blue: 0.95},
     red: {red: 0.95, green: 0.8, blue: 0.85},
-    orange: {red: 252 / 255.0, green: 186 / 255.0, blue: 3 / 255.0},
+    orange: {red: 255 / 255.0, green: 240 / 255.0, blue: 219 / 255.0},
 }
 
 export type CellColor = keyof typeof CELL_BG_COLORS

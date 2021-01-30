@@ -85,7 +85,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
 
     await warnAdminIfDateIsOverriden(ctx)
 
-    const rangeN = removeLastSecond(range)
+    const rangeHuman = removeLastSecond(range)
 
     if (total > 0) {
         const tplData = {
@@ -93,17 +93,16 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
         }
 
         let humanDateRange = ''
-        if (isSameMonth(rangeN.start, range.end)) {
-            humanDateRange = ruFormat(rangeN.start, 'dd') + '-' + ruFormat(rangeN.end, 'dd MMMM')
-        } else {
-            humanDateRange = ruFormat(rangeN.start, 'dd MMMM') + '-' + ruFormat(rangeN.end, 'dd MMMM')
-        }
-
         let templateName
 
-        if (isSameDay(ctx.now(), rangeN.end)) {
+        if (isSameDay(ctx.now(), rangeHuman.end)) {
+            humanDateRange = ruFormat(rangeHuman.end, 'dd MMMM')
             templateName = 'let_me_show_today'
+        } else if (isSameMonth(rangeHuman.start, range.end)) {
+            humanDateRange = ruFormat(rangeHuman.start, 'dd') + '-' + ruFormat(rangeHuman.end, 'dd MMMM')
+            templateName = 'let_me_show_next_weekend'
         } else {
+            humanDateRange = ruFormat(rangeHuman.start, 'dd MMMM') + '-' + ruFormat(rangeHuman.end, 'dd MMMM')
             templateName = 'let_me_show_next_weekend'
         }
 
