@@ -7,9 +7,9 @@ Feature: Feedback scene
   Scenario: I can send text as feedback
     Then Bot responds '✉️ ' with markup buttons:
       """
-      [В главное меню]
+      [⏮ В главное меню]
       """
-    Then Bot responds '*опрос*' with inline buttons:
+    Then Bot responds '*Напишите сообщение для авторов бота*' with inline buttons:
       """
       [Пройти опрос]
       [Написать авторам]
@@ -17,7 +17,7 @@ Feature: Feedback scene
     When I click inline [Написать авторам]
     When I type 'Вы молодцы'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Вы молодцы*'
-    Then Bot responds '*Спасибо*'
+    Then Bot responds '*сообщение отправлено*'
 
   Scenario: I select positive items in survey
     When I click inline [Пройти опрос]
@@ -34,7 +34,7 @@ Feature: Feedback scene
     When I click inline [Свой вариант]
     Then Bot responds 'Напишите, что было важно при выборе событий:'
     When I type 'Всё гуд'
-    Then Bot responds '*Спасибо*'
+    Then Bot responds '*Спасибо за ответ*'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Всё гуд*'
 
   Scenario: I select negative items in survey
@@ -43,7 +43,7 @@ Feature: Feedback scene
     When I click inline [Невнятное описание]
     When I click inline [Ничего не заинтересовало]
     When I click inline [Отправить]
-    Then Bot responds 'Спасибо за ответ! Мы обязательно учтём это в дальнейшей работе 💪🏻'
+    Then Bot responds '*Спасибо за ответ*'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Ничего не заинтересовало*'
 
   Scenario: I select negative items in survey with custom answer
@@ -53,7 +53,7 @@ Feature: Feedback scene
     When I click inline [Свой вариант]
     Then Bot responds 'Напишите, что не понравилось:'
     When I type 'Вы ужасны'
-    Then Bot responds '*Спасибо*'
+    Then Bot responds '*Спасибо за ответ*'
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Вы ужасны*'
 
   Scenario: I go back to main scene

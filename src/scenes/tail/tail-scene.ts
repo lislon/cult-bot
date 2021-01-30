@@ -8,8 +8,7 @@ const tail = new Composer<ContextMessageUpdate>()
 
 const backButtonsCatch = new Composer<ContextMessageUpdate>()
 backButtonsCatch
-    .hears(backToMainButtonTitle(), async ctx => {
-        ctx.logger.debug('main catch: %s', ctx.match[0])
+    .hears(backToMainButtonTitle().trim(), async ctx => {
         await ctx.scene.enter('main_scene')
     })
     .hears(/(\s|^)Назад(\s|$)|◀️/, async ctx => {

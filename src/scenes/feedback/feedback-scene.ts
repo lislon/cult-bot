@@ -185,7 +185,11 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
         })
 
         if (ctx.session.feedbackScene.messagesSent === 0) {
-            await ctx.replyWithHTML(i18Msg(ctx, 'thank_you_for_custom_feedback'))
+            if (ctx.session.feedbackScene.isListening === 'text') {
+                await ctx.replyWithHTML(i18Msg(ctx, 'thank_you_for_custom_message'))
+            } else {
+                await ctx.replyWithHTML(i18Msg(ctx, 'thank_you_custom_survey_answer'))
+            }
         } else {
             if (ctx.session.feedbackScene.messagesSent === 5) {
                 const messageSticker = await ctx.replyWithSticker(i18Msg(ctx, 'sticker_stop_it'))

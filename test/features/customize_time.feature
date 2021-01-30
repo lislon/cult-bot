@@ -14,7 +14,7 @@ Feature: Customize time
 
   Scenario: I can see number of events when click on time
     Then Bot responds '👇'
-    Then Bot responds '*Отбор событий*' with inline buttons:
+    Then Bot responds '*Настройте фильтры согласно предпочтениям*' with inline buttons:
       """
       [Формат] [Рубрики]
       [Приоритеты] [Время]
