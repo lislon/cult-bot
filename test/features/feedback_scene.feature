@@ -19,6 +19,14 @@ Feature: Feedback scene
     Then Bot sends reply to chat 'SUPPORT_FEEDBACK_CHAT_ID' with message '*Вы молодцы*'
     Then Bot responds '*сообщение отправлено*'
 
+  Scenario: I can go back while sending message
+    Then Bot responds something
+    Then Bot responds something
+    When I click inline [Написать авторам]
+    When I click markup [⏮ В главное меню]
+    Then I will be on scene 'main_scene'
+
+
   Scenario: I select positive items in survey
     When I click inline [Пройти опрос]
     When I click inline [Да, подобрал]
