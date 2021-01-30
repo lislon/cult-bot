@@ -208,6 +208,8 @@ export function getMsgId(ctx: ContextMessageUpdate): number {
 }
 
 export async function buttonIsOldGoToMain(ctx: ContextMessageUpdate) {
+    ctx.logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [callback_data=${ctx.update?.callback_query?.data}] buttonIsOldGoToMain`)
+    await editMessageAndButtons(ctx, [[Markup.callbackButton(i18SharedBtn('back'), 'go_to_main')]], ctx.i18n.t('root.unknown_action'))
     await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.unknown_action')})
 }
 

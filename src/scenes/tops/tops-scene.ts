@@ -128,18 +128,6 @@ function trackUa(ctx: ContextMessageUpdate) {
     ctx.ua.pv(analyticsTopParams(ctx.session.topsScene))
 }
 
-async function goBack(ctx: ContextMessageUpdate) {
-    await prepareSessionStateIfNeeded(ctx)
-    if (ctx.session.topsScene.submenuSelected !== undefined) {
-        ctx.session.topsScene.submenuSelected = undefined
-        await showExhibitionsSubMenu(ctx)
-    } else if (ctx.session.topsScene.isWatchingEvents) {
-        await ctx.scene.enter('tops_scene')
-    } else {
-        await ctx.scene.enter('main_scene')
-    }
-}
-
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
         const {msg, markupMainMenu} = content(ctx)
@@ -184,8 +172,16 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             trackUa(ctx)
         })
         .action(actionName('back_inline'), async ctx => {
+            await prepareSessionStateIfNeeded(ctx)
             await ctx.answerCbQuery()
-            await goBack(ctx)
+            if (ctx.session.topsScene.submenuSelected !== undefined) {
+                ctx.session.topsScene.submenuSelected = undefined
+                await showExhibitionsSubMenu(ctx)
+            } else if (ctx.session.topsScene.isWatchingEvents) {
+                await ctx.scene.enter('tops_scene')
+            } else {
+                await ctx.scene.enter('main_scene')
+            }
         })
         .use(pager.middleware())
 }

@@ -13,7 +13,7 @@ Feature: Customize time
     Given Scene is 'customize_scene'
 
   Scenario: I can see number of events when click on time
-    Then Bot responds '👇'
+    Then Bot responds '*Подобрать под интересы*'
     Then Bot responds '*Настройте фильтры согласно предпочтениям*' with inline buttons:
       """
       [Формат] [Рубрики]

@@ -247,7 +247,7 @@ function isThisMessageMatchesWithActiveFilter(ctx: ContextMessageUpdate) {
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
         prepareSessionStateIfNeeded(ctx)
-        await replyWithBackToMainMarkup(ctx)
+        await replyWithBackToMainMarkup(ctx, i18Msg(ctx, 'markup_back_decoy'))
         ctx.session.customize.resultsFound = undefined
         const msgId = await updateDialog(ctx, 'root', {forceNewMsg: true, restoreMessage: true})
         await invalidateSliderAndCounters(ctx, msgId)
@@ -337,7 +337,9 @@ scene
 // })
 
 async function editMessageNotifyUserItsOld(ctx: ContextMessageUpdate) {
-    await editMessageAndButtons(ctx, [], i18Msg(ctx, 'message_is_old'))
+    // await editMessageAndButtons(ctx, [], i18Msg(ctx, 'message_is_old'))
+    ctx.logger.warn(`message msg=${getMsgId(ctx)} is old`)
+    await ctx.scene.enter('main_scene')
 }
 
 async function editMessageNotifyUserViewBelow(ctx: ContextMessageUpdate) {

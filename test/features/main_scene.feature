@@ -22,7 +22,7 @@ Feature: Main scene
   Scenario: I can click customize
     Given Scene is 'main_scene'
     When I click markup [~main_scene.customize]
-    Then Bot responds '👇'
+    Then Bot responds '*Подобрать*'
     Then Bot responds '*фильтр*'
 
   Scenario: I can click packs
