@@ -1,7 +1,7 @@
 import { BaseScene, Composer } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
+import { backToMainButtonTitle, replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { SceneRegister } from '../../middleware-utils'
 import emojiRegex from 'emoji-regex'
 import { SearchPagerConfig } from './search-pager'
@@ -38,6 +38,9 @@ scene
         ctx.session.search = undefined
     })
     .use(eventSlider.middleware())
+    .hears(backToMainButtonTitle().trim(), async (ctx, next) => {
+        await ctx.scene.enter('main_scene')
+    })
     .hears(/^[^/].*$/, async (ctx, next) => {
         if (ctx.match[0].match(emojiRegex())) {
             await next()
