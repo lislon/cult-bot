@@ -10,6 +10,7 @@ import {
     editMessageAndButtons,
     extraInlineMenu,
     generatePlural,
+    getMsgId,
     parseAndUpdateBtn,
     replyWithBackToMainMarkup,
     ruFormat,
@@ -115,8 +116,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
 scene
     .enter(async (ctx: ContextMessageUpdate) => {
-        await replyWithBackToMainMarkup(ctx)
-
+        await replyWithBackToMainMarkup(ctx, i18Msg(ctx, 'markup_back_decoy'))
 
         await warnAdminIfDateIsOverriden(ctx)
         prepareSessionStateIfNeeded(ctx)
@@ -145,10 +145,6 @@ const eventPager = new SliderPager(new FavoritesPagerConfig())
 
 function removeFromFavorite(ctx: ContextMessageUpdate, eventId: number) {
     ctx.session.user.eventsFavorite = ctx.session.user.eventsFavorite.filter(e => e !== eventId)
-}
-
-async function updatePagerState(ctx: ContextMessageUpdate) {
-    return await eventPager.updateState(ctx, {invalidateOtherSliders: true})
 }
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
@@ -182,7 +178,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                     }
 
                     if (!cardBtnIsFresh) {
-                        await updatePagerState(ctx)
+                        await eventPager.updateState(ctx, {invalidateOtherSliders: true})
 
                         const card = cardFormat(event, {deleted: !isEventInFavorites(ctx, eventId)})
                         let newKeyboard = (ctx.update.callback_query.message as any)?.reply_markup as InlineKeyboardMarkup
@@ -227,13 +223,13 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             await ctx.answerCbQuery()
             await prepareSessionStateIfNeeded(ctx)
 
-            const state = await updatePagerState(ctx)
+            const state = await eventPager.updateState(ctx, {invalidateOtherSliders: true, msgId: getMsgId(ctx)})
             await eventPager.showOrUpdateSlider(ctx, state)
         })
         .action(actionName('back_to_favorite_main'), async ctx => {
             await ctx.answerCbQuery()
             const {msg, buttons} = await getMainMenu(ctx)
-            await editMessageAndButtons(ctx, buttons, msg, {forceNewMsg: true})
+            await editMessageAndButtons(ctx, buttons, msg)
         })
         .use(eventPager.middleware())
 }
