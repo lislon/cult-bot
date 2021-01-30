@@ -180,6 +180,14 @@ class GlobalSync {
     private user: User
     private validationErrors: SpreadSheetValidationError[] = []
 
+    public getStatus() {
+        if (this.user === undefined) {
+            return `global state empty`
+        } else {
+            return `global state sync_owner=${this.user?.username} Size=${JSON.stringify(this).length}`
+        }
+    }
+
     public async executeSync(dbTx: ITask<IExtensions> & IExtensions) {
         logger.debug('hasData?', this.syncDiff !== undefined)
         this.stopOldTimerIfExists()
@@ -290,7 +298,11 @@ class GlobalSync {
 const GLOBAL_SYNC_STATE = new GlobalSync()
 
 async function replySyncNoTransaction(ctx: ContextMessageUpdate) {
-    await ctx.replyWithHTML(i18Msg(ctx, 'sync_no_transaction', {minutes: Math.ceil(SYNC_CONFIRM_TIMEOUT_SECONDS / 60)}))
+    ctx.logger.warn(`sync already in progress (${GLOBAL_SYNC_STATE.getStatus()})`)
+    await ctx.replyWithHTML(i18Msg(ctx, 'sync_no_transaction', {
+        minutes: Math.ceil(SYNC_CONFIRM_TIMEOUT_SECONDS / 60),
+        status: GLOBAL_SYNC_STATE.getStatus()
+    }))
 }
 
 scene
