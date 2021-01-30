@@ -11,6 +11,10 @@ backButtonsCatch
     .hears(backToMainButtonTitle().trim(), async ctx => {
         await ctx.scene.enter('main_scene')
     })
+    .hears(/^\s*[◀️ ]/, async ctx => {
+        ctx.logger.debug('main catch: %s', ctx.match[0])
+        await ctx.scene.enter('main_scene')
+    })
     .hears(/(\s|^)Назад(\s|$)|◀️/, async ctx => {
         ctx.logger.debug('main catch: %s', ctx.match[0])
         await ctx.scene.enter('main_scene')
@@ -46,6 +50,9 @@ tail
     .hears(/.+/, async (ctx) => {
         await ctx.replyWithHTML('Введена непонятная команда. Вернемся вначало? /menu')
         ctx.logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [text=${ctx.message.text}] Введена непонятная команда`)
+    })
+    .action('go_to_main', async (ctx) => {
+        await ctx.scene.enter('main_scene')
     })
     .action(/.+/, async (ctx) => {
         await ctx.answerCbQuery()
