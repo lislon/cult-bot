@@ -216,7 +216,7 @@ export async function chunkanize(msg: string, callback: (text: string, extra?: E
     const chunks: string[] = chunkString(msg, MAX_TELEGRAM_MESSAGE_LENGTH)
     let last: Message = undefined
     for (let i = 0; i < chunks.length; i++) {
-        last = await callback(chunks[i], i === chunks.length - 1 ? extra : {disable_notification: true})
+        last = await callback(chunks[i], i === chunks.length - 1 ? extra : {...extra, disable_notification: true})
     }
     return last
 }
