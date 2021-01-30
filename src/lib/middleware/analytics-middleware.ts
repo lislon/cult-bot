@@ -6,6 +6,7 @@ import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { BaseScene } from 'telegraf'
 import { db } from '../../database/db'
 import { logger } from '../../util/logger'
+import { getResponsePerformance } from './performance-middleware'
 
 export interface AnalyticsState {
     markupClicks: number
@@ -74,8 +75,8 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
         }
         throw e
     } finally {
-        if (ctx.perf !== undefined && ctx.perf.timeBeforeFirstMsg !== undefined) {
-            ctx.ua.timing('category', 'timeBeforeFirstMsg', Math.ceil(ctx.perf.timeBeforeFirstMsg))
+        if (ctx.perf !== undefined && ctx.perf.timeBeforeFirstMsg !== undefined && ctx.ua !== undefined) {
+            ctx.ua.timing(ctx.perf.scene ?? 'no_scene', 'first response', Math.ceil(getResponsePerformance(ctx)))
         }
         if (botConfig.GOOGLE_ANALYTICS_ID !== undefined) {
 
