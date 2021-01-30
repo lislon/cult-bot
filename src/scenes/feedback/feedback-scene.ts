@@ -74,16 +74,6 @@ scene
         ctx.session.feedbackScene.isFound = true
         await next()
     })
-    .action(/\/found\/not_found\/not_likeT:opt_(?!everything_bad)/, async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
-        prepareSessionStateIfNeeded(ctx)
-        ctx.session.feedbackScene.whyDontLike = ctx.session.feedbackScene.whyDontLike.filter(s => s !== 'opt_everything_bad')
-        await next()
-    })
-    .action(/\/found\/not_found\/not_likeT:opt_(everything_bad)/, async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
-        prepareSessionStateIfNeeded(ctx)
-        ctx.session.feedbackScene.whyDontLike = []
-        await next()
-    })
     .action('/found/your_events/end_nice', async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
         prepareSessionStateIfNeeded(ctx)
         if (ctx.session.feedbackScene.whatImportant.length > 0) {
