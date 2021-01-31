@@ -18,6 +18,7 @@ import { searchScene } from '../../../src/scenes/search/search-scene'
 import { botErrorHandler } from '../../../src/util/error-handler'
 import { likesScene } from '../../../src/scenes/likes/likes-scene'
 import { favoritesScene } from '../../../src/scenes/favorites/favorites-scene'
+import { performanceMiddleware } from '../../../src/lib/middleware/performance-middleware'
 
 const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
 
@@ -37,6 +38,7 @@ class CustomWorld {
         const stage = new Stage([], {})
 
         this.bot.use(
+            performanceMiddleware('total'),
             middlewares.i18n,
             middlewares.loggerInject,
             middlewares.telegrafThrottler({

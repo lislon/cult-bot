@@ -18,7 +18,7 @@ export class PerformanceContext {
 function recordFirstResponse(ctx: ContextMessageUpdate) {
     if (ctx.perf.timeBeforeFirstMsg === undefined) {
         ctx.perf.timeBeforeFirstMsg = performance.now()
-        ctx.perf.scene = ctx.scene?.current.id
+        ctx.perf.scene = ctx.scene?.current?.id
     }
 }
 
@@ -41,7 +41,7 @@ export function performanceMiddleware(prefix: string) {
         }
         ctx.editMessageReplyMarkup = (markup?: InlineKeyboardMarkup) => {
             recordFirstResponse(ctx)
-            return origCtx.editMessageReplyMarkup.apply(ctx, markup)
+            return origCtx.editMessageReplyMarkup.apply(ctx, [markup])
         }
         await next()
     }

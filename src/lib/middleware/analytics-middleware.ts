@@ -29,7 +29,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
     ctx.session.analytics = {
         markupClicks: markupClicks || 0,
-        inlineClicks: inlineClicks || 0,
+        inlineClicks: inlineClicks || ctx.session.user.clicks || 0,
     }
 
     ctx.sessionTmp.analyticsScene = {
@@ -51,7 +51,7 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
     prepareSessionStateIfNeeded(ctx)
     if (ctx.updateType === 'message' && ctx.updateSubTypes.includes('text') && !ctx.message.text?.startsWith('/start')) {
         ctx.ua.e('Button', 'type', ctx.message.text, undefined)
-        ctx.session.analytics.markupClicks++
+        ctx.session.analytics.inlineClicks++
     } else if (ctx.updateType === 'callback_query') {
         const message = ctx.update.callback_query.message as any
         const replyMarkup = message.reply_markup

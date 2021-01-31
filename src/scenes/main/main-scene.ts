@@ -76,7 +76,10 @@ function googleAnalyticsSource(ctx: ContextMessageUpdate & { startPayload: strin
             case 'f': return 'facebook'
             case 'v': return 'vk'
             case 't': return 'telegram'
-            case 'o': return 'other'
+            case 'o':
+                return 'other'
+            case 'm':
+                return 'email'
             default:
                 return sourceCode
         }

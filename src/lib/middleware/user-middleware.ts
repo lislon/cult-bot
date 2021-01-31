@@ -11,6 +11,7 @@ export interface UserState {
     uaUuid?: string
     eventsFavorite: number[]
     version: string
+    clicks: number
 }
 
 
@@ -42,6 +43,7 @@ async function prepareSessionIfNeeded(ctx: ContextMessageUpdate) {
     if (ctx.session.user === undefined) {
         ctx.session.user = {
             lastDbUpdated: 0,
+            clicks: 0,
             version: botConfig.HEROKU_RELEASE_VERSION,
             id: 0,
             uaUuid: undefined,
@@ -57,7 +59,8 @@ async function prepareSessionIfNeeded(ctx: ContextMessageUpdate) {
                 ...ctx.session.user,
                 id: userDb.id,
                 uaUuid: userDb.ua_uuid,
-                eventsFavorite: userDb.events_favorite.map(e => +e)
+                clicks: userDb.clicks,
+                eventsFavorite: userDb.events_favorite.map(e => +e),
             }
         }
     }
@@ -86,6 +89,7 @@ async function updateOrInsertUser(ctx: ContextMessageUpdate) {
             events_favorite: ctx.session.user.eventsFavorite,
             clicks: countInteractions(ctx)
         })
+        ctx.session.user.clicks = countInteractions(ctx)
         ctx.session.user.lastDbUpdated = new Date().getTime()
     }
 }
