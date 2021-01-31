@@ -62,13 +62,14 @@ export class UserRepository {
     }
 
     public async findUserByTid(tid: number): Promise<UserDb | null> {
-        return this.db.oneOrNone<UserDb>('SELECT id, tid, ua_uuid, events_favorite FROM cb_users WHERE tid = $1', tid,
+        return this.db.oneOrNone<UserDb>('SELECT id, tid, ua_uuid, events_favorite, clicks FROM cb_users WHERE tid = $1', tid,
             (row: UserDb) => {
                 if (row !== null) {
                     return {
                         id: +row.id,
                         tid: +row.tid,
                         ua_uuid: row.ua_uuid,
+                        clicks: +row.clicks,
                         events_favorite: row.events_favorite
                     }
                 }

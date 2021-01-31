@@ -143,6 +143,15 @@ db-migrate create <name-of-migration>
 heroku pg:diagnose -a cult-hub-bot-prod
 ```
 
+### View redis state
+
+```
+rdcli -h your.redis.host -a yourredispassword -p 11111
+KEYS * 
+GET key                           # get value in key
+DEL key                           # delete key
+```
+
 
 ### Tests:
 

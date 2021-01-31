@@ -490,6 +490,10 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             await db.repoSnapshot.takeSnapshot(getHumanReadableUsername(getUserFromCtx(ctx)), new Date())
             await ctx.replyWithHTML(i18Msg(ctx, 'snapshot_taken'))
         })
+        .command('sess', async (ctx) => {
+            const chatId = ctx.message.text.replace(/^\/sess[_\s]*/, '')
+            await ctx.replyWithHTML(`rdcli -h your.redis.host -a yourredispassword -p 11111\nGET ${chatId}:${chatId}\n<i>Your id: ${ctx.chat.id}</i>`)
+        })
         .command(['level_silly', 'level_debug', 'level_error'], async (ctx) => {
             loggerTransport.level = ctx.message.text.replace(/^\/[^_]+_/, '')
             await ctx.replyWithHTML(i18Msg(ctx, 'log_level_selected', {level: loggerTransport.level}))
