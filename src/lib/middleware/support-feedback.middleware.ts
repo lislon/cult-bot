@@ -10,16 +10,9 @@ import { isBlockedError } from '../../util/error-handler'
 import { logger } from '../../util/logger'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { parseTelegramMessageToHtml } from '../message-parser/message-parser'
-import {
-    editMessageAndButtons,
-    getMsgId,
-    getNextWeekRange,
-    mySlugify,
-    ruFormat
-} from '../../scenes/shared/shared-logic'
+import { editMessageAndButtons, getMsgId, getNextWeekRange, ruFormat } from '../../scenes/shared/shared-logic'
 import { ScenePack } from '../../database/db-packs'
 import { formatUserName } from '../../util/misc-utils'
-import ua from 'universal-analytics'
 
 const scene = new BaseScene<ContextMessageUpdate>('support_chat_scene');
 
@@ -88,8 +81,6 @@ async function startMailings(telegram: Telegram, mailingId: number) {
     const nowFormat = ruFormat(new Date(), 'yyyy-MM-dd')
 
 
-    const analyticsPath = `/mailing/${nowFormat}-${mySlugify(mailMsg.text).substring(0, 40)}/`
-
     for (const user of users) {
         try {
             await telegram.sendMessage(user.tid, mailMsg.text, Extra.HTML()
@@ -98,11 +89,6 @@ async function startMailings(telegram: Telegram, mailingId: number) {
                 ))
 
             sentOkUsers.push(user.id)
-
-            const googleAnalytics = ua(botConfig.GOOGLE_ANALYTICS_ID, user.ua_uuid);
-            googleAnalytics.pageview(analyticsPath, undefined)
-            googleAnalytics.send()
-
             await sleep(1000.0 / botConfig.MAILINGS_PER_SECOND)
         } catch (e) {
             if (isBlockedError(e)) {
