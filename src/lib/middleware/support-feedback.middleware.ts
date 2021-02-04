@@ -42,7 +42,7 @@ async function formatMessage(ctx: ContextMessageUpdate, msg: Message, allPacks: 
         if (searchForPackTitle === 'подборки' || searchForPackTitle === 'подборка') {
             btns.push([Markup.callbackButton(' 📚 Подборки', `packs_scene.direct_menu`)])
         } else {
-            const packData = allPacks.find(p => p.title.toLowerCase() === searchForPackTitle)
+            const packData = allPacks.find(p => p.title.toLowerCase().trim() === searchForPackTitle)
 
             if (packData !== undefined) {
                 btns.push([Markup.callbackButton(packData.title, `packs_scene.direct_${packData.id}`)])
