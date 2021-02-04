@@ -179,6 +179,8 @@ export class AdminRepository {
         return await db.one(`
         select  (select COUNT(id) from cb_events) +
                 (select COUNT(id) from cb_events_entrance_times) +
+                (select COUNT(id) from cb_events_snapshot) +
+                (select COUNT(*) from cb_events_snapshot_meta) +
                 (select COUNT(id) from cb_feedbacks) +
                 (select COUNT(id) from cb_survey) +
                 (select COUNT(id) from cb_users) +
