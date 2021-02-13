@@ -196,7 +196,7 @@ export class IntervalGenerator {
     private readonly fromTime: Date
     private readonly daysAhead: number
 
-    constructor(time: Date, daysAhead: number = 7) {
+    constructor(time: Date, daysAhead = 7) {
         this.daysAhead = daysAhead
         this.fromTime = time
     }
@@ -236,14 +236,14 @@ export class IntervalGenerator {
 
     private flatIntervalsWeekdays(time: Date, weekTimes: WeekTime[]): MomentIntervals {
         const initialDate = startOfDay(time)
-        const intervals: MomentIntervals = []
+        let intervals: MomentIntervals = []
 
         for (let i = 0; i < this.daysAhead; i++) {
             const d = addDays(i)(initialDate);
             const times = findTimesToday(weekTimes || [], d)
-            intervals.push.apply(intervals, times.map(t => mapInterval(t, (st) => {
+            intervals = [...intervals, ...times.map(t => mapInterval(t, (st) => {
                 return addHourAndMin(st)(d)
-            })));
+            }))]
         }
         return intervals;
     }
@@ -288,11 +288,11 @@ export class IntervalGenerator {
     }
 
     private intervalsFromTime(start: Date, end: Date, times: DayTime[]) {
-        const timeIntervals: MomentIntervals = []
+        let timeIntervals: MomentIntervals = []
         for (let i = 0; i < this.daysAhead && addDays(i)(start) < end; i++) {
-            timeIntervals.push.apply(timeIntervals, (times || []).map(t => {
+            timeIntervals = [...timeIntervals, ...(times || []).map(t => {
                 return mapInterval(t, st => flow(addDays(i), addHourAndMin(st))(start))
-            }));
+            })]
         }
         return timeIntervals
     }

@@ -5,12 +5,11 @@ import { i18n } from './i18n'
 import { adminIds, adminUsernames, devUsernames } from './admins-list'
 import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
-
-export function i18SharedBtn(id: string, tplData: object = undefined) {
+export function i18SharedBtn(id: string, tplData: any = undefined) {
     return i18n.t(`ru`, `shared.keyboard.${id}`, tplData)
 }
 
-export function i18SharedMsg(id: string, tplData: object = undefined) {
+export function i18SharedMsg(id: string, tplData: any = undefined) {
     return i18n.t(`ru`, `shared.${id}`, tplData)
 }
 
@@ -35,12 +34,12 @@ export function i18nSceneHelper(scene: Pick<Scenes.BaseScene<ContextMessageUpdat
         },
         pushEnterScene,
 
-        i18Btn: (ctx: ContextMessageUpdate, id: string, tplData: object = undefined) =>
+        i18Btn: (ctx: ContextMessageUpdate, id: string, tplData: any = undefined) =>
             ctx.i18n.t(`scenes.${scene.id}.keyboard.${id}`, tplData),
-        i18SharedBtn: (ctx: ContextMessageUpdate, id: string, tplData: object = undefined) =>
+        i18SharedBtn: (ctx: ContextMessageUpdate, id: string, tplData: any = undefined) =>
             ctx.i18n.t(`shared.keyboard.${id}`, tplData),
         // scenes.<scene id>.<id>
-        i18Msg: (ctx: ContextMessageUpdate, id: string, tplData: object = undefined, byDefault: string | null = undefined) => {
+        i18Msg: (ctx: ContextMessageUpdate, id: string, tplData: any = undefined, byDefault: string | null = undefined) => {
             const resourceKey = `scenes.${scene.id}.${id}`
             if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
                 try {
@@ -52,18 +51,18 @@ export function i18nSceneHelper(scene: Pick<Scenes.BaseScene<ContextMessageUpdat
                 return byDefault
             }
         },
-        i18SharedMsg: (ctx: ContextMessageUpdate, id: string, tplData: object = undefined) =>
+        i18SharedMsg: (ctx: ContextMessageUpdate, id: string, tplData: any = undefined) =>
             ctx.i18n.t(`shared.${id}`, tplData),
 
         sceneHelper: (ctx: ContextMessageUpdate) => {
             return {
                 // scenes.<scene id>.keyboard.<id>
-                i18Btn: (id: string, tplData: object = undefined) =>
+                i18Btn: (id: string, tplData: any = undefined) =>
                     ctx.i18n.t(`scenes.${scene.id}.keyboard.${id}`, tplData),
-                i18SharedBtn: (id: string, tplData: object = undefined) =>
+                i18SharedBtn: (id: string, tplData: any = undefined) =>
                     ctx.i18n.t(`shared.keyboard.${id}`, tplData),
                 // scenes.<scene id>.<id>
-                i18Msg: (id: string, tplData: object = undefined, byDefault: string | null = undefined) => {
+                i18Msg: (id: string, tplData: any = undefined, byDefault: string | null = undefined) => {
                     const resourceKey = `scenes.${scene.id}.${id}`
                     if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
                         return ctx.i18n.t(resourceKey, tplData)

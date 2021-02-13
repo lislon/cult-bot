@@ -72,9 +72,6 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
     })
     analyticRecordEventView(ctx, event)
 
-    const page = getPacksCurEventIndex(ctx) + 1
-    const total = await getEventsCount(ctx)
-
     const buttons = [
         [
             Markup.button.callback(i18Btn(ctx, 'event_back', {

@@ -2,11 +2,10 @@ import { cardFormat } from '../../../src/scenes/shared/card-format'
 import { Event } from '../../../src/interfaces/app-interfaces'
 import path from 'path'
 import { formatPrice, parsePrice } from '../../../src/lib/price-parser'
+import fs from 'fs'
+import util from 'util'
 
-const fs = require('fs');
-const util = require('util');
-
-const readFile = util.promisify(fs.readFile);
+const readFile = util.promisify(fs.readFile)
 
 async function readCard(card: string) {
     return await readFile(path.resolve(__dirname, `cards/${card}`), 'utf8')

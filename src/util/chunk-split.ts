@@ -32,4 +32,4 @@ export function chunkString(str: string, size: number): string[] {
 
         return chunks;
     }, ['']);
-};
+}

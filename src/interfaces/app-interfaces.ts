@@ -8,7 +8,6 @@ import { AnalyticsState, AnalyticsStateTmp } from '../lib/middleware/analytics-m
 import { UserState } from '../lib/middleware/user-middleware'
 import { HelpSceneState } from '../scenes/help/help-scene'
 import { PacksSceneState } from '../scenes/packs/packs-common'
-import { FavoritesState } from '../scenes/favorites/favorites-scene'
 import { AllSlidersState } from '../scenes/shared/slider-pager'
 import { CustomizeSceneState } from '../scenes/customize/customize-common'
 import { PagingState } from '../scenes/shared/paging-pager'
@@ -45,7 +44,6 @@ interface MySession extends Scenes.SceneSession<Scenes.SceneSessionData> {
     customize?: CustomizeSceneState
     adminScene?: AdminSceneState
     feedbackScene?: FeedbackSceneState
-    favorites?: FavoritesState
     analytics?: AnalyticsState,
     user?: UserState
     help?: HelpSceneState,
@@ -100,7 +98,7 @@ export type MyInterval = {
     end: Date
 }
 
-export type I18MsgFunction = (ctx: ContextMessageUpdate, id: string, tplData?: object, byDefault?: string | null) => string
+export type I18MsgFunction = (ctx: ContextMessageUpdate, id: string, tplData?: any, byDefault?: string | null) => string
 export const CHEAP_PRICE_THRESHOLD = 500
 
 export const CAT_NAMES = {
@@ -117,6 +115,6 @@ export type ExtIdAndId = { id: number; extId: string }
 export type ExtIdAndMaybeId = { id?: number; extId: string }
 export type ContextCallbackQueryUpdate = ContextMessageUpdate & {
     update: {
-        callback_query: object
+        callback_query: any
     }
 }

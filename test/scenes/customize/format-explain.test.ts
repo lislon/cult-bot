@@ -18,7 +18,7 @@ function formatExplainTimeEx(now: string, time: string[]): string[] {
         } as any
     } as ContextMessageUpdate
 
-    const i18Msg: I18MsgFunction = function (ctx: ContextMessageUpdate, id: string, tplData: object = undefined, byDefault: string | null = undefined) {
+    const i18Msg: I18MsgFunction = function (ctx: ContextMessageUpdate, id: string, tplData: any = undefined, byDefault: string | null = undefined) {
         const resourceKey = `scenes.customize_scene.${id}`
         if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
             return i18n.t('ru', resourceKey, tplData)

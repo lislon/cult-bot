@@ -196,7 +196,7 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
 
     const notNull = (s: string) => s === undefined ? '' : s.trim()
     const notNullOrUnknown = (s: string) => s === undefined ? '' : s
-    const forceDigit = (n: string, def: number = 0) => n === undefined ? def : +n
+    const forceDigit = (n: string, def = 0) => n === undefined ? def : +n
     const splitTags = (s: string) => s.split(/\s+|(?<=[^\s])(?=#)/)
 
     const data: Event = {

@@ -1,6 +1,6 @@
 import { EventCategory } from '../interfaces/app-interfaces'
 
-export function cleanTagLevel1(text: string) {
+export function cleanTagLevel1(text: string): string {
     // tag[cat] -> tag
     return text.replace(/^[^.]+[.]/, '')
 }

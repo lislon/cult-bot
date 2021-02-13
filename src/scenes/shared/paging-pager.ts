@@ -13,9 +13,7 @@ import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg} = i18nSceneHelper(scene)
 
-export interface PagingState<Q> extends PagerSliderState<Q> {
-
-}
+export type PagingState<Q> = PagerSliderState<Q>
 
 export interface PagingConfig<Q, E = Event> extends PagingCommonConfig<Q, E> {
     limit: number

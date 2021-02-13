@@ -89,7 +89,7 @@ export class AdminRepository {
             }) as StatByReviewer[];
     }
 
-    async findAllChangedEventsByCat(category: EventCategory, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<AdminEvent[]> {
+    async findAllChangedEventsByCat(category: EventCategory, interval: MyInterval, limit = 50, offset = 0): Promise<AdminEvent[]> {
         const finalQuery = `
         select * FROM (
             SELECT ${SELECT_ADMIN_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
@@ -117,7 +117,7 @@ export class AdminRepository {
             }, AdminRepository.mapToEventWithId) as AdminEvent[]
     }
 
-    async findAllEventsByReviewer(reviewer: string, interval: MyInterval, limit: number = 50, offset: number = 0): Promise<AdminEvent[]> {
+    async findAllEventsByReviewer(reviewer: string, interval: MyInterval, limit = 50, offset = 0): Promise<AdminEvent[]> {
         const finalQuery = `
         select * FROM (
             SELECT ${SELECT_ADMIN_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}

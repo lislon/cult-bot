@@ -23,11 +23,14 @@ export function formatPrice(eventPrice: EventPrice): string {
     }
 
     switch (eventPrice.type) {
-        case 'donation': return withComment('донейшен')
-        case 'free': return withComment('бесплатно')
-        case 'other': return eventPrice.comment
-        case 'paid':
-            const { min, max } = eventPrice
+        case 'donation':
+            return withComment('донейшен')
+        case 'free':
+            return withComment('бесплатно')
+        case 'other':
+            return eventPrice.comment
+        case 'paid': {
+            const {min, max} = eventPrice
             if (min === max) {
                 return withComment(formatPrice(min))
             }
@@ -35,6 +38,7 @@ export function formatPrice(eventPrice: EventPrice): string {
                 return withComment(`от ${formatPrice(min)}`)
             }
             return withComment(`от ${formatPrice(min)} до ${formatPrice(max)}`)
+        }
         default:
             return ''
     }

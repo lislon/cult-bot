@@ -1,4 +1,4 @@
-import { Markup, Scenes, Telegraf } from 'telegraf'
+import { Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
@@ -12,9 +12,6 @@ import { formatUserName } from '../../util/misc-utils'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('feedback_scene')
 const {actionName, i18nModuleBtnName, scanKeys, i18Btn, i18Msg} = i18nSceneHelper(scene)
-
-function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>) {
-}
 
 async function sendFeedbackIfListening(ctx: ContextMessageUpdate) {
     if (ctx.session.feedbackScene.isListening !== undefined) {
@@ -227,8 +224,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 }
 
 export const feedbackScene = {
-    scene,
-    postStageActionsFn
+    scene
 } as SceneRegister
 
 export type IsListening = 'like' | 'dislike' | 'text'

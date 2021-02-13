@@ -1,7 +1,7 @@
 import { DbEvent, EventToSave } from '../interfaces/db-interfaces'
 import { encodeTagsLevel1 } from '../util/tag-level1-encoder'
 import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise'
-import { db } from './db'
+import { db, IExtensions } from './db'
 import md5 from 'md5'
 import { MomentIntervals } from '../lib/timetable/intervals'
 import { logger } from '../util/logger'
@@ -123,14 +123,14 @@ export class EventsSyncRepository {
     }
 
     public async syncDatabase(newEvents: EventToSave[]): Promise<SyncDiff> {
-        return await this.db.tx('sync', async (dbTx: ITask<{}> & {}) => {
+        return await this.db.tx('sync', async (dbTx: ITask<IExtensions>) => {
             const syncDiff = await this.prepareDiffForSync(newEvents, dbTx)
             await this.syncDiff(syncDiff, dbTx)
             return syncDiff
         })
     }
 
-    public async prepareDiffForSync(newEvents: EventToSave[], db: ITask<{}>): Promise<SyncDiff> {
+    public async prepareDiffForSync(newEvents: EventToSave[], db: ITask<IExtensions>): Promise<SyncDiff> {
         const result: SyncDiff = {
             updatedEvents: [],
             insertedEvents: [],
@@ -140,7 +140,7 @@ export class EventsSyncRepository {
         }
         const now = new Date()
 
-        await db.txIf(async (dbTx: ITask<{}> & {}) => {
+        await db.txIf(async (dbTx: ITask<IExtensions>) => {
 
             const existingIdsRaw = await dbTx.manyOrNone(`
                     SELECT id,
@@ -231,12 +231,12 @@ export class EventsSyncRepository {
         return result
     }
 
-    public async syncDiff(syncDiff: SyncDiff, db: ITask<{}>): Promise<void> {
+    public async syncDiff(syncDiff: SyncDiff, db: ITask<IExtensions>): Promise<void> {
         const now = new Date()
 
         const newDbRows = syncDiff.insertedEvents.map(e => EventsSyncRepository.mapToDb(e, now))
 
-        const updatedAndRecovered = [... syncDiff.updatedEvents, ...syncDiff.recoveredEvents]
+        const updatedAndRecovered = [...syncDiff.updatedEvents, ...syncDiff.recoveredEvents]
         const updatedAndRecoveredRows: (DbEvent & { id: number })[] = updatedAndRecovered.map(e => {
             return {...(EventsSyncRepository.mapToDb(e, now)), id: e.primaryData.id}
         })
@@ -244,7 +244,7 @@ export class EventsSyncRepository {
         const eventsIntervalToSync: EventIntervalForSave[] = updatedAndRecovered
             .map(({ primaryData, timeIntervals }) => { return { eventId: primaryData.id, timeIntervals } })
 
-        await db.txIf({ reusable: true }, async (dbTx: ITask<{}> & {}) => {
+        await db.txIf({reusable: true}, async (dbTx: ITask<IExtensions>) => {
 
             await this.deleteEvents(dbTx, syncDiff.deletedEvents, now)
 
@@ -296,9 +296,9 @@ export class EventsSyncRepository {
         })
     }
 
-    public async syncEventIntervals(eventsWithIntervals: EventIntervalForSave[], dbTx: ITask<{}>) {
+    public async syncEventIntervals(eventsWithIntervals: EventIntervalForSave[], dbTx: ITask<IExtensions>) {
         if (eventsWithIntervals.length > 0) {
-            await dbTx.txIf({ reusable: true }, async (dbTx: ITask<{}> & {}) => {
+            await dbTx.txIf({reusable: true}, async (dbTx: ITask<IExtensions>) => {
                 await dbTx.none(`DELETE FROM cb_events_entrance_times WHERE event_id IN($1:csv)`, [eventsWithIntervals.map(e => e.eventId)])
                 const intervals = EventsSyncRepository.convertToIntervals(eventsWithIntervals)
                 if (intervals.length > 0) {
@@ -307,7 +307,8 @@ export class EventsSyncRepository {
             })
         }
     }
-    private async deleteEvents(dbTx: ITask<{}>, deletedEvents: DeletedEvent[], dateDeleted: Date) {
+
+    private async deleteEvents(dbTx: ITask<IExtensions>, deletedEvents: DeletedEvent[], dateDeleted: Date) {
         if (deletedEvents.length > 0) {
             const s = this.pgp.helpers.update({
                 deleted_at: dateDeleted,
@@ -318,7 +319,7 @@ export class EventsSyncRepository {
         }
     }
 
-    private async insertNewEvents(dbTx: ITask<{}>, newDbRows: DbEvent[]) {
+    private async insertNewEvents(dbTx: ITask<IExtensions>, newDbRows: DbEvent[]) {
         const s = this.pgp.helpers.insert(newDbRows, this.dbColEvents) + ' RETURNING id'
         return await dbTx.map(s, [], r => +r.id)
     }

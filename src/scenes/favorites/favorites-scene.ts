@@ -33,10 +33,6 @@ const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 
 const {i18SharedMsg, i18Btn, i18Msg, i18SharedBtn, backButton, actionName, actionNameRegex} = i18nSceneHelper(scene)
 
-export interface FavoritesState {
-
-}
-
 export interface FavoriteEvent extends Event {
     parsedTimetable: ParseAndPredictTimetableResult
     firstDate: Date
@@ -107,26 +103,16 @@ async function getMainMenu(ctx: ContextMessageUpdate) {
 }
 
 
-function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
-    // const {
-    //
-    // } = ctx.session.favorites || {}
-    ctx.session.favorites = undefined
-}
-
 scene
     .enter(async ctx => {
         await replyWithBackToMainMarkup(ctx, i18Msg(ctx, 'markup_back_decoy'))
 
         await warnAdminIfDateIsOverriden(ctx)
-        prepareSessionStateIfNeeded(ctx)
 
         const {msg, buttons} = await getMainMenu(ctx)
         await ctx.replyWithHTML(msg, extraInlineMenu(buttons))
 
         ctx.ua.pv({dp: `/favorites/`, dt: `Избранное`})
-    })
-    .leave((ctx: ContextMessageUpdate) => {
     })
 
 async function toggleFavoriteButtonLogic(ctx: ContextMessageUpdate, eventId: number) {
@@ -222,7 +208,6 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
         .action(actionName('show_cards'), async ctx => {
             await ctx.answerCbQuery()
-            await prepareSessionStateIfNeeded(ctx)
 
             const state = await eventPager.updateState(ctx, {invalidateOtherSliders: true, msgId: getMsgId(ctx)})
             await eventPager.showOrUpdateSlider(ctx, state)

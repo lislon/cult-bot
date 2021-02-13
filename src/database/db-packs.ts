@@ -41,8 +41,8 @@ export class PacksRepository {
             ], {table: 'cb_events_packs'})
     }
 
-    public async sync(packs: EventPackForSave[], outerDbTx: IBaseProtocol<{}> = db): Promise<number[]> {
-        return await outerDbTx.txIf({ reusable: true }, async (dbTx: ITask<IExtensions> & IExtensions) => {
+    public async sync(packs: EventPackForSave[], outerDbTx: IBaseProtocol<IExtensions> = db): Promise<number[]> {
+        return await outerDbTx.txIf({reusable: true}, async (dbTx: ITask<IExtensions> & IExtensions) => {
             await dbTx.none('TRUNCATE cb_events_packs')
             if (packs.length > 0) {
                 const s = this.pgp.helpers.insert(packs.map(p => {

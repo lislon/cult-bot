@@ -1,6 +1,7 @@
 import { Event, MyInterval } from '../interfaces/app-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { ColumnSet, IColumnConfig, IDatabase, IMain, ITask } from 'pg-promise'
+import { IExtensions } from './db'
 
 interface CountEventsQuery {
     interval: MyInterval
@@ -70,7 +71,7 @@ export class EventsCommonRepository {
             },
         ], {table: 'cb_events'})
 
-        function getArrayPushPopColumnSettings(name: string): IColumnConfig<{}> {
+        function getArrayPushPopColumnSettings(name: string): IColumnConfig<IExtensions> {
             return {
                 name: name,
                 init: c => c.value > 0 ? `array_append(${name}, ${c.value}::int8)` : `array_remove(${name}, ${-c.value}::int8)`,
@@ -104,7 +105,7 @@ export class EventsCommonRepository {
     }
 
     public async voteEvent(userId: number, eventId: number, vote: 'like'|'dislike'): Promise<LikeDislikeChange> {
-        return await this.db.txIf(async (dbTx: ITask<{}>) => {
+        return await this.db.txIf(async (dbTx: ITask<IExtensions>) => {
             const oldChoose = await dbTx.one(`
                 SELECT
                     ($(eventIdArr)::int8[] <@ events_liked) AS is_liked,

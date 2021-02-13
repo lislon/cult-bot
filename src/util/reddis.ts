@@ -3,13 +3,14 @@ import { botConfig } from './bot-config'
 import { Context } from 'telegraf'
 import { RedisClient } from 'redis'
 import { promisify } from 'util'
+import redisMock from 'redis-mock'
 
 export interface MyRedisSession {
     middleware(): (ctx: any, next?: (() => any) | undefined) => any
 
     getSession(key: Context): string
 
-    saveSession(key: string, session: object): object
+    saveSession(key: string, session: any): any
 
     client: RedisClient
 
@@ -20,8 +21,7 @@ export interface MyRedisSession {
 
 function getRedis(): MyRedisSession {
     if (botConfig.NODE_ENV === 'test') {
-        const redis = require('redis-mock'),
-            client = redis.createClient();
+        const client = redisMock.createClient()
 
         return {
             getSession(key: Context): string {
@@ -29,10 +29,11 @@ function getRedis(): MyRedisSession {
             },
             middleware(): (ctx: any, next?: ((() => any) | undefined)) => any {
                 return function (p1: any, p2: (() => any) | undefined) {
-                };
+                    // do nothing
+                }
             },
-            saveSession(key: string, session: object): object {
-                return undefined;
+            saveSession(key: string, session: any): any {
+                return undefined
             },
             get options() {
                 return {

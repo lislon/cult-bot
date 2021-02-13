@@ -12,9 +12,6 @@ function loop(index: number | undefined, count: number, dir: string) {
     return (count + (index === undefined ? 0 : index) + (dir === 'prev' ? -1 : 1)) % count
 }
 
-function doNotUpdateInlineMenu(ctx: ContextMessageUpdate) {
-}
-
 // ctx.session.packsScene.msgId = undefined
 scene
     .enter(async ctx => {
@@ -90,7 +87,6 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
             const packs = await getPacksList(ctx)
             await ctx.scene.enter('packs_scene', {}, true)
 
-            doNotUpdateInlineMenu(ctx)
             const directPackId = +ctx.match[1]
             ctx.session.packsScene.packSelectedIdx = packs.findIndex(p => p.id === directPackId)
             if (ctx.session.packsScene.packSelectedIdx === -1) {
