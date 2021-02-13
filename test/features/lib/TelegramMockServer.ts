@@ -1,5 +1,4 @@
-/// <reference path="./../../../src/types/telegraf.d.ts"/>
-import { Context, MiddlewareFn, Telegraf, TelegramError } from 'telegraf'
+import { Context, MiddlewareFn, Telegraf, TelegramError, Telegram } from 'telegraf'
 import {
     ExtraEditMessageText,
     ExtraReplyMessage,
@@ -13,7 +12,6 @@ import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { MarkupHelper } from './MarkupHelper'
 import { Chat, User } from 'typegram/manage'
 import { True } from 'typegram/alias'
-import Telegram from 'telegraf/lib/telegram'
 import { omit } from 'lodash'
 import ServiceMessage = Message.ServiceMessage
 import TextMessage = Message.TextMessage

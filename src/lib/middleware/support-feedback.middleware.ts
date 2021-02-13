@@ -17,9 +17,10 @@ import {
 } from '../../scenes/shared/shared-logic'
 import { ScenePack } from '../../database/db-packs'
 import { formatUserName } from '../../util/misc-utils'
-import ua from 'universal-analytics'
 import { InlineKeyboardButton, Message } from 'telegraf/typings/telegram-types'
 import Telegram from 'telegraf/typings/telegram'
+import TextMessage = Message.TextMessage;
+import { ReplyMessage } from 'typegram';
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('support_chat_scene')
 
@@ -138,6 +139,10 @@ async function startMailing(ctx: ContextMessageUpdate, mailingId: number, option
     setTimeout(startMailings, 0, ctx.telegram, mailingId)
 }
 
+function isTextMessage(r: ReplyMessage): r is TextMessage & { reply_to_message: undefined } {
+    return 'text' in r;
+}
+
 supportFeedbackMiddleware
     .command('stat', async (ctx: ContextMessageUpdate, next: any) => {
         if (botConfig.SUPPORT_FEEDBACK_CHAT_ID !== undefined) {
@@ -148,7 +153,7 @@ supportFeedbackMiddleware
     .hears(/^(s|ы)(i|ш)?(f)?\s*$/i, async ctx => {
         const webPreview = ctx.match[2] !== undefined
         const force = ctx.match[3] === 'f'
-        if ('reply_to_message' in ctx.message && 'text' in ctx.message.reply_to_message) {
+        if ('reply_to_message' in ctx.message && isTextMessage(ctx.message.reply_to_message)) {
             const messageId = ctx.message.reply_to_message.message_id
 
             const allPacks = await db.repoPacks.listPacks({

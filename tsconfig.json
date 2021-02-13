@@ -22,7 +22,10 @@
     "typeRoots": [
       "./node_modules/@types",
       "./src/types"
-    ]
+    ],
+//    "paths": {
+//      "telegraf/lib/telegram": ["node_modules/telegraf/lib/telegram"]
+//    }
   },
   "include": ["src/**/*", "src/locales/*.json"]
 }
