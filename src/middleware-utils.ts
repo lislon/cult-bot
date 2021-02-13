@@ -1,4 +1,4 @@
-import telegrafThrottler from 'telegraf-throttler'
+import telegrafThrottler, { ThrottlerOptions } from 'telegraf-throttler'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { parseISO } from 'date-fns'
 import { userMiddleware } from './lib/middleware/user-middleware'
@@ -74,10 +74,10 @@ function loggerInjectMiddleware() {
 export default {
     i18n: i18n.middleware(),
     dateTime: dateTimeMiddleware,
-    telegrafThrottler: (opts?: Parameters<typeof telegrafThrottler>[0]) => {
+    telegrafThrottler: (opts?: ThrottlerOptions) => {
         return telegrafThrottler({
-            onThrottlerError: async (ctx: ContextMessageUpdate, next, throttlerName, error: any) => {
-                logger.debug(`Throttle limit ${throttlerName}: ${error} for user ${ctx.from.username}`)
+            inThrottlerError: async (ctx: ContextMessageUpdate, next, error: Error) => {
+                logger.debug(`Throttle limit: ${error} for user ${ctx.from.username}`)
             },
             ...opts,
         })
