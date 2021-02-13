@@ -152,6 +152,10 @@ GET key                           # get value in key
 DEL key                           # delete key
 ```
 
+Auto-delete redis keys on limit:
+```
+heroku redis:maxmemory --policy allkeys-lru -a cult-hub-bot-dev
+```
 
 ### Tests:
 
