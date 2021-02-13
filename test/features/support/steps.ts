@@ -12,7 +12,7 @@ import { allCategories, ContextMessageUpdate } from '../../../src/interfaces/app
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
 import { botConfig } from '../../../src/util/bot-config'
 import { clone, last } from 'lodash'
-import { InlineKeyboardMarkup } from 'telegram-typings'
+import { InlineKeyboardMarkup } from 'telegraf/typings/telegram-types'
 
 function clean(str: string) {
     return str

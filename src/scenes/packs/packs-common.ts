@@ -1,17 +1,13 @@
 import { ContextMessageUpdate, Event, MyInterval } from '../../interfaces/app-interfaces'
-import { BaseScene } from 'telegraf'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import { ScenePack } from '../../database/db-packs'
 import { SessionEnforcer } from '../shared/shared-logic'
 import { db } from '../../database/db'
 import { addDays, max, startOfDay, startOfISOWeek } from 'date-fns/fp'
 import flow from 'lodash/fp/flow'
 import addMonths from 'date-fns/fp/addMonths'
+import { Scenes } from 'telegraf'
 
-export const scene = new BaseScene<ContextMessageUpdate>('packs_scene');
-
-const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
-
+export const scene = new Scenes.BaseScene<ContextMessageUpdate>('packs_scene')
 
 export interface PacksSceneState {
     packs: ScenePack[]

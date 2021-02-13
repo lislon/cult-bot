@@ -33,13 +33,13 @@ backButtonsCatch
 //     })
 
 tail
-    .command('menu', async (ctx: ContextMessageUpdate) => {
+    .command('menu', async ctx => {
         await ctx.scene.enter('main_scene')
     })
-    .command('error', async (ctx: ContextMessageUpdate) => {
+    .command('error', async ctx => {
         throw new Error('This is test error from userId=' + ctx.from.id)
     })
-    .command('me', async (ctx: ContextMessageUpdate) => {
+    .command('me', async ctx => {
         if (isAdmin(ctx)) {
             await ctx.replyWithHTML(JSON.stringify(ctx.session, undefined, 2))
         }
@@ -57,7 +57,9 @@ tail
     .action(/.+/, async (ctx) => {
         await ctx.answerCbQuery()
         await buttonIsOldGoToMain(ctx)
-        ctx.logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [callback_data=${ctx.update?.callback_query?.data}] Аварийный выход`)
+        if ('data' in ctx.update?.callback_query) {
+            ctx.logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [callback_data=${ctx.update.callback_query.data}] Аварийный выход`)
+        }
     })
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {

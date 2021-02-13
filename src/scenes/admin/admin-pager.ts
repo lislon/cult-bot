@@ -1,15 +1,16 @@
 import { getButtonsSwitch, getSearchedEvents, POSTS_PER_PAGE_ADMIN } from './admin-common'
 import { AdminSceneQueryState } from './admin-scene'
 import { CardOptions } from '../shared/card-format'
-import { BaseScene } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { PagingConfig } from '../shared/paging-pager'
 import { db, LimitOffset } from '../../database/db'
-import { CallbackButton } from 'telegraf/typings/markup'
-import { AdminEvent } from '../../database/db-admin'
 
-const scene = new BaseScene<ContextMessageUpdate>('admin_scene')
+import { AdminEvent } from '../../database/db-admin'
+import { Scenes } from 'telegraf'
+import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
 
 
@@ -37,7 +38,7 @@ export class AdminPager implements PagingConfig<AdminSceneQueryState, AdminEvent
         }
     }
 
-    async cardButtons(ctx: ContextMessageUpdate, event: AdminEvent): Promise<CallbackButton[]> {
+    async cardButtons(ctx: ContextMessageUpdate, event: AdminEvent): Promise<InlineKeyboardButton.CallbackButton[]> {
         if (event.snapshotStatus === 'updated') {
             return getButtonsSwitch(ctx, event.ext_id, 'current')
         }
@@ -47,7 +48,7 @@ export class AdminPager implements PagingConfig<AdminSceneQueryState, AdminEvent
     // async onLastEvent(ctx: ContextMessageUpdate) {
     //     await ctx.replyWithHTML(i18Msg(ctx, 'last_event'), {
     //         reply_markup: Markup.inlineKeyboard([[
-    //             Markup.callbackButton(i18Btn(ctx, 'back_to_main'), actionName('back_to_main'))
+    //            Markup.button.callback(i18Btn(ctx, 'back_to_main').reply_markup, actionName('back_to_main'))
     //         ]])
     //     })
     // }

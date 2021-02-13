@@ -13,6 +13,9 @@
     "outDir": "dist",
     "baseUrl": ".",
     "resolveJsonModule": true,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": true,
+    "strictBindCallApply": true,
     "jsx": "react",
     "lib": [
       "es2019"

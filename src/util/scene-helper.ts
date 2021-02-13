@@ -1,9 +1,10 @@
-import { BaseScene, Markup } from 'telegraf'
+import { Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 import { ReversableTranslit } from '../lib/translit/reversable-translit'
 import { i18n } from './i18n'
 import { adminIds, adminUsernames, devUsernames } from './admins-list'
-import { CallbackButton } from 'telegraf/typings/markup'
+import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+
 
 export function i18SharedBtn(id: string, tplData: object = undefined) {
     return i18n.t(`ru`, `shared.keyboard.${id}`, tplData)
@@ -13,7 +14,7 @@ export function i18SharedMsg(id: string, tplData: object = undefined) {
     return i18n.t(`ru`, `shared.${id}`, tplData)
 }
 
-export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id'>) {
+export function i18nSceneHelper(scene: Pick<Scenes.BaseScene<ContextMessageUpdate>, 'id'>) {
     const backAction = scene.id + '.button.back'
 
     const pushEnterScene = async (ctx: ContextMessageUpdate, nextSceneId: string) => {
@@ -21,7 +22,7 @@ export function i18nSceneHelper(scene: Pick<BaseScene<ContextMessageUpdate>, 'id
     }
 
     return {
-        backButton: (): CallbackButton => Markup.callbackButton(i18n.t('ru', 'shared.keyboard.back'), backAction),
+        backButton: (): InlineKeyboardButton.CallbackButton => Markup.button.callback(i18n.t('ru', 'shared.keyboard.back'), backAction),
         actionName: (id: string) => `${scene.id}.${ReversableTranslit.translit(id)}`,
         actionNameRegex: (id: RegExp) => new RegExp(`^${scene.id}[.]${id.source}`),
         revertActionName: (id: string) => {

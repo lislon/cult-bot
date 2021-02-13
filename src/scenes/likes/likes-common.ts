@@ -1,13 +1,14 @@
-import { BaseScene, Markup } from 'telegraf'
-import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
+import { Markup, Scenes } from 'telegraf'
+import { ContextCallbackQueryUpdate, ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { CallbackButton } from 'telegraf/typings/markup'
+
 import { ITask } from 'pg-promise'
 import { IExtensions } from '../../database/db'
-import { getMsgInlineKeyboard, parseAndUpdateBtn } from '../shared/shared-logic'
+import { getInlineKeyboardFromCallbackQuery, parseAndUpdateBtn } from '../shared/shared-logic'
 import { getFavoriteBtnText } from '../favorites/favorites-common'
+import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
-const scene = new BaseScene<ContextMessageUpdate>('likes_scene');
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('likes_scene')
 
 const {i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
 
@@ -23,11 +24,11 @@ export interface BtnLikeDislikeParams {
 
 export const LIKES_EVENT_ACTION_PREFIXES = ['like_', 'dislike_', 'favorite_']
 
-export function getLikesRow(ctx: ContextMessageUpdate, event: Pick<Event, 'id' | 'likes' | 'dislikes'>): CallbackButton[] {
+export function getLikesRow(ctx: ContextMessageUpdate, event: Pick<Event, 'id' | 'likes' | 'dislikes'>): InlineKeyboardButton.CallbackButton[] {
     return [
-        Markup.callbackButton(getLikeDislikeButtonText(ctx, event.likes, 'like'), `like_${event.id}`),
-        Markup.callbackButton(getLikeDislikeButtonText(ctx, event.dislikes, 'dislike'), `dislike_${event.id}`),
-        Markup.callbackButton(getFavoriteBtnText(ctx, isEventInFavorites(ctx, event.id)), `favorite_${event.id}`),
+        Markup.button.callback(getLikeDislikeButtonText(ctx, event.likes, 'like'), `like_${event.id}`),
+        Markup.button.callback(getLikeDislikeButtonText(ctx, event.dislikes, 'dislike'), `dislike_${event.id}`),
+        Markup.button.callback(getFavoriteBtnText(ctx, isEventInFavorites(ctx, event.id)), `favorite_${event.id}`),
     ]
 }
 
@@ -35,8 +36,8 @@ export function isEventInFavorites(ctx: ContextMessageUpdate, eventId: number) {
     return ctx.session.user.eventsFavorite.includes(+eventId)
 }
 
-export async function updateLikeDislikeInlineButtons(ctx: ContextMessageUpdate, dbTask: ITask<IExtensions> & IExtensions, eventId: number) {
-    const originalKeyboard = getMsgInlineKeyboard(ctx)
+export async function updateLikeDislikeInlineButtons(ctx: ContextCallbackQueryUpdate, dbTask: ITask<IExtensions> & IExtensions, eventId: number) {
+    const originalKeyboard = getInlineKeyboardFromCallbackQuery(ctx)
 
     const [likes, dislikes] = await dbTask.repoEventsCommon.getLikesDislikes(eventId)
 

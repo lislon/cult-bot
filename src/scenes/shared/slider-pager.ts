@@ -1,18 +1,22 @@
-import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
-import { MiddlewareFn } from 'telegraf/typings/composer'
-import { BaseScene, Composer, Markup } from 'telegraf'
-import { editMessageAndButtons, EditMessageAndButtonsOptions, getMsgId, parseAndUpdateBtn } from './shared-logic'
+import { ContextCallbackQueryUpdate, ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
+import { Composer, Markup, MiddlewareFn, Scenes } from 'telegraf'
+import {
+    editMessageAndButtons,
+    EditMessageAndButtonsOptions,
+    getInlineKeyboardFromCallbackQuery,
+    getMsgId,
+    parseAndUpdateBtn
+} from './shared-logic'
 import { getLikesRow } from '../likes/likes-common'
 import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { CallbackButton } from 'telegraf/typings/markup'
 import { EventsPagerSliderBase, PagerSliderState, PagingCommonConfig } from './events-common'
 import { botConfig } from '../../util/bot-config'
-import { InlineKeyboardMarkup } from 'telegram-typings'
 import { clone } from 'lodash'
+import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
-const scene = new BaseScene<ContextMessageUpdate>('')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18SharedMsg} = i18nSceneHelper(scene)
 
 export interface SliderState<Q> extends PagerSliderState<Q> {
@@ -67,7 +71,7 @@ export interface UpdateData<Q> {
 
 interface ButtonsAndText {
     text: string
-    buttons: CallbackButton[][]
+    buttons: InlineKeyboardButton.CallbackButton[][]
 }
 
 export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBase<Q, SliderConfig<Q, E>, E> {
@@ -109,7 +113,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
     }
 
     private async getBackButton(ctx: ContextMessageUpdate) {
-        return Markup.callbackButton(i18nSharedBtnName('slider_keyboard.back'), await this.config.backButtonCallbackData(ctx))
+        return Markup.button.callback(i18nSharedBtnName('slider_keyboard.back'), await this.config.backButtonCallbackData(ctx))
     }
 
     private async showOrUpdateCard(ctx: ContextMessageUpdate, state: SliderState<Q>, options?: EditMessageAndButtonsOptions): Promise<number> {
@@ -124,20 +128,20 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
     }
 
     private async handleExistingCard(ctx: ContextMessageUpdate, cardId: number, state: SliderState<Q>): Promise<ButtonsAndText> {
-        const backButton: CallbackButton = await this.getBackButton(ctx)
+        const backButton: InlineKeyboardButton.CallbackButton = await this.getBackButton(ctx)
         const [event] = await this.config.loadCardsByIds(ctx, [cardId])
         if (event !== undefined) {
 
             this.config.analytics?.(ctx, event, {offset: state.selectedIdx, total: state.total}, state.query)
 
-            const cardButtons: CallbackButton[] = this.config.cardButtons ? await this.config.cardButtons(ctx, event) : getLikesRow(ctx, event)
+            const cardButtons: InlineKeyboardButton.CallbackButton[] = this.config.cardButtons ? await this.config.cardButtons(ctx, event) : getLikesRow(ctx, event)
 
 
-            const prevButton = Markup.callbackButton(i18nSharedBtnName('slider_keyboard.prev'), this.btnActionPrev)
-            const position = Markup.callbackButton(getPositionText(state.selectedIdx + 1, state.total), this.btnActionPosition)
-            const nextButton = Markup.callbackButton(i18nSharedBtnName('slider_keyboard.next'), this.btnActionNext)
+            const prevButton = Markup.button.callback(i18nSharedBtnName('slider_keyboard.prev'), this.btnActionPrev)
+            const position = Markup.button.callback(getPositionText(state.selectedIdx + 1, state.total), this.btnActionPosition)
+            const nextButton = Markup.button.callback(i18nSharedBtnName('slider_keyboard.next'), this.btnActionNext)
 
-            const buttons: CallbackButton[][] = [
+            const buttons: InlineKeyboardButton.CallbackButton[][] = [
                 [backButton, ...cardButtons],
                 [prevButton, position, nextButton]
             ]
@@ -170,7 +174,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                     /^slider_keyboard[.].+[.]next$/, (btn) => {
                         btn.text = `* ${btn.text}`
                         return btn
-                    })).inline_keyboard as CallbackButton[][]
+                    })).inline_keyboard as InlineKeyboardButton.CallbackButton[][]
 
                 return buttonsAndText
             } else {
@@ -194,10 +198,10 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
         return `slider_keyboard.${this.config.sceneId}.prev`
     }
 
-    private async nextPrev(ctx: ContextMessageUpdate, leftRightLogic: (state: SliderState<Q>) => void) {
+    private async nextPrev(ctx: ContextCallbackQueryUpdate, leftRightLogic: (state: SliderState<Q>) => void) {
 
         function onlyOneEventLeftAccordingToButtons() {
-            const keyboard = (ctx.update.callback_query.message as any)?.reply_markup as InlineKeyboardMarkup
+            const keyboard = getInlineKeyboardFromCallbackQuery(ctx)
             const oneOfOneBtn = keyboard.inline_keyboard.flatMap(rows => rows).find(row => row.text === getPositionText(1, 1))
             return oneOfOneBtn !== undefined
         }

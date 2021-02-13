@@ -1,4 +1,4 @@
-import { BaseScene, Composer } from 'telegraf'
+import { Composer, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { db } from '../../database/db'
@@ -6,7 +6,7 @@ import { SceneRegister } from '../../middleware-utils'
 import { formatUserName } from '../../util/misc-utils'
 import { updateLikeDislikeInlineButtons } from './likes-common'
 
-const scene = new BaseScene<ContextMessageUpdate>('likes_scene');
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('likes_scene')
 
 const {i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
 
@@ -22,7 +22,7 @@ function logLikes(plusLikes: number, ctx: ContextMessageUpdate, eventId: number,
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
-        .action(/^like_(\d+)/, async (ctx: ContextMessageUpdate) => {
+        .action(/^like_(\d+)/, async ctx => {
             const eventId = +ctx.match[1]
 
             await db.task(async dbTask => {
@@ -34,7 +34,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                 await updateLikeDislikeInlineButtons(ctx, dbTask, eventId)
             })
         })
-        .action(/^dislike_(\d+)/, async (ctx: ContextMessageUpdate) => {
+        .action(/^dislike_(\d+)/, async ctx => {
             const eventId = +ctx.match[1]
             await db.task(async dbTask => {
                 const {plusLikes, plusDislikes} = await dbTask.repoEventsCommon.voteEvent(ctx.session.user.id, eventId, 'dislike')

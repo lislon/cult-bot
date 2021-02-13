@@ -1,16 +1,16 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
-import { MiddlewareFn } from 'telegraf/typings/composer'
-import { BaseScene, Composer, Markup } from 'telegraf'
+import { Composer, Markup, MiddlewareFn, Scenes } from 'telegraf'
 import { SessionEnforcer } from './shared-logic'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
-import { CallbackButton } from 'telegraf/typings/markup'
+
 import { LimitOffset } from '../../database/db'
 import { EventsPagerSliderBase, PagerSliderState, PagingCommonConfig } from './events-common'
 import { getLikesRow, LIKES_EVENT_ACTION_PREFIXES } from '../likes/likes-common'
 import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
+import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
-const scene = new BaseScene<ContextMessageUpdate>('')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg} = i18nSceneHelper(scene)
 
 export interface PagingState<Q> extends PagerSliderState<Q> {
@@ -24,7 +24,7 @@ export interface PagingConfig<Q, E = Event> extends PagingCommonConfig<Q, E> {
 
     hideNextBtnOnClick?: boolean
 
-    lastEventEndButton?(ctx: ContextMessageUpdate): CallbackButton[]
+    lastEventEndButton?(ctx: ContextMessageUpdate): InlineKeyboardButton.CallbackButton[]
 
     onLastEvent?(ctx: ContextMessageUpdate): Promise<void>
 }
@@ -34,7 +34,7 @@ export class PagingPager<Q, E extends Event = Event> extends EventsPagerSliderBa
 
     public middleware(): MiddlewareFn<ContextMessageUpdate> {
         return (new Composer<ContextMessageUpdate>()
-                .action(/.+/, (ctx: ContextMessageUpdate, next) => {
+                .action(/.+/, (ctx: ContextMessageUpdate & { match: RegExpExecArray }, next) => {
                     if (ctx.session.paging !== undefined) {
                         const actionName = ctx.match[0]
 
@@ -57,7 +57,7 @@ export class PagingPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                         const pagerState = this.getPagerState(ctx)
                         await this.showCards(ctx, pagerState)
                         if (this.config.hideNextBtnOnClick) {
-                            await ctx.editMessageReplyMarkup()
+                            await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]).reply_markup)
                         }
                     }
                 })
@@ -106,7 +106,7 @@ export class PagingPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             counter++
 
 
-            const showMoreButton = Markup.callbackButton(i18nSharedBtnName('paging_show_more', {countLeft}), this.showMoreAction)
+            const showMoreButton = Markup.button.callback(i18nSharedBtnName('paging_show_more', {countLeft}), this.showMoreAction)
             const buttons = [
                 ...this.config.cardButtons ? [await this.config.cardButtons(ctx, event)] : [getLikesRow(ctx, event)],
                 ...[isShowMore ? [showMoreButton] : []],
@@ -116,7 +116,7 @@ export class PagingPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             const html = cardFormat(event, this.config.cardFormatOptions?.(ctx, event))
             await ctx.replyWithHTML(html, {
                 disable_web_page_preview: true,
-                reply_markup: Markup.inlineKeyboard(buttons)
+                reply_markup: Markup.inlineKeyboard(buttons).reply_markup
             })
 
             analyticRecordEventView(ctx, event)

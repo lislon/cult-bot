@@ -1,4 +1,4 @@
-import { BaseScene, Composer, Extra, Markup } from 'telegraf'
+import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate, EventCategory, ExtIdAndId } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
@@ -12,7 +12,7 @@ import {
 } from '../shared/shared-logic'
 import { db, IExtensions, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
 import { isValid, parse, parseISO } from 'date-fns'
-import { CallbackButton } from 'telegraf/typings/markup'
+import { ExtraReplyMessage, InlineKeyboardButton, Message, User } from 'telegraf/typings/telegram-types'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
 import { logger, loggerTransport } from '../../util/logger'
@@ -21,8 +21,6 @@ import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import { EventToSave } from '../../interfaces/db-interfaces'
 import { formatMainAdminMenu, formatMessageForSyncReport } from './admin-format'
 import { getButtonsSwitch, menuCats, SYNC_CONFIRM_TIMEOUT_SECONDS, totalValidationErrors } from './admin-common'
-import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
-import { Message, User } from 'telegram-typings'
 import { EventToRecover, SyncDiff } from '../../database/db-sync-repository'
 import { ITask } from 'pg-promise'
 import { parseAndValidateGoogleSpreadsheets, SpreadSheetValidationError } from '../../dbsync/parserSpresdsheetEvents'
@@ -43,7 +41,7 @@ import { rawBot } from '../../bot'
 import { formatUserName2 } from '../../util/misc-utils'
 import Timeout = NodeJS.Timeout
 
-const scene = new BaseScene<ContextMessageUpdate>('admin_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 
 const pager = new PagingPager(new AdminPager())
 
@@ -67,10 +65,20 @@ function listExtIds(eventToSaves: EventToSave[]): string {
 }
 
 function getUserFromCtx(ctx: ContextMessageUpdate): User {
-    if (ctx.update.message !== undefined) {
+    if ('message' in ctx.update) {
         return ctx.update.message.from
+    } else if ('callback_query' in ctx.update) {
+        return ctx.update.callback_query.from
+    } else {
+        return {
+            id: 0,
+            username: 'unknown',
+            last_name: '',
+            first_name: '',
+            language_code: 'ru',
+            is_bot: false
+        }
     }
-    return ctx.update.callback_query.from
 }
 
 function getHumanReadableUsername(user: User): string {
@@ -126,12 +134,12 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
         const body = await formatMessageForSyncReport(syncResult.errors, dbDiff, eventPacks, ctx)
         if (askUserToConfirm === true) {
             const keyboard = [[
-                Markup.callbackButton(i18Btn(ctx, 'sync_back'), actionName('sync_back')),
-                Markup.callbackButton(i18Btn(ctx, 'sync_confirm'), actionName('sync_confirm')),
+                Markup.button.callback(i18Btn(ctx, 'sync_back'), actionName('sync_back')),
+                Markup.button.callback(i18Btn(ctx, 'sync_confirm'), actionName('sync_confirm')),
             ]]
             const msgId = await replyWithHTMLMaybeChunk(ctx, i18Msg(ctx, 'sync_ask_user_to_confirm', {
                 body
-            }), Extra.HTML().markup(Markup.inlineKeyboard(keyboard)))
+            }), {...Markup.inlineKeyboard(keyboard).reply_markup, parse_mode: 'HTML'})
 
             GLOBAL_SYNC_STATE.saveConfirmIdMessage(msgId)
 
@@ -314,38 +322,38 @@ scene
             await next()
         }
     })
-    .enter(async (ctx: ContextMessageUpdate) => {
+    .enter(async ctx => {
         await prepareSessionStateIfNeeded(ctx)
         await replyWithBackToMainMarkup(ctx)
         const {msg, markup} = await formatMainAdminMenu(ctx)
         await ctx.replyWithMarkdown(msg, markup)
     })
     .use(pager.middleware())
-    .action(actionName('sync'), async (ctx: ContextMessageUpdate) => {
+    .action(actionName('sync'), async ctx => {
         await ctx.answerCbQuery()
         await synchronizeDbByUser(ctx)
     })
-    .action(actionName('version'), async (ctx: ContextMessageUpdate) => {
+    .action(actionName('version'), async ctx => {
         await ctx.answerCbQuery()
         await showBotVersion(ctx)
     })
-    .action(actionName('sync_back'), async (ctx: ContextMessageUpdate) => {
+    .action(actionName('sync_back'), async ctx => {
         await ctx.answerCbQuery()
         if (GLOBAL_SYNC_STATE.isRunning(ctx)) {
             GLOBAL_SYNC_STATE.abort()
-            await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]))
+            await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]).reply_markup)
             await ctx.replyWithHTML(i18Msg(ctx, 'sync_cancelled'))
         } else {
             await replySyncNoTransaction(ctx)
         }
     })
-    .action(actionName('sync_confirm'), async (ctx: ContextMessageUpdate) => {
+    .action(actionName('sync_confirm'), async ctx => {
         await ctx.answerCbQuery()
         if (GLOBAL_SYNC_STATE.isRunning(ctx)) {
             await db.tx(async (dbTx: ITask<IExtensions> & IExtensions) => {
                 await GLOBAL_SYNC_STATE.executeSync(dbTx)
             })
-            await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]))
+            await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]).reply_markup)
             await ctx.replyWithHTML(i18Msg(ctx, 'sync_confirmed', {
                 rows: await db.repoAdmin.countTotalRows()
             }))
@@ -353,7 +361,7 @@ scene
             await replySyncNoTransaction(ctx)
         }
     })
-    .action(new RegExp(`${actionName('r_')}(.+)`), async (ctx: ContextMessageUpdate) => {
+    .action(new RegExp(`${actionName('r_')}(.+)`), async ctx => {
         // db.repoAdmin.findAllEventsByReviewer(ctx.match[1], getNextWeekEndRange(ctx.now()), )
         await ctx.answerCbQuery()
         await startNewPaging(ctx)
@@ -368,7 +376,7 @@ scene
     .action('fake', async (ctx) => await ctx.answerCbQuery(i18Msg(ctx, 'just_a_button')))
 
 menuCats.flatMap(m => m).forEach(menuItem => {
-    scene.action(actionName(menuItem), async (ctx: ContextMessageUpdate) => {
+    scene.action(actionName(menuItem), async ctx => {
         await ctx.answerCbQuery()
         await startNewPaging(ctx)
         ctx.session.adminScene.cat = menuItem as EventCategory
@@ -401,13 +409,13 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     }
 }
 
-function findExistingButtonRow(ctx: ContextMessageUpdate, predicate: (btn: CallbackButton) => boolean): CallbackButton[] {
-    const existingKeyboard = (ctx as any).update?.callback_query?.message?.reply_markup?.inline_keyboard as CallbackButton[][]
+function findExistingButtonRow(ctx: ContextMessageUpdate, predicate: (btn: InlineKeyboardButton.CallbackButton) => boolean): InlineKeyboardButton.CallbackButton[] {
+    const existingKeyboard = (ctx as any).update?.callback_query?.message?.reply_markup?.inline_keyboard as InlineKeyboardButton.CallbackButton[][]
     return existingKeyboard?.find(btns => btns.find(predicate) !== undefined)
 }
 
-function findButton(ctx: ContextMessageUpdate, predicate: (btn: CallbackButton) => boolean): CallbackButton {
-    const existingKeyboard = (ctx as any).update?.callback_query?.message?.reply_markup?.inline_keyboard as CallbackButton[][]
+function findButton(ctx: ContextMessageUpdate, predicate: (btn: InlineKeyboardButton.CallbackButton) => boolean): InlineKeyboardButton.CallbackButton {
+    const existingKeyboard = (ctx as any).update?.callback_query?.message?.reply_markup?.inline_keyboard as InlineKeyboardButton.CallbackButton[][]
     return existingKeyboard?.flatMap(rows => rows).find(predicate)
 }
 
@@ -417,7 +425,7 @@ function isCurrentButtonAlreadySelected(ctx: ContextMessageUpdate, version: 'cur
     return currentStateBtn?.text.includes(icon)
 }
 
-async function switchCard(ctx: ContextMessageUpdate, version: 'current' | 'snapshot') {
+async function switchCard(ctx: ContextMessageUpdate & { match: RegExpExecArray }, version: 'current' | 'snapshot') {
     const extId = ctx.match[1].toUpperCase()
     await ctx.answerCbQuery()
     if (isCurrentButtonAlreadySelected(ctx, version)) {
@@ -427,20 +435,23 @@ async function switchCard(ctx: ContextMessageUpdate, version: 'current' | 'snaps
     const event = await db.repoAdmin.findSnapshotEvent(extId, version)
     const existingKeyboard = findExistingButtonRow(ctx, btn => btn.callback_data === actionName('show_more'))
     const buttons = [getButtonsSwitch(ctx, extId, version), ...(existingKeyboard ? [existingKeyboard] : [])]
-    await ctx.editMessageText(cardFormat(event, {showAdminInfo: true}),
-        Extra.HTML().markup(Markup.inlineKeyboard(buttons)).webPreview(false))
+    await ctx.editMessageText(cardFormat(event, {showAdminInfo: true}), {
+        ...Markup.inlineKeyboard(buttons),
+        parse_mode: 'HTML',
+        disable_web_page_preview: true
+    })
 }
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     const adminGlobalCommands = new Composer<ContextMessageUpdate>()
-        .command('adminGlobalCommands', async (ctx: ContextMessageUpdate) => {
+        .command('adminGlobalCommands', async ctx => {
             await ctx.scene.enter('admin_scene')
         })
-        .command('time_now', async (ctx: ContextMessageUpdate) => {
+        .command('time_now', async ctx => {
             ctx.session.adminScene.overrideDate = undefined
             await ctx.replyWithHTML(i18Msg(ctx, 'time_override.reset'))
         })
-        .command('time', async (ctx: ContextMessageUpdate) => {
+        .command('time', async ctx => {
             const HUMAN_OVERRIDE_FORMAT = 'dd MMMM yyyy HH:mm, iiii'
 
             await prepareSessionStateIfNeeded(ctx)

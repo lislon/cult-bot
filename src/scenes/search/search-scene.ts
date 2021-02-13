@@ -1,4 +1,4 @@
-import { BaseScene, Composer } from 'telegraf'
+import { Composer, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { backToMainButtonTitle, replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
@@ -7,7 +7,7 @@ import emojiRegex from 'emoji-regex'
 import { SearchPagerConfig } from './search-pager'
 import { SliderPager } from '../shared/slider-pager'
 
-const scene = new BaseScene<ContextMessageUpdate>('search_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('search_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
 
 export interface SearchSceneState {
@@ -28,17 +28,17 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 const eventSlider = new SliderPager(new SearchPagerConfig())
 
 scene
-    .enter(async (ctx: ContextMessageUpdate) => {
+    .enter(async ctx => {
         await prepareSessionStateIfNeeded(ctx)
         await replyWithBackToMainMarkup(ctx, i18Msg(ctx, 'please_search'))
 
         ctx.ua.pv({dp: `/search/`, dt: `Поиск`})
     })
-    .leave(async (ctx: ContextMessageUpdate) => {
+    .leave(async ctx => {
         ctx.session.search = undefined
     })
     .use(eventSlider.middleware())
-    .hears(backToMainButtonTitle().trim(), async (ctx, next) => {
+    .hears(backToMainButtonTitle().trim(), async (ctx) => {
         await ctx.scene.enter('main_scene')
     })
     .hears(/^[^/].*$/, async (ctx, next) => {

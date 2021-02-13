@@ -1,9 +1,7 @@
-import Telegraf, { Composer, Stage } from 'telegraf'
+import { Composer, Scenes, Telegraf } from 'telegraf'
 import { mainScene } from './scenes/main/main-scene'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import middlewares, { myRegisterScene } from './middleware-utils'
-import { timeTableScene } from './scenes/timetable/timetable-scene'
-import { timeIntervalScene } from './scenes/time-interval/time-interval-scene'
 import 'source-map-support/register'
 import { performanceMiddleware } from './lib/middleware/performance-middleware'
 import { botConfig } from './util/bot-config'
@@ -33,7 +31,7 @@ export const rawBot: Telegraf<ContextMessageUpdate> = new Telegraf(botConfig.TEL
 })
 export const bot = new Composer<ContextMessageUpdate>()
 
-const stage = new Stage([], {
+const stage = new Scenes.Stage<ContextMessageUpdate>([], {
     default: 'main_scene'
 })
 
@@ -58,8 +56,6 @@ myRegisterScene(bot, stage, [
     helpScene,
     customizeScene,
     packsScene,
-    timeTableScene,
-    timeIntervalScene,
     adminScene,
     topsScene,
     searchScene,

@@ -2,10 +2,10 @@ import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { db, LimitOffset } from '../../database/db'
 import { getNextWeekendRange } from '../shared/shared-logic'
 import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
-import { BaseScene } from 'telegraf'
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
+import { Scenes } from 'telegraf'
 
-const scene = new BaseScene<ContextMessageUpdate>('search_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('search_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
 
 export class SearchPagerConfig implements SliderConfig<string> {

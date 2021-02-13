@@ -1,7 +1,6 @@
 import RedisSession from 'telegraf-session-redis'
 import { botConfig } from './bot-config'
 import { Context } from 'telegraf'
-import { TelegrafContext } from 'telegraf/typings/context'
 import { RedisClient } from 'redis'
 import { promisify } from 'util'
 
@@ -15,7 +14,7 @@ export interface MyRedisSession {
     client: RedisClient
 
     options: {
-        getSessionKey: (ctx: TelegrafContext) => string
+        getSessionKey: (ctx: Context) => string
     }
 }
 
@@ -25,8 +24,8 @@ function getRedis(): MyRedisSession {
             client = redis.createClient();
 
         return {
-            getSession(key: TelegrafContext): string {
-                return '';
+            getSession(key: Context): string {
+                return ''
             },
             middleware(): (ctx: any, next?: ((() => any) | undefined)) => any {
                 return function (p1: any, p2: (() => any) | undefined) {
@@ -37,7 +36,7 @@ function getRedis(): MyRedisSession {
             },
             get options() {
                 return {
-                    getSessionKey: (ctx: TelegrafContext) => 'mock'
+                    getSessionKey: (ctx: Context) => 'mock'
                 }
             },
             client

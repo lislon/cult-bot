@@ -1,7 +1,7 @@
-import { Update } from 'telegram-typings'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import chalk from 'chalk'
 import { logger } from '../../util/logger'
+import { Update } from 'telegraf/typings/telegram-types'
 
 const DEFAULT_COLORS = {
     id: chalk.blue,
@@ -37,17 +37,31 @@ function getMessageType(msg: any) {
 }
 
 function format(update: Update, options: any = {}) {
-    const msg =
-        update.message ||
-        update.edited_message ||
-        update.channel_post ||
-        update.edited_channel_post ||
-        update.inline_query ||
-        update.callback_query
+    // const msg =
+    //     update.message ||
+    //     update.edited_message ||
+    //     update.channel_post ||
+    //     update.edited_channel_post ||
+    //     update.inline_query ||
+    //     update.callback_query
+    //
+    // // (from the Telegram API docs):
+    // // "Message with the callback button that originated the query."
+    // const originalMessage = (msg as any).message
 
-    // (from the Telegram API docs):
-    // "Message with the callback button that originated the query."
-    const originalMessage = (msg as any).message
+
+    const msg: any =
+        ('message' in update && update.message) ||
+        ('edited_message' in update && update.edited_message) ||
+        ('channel_post' in update && update.channel_post) ||
+        ('edited_channel_post' in update && update.edited_channel_post) ||
+        // ('inline_query' in update && update.inline_query) ||
+        ('callback_query' in update && update.callback_query) ||
+        undefined
+
+    // let originalMessage = msg && 'message' in msg ? msg.message : undefined
+    const originalMessage = (msg as any)?.message
+
 
     const colors =
         typeof options.colors === 'object'

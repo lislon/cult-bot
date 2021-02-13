@@ -3,10 +3,11 @@ import ua from 'universal-analytics'
 import { v4 as generateUuid } from 'uuid'
 import { botConfig } from '../../util/bot-config'
 import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
-import { BaseScene } from 'telegraf'
 import { db } from '../../database/db'
 import { logger } from '../../util/logger'
 import { getResponsePerformance } from './performance-middleware'
+import { Scenes } from 'telegraf'
+import { Update } from 'telegraf/typings/telegram-types'
 
 export interface AnalyticsState {
     markupClicks: number
@@ -45,26 +46,36 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
     if (ctx.session.user.uaUuid === undefined) {
         ctx.session.user.uaUuid = generateUuid()
     }
-    ctx.ua = ua(botConfig.GOOGLE_ANALYTICS_ID, ctx.session.user.uaUuid);
+    ctx.ua = ua(botConfig.GOOGLE_ANALYTICS_ID, ctx.session.user.uaUuid)
     ctx.ua.set('ds', 'app')
 
     prepareSessionStateIfNeeded(ctx)
-    if (ctx.updateType === 'message' && ctx.updateSubTypes.includes('text') && !ctx.message.text?.startsWith('/start')) {
+
+    function isCallbackQuery(update: Update): update is Update.CallbackQueryUpdate {
+        return 'callback_query' in update
+    }
+
+    if (ctx.message !== undefined && 'text' in ctx.message && !ctx.message.text?.startsWith('/start')) {
         ctx.ua.e('Button', 'type', ctx.message.text, undefined)
         ctx.session.analytics.inlineClicks++
-    } else if (ctx.updateType === 'callback_query') {
-        const message = ctx.update.callback_query.message as any
-        const replyMarkup = message.reply_markup
-        const inlineKeyboard = replyMarkup.inline_keyboard
+    } else {
+        const update = ctx.update
+        if (isCallbackQuery(update)) {
+            if ('message' in update.callback_query) {
+                const message = update.callback_query.message as any
+                const replyMarkup = message.reply_markup
+                const inlineKeyboard = replyMarkup.inline_keyboard
 
-        const buttonText = inlineKeyboard
-            .flatMap((kbRows: any) => kbRows)
-            .find(({callback_data}: any) => callback_data === ctx.update.callback_query.data)
+                const buttonText = inlineKeyboard
+                    .flatMap((kbRows: any) => kbRows)
+                    .find(({callback_data}: any) => callback_data === (update.callback_query as any)?.data)
 
-        if (buttonText !== undefined) {
-            ctx.ua.e('Button', 'click', buttonText.text, undefined)
+                if (buttonText !== undefined) {
+                    ctx.ua.e('Button', 'click', buttonText.text, undefined)
+                }
+                ctx.session.analytics.inlineClicks++
+            }
         }
-        ctx.session.analytics.inlineClicks++
     }
 
     try {
@@ -96,7 +107,7 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
     }
 }
 
-const {i18SharedMsg} = i18nSceneHelper(new BaseScene<ContextMessageUpdate>(''))
+const {i18SharedMsg} = i18nSceneHelper(new Scenes.BaseScene<ContextMessageUpdate>(''))
 
 export function analyticRecordEventView(ctx: ContextMessageUpdate, event: Event) {
     const label = `${i18SharedMsg(ctx, `category_icons.${event.category}`)} ${event.ext_id} ${event.title} [${event.place}]`

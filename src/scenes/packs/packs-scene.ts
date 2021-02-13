@@ -17,7 +17,7 @@ function doNotUpdateInlineMenu(ctx: ContextMessageUpdate) {
 
 // ctx.session.packsScene.msgId = undefined
 scene
-    .enter(async (ctx: ContextMessageUpdate) => {
+    .enter(async ctx => {
         await warnAdminIfDateIsOverriden(ctx)
 
         await replyWithBackToMainMarkup(ctx)
@@ -28,19 +28,19 @@ scene
     .leave(async (ctx) => {
         ctx.session.packsScene = undefined
     })
-    .action(/packs_scene[.]pack_back/, async (ctx: ContextMessageUpdate) => {
+    .action(/packs_scene[.]pack_back/, async ctx => {
         await displayMainMenu(ctx)
     })
-    .action(/^packs_scene[.]pack_(\d+)$/, async (ctx: ContextMessageUpdate) => {
+    .action(/^packs_scene[.]pack_(\d+)$/, async ctx => {
         await ctx.answerCbQuery()
         ctx.session.packsScene.packSelectedIdx = +ctx.match[1]
         await displayPackMenu(ctx)
     })
-    .action('packs_scene.pack_open', async (ctx: ContextMessageUpdate) => {
+    .action('packs_scene.pack_open', async ctx => {
         await ctx.answerCbQuery()
         await displayEventsMenu(ctx)
     })
-    .action(/^packs_scene[.]event_(prev|next)$/, async (ctx: ContextMessageUpdate) => {
+    .action(/^packs_scene[.]event_(prev|next)$/, async ctx => {
         await ctx.answerCbQuery()
         if (await getEventsCount(ctx) !== 1) {
             const c = loop(
@@ -50,14 +50,14 @@ scene
             await displayEventsMenu(ctx)
         }
     })
-    .action('packs_scene.event_back', async (ctx: ContextMessageUpdate) => {
+    .action('packs_scene.event_back', async ctx => {
         await ctx.answerCbQuery()
         await displayPackMenu(ctx)
     })
-    .action(actionName('event_curr'), async (ctx: ContextMessageUpdate) => {
+    .action(actionName('event_curr'), async ctx => {
         await ctx.answerCbQuery(i18Msg(ctx, 'event_curr_tip'))
     })
-// .hears(i18n.t(`ru`, `shared.keyboard.back`), async (ctx: ContextMessageUpdate) => {
+// .hears(i18n.t(`ru`, `shared.keyboard.back`), async ctx => {
 //     await prepareSessionStateIfNeeded(ctx)
 //     doNotUpdateInlineMenu(ctx)
 //     try {

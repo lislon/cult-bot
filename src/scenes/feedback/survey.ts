@@ -76,7 +76,7 @@ function selectAtLeastOne(predicate: (ctx: ContextMessageUpdate) => boolean, res
             await deleteMenuFromContext(ctx)
             await ctx.replyWithHTML(i18nModuleMsg(`survey.${responseId}`), extra)
         } else {
-            await ctx.answerCbQuery(i18Msg(ctx, 'select_at_least_one'), true)
+            await ctx.answerCbQuery(i18Msg(ctx, 'select_at_least_one'), {show_alert: true})
         }
         return false
     }

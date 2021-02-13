@@ -1,12 +1,10 @@
+/// <reference path="./../../../src/types/telegraf.d.ts"/>
 import { setWorldConstructor } from '@cucumber/cucumber'
-import { Composer, Middleware, Stage, Telegraf } from 'telegraf'
 import middlewares, { myRegisterScene } from '../../../src/middleware-utils'
 import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { customizeScene } from '../../../src/scenes/customize/customize-scene'
 import { BotReply, TelegramMockServer } from '../lib/TelegramMockServer'
-import session from 'telegraf/session'
 import { topsScene } from '../../../src/scenes/tops/tops-scene'
-import { MiddlewareFn } from 'telegraf/typings/composer'
 import { feedbackScene } from '../../../src/scenes/feedback/feedback-scene'
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
 import { mainScene } from '../../../src/scenes/main/main-scene'
@@ -19,6 +17,7 @@ import { botErrorHandler } from '../../../src/util/error-handler'
 import { likesScene } from '../../../src/scenes/likes/likes-scene'
 import { favoritesScene } from '../../../src/scenes/favorites/favorites-scene'
 import { performanceMiddleware } from '../../../src/lib/middleware/performance-middleware'
+import { Composer, Middleware, MiddlewareFn, Scenes, session, Telegraf } from 'telegraf'
 
 const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
 
@@ -35,7 +34,7 @@ class CustomWorld {
     private analyticsRecorder = new AnalyticsRecorder()
 
     constructor() {
-        const stage = new Stage([], {})
+        const stage = new Scenes.Stage<ContextMessageUpdate>([], {})
 
         this.bot.use(
             performanceMiddleware('total'),
@@ -81,7 +80,7 @@ class CustomWorld {
 
     private executeFeaturesMiddlewares() {
         return async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
-            this.middlewaresBeforeScenes.forEach(it => it.call(this, ctx))
+            this.middlewaresBeforeScenes.forEach(it => it.call(this, ctx, () => Promise.resolve()))
             return await next()
         }
     }
@@ -138,6 +137,7 @@ class CustomWorld {
     useBeforeScenes(middleware: MiddlewareFn<ContextMessageUpdate>) {
         this.middlewaresBeforeScenes.push(middleware)
     }
+
     getLastCbQuery(): string {
         return this.server.getLastCbQuery()
     }

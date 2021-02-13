@@ -1,6 +1,6 @@
-import { Message, MessageEntity } from 'telegram-typings'
+import { Message, MessageEntity } from 'telegraf/typings/telegram-types'
 
-export function parseTelegramMessageToHtml({ text, entities }: Pick<Message, 'text'|'entities'>) {
+export function parseTelegramMessageToHtml({text, entities}: Pick<Message.TextMessage, 'text' | 'entities'>) {
     function surroundWithTags(e: MessageEntity) {
         const contentString = text.substring(e.offset, e.offset + e.length)
 

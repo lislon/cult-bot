@@ -1,10 +1,10 @@
 import { chidrensTags, ContextMessageUpdate, TagLevel2 } from '../../../interfaces/app-interfaces'
 import { DropdownMenu } from '../dropdown-menu'
 import { i18nSceneHelper } from '../../../util/scene-helper'
-import { BaseScene } from 'telegraf'
+import { Scenes } from 'telegraf'
 
-const scene = new BaseScene<ContextMessageUpdate>('customize_scene')
-const {backButton, actionName, i18nModuleBtnName, revertActionName, scanKeys, i18nSharedBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('customize_scene')
+const {revertActionName} = i18nSceneHelper(scene)
 
 export async function customizepriorities(ctx: ContextMessageUpdate) {
     const state = ctx.session.customize

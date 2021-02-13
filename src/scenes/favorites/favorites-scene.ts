@@ -1,4 +1,4 @@
-import { BaseScene, Composer, Markup } from 'telegraf'
+import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { db } from '../../database/db'
@@ -10,6 +10,7 @@ import {
     editMessageAndButtons,
     extraInlineMenu,
     generatePlural,
+    getInlineKeyboardFromCallbackQuery,
     getMsgId,
     parseAndUpdateBtn,
     replyWithBackToMainMarkup,
@@ -21,15 +22,14 @@ import { ParseAndPredictTimetableResult } from '../../lib/timetable/timetable-ut
 import { first, last } from 'lodash'
 import { isAfter } from 'date-fns'
 import { addHtmlNiceUrls, cardFormat, formatUrl } from '../shared/card-format'
-import { CallbackButton } from 'telegraf/typings/markup'
-import { InlineKeyboardMarkup } from 'telegram-typings'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
 import { escapeHTML } from '../../util/string-utils'
 import { SliderPager } from '../shared/slider-pager'
 import { FavoritesPagerConfig } from './favorites-pager-config'
 import { loadEventsAsFavorite, removeFavoriteButton, sortFavorites } from './favorites-common'
+import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
-const scene = new BaseScene<ContextMessageUpdate>('favorites_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 
 const {i18SharedMsg, i18Btn, i18Msg, i18SharedBtn, backButton, actionName, actionNameRegex} = i18nSceneHelper(scene)
 
@@ -82,13 +82,13 @@ async function formatListOfFavorites(ctx: ContextMessageUpdate, events: Favorite
 
 async function getMainMenu(ctx: ContextMessageUpdate) {
     let msg
-    let buttons: CallbackButton[][] = []
+    let buttons: InlineKeyboardButton.CallbackButton[][] = []
     const events = sortFavorites(await loadEventsAsFavorite(ctx.session.user.eventsFavorite, ctx.now()))
 
     const back = backButton()
     if (events.length > 0) {
-        const wipeButton = Markup.callbackButton(i18Btn(ctx, 'wipe'), actionName('wipe'))
-        const showCards = Markup.callbackButton(i18Btn(ctx, 'show_cards', {count: events.length}), actionName('show_cards'))
+        const wipeButton = Markup.button.callback(i18Btn(ctx, 'wipe'), actionName('wipe'))
+        const showCards = Markup.button.callback(i18Btn(ctx, 'show_cards', {count: events.length}), actionName('show_cards'))
 
         const hasOld = events.find(e => e.isFuture === false) !== undefined
 
@@ -115,7 +115,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 }
 
 scene
-    .enter(async (ctx: ContextMessageUpdate) => {
+    .enter(async ctx => {
         await replyWithBackToMainMarkup(ctx, i18Msg(ctx, 'markup_back_decoy'))
 
         await warnAdminIfDateIsOverriden(ctx)
@@ -149,13 +149,13 @@ function removeFromFavorite(ctx: ContextMessageUpdate, eventId: number) {
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
-        .action(/^favorite_(\d+)/, async (ctx: ContextMessageUpdate) => {
+        .action(/^favorite_(\d+)/, async ctx => {
             const eventId = +ctx.match[1]
 
             await toggleFavoriteButtonLogic(ctx, eventId)
             await db.task(async dbtask => await updateLikeDislikeInlineButtons(ctx, dbtask, eventId))
         })
-        .action(actionNameRegex(/(restore|remove)_(\d+)/), async (ctx: ContextMessageUpdate) => {
+        .action(actionNameRegex(/(restore|remove)_(\d+)/), async ctx => {
             const action = ctx.match[1] as 'restore' | 'remove'
             const eventId = +ctx.match[2]
 
@@ -181,7 +181,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                         await eventPager.updateState(ctx, {invalidateOtherSliders: true})
 
                         const card = cardFormat(event, {deleted: !isEventInFavorites(ctx, eventId)})
-                        let newKeyboard = (ctx.update.callback_query.message as any)?.reply_markup as InlineKeyboardMarkup
+                        let newKeyboard = getInlineKeyboardFromCallbackQuery(ctx)
 
                         newKeyboard = await parseAndUpdateBtn(newKeyboard, /(restore|remove)/, () => {
                             return removeFavoriteButton(ctx, event)
@@ -192,6 +192,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                             parse_mode: 'HTML',
                             reply_markup: newKeyboard
                         })
+
                     } else {
                         await ctx.answerCbQuery('Уже ок')
                     }

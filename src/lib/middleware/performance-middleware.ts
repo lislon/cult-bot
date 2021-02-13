@@ -1,7 +1,7 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { performance } from 'perf_hooks'
 import * as tt from 'telegraf/typings/telegram-types'
-import { InlineKeyboardMarkup } from 'telegraf/typings/telegram-types'
+import { ExtraEditMessageText, InlineKeyboardMarkup } from 'telegraf/typings/telegram-types'
 
 export class PerformanceContext {
     public timeBeforeFirstMsg?: number // time to message
@@ -25,7 +25,6 @@ function recordFirstResponse(ctx: ContextMessageUpdate) {
 export function performanceMiddleware(prefix: string) {
     return async (ctx: ContextMessageUpdate, next: any) => {
         ctx.perf = new PerformanceContext(performance.now())
-
         const origCtx = {
             reply: ctx.reply,
             editMessageText: ctx.editMessageText,
@@ -35,7 +34,7 @@ export function performanceMiddleware(prefix: string) {
             recordFirstResponse(ctx)
             return origCtx.reply.apply(ctx, [text, extra])
         }
-        ctx.editMessageText = (text: string, extra?: tt.ExtraEditMessage) => {
+        ctx.editMessageText = (text: string, extra?: ExtraEditMessageText) => {
             recordFirstResponse(ctx)
             return origCtx.editMessageText.apply(ctx, [text, extra])
         }

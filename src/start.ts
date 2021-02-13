@@ -61,7 +61,7 @@ class BotStart {
         BotStart.printDiagnostic()
 
         rp(`https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook`).then(async () => {
-            bot.startPolling()
+            return bot.launch()
         });
     }
 
@@ -86,15 +86,17 @@ class BotStart {
             logger.info(`hook ${hookUrl} is set. (To delete: https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook ) Starting app at ${botConfig.PORT}`)
         } else {
             logger.error(`hook was not set!`)
-            const webhookStatus = await bot.telegram.getWebhookInfo();
-            logger.error('Webhook status', JSON.stringify(webhookStatus));
+            const webhookStatus = await bot.telegram.getWebhookInfo()
+            logger.error('Webhook status', JSON.stringify(webhookStatus))
             process.exit(2)
         }
 
-        const webhookStatus = await bot.telegram.getWebhookInfo();
+        const webhookStatus = await bot.telegram.getWebhookInfo()
 
-        logger.info('Webhook status: ' + JSON.stringify(webhookStatus));
+        logger.info('Webhook status: ' + JSON.stringify(webhookStatus))
         await notifyAdminsAboutRestart()
+        process.once('SIGINT', () => bot.stop('SIGINT'))
+        process.once('SIGTERM', () => bot.stop('SIGTERM'))
     }
 }
 
@@ -112,9 +114,6 @@ app.use(BotStart.expressMiddleware(rawBot))
 app.get('/event/:id', async (request: Request<{ id: number }>, response: Response) => {
     const [event] = await db.repoEventsCommon.getFirstEvent()
     if (event !== undefined) {
-        const convert = require('xml-js')
-        const options = {compact: true, ignoreComment: true, spaces: 4}
-        // const result = convert.json2xml({event: omit(event, ['reviewer', 'likes', 'dislikes', 'order_rnd'])}, options)
         const result = ReactDOMServer.renderToString(Event(event))
         return response.contentType('text/html').send(result)
     } else {

@@ -1,5 +1,5 @@
+import { User } from 'telegraf/typings/telegram-types'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
-import { User } from 'telegram-typings'
 
 export function fieldIsQuestionMarkOrEmpty(str: string) {
     const trim = str.trim()

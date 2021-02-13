@@ -1,14 +1,15 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
-import { CallbackButton } from 'telegraf/typings/markup'
-import { BaseScene } from 'telegraf'
+
+import { Scenes } from 'telegraf'
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { LimitOffset } from '../../database/db'
 import { favoriteCardButtonsRow, getSortedFavoriteEventsIds, loadEventsAsFavorite } from './favorites-common'
 import { CardOptions } from '../shared/card-format'
 import { isEventInFavorites } from '../likes/likes-common'
+import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
-const scene = new BaseScene<ContextMessageUpdate>('favorites_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 const {backButton, i18Msg, actionName} = i18nSceneHelper(scene)
 
 export class FavoritesPagerConfig implements SliderConfig<void> {
@@ -34,7 +35,7 @@ export class FavoritesPagerConfig implements SliderConfig<void> {
         return i18Msg(ctx, 'slider_is_empty')
     }
 
-    async cardButtons?(ctx: ContextMessageUpdate, event: Event): Promise<CallbackButton[]> {
+    async cardButtons?(ctx: ContextMessageUpdate, event: Event): Promise<InlineKeyboardButton.CallbackButton[]> {
         return favoriteCardButtonsRow(ctx, event)
     }
 

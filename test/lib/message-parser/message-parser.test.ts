@@ -1,9 +1,10 @@
 import { parseTelegramMessageToHtml } from '../../../src/lib/message-parser/message-parser'
+import { Message } from 'telegraf/typings/telegram-types'
 
 describe('parse complex', () => {
     test('parse bold', () => {
 
-        const message = {
+        const message: Pick<Message.TextMessage, 'text' | 'entities'> = {
             text: '🎥 КИНО #игровоекино',
             entities: [
                 {

@@ -1,4 +1,4 @@
-import { BaseScene, Composer, Extra, Markup } from 'telegraf'
+import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate, EventCategory, MyInterval } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import * as events from 'events'
@@ -17,14 +17,14 @@ import {
 } from './tops-common'
 
 
-const scene = new BaseScene<ContextMessageUpdate>('tops_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('tops_scene')
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
 
 const pager = new SliderPager<TopEventsStageQuery>(new TopsPagerConfig())
 
 
 const backMarkup = (ctx: ContextMessageUpdate) => {
-    const btn = Markup.button(backToMainButtonTitle())
+    const btn = Markup.button.text(backToMainButtonTitle())
     return Markup.keyboard([btn]).resize()
 }
 
@@ -37,12 +37,12 @@ const content = (ctx: ContextMessageUpdate) => {
 
     const mainButtons = topLevelMenu.map(row =>
         row.map(btnName => {
-            return Markup.button(i18Btn(ctx, btnName))
+            return Markup.button.text(i18Btn(ctx, btnName))
         })
     )
     return {
         msg: i18Msg(ctx, 'select_category'),
-        markupMainMenu: Extra.HTML(true).markup(Markup.keyboard([...mainButtons, [Markup.button(backToMainButtonTitle())]]).resize())
+        markupMainMenu: Markup.keyboard([...mainButtons, [Markup.button.text(backToMainButtonTitle())]]).resize()
     }
 }
 
@@ -70,12 +70,12 @@ async function showExhibitionsSubMenu(ctx: ContextMessageUpdate) {
 
     const buttons = subMenu.map(row =>
         row.map(btnName => {
-            return Markup.button(i18Btn(ctx, btnName))
+            return Markup.button.text(i18Btn(ctx, btnName))
         })
     )
 
-    await ctx.reply(i18Msg(ctx, 'select_exhibition'),
-        Extra.HTML().markup(Markup.keyboard(buttons).resize())
+    await ctx.replyWithHTML(i18Msg(ctx, 'select_exhibition'),
+        Markup.keyboard(buttons).resize()
     )
 }
 
@@ -106,8 +106,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
             templateName = 'let_me_show_next_weekend'
         }
 
-        await ctx.replyWithHTML(i18Msg(ctx, templateName, {humanDateRange, ...tplData}),
-            {reply_markup: backMarkup(ctx)})
+        await ctx.replyWithHTML(i18Msg(ctx, templateName, {humanDateRange, ...tplData}), backMarkup(ctx))
 
         await sleep(70)
         const sliderState = await pager.updateState(ctx, {
@@ -118,9 +117,7 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
             forceNewMsg: true
         })
     } else {
-        await ctx.reply(i18Msg(ctx, 'nothing_found_in_interval', intervalTemplateParams(range)),
-            Extra.HTML(true).markup(backMarkup(ctx))
-        )
+        await ctx.replyWithHTML(i18Msg(ctx, 'nothing_found_in_interval', intervalTemplateParams(range)), backMarkup(ctx))
     }
 }
 
@@ -129,27 +126,27 @@ function trackUa(ctx: ContextMessageUpdate) {
 }
 
 scene
-    .enter(async (ctx: ContextMessageUpdate) => {
+    .enter(async ctx => {
         const {msg, markupMainMenu} = content(ctx)
         await prepareSessionStateIfNeeded(ctx)
 
         ctx.session.topsScene.isWatchingEvents = false
         ctx.session.topsScene.isInSubMenu = false
 
-        await ctx.replyWithMarkdown(msg, markupMainMenu)
+        await ctx.replyWithHTML(msg, markupMainMenu)
         ctx.ua.pv({dp: '/top/', dt: 'Рубрики'})
     })
     .leave(async (ctx) => {
         ctx.session.topsScene = undefined
     })
-    .hears(i18nModuleBtnName('back_exhibitions'), async (ctx: ContextMessageUpdate) => {
+    .hears(i18nModuleBtnName('back_exhibitions'), async ctx => {
         await ctx.scene.enter('tops_scene')
     })
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
 
     for (const cat of ['theaters', 'movies', 'events', 'walks', 'concerts', 'exhibitions_temp', 'exhibitions_perm']) {
-        bot.hears(i18nModuleBtnName(cat), async (ctx: ContextMessageUpdate) => {
+        bot.hears(i18nModuleBtnName(cat), async ctx => {
             await prepareSessionStateIfNeeded(ctx)
             if (cat === 'exhibitions_temp' || cat === 'exhibitions_perm') {
                 ctx.session.topsScene.cat = 'exhibitions'
@@ -164,7 +161,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
     }
     bot
-        .hears(i18nModuleBtnName('exhibitions'), async (ctx: ContextMessageUpdate) => {
+        .hears(i18nModuleBtnName('exhibitions'), async ctx => {
             await prepareSessionStateIfNeeded(ctx)
             ctx.session.topsScene.isInSubMenu = true
             ctx.session.topsScene.cat = 'exhibitions'

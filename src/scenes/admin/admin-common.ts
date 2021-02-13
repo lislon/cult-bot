@@ -4,7 +4,7 @@ import { db, LimitOffset } from '../../database/db'
 import { getNextWeekendRange } from '../shared/shared-logic'
 import { StatByCat } from '../../database/db-admin'
 import { AdminSceneQueryState } from './admin-scene'
-import { BaseScene, Markup } from 'telegraf'
+import { Markup, Scenes } from 'telegraf'
 import { i18nSceneHelper } from '../../util/scene-helper'
 
 export const POSTS_PER_PAGE_ADMIN = 10
@@ -16,7 +16,7 @@ export const menuCats = [
     ['walks', 'concerts']
 ]
 
-const scene = new BaseScene<ContextMessageUpdate>('admin_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
 
 export function totalValidationErrors(errors: SpreadSheetValidationError[]) {
@@ -39,12 +39,12 @@ export async function getSearchedEvents(ctx: ContextMessageUpdate, query: AdminS
 }
 
 export function getButtonsSwitch(ctx: ContextMessageUpdate, extId: string, active: 'snapshot' | 'current' = 'current') {
-    return [Markup.callbackButton(
+    return [Markup.button.callback(
         i18Btn(ctx, `switch_to_snapshot`,
             {active_icon: active === 'snapshot' ? i18Btn(ctx, 'snapshot_active_icon') : ''}
         ),
         actionName(`snapshot_${extId.toLowerCase()}`)),
-        Markup.callbackButton(
+        Markup.button.callback(
             i18Btn(ctx, 'switch_to_current',
                 {active_icon: active === 'current' ? i18Btn(ctx, 'current_active_icon') : ''}
             ),

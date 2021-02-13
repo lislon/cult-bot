@@ -3,8 +3,6 @@ import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import { parseISO } from 'date-fns'
 import { userMiddleware } from './lib/middleware/user-middleware'
 import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
-import { Composer, session, Stage } from 'telegraf'
-import { Scene, SceneContextMessageUpdate } from 'telegraf/typings/stage'
 import { supportFeedbackMiddleware } from './lib/middleware/support-feedback.middleware'
 import { logger } from './util/logger'
 import { i18n } from './util/i18n'
@@ -12,6 +10,7 @@ import { MyRedisSession, redisSession } from './util/reddis'
 import { botConfig } from './util/bot-config'
 import { formatUserName } from './util/misc-utils'
 import { loggerMiddleware } from './lib/middleware/logger-middleware'
+import { Composer, Scenes, session } from 'telegraf'
 
 let sessionMechanism: MyRedisSession
 
@@ -45,6 +44,11 @@ function sessionTmp() {
     return async (ctx: ContextMessageUpdate, next: any) => {
         ctx.sessionTmp = {
             analyticsScene: undefined
+        }
+        if (ctx.session === undefined) {
+            ctx.session = {
+                __scenes: undefined
+            }
         }
         await next()
     }
@@ -91,14 +95,14 @@ export default {
 export type SceneGlobalActionsFn = (bot: Composer<ContextMessageUpdate>) => void
 
 export interface SceneRegister {
-    scene?: Scene<ContextMessageUpdate>
+    scene?: Scenes.BaseScene<ContextMessageUpdate>
     postStageActionsFn: SceneGlobalActionsFn
     preStageGlobalActionsFn?: SceneGlobalActionsFn
     preSceneGlobalActionsFn?: SceneGlobalActionsFn
 }
 
 export const myRegisterScene = (bot: Composer<ContextMessageUpdate>,
-                                stage: Stage<SceneContextMessageUpdate>,
+                                stage: Scenes.Stage<ContextMessageUpdate>,
                                 scenesReg: SceneRegister[]) => {
     scenesReg.map(scene => {
         scene.preSceneGlobalActionsFn?.(bot)

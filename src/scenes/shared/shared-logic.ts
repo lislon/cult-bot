@@ -1,4 +1,4 @@
-import { ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
+import { ContextCallbackQueryUpdate, ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
 import { addDays, max, parseISO, startOfDay, startOfISOWeek } from 'date-fns/fp'
 import { format, formatDistanceToNow, isAfter, isBefore, Locale } from 'date-fns'
 import flow from 'lodash/fp/flow'
@@ -6,20 +6,18 @@ import { ru } from 'date-fns/locale'
 import { i18n } from '../../util/i18n'
 import { botConfig } from '../../util/bot-config'
 import plural from 'plural-ru'
-import { Extra, Markup } from 'telegraf'
-import { ExtraReplyMessage, InlineKeyboardMarkup } from 'telegraf/typings/telegram-types'
-import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
+import { Markup } from 'telegraf'
 import slugify from 'slugify'
 import { i18SharedBtn, i18SharedMsg } from '../../util/scene-helper'
-import { Message } from 'telegram-typings'
 import { chunkString } from '../../util/chunk-split'
+import { ExtraReplyMessage, InlineKeyboardButton, InlineKeyboardMarkup, Message } from 'telegraf/typings/telegram-types'
 
 const YEAR_2020_WEEKENDS = [parseISO('2021-01-01 00:00:00'), parseISO('2021-01-11 00:00:00')]
 const START_SHOW_WEEKENDS_FROM = parseISO('2020-12-28 00:00:00')
 
 type Range = '2weekends_only'
 
-export function getNextWeekendRange(now: Date, range: Range = undefined): MyInterval {
+export function getNextWeekendRange(now: Date, range?: Range): MyInterval {
     if (range !== '2weekends_only') {
         if (isAfter(now, START_SHOW_WEEKENDS_FROM) && isBefore(now, YEAR_2020_WEEKENDS[1])) {
             return {
@@ -69,8 +67,8 @@ export class SessionEnforcer {
         return (original === undefined) ? def : original;
     }
 
-    static number(original: number, defaultValue: number = undefined): number {
-        return typeof original === 'number' ? original : defaultValue;
+    static number(original: number, defaultValue?: number): number | undefined {
+        return typeof original === 'number' ? original : defaultValue
     }
 }
 export async function showBotVersion(ctx: ContextMessageUpdate) {
@@ -109,21 +107,21 @@ export function extraInlineMenu(rows: InlineKeyboardButton[][]): ExtraReplyMessa
     return {
         parse_mode: 'HTML',
         disable_web_page_preview: true,
-        reply_markup: Markup.inlineKeyboard(rows)
+        reply_markup: Markup.inlineKeyboard(rows).reply_markup
     }
 }
 
 export async function parseAndUpdateBtn(replyMarkup: InlineKeyboardMarkup,
-                                        callbackDataToken: RegExp, updateFunc: (text: CallbackButton) => (CallbackButton | CallbackButton[])): Promise<undefined | InlineKeyboardMarkup> {
+                                        callbackDataToken: RegExp, updateFunc: (text: InlineKeyboardButton.CallbackButton) => (InlineKeyboardButton.CallbackButton | InlineKeyboardButton.CallbackButton[])): Promise<undefined | InlineKeyboardMarkup> {
     if (replyMarkup !== undefined) {
-        const newKeyboard: CallbackButton[][] = []
+        const newKeyboard: InlineKeyboardButton.CallbackButton[][] = []
         for (const row of replyMarkup.inline_keyboard) {
-            const q = row.flatMap((btn: CallbackButton) => {
+            const q = row.flatMap((btn: InlineKeyboardButton.CallbackButton) => {
                 if (btn.callback_data.match(callbackDataToken)) {
                     const newBtnOrButtons = updateFunc(btn)
                     return Array.isArray(newBtnOrButtons) ? newBtnOrButtons : [newBtnOrButtons]
                 }
-                return [btn];
+                return [btn]
             })
                 .filter(btn => btn !== undefined)
             if (q.length > 0) {
@@ -142,17 +140,13 @@ export function mySlugify(text: string) {
     })
 }
 
-export function getMsgInlineKeyboard(ctx: ContextMessageUpdate) {
-    return (ctx.update.callback_query.message as any)?.reply_markup as InlineKeyboardMarkup
-}
-
 // @deprec -> editMessageAndButtons
 export function backToMainButtonTitle() {
     return i18SharedBtn('markup_back')
 }
 
-export async function replyWithBackToMainMarkup(ctx: ContextMessageUpdate, message: string = undefined) {
-    const markupWithBackButton = Extra.HTML().markup(Markup.keyboard([Markup.button(backToMainButtonTitle())]).resize())
+export async function replyWithBackToMainMarkup(ctx: ContextMessageUpdate, message?: string) {
+    const markupWithBackButton = Markup.keyboard([Markup.button.text(backToMainButtonTitle())]).resize()
 
     const msg = await ctx.replyWithHTML(message ?? i18SharedMsg('markup_back_decoy'), markupWithBackButton)
     return msg.message_id
@@ -167,8 +161,8 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
         inline_keyboard: inlineButtons
     }
     const goodErrors = [
-        `Telegraf: "editMessageText" isn't available for "message::text"`,
-        `Telegraf: "editMessageReplyMarkup" isn't available for "message::text"`,
+        `Telegraf: "editMessageText" isn't available for "message"`,
+        `Telegraf: "editMessageReplyMarkup" isn't available for "message"`,
         '400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message'
     ]
     if (options?.forceNewMsg) {
@@ -203,14 +197,30 @@ export async function editMessageAndButtons(ctx: ContextMessageUpdate, inlineBut
     // ctx.session.lastText = text
 }
 
-export function getMsgId(ctx: ContextMessageUpdate): number {
-    return ctx.update.message?.message_id || ctx.update.callback_query?.message?.message_id
+export function getMsgId(ctx: ContextMessageUpdate): number | undefined {
+    if ('message' in ctx.update) {
+        return ctx.update.message.message_id
+    } else if ('callback_query' in ctx.update) {
+        return ctx.update.callback_query?.message?.message_id
+    } else {
+        throw new Error('wtf ' + JSON.stringify(ctx.update))
+    }
 }
 
-export async function buttonIsOldGoToMain(ctx: ContextMessageUpdate) {
-    ctx.logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [type=${ctx.updateType}], [callback_data=${ctx.update?.callback_query?.data}] buttonIsOldGoToMain`)
-    await editMessageAndButtons(ctx, [[Markup.callbackButton(i18SharedBtn('back'), 'go_to_main')]], ctx.i18n.t('root.unknown_action'))
+export async function buttonIsOldGoToMain(ctx: ContextCallbackQueryUpdate) {
+    if ('data' in ctx.update.callback_query) {
+        ctx.logger.warn(`@${ctx.from?.username} (id=${ctx.from?.id}): [type=${ctx.updateType}], [callback_data=${ctx.update.callback_query.data}] buttonIsOldGoToMain`)
+    }
+    await editMessageAndButtons(ctx, [[Markup.button.callback(i18SharedBtn('back'), 'go_to_main')]], ctx.i18n.t('root.unknown_action'))
     await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.unknown_action')})
+}
+
+export function getInlineKeyboardFromCallbackQuery(ctx: ContextCallbackQueryUpdate): InlineKeyboardMarkup {
+    if ('message' in ctx.update.callback_query && 'reply_markup' in ctx.update.callback_query.message) {
+        return ctx.update.callback_query.message.reply_markup
+    } else {
+        throw new Error('wtf')
+    }
 }
 
 export async function chunkanize(msg: string, callback: (text: string, extra?: ExtraReplyMessage) => Promise<Message>, extra: ExtraReplyMessage = undefined): Promise<Message> {

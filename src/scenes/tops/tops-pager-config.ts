@@ -1,7 +1,7 @@
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { db, LimitOffset } from '../../database/db'
-import { BaseScene } from 'telegraf'
+import { Scenes } from 'telegraf'
 import {
     analyticsTopParams,
     getTopEventCount,
@@ -12,7 +12,7 @@ import {
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { mySlugify } from '../shared/shared-logic'
 
-const scene = new BaseScene<ContextMessageUpdate>('tops_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('tops_scene')
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
 
 export class TopsPagerConfig implements SliderConfig<TopEventsStageQuery> {

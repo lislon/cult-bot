@@ -1,5 +1,5 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
-import { BaseScene, Markup } from 'telegraf'
+import { Markup, Scenes } from 'telegraf'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { leftDate, MomentIntervals, rightDate } from '../../lib/timetable/intervals'
 import { compareAsc, compareDesc, isAfter } from 'date-fns'
@@ -9,7 +9,7 @@ import { parseAndPredictTimetable } from '../../lib/timetable/timetable-utils'
 import { FavoriteEvent } from './favorites-scene'
 import { getLikeDislikeButtonText, isEventInFavorites } from '../likes/likes-common'
 
-const scene = new BaseScene<ContextMessageUpdate>('favorites_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 
 const {i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn, actionName} = i18nSceneHelper(scene)
 
@@ -39,16 +39,16 @@ export async function loadEventsAsFavorite(eventIds: number[], now: Date): Promi
 
 export function removeFavoriteButton(ctx: ContextMessageUpdate, event: Event) {
     if (isEventInFavorites(ctx, event.id)) {
-        return Markup.callbackButton(i18Btn(ctx, 'remove_favorite'), actionName(`remove_${event.id}`))
+        return Markup.button.callback(i18Btn(ctx, 'remove_favorite'), actionName(`remove_${event.id}`))
     } else {
-        return Markup.callbackButton(i18Btn(ctx, 'restore_favorite'), actionName(`restore_${event.id}`))
+        return Markup.button.callback(i18Btn(ctx, 'restore_favorite'), actionName(`restore_${event.id}`))
     }
 }
 
 export function favoriteCardButtonsRow(ctx: ContextMessageUpdate, event: Event) {
     return [
-        Markup.callbackButton(getLikeDislikeButtonText(ctx, event.likes, 'like'), `like_${event.id}`),
-        Markup.callbackButton(getLikeDislikeButtonText(ctx, event.dislikes, 'dislike'), `dislike_${event.id}`),
+        Markup.button.callback(getLikeDislikeButtonText(ctx, event.likes, 'like'), `like_${event.id}`),
+        Markup.button.callback(getLikeDislikeButtonText(ctx, event.dislikes, 'dislike'), `dislike_${event.id}`),
         removeFavoriteButton(ctx, event),
     ]
 }

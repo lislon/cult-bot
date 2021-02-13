@@ -1,3 +1,5 @@
+import { BotReply } from './TelegramMockServer'
+import { i18n } from '../../../src/util/i18n'
 import {
     ForceReply,
     InlineKeyboardButton,
@@ -5,9 +7,8 @@ import {
     KeyboardButton,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove
-} from 'telegram-typings'
-import { BotReply } from './TelegramMockServer'
-import { i18n } from '../../../src/util/i18n'
+} from 'typegram'
+import CallbackButton = InlineKeyboardButton.CallbackButton
 
 export type AnyTypeOfKeyboard = InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 
@@ -46,15 +47,15 @@ export class MarkupHelper {
     static toLayout(replyMarkup: AnyTypeOfKeyboard): string {
         if (MarkupHelper.isMarkupKeyboard(replyMarkup)) {
             return MarkupHelper.prepareExpectedLayout(
-                replyMarkup.keyboard.map((line: KeyboardButton[]) => {
-                    return line.map((button: KeyboardButton) => `[${button.text}]`).join(' ')
+                replyMarkup.keyboard.map((line: KeyboardButton.CommonButton[]) => {
+                    return line.map((button: KeyboardButton.CommonButton) => `[${button.text}]`).join(' ')
                 }).join('\n')
             )
 
         } else if (MarkupHelper.isInlineKeyboard(replyMarkup)) {
             return MarkupHelper.prepareExpectedLayout(
-                replyMarkup.inline_keyboard.map((line: KeyboardButton[]) => {
-                    return line.map((button: KeyboardButton) => `[${button.text}]`).join(' ')
+                replyMarkup.inline_keyboard.map((line: KeyboardButton.CommonButton[]) => {
+                    return line.map((button: KeyboardButton.CommonButton) => `[${button.text}]`).join(' ')
                 }).join('\n')
             )
         } else {
@@ -62,16 +63,16 @@ export class MarkupHelper {
         }
     }
 
-    public static listInlineButtons(replyMarkup: AnyTypeOfKeyboard): InlineKeyboardButton[] {
+    public static listInlineButtons(replyMarkup: AnyTypeOfKeyboard): CallbackButton[] {
         if (MarkupHelper.isInlineKeyboard(replyMarkup)) {
-            return replyMarkup.inline_keyboard.flatMap(line => line)
+            return replyMarkup.inline_keyboard.flatMap(line => line) as CallbackButton[]
         }
         return []
     }
 
-    public static listMarkupButtons(replyMarkup: AnyTypeOfKeyboard): KeyboardButton[] {
+    public static listMarkupButtons(replyMarkup: AnyTypeOfKeyboard): CallbackButton[] {
         if (MarkupHelper.isMarkupKeyboard(replyMarkup)) {
-            return replyMarkup.keyboard.flatMap(line => line)
+            return replyMarkup.keyboard.flatMap(line => line) as CallbackButton[]
         }
         return []
     }

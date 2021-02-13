@@ -1,10 +1,10 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { InlineKeyboardButton } from 'telegraf/typings/markup'
+import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 import { checkboxi18nBtnId } from '../shared/shared-logic'
-import { BaseScene, Markup } from 'telegraf'
+import { Markup, Scenes } from 'telegraf'
 import { i18nSceneHelper } from '../../util/scene-helper'
 
-const scene = new BaseScene<ContextMessageUpdate>('customize_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('customize_scene')
 
 const {backButton, actionName, i18nModuleBtnName, revertActionName, scanKeys, i18nSharedBtnName, i18Btn} = i18nSceneHelper(scene)
 
@@ -29,7 +29,7 @@ export class DropdownMenu {
     button(tag: string): InlineKeyboardButton {
         const isSelected = this.selected.includes(tag)
         const text = i18Btn(this.ctx, `${this.section}.${tag}`) + checkboxi18nBtnId(this.ctx, isSelected)
-        return Markup.callbackButton(text, this.actionName(`${tag}`))
+        return Markup.button.callback(text, this.actionName(`${tag}`))
     }
 
     private actionName(postfix: string) {
@@ -65,7 +65,7 @@ export class DropdownMenu {
         const map: InlineKeyboardButton[][] = isOpen ? submenus.map(rows => rows.map(tag => this.button(decorateTag(tag)))) : []
 
         return [
-            [Markup.callbackButton(menuTitleFull, this.actionName(menuTitle))],
+            [Markup.button.callback(menuTitleFull, this.actionName(menuTitle))],
             ...map
         ]
     }

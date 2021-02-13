@@ -2,10 +2,10 @@ import { CAT_NAMES, ContextMessageUpdate, EventCategory, MyInterval } from '../.
 import { getNextWeekendRange } from '../shared/shared-logic'
 import { db, LimitOffset } from '../../database/db'
 import { encodeTagsLevel1 } from '../../util/tag-level1-encoder'
-import { BaseScene } from 'telegraf'
+import { Scenes } from 'telegraf'
 import { i18nSceneHelper } from '../../util/scene-helper'
 
-const scene = new BaseScene<ContextMessageUpdate>('tops_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('tops_scene')
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
 
 export type SubMenuVariants = 'exhibitions_temp' | 'exhibitions_perm'

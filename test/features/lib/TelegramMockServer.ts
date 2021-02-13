@@ -1,27 +1,37 @@
-import { Context, Telegraf, Telegram } from 'telegraf'
-import * as tt from 'telegraf/typings/telegram-types'
-import { Update } from 'telegraf/typings/telegram-types'
+/// <reference path="./../../../src/types/telegraf.d.ts"/>
+import { Context, MiddlewareFn, Telegraf, TelegramError } from 'telegraf'
+import {
+    ExtraEditMessageText,
+    ExtraReplyMessage,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    Message,
+    Update
+} from 'telegraf/typings/telegram-types'
 import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
-import { InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, Message } from 'telegram-typings'
-import { MiddlewareFn } from 'telegraf/typings/composer'
 import { MarkupHelper } from './MarkupHelper'
-
-const TelegramError = require('telegraf/core/network/error') as any
-
+import { Chat, User } from 'typegram/manage'
+import { True } from 'typegram/alias'
+import Telegram from 'telegraf/lib/telegram'
+import { omit } from 'lodash'
+import ServiceMessage = Message.ServiceMessage
+import TextMessage = Message.TextMessage
+import CallbackButton = InlineKeyboardButton.CallbackButton
+import CommonButton = KeyboardButton.CommonButton
 
 const CHAT_ID = 1234
 const FROM_ID = 7777
 
-interface MessageWithInlineMarkup extends Message {
-    reply_markup?: InlineKeyboardMarkup
-}
+type MessageWithInlineMarkup = Message.CommonMessage
 
-const CHAT = {
+const CHAT: Chat.PrivateChat = {
     id: CHAT_ID,
-    type: 'private'
+    type: 'private',
+    first_name: ''
 }
 
-function makeFrom() {
+function makeFrom(): { from: User } {
     return {
         from: {
             id: FROM_ID,
@@ -32,35 +42,36 @@ function makeFrom() {
     }
 }
 
-function makeMessage(text: string = undefined, override: Partial<Message> = {}): { message: Message } {
+function makeMessage(text: string = undefined, override: Partial<Message> = {}): Update.MessageUpdate {
+    const message: ServiceMessage = {
+        date: new Date().getTime(),
+        message_id: 0,
+        chat: CHAT,
+        ...override
+    }
+
     return {
-        message: {
-            ...makeFrom(),
-            date: new Date().getTime(),
-            message_id: 0,
-            text: text,
-            chat: CHAT,
-            ...override
-        }
+        update_id: 0,
+        message: {...message, text: text, from: makeFrom().from, chat: CHAT}
     }
 }
 
-function makeCommand(command: string, payload: string = ''): { message: Message } {
+function makeCommand(command: string, payload: string = ''): Pick<Update.MessageUpdate, 'message'> {
     return {
         ...makeMessage([command, payload].join(' '), {
-            entities: [ {
+            entities: [{
                 offset: 0,
                 type: 'bot_command',
                 length: command.length
-            } ]
+            }]
         })
     }
 }
 
-const makeDefaultEvent = (content: Partial<Update>) => {
+const makeDefaultEvent = (content: Pick<Update.MessageUpdate, 'message'> | Pick<Update.CallbackQueryUpdate, 'callback_query'>): Update.MessageUpdate | Update.CallbackQueryUpdate => {
     return {
         ...content,
-        update_id: 0
+        update_id: 0,
     }
 }
 
@@ -68,8 +79,8 @@ export class TelegramMockServer {
     // private currentScene = ''
     private replies: BotReply[] = []
     private repliesIterIndex = { index: 0 }
-    private repliesIterIndexOtherChat = { index: 0 }
-    private lastMsg: MessageWithInlineMarkup
+    private repliesIterIndexOtherChat = {index: 0}
+    private lastMsg: Message.TextMessage
     private lastEdited: BotReply
     private lastMsgId = 0;
     private lastCtx: ContextMessageUpdate
@@ -120,14 +131,16 @@ export class TelegramMockServer {
     }
 
     async sendInitialUpdate(middleware: MiddlewareFn<ContextMessageUpdate>) {
-        this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage()}))
-        await middleware(this.lastCtx, undefined)
+        this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent(makeMessage()))
+        await middleware(this.lastCtx, () => Promise.resolve())
     }
 
     async enterScene(bot: Telegraf<ContextMessageUpdate>, sceneId: string) {
-        this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage()}))
+        this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent(makeMessage()))
         try {
-            await bot.middleware()(this.lastCtx, async () => await this.lastCtx.scene.enter(sceneId))
+            await bot.middleware()(this.lastCtx, async () => {
+                await this.lastCtx.scene.enter(sceneId)
+            })
         } catch (e) {
             await (bot as any).handleError(e, this.lastCtx)
         }
@@ -136,12 +149,12 @@ export class TelegramMockServer {
 
     async sendMessage(bot: Telegraf<ContextMessageUpdate>, text: string) {
         if (text.startsWith('/')) {
-            this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeCommand(text)}))
+            this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent(makeCommand(text)))
         } else {
             this.lastCtx = this.prepareCtxFromServer(makeDefaultEvent({...makeMessage(text)}))
         }
         try {
-            await bot.middleware()(this.lastCtx, undefined)
+            await bot.middleware()(this.lastCtx, () => Promise.resolve())
         } catch (e) {
             // await (bot as any).handleError(e, this.lastCtx)
             console.log('ok')
@@ -175,7 +188,7 @@ export class TelegramMockServer {
         await bot.middleware()(this.lastCtx, undefined)
     }
 
-    getListOfInlineButtonsFromLastMsg(): {message: MessageWithInlineMarkup, buttons: InlineKeyboardButton[]} {
+    getListOfInlineButtonsFromLastMsg(): { message: TextMessage, buttons: CallbackButton[] } {
         for (let i = this.replies.length - 1; i >= 0; i--) {
             if (MarkupHelper.isInlineKeyboard(this.replies[i].extra?.reply_markup)) {
                 return {
@@ -184,10 +197,10 @@ export class TelegramMockServer {
                 }
             }
         }
-        return { message: undefined, buttons: [] }
+        return {message: undefined, buttons: []}
     }
 
-    getListOfMarkupButtonsFromLastMsg(): { message: MessageWithInlineMarkup, buttons: KeyboardButton[] } {
+    getListOfMarkupButtonsFromLastMsg(): { message: MessageWithInlineMarkup, buttons: CommonButton[] } {
         for (let i = this.replies.length - 1; i >= 0; i--) {
             if (MarkupHelper.isMarkupKeyboard(this.replies[i].extra?.reply_markup)) {
                 return {
@@ -196,12 +209,13 @@ export class TelegramMockServer {
                 }
             }
         }
-        return { message: undefined, buttons: [] }
+        return {message: undefined, buttons: []}
     }
 
-    private prepareCtxFromServer(update: tt.Update): ContextMessageUpdate {
+    private prepareCtxFromServer(update: Update): ContextMessageUpdate {
         const tg = new Telegram('', {})
-        tg.callApi = async (method: any, data: { chat_id: number }): Promise<any> => {
+
+        tg.callApi = async (method: any, payload: any, callApiOptions: any): Promise<any> => {
             if (this.botIsBlocked) {
                 throw new TelegramError({
                     error_code: 403,
@@ -210,13 +224,21 @@ export class TelegramMockServer {
             }
         }
 
-        const ctx: ContextMessageUpdate = new Context(update, tg, {}) as ContextMessageUpdate
+        const ctx: ContextMessageUpdate = new Context(update, tg, {
+            id: 0,
+            first_name: 'bot',
+            can_join_groups: false,
+            can_read_all_group_messages: false,
+            supports_inline_queries: false,
+            username: 'bot',
+            is_bot: true
+        }) as ContextMessageUpdate
 
         async function touchApiMock() {
-            await ctx.telegram.callApi('mock', {chat_id: 0})
+            await ctx.telegram.callApi('getMe', {chat_id: 0})
         }
 
-        ctx.reply = async (message: string, extra: tt.ExtraReplyMessage = undefined): Promise<tt.Message> => {
+        ctx.reply = async (message: string, extra: ExtraReplyMessage = undefined): Promise<Message.TextMessage> => {
             this.lastMsg = await this.generateAnswerAfterReply()
             await touchApiMock()
             if (MarkupHelper.isInlineKeyboard(extra?.reply_markup)) {
@@ -234,21 +256,35 @@ export class TelegramMockServer {
             await touchApiMock()
             return Promise.resolve(true)
         }
-        ctx.editMessageReplyMarkup = async (markup?: tt.InlineKeyboardMarkup): Promise<tt.Message | boolean> => {
+        ctx.editMessageReplyMarkup = async (markup?: InlineKeyboardMarkup): Promise<(Update.Edited & Message) | True> => {
             await touchApiMock()
             const lastReply = this.findLastReply()
 
             if (lastReply === undefined) {
-                return false
+                throw new Error('was false')
+                return true
             } else {
                 lastReply.extra.reply_markup = markup
                 lastReply.message.reply_markup = markup
             }
             this.lastEdited = lastReply
 
-            return lastReply.message
+            const result: Update.Edited & Message = {
+                ...omit(lastReply.message, [
+                    'forward_from',
+                    'forward_from_chat',
+                    'forward_from_message_id',
+                    'forward_signature',
+                    'forward_sender_name',
+                    'forward_date'
+                ]),
+                edit_date: 0,
+            }
+
+            return result
         }
-        ctx.editMessageText = async (text: string, extra?: tt.ExtraEditMessage): Promise<tt.Message | boolean> => {
+
+        ctx.editMessageText = async (text: string, extra?: ExtraEditMessageText): Promise<(Update.Edited & Message.TextMessage) | True> => {
             await touchApiMock()
 
             if (ctx.updateType !== 'callback_query') {
@@ -257,42 +293,43 @@ export class TelegramMockServer {
 
             const lastReply = this.findLastReply()
             if (lastReply === undefined) {
-                return false
+                return true
             } else {
                 lastReply.text = text
                 lastReply.extra = extra
             }
             this.lastEdited = lastReply
 
-            return lastReply.message
+            return {...(lastReply.message), edit_date: 0} as Update.Edited & Message.TextMessage
         }
 
-        tg.sendMessage = async (chatId: number | string, text: string, extra?: tt.ExtraEditMessage): Promise<tt.Message> => {
-            await ctx.telegram.callApi('mock', {})
-            const message: Message = {
+        tg.sendMessage = async (chatId: number | string, text: string, extra?: ExtraEditMessageText): Promise<Message.TextMessage> => {
+            await touchApiMock()
+            const message: TextMessage = {
                 message_id: this.nextMsgId(),
                 chat: {
                     id: +chatId,
+                    first_name: '',
                     type: 'private'
                 },
                 date: new Date().getTime(),
                 text
             }
-            this.replies.push({ message, extra, text })
+            this.replies.push({message, extra, text})
             return message
         }
 
         return ctx
     }
 
-    private findLastReply() {
-        const lastReply = this.replies.find(reply => reply.message.message_id === this.lastMsg.message_id)
-        return lastReply
+    private findLastReply(): BotReply {
+        return this.replies.find(reply => reply.message.message_id === this.lastMsg.message_id)
     }
 
-    async generateAnswerAfterReply(): Promise<Message> {
+    async generateAnswerAfterReply(): Promise<Message.TextMessage> {
         return {
             message_id: this.nextMsgId(),
+            text: '',
             date: new Date().getTime(),
             chat: CHAT,
         }
@@ -308,7 +345,7 @@ export class TelegramMockServer {
 }
 
 export interface BotReply {
-    message: MessageWithInlineMarkup
+    message: Message.TextMessage
     text: string
-    extra?: tt.ExtraReplyMessage
+    extra?: ExtraReplyMessage
 }

@@ -1,4 +1,4 @@
-import { BaseScene, Composer, Extra, Markup } from 'telegraf'
+import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, ifAdmin, isAdmin, sleep } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
@@ -6,7 +6,7 @@ import { botConfig } from '../../util/bot-config'
 import { db } from '../../database/db'
 import { generatePlural, getNextWeekendRange } from '../shared/shared-logic'
 
-const scene = new BaseScene<ContextMessageUpdate>('main_scene');
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('main_scene')
 
 const {i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
@@ -23,22 +23,22 @@ const content = (ctx: ContextMessageUpdate) => {
 
     const mainButtons = menu.map(row =>
         row.map(btnName => {
-            return Markup.button(i18Btn(ctx, btnName))
+            return Markup.button.text(i18Btn(ctx, btnName))
         })
     );
 
     const state = ctx.scene.state as MainSceneEnterState
     return {
         msg: state.override_main_scene_msg ? state.override_main_scene_msg : i18Msg(ctx, 'select_anything'),
-        markupMainMenu: Extra.HTML(true).markup(Markup.keyboard(mainButtons).resize())
+        markupMainMenu: Markup.keyboard(mainButtons).resize()
     }
 }
 
 scene
-    .enter(async (ctx: ContextMessageUpdate) => {
+    .enter(async ctx => {
         const {msg, markupMainMenu} = content(ctx)
 
-        await ctx.replyWithMarkdown(msg, markupMainMenu)
+        await ctx.replyWithHTML(msg, markupMainMenu)
 
         ctx.ua.pv({dp: '/', dt: 'Главное меню'})
     })
@@ -46,27 +46,27 @@ scene
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
         // .use(middlewares.logMiddleware('postStageActionsFn scene: ' + scene.id))
-        .hears(i18nModuleBtnName('tops'), async (ctx: ContextMessageUpdate) => {
+        .hears(i18nModuleBtnName('tops'), async ctx => {
             await ctx.scene.enter('tops_scene')
         })
-        .hears(/.{1,4}Подборки$/, async (ctx: ContextMessageUpdate) => {
+        .hears(/.{1,4}Подборки$/, async ctx => {
             await ctx.scene.enter('packs_scene')
         })
-        .hears(i18nModuleBtnName('search'), async (ctx: ContextMessageUpdate) => {
+        .hears(i18nModuleBtnName('search'), async ctx => {
             await ctx.scene.enter('search_scene')
         })
-        .hears(i18nModuleBtnName('customize'), async (ctx: ContextMessageUpdate) => {
+        .hears(i18nModuleBtnName('customize'), async ctx => {
             await ctx.scene.enter('customize_scene')
         })
-        .hears(i18nModuleBtnName('feedback'), async (ctx: ContextMessageUpdate) => {
+        .hears(i18nModuleBtnName('feedback'), async ctx => {
             await ctx.scene.enter('feedback_scene')
         })
-        .hears(i18nModuleBtnName('favorites'), async (ctx: ContextMessageUpdate) => {
+        .hears(i18nModuleBtnName('favorites'), async ctx => {
             await ctx.scene.enter('favorites_scene')
         })
-        .hears(i18nModuleBtnName('admin'), async (ctx: ContextMessageUpdate) => {
+        .hears(i18nModuleBtnName('admin'), async ctx => {
             await ifAdmin(ctx, () => ctx.scene.enter('admin_scene'))
-        });
+        })
 }
 
 function googleAnalyticsSource(ctx: ContextMessageUpdate & { startPayload: string }) {

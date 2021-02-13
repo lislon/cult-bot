@@ -1,7 +1,6 @@
-import { BaseScene, Composer, Markup } from 'telegraf'
+import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { CallbackButton, InlineKeyboardButton } from 'telegraf/typings/markup'
 import {
     editMessageAndButtons,
     EditMessageAndButtonsOptions,
@@ -21,16 +20,17 @@ import { formatOptionLogic, getKeyboardFormat } from './filters/customize-format
 import { SliderPager } from '../shared/slider-pager'
 import { CustomizePagerConfig } from './customize-pager-config'
 import { db } from '../../database/db'
+import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
-const scene = new BaseScene<ContextMessageUpdate>('customize_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('customize_scene')
 
-const {backButton, actionName, i18nModuleBtnName, revertActionName, scanKeys, i18nSharedBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
+const {backButton, actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 const eventSlider = new SliderPager(new CustomizePagerConfig())
 
 async function showFilteredEventsButton(ctx: ContextMessageUpdate) {
 
-    return Markup.callbackButton(i18Btn(ctx,
+    return Markup.button.callback(i18Btn(ctx,
         await countFoundEvents(ctx) > 0 ? 'show_personalized_events' : 'show_personalized_events_zero', {
             count: await countFoundEvents(ctx)
         }), actionName('show_personalized_events'))
@@ -42,14 +42,14 @@ function isAnyFilterSelected(ctx: ContextMessageUpdate): boolean {
 }
 
 function resetButton(ctx: ContextMessageUpdate) {
-    return Markup.callbackButton(i18Btn(ctx, 'reset_filter'), actionName('reset_filter'))
+    return Markup.button.callback(i18Btn(ctx, 'reset_filter'), actionName('reset_filter'))
 }
 
-const getRootKeyboard = async (ctx: ContextMessageUpdate): Promise<CallbackButton[][]> => {
+const getRootKeyboard = async (ctx: ContextMessageUpdate): Promise<InlineKeyboardButton.CallbackButton[][]> => {
     const selected = i18Btn(ctx, 'selected_filter_postfix')
 
-    function btn(name: string, state: string[]): CallbackButton {
-        return Markup.callbackButton(i18Btn(ctx, name) + (isEmpty(state) ? '' : ' ' + selected), actionName(name))
+    function btn(name: string, state: string[]): InlineKeyboardButton.CallbackButton {
+        return Markup.button.callback(i18Btn(ctx, name) + (isEmpty(state) ? '' : ' ' + selected), actionName(name))
     }
 
     const showEventsBtn = await showFilteredEventsButton(ctx)
@@ -134,8 +134,8 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType, opti
 
     async function btnRow(): Promise<InlineKeyboardButton[]> {
         return [
-            Markup.callbackButton(i18Btn(ctx, 'back'), actionName('back_to_filters')),
-            Markup.callbackButton(await showGoToResultsButton(ctx), actionName('show_personalized_events'))
+            Markup.button.callback(i18Btn(ctx, 'back'), actionName('back_to_filters')),
+            Markup.button.callback(await showGoToResultsButton(ctx), actionName('show_personalized_events'))
         ]
     }
 
@@ -195,7 +195,7 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType, opti
 //     await updateDialog(ctx, 'root')
 // }
 
-async function checkOrUncheckMenuState(ctx: ContextMessageUpdate) {
+async function checkOrUncheckMenuState(ctx: ContextMessageUpdate & { match: RegExpExecArray }) {
     await ctx.answerCbQuery()
     const menuTitle = ctx.match[1]
     if (ctx.session.customize.openedMenus.includes(menuTitle)) {
@@ -226,7 +226,7 @@ async function countFoundEvents(ctx: ContextMessageUpdate) {
 }
 
 // async function showMainMenu(ctx: ContextMessageUpdate, text = i18Msg(ctx, 'welcome')) {
-//     await ctx.replyWithHTML(text, Extra.markup(Markup.inlineKeyboard(await getMainKeyboard(ctx))))
+//     await ctx.replyWithHTML(text, Extra.markup(Markup.inlineKeyboard(await getMainKeyboard(ctx).reply_markup)))
 //
 //     ctx.ua.pv({dp: `/customize/`, dt: `Подобрать под мои интересы`})
 // }
@@ -245,7 +245,7 @@ function isThisMessageMatchesWithActiveFilter(ctx: ContextMessageUpdate) {
 }
 
 scene
-    .enter(async (ctx: ContextMessageUpdate) => {
+    .enter(async ctx => {
         prepareSessionStateIfNeeded(ctx)
         await replyWithBackToMainMarkup(ctx, i18Msg(ctx, 'markup_back_decoy'))
         ctx.session.customize.resultsFound = undefined
@@ -257,36 +257,36 @@ scene
         // resetFilter(ctx)
         // ctx.session.customize.currentStage = 'root'
     })
-    .action(/customize_scene[.]p_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
+    .action(/customize_scene[.]p_(menu_.+)/, async ctx => {
         prepareSessionStateIfNeeded(ctx)
         await checkOrUncheckMenuState(ctx)
         await updateDialog(ctx, 'priorities')
     })
-    .action(/customize_scene[.]o_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
+    .action(/customize_scene[.]o_(menu_.+)/, async ctx => {
         prepareSessionStateIfNeeded(ctx)
         await checkOrUncheckMenuState(ctx)
         await updateDialog(ctx, 'rubrics')
     })
-    .action(/customize_scene[.]t_(menu_.+)/, async (ctx: ContextMessageUpdate) => {
+    .action(/customize_scene[.]t_(menu_.+)/, async ctx => {
         prepareSessionStateIfNeeded(ctx)
         await checkOrUncheckMenuState(ctx)
         await updateDialog(ctx, 'time')
     })
-    .action(/customize_scene[.]p_(.+)/, async (ctx: ContextMessageUpdate) => {
+    .action(/customize_scene[.]p_(.+)/, async ctx => {
         prepareSessionStateIfNeeded(ctx)
         prioritiesOptionLogic(ctx, ctx.match[1])
         await invalidateSliderAndCounters(ctx)
         await answerCbEventsSelected(ctx)
         await updateDialog(ctx, 'priorities')
     })
-    .action(/customize_scene[.]o_(.+)/, async (ctx: ContextMessageUpdate) => {
+    .action(/customize_scene[.]o_(.+)/, async ctx => {
         prepareSessionStateIfNeeded(ctx)
         rubricsOptionLogic(ctx, ctx.match[1])
         await invalidateSliderAndCounters(ctx)
         await answerCbEventsSelected(ctx)
         await updateDialog(ctx, 'rubrics')
     })
-    .action(/customize_scene[.]t_(.+)/, async (ctx: ContextMessageUpdate) => {
+    .action(/customize_scene[.]t_(.+)/, async ctx => {
         prepareSessionStateIfNeeded(ctx)
         timeOptionLogic(ctx, ctx.match[1])
         await invalidateSliderAndCounters(ctx)
@@ -294,7 +294,7 @@ scene
         await answerCbEventsSelected(ctx)
         await updateDialog(ctx, 'time')
     })
-    .action(/customize_scene[.]f_(.+)/, async (ctx: ContextMessageUpdate) => {
+    .action(/customize_scene[.]f_(.+)/, async ctx => {
         prepareSessionStateIfNeeded(ctx)
         formatOptionLogic(ctx, ctx.match[1])
         await invalidateSliderAndCounters(ctx)
@@ -302,14 +302,14 @@ scene
         await answerCbEventsSelected(ctx)
         await updateDialog(ctx, 'format')
     })
-    .action(actionName('last_card_back'), async (ctx: ContextMessageUpdate) => {
+    .action(actionName('last_card_back'), async ctx => {
         await ctx.answerCbQuery()
         await resetSessionIfProblem(ctx, async () => {
             prepareSessionStateIfNeeded(ctx)
             await updateDialog(ctx, 'root')
         })
     })
-    .action(actionName('card_back'), async (ctx: ContextMessageUpdate) => {
+    .action(actionName('card_back'), async ctx => {
         await ctx.answerCbQuery()
         prepareSessionStateIfNeeded(ctx)
 
@@ -323,7 +323,7 @@ scene
             await restoreOldCustomize(ctx)
         }
     })
-// .hears(i18nModuleBtnName('back'), async (ctx: ContextMessageUpdate) => {
+// .hears(i18nModuleBtnName('back'), async ctx => {
 //     await resetSessionIfProblem(ctx, async () => {
 //         prepareSessionStateIfNeeded(ctx)
 //         await ctx.scene.enter('main_scene')
@@ -367,29 +367,29 @@ async function restoreOldCustomize(ctx: ContextMessageUpdate) {
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot
         .use(eventSlider.middleware())
-        .action(actionName('format'), async (ctx: ContextMessageUpdate) => {
+        .action(actionName('format'), async ctx => {
             await ctx.answerCbQuery()
             await withSubDialog(ctx, 'format')
             ctx.ua.pv({dp: `/customize/format/`, dt: `Подобрать под интересы > Формат`})
         })
-        .action(actionName('rubrics'), async (ctx: ContextMessageUpdate) => {
+        .action(actionName('rubrics'), async ctx => {
             await ctx.answerCbQuery()
             await withSubDialog(ctx, 'rubrics')
             ctx.ua.pv({dp: `/customize/rubrics/`, dt: `Подобрать под интересы > Рубрики`})
 
         })
-        .action(actionName('priorities'), async (ctx: ContextMessageUpdate) => {
+        .action(actionName('priorities'), async ctx => {
             await ctx.answerCbQuery()
             await withSubDialog(ctx, 'priorities')
             ctx.ua.pv({dp: `/customize/priorities/`, dt: `Подобрать под интересы > Приоритеты`})
 
         })
-        .action(actionName('time'), async (ctx: ContextMessageUpdate) => {
+        .action(actionName('time'), async ctx => {
             await ctx.answerCbQuery()
             await withSubDialog(ctx, 'time')
             ctx.ua.pv({dp: `/customize/time/`, dt: `Подобрать под интересы > Время`})
         })
-        .action(actionName('show_personalized_events'), async (ctx: ContextMessageUpdate) => {
+        .action(actionName('show_personalized_events'), async ctx => {
             prepareSessionStateIfNeeded(ctx)
 
             if (isThisMessageMatchesWithActiveFilter(ctx)) {
@@ -409,12 +409,12 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                 await restoreOldCustomize(ctx)
             }
         })
-        .action(actionName('card_back'), async (ctx: ContextMessageUpdate) => {
+        .action(actionName('card_back'), async ctx => {
             prepareSessionStateIfNeeded(ctx)
             await ctx.answerCbQuery()
             await restoreOldCustomize(ctx)
         })
-        .action(actionName('reset_filter'), async (ctx: ContextMessageUpdate) => {
+        .action(actionName('reset_filter'), async ctx => {
             prepareSessionStateIfNeeded(ctx)
             await ctx.answerCbQuery('Фильтр сброшен')
             if (isAnyFilterSelected(ctx)) {
@@ -423,7 +423,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                 await updateDialog(ctx, 'root')
             }
         })
-        .action(actionName('back_to_filters'), async (ctx: ContextMessageUpdate) => {
+        .action(actionName('back_to_filters'), async ctx => {
             prepareSessionStateIfNeeded(ctx)
             await ctx.answerCbQuery()
             if (isThisMessageMatchesWithActiveFilter(ctx)) {

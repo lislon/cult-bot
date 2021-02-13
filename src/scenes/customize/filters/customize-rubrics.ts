@@ -1,9 +1,9 @@
 import { ContextMessageUpdate } from '../../../interfaces/app-interfaces'
 import { DropdownMenu } from '../dropdown-menu'
-import { BaseScene } from 'telegraf'
+import { Scenes } from 'telegraf'
 import { i18nSceneHelper } from '../../../util/scene-helper'
 
-const scene = new BaseScene<ContextMessageUpdate>('customize_scene')
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('customize_scene')
 
 const {backButton, actionName, i18nModuleBtnName, revertActionName, scanKeys, i18nSharedBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
 

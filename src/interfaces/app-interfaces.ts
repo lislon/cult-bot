@@ -1,7 +1,4 @@
-import { SceneContextMessageUpdate } from 'telegraf/typings/stage'
 import { I18n } from 'telegraf-i18n'
-import { TimetableSceneState } from '../scenes/timetable/timetable-scene'
-import { TimeIntervalSceneState } from '../scenes/time-interval/time-interval-scene'
 import { AdminSceneState } from '../scenes/admin/admin-scene'
 import { SearchSceneState } from '../scenes/search/search-scene'
 import { Visitor } from 'universal-analytics'
@@ -17,7 +14,7 @@ import { CustomizeSceneState } from '../scenes/customize/customize-common'
 import { PagingState } from '../scenes/shared/paging-pager'
 import { TopsSceneState } from '../scenes/tops/tops-common'
 import { Logger } from 'winston'
-
+import { Context, Scenes } from 'telegraf'
 
 export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
 export const allCategories: EventCategory[] = ['theaters', 'exhibitions', 'movies', 'events', 'walks', 'concerts']
@@ -41,33 +38,36 @@ export const moneyTags: TagLevel2[] = ['#доступноподеньгам', '#
 export const chidrensTags: TagLevel2[] = ['#сдетьми0+', '#сдетьми6+', '#сдетьми12+', '#сдетьми16+']
 export type EventFormat = 'online' | 'outdoor' | undefined
 
-export interface ContextMessageUpdate extends SceneContextMessageUpdate {
+interface MySession extends Scenes.SceneSession<Scenes.SceneSessionData> {
+    topsScene?: TopsSceneState
+    packsScene?: PacksSceneState
+    search?: SearchSceneState
+    customize?: CustomizeSceneState
+    adminScene?: AdminSceneState
+    feedbackScene?: FeedbackSceneState
+    favorites?: FavoritesState
+    analytics?: AnalyticsState,
+    user?: UserState
+    help?: HelpSceneState,
+    paging?: PagingState<unknown>
+    slider?: AllSlidersState
+    language?: 'en' | 'ru'
+}
+
+export interface ContextMessageUpdate extends Context {
+    session: MySession
+    scene: Scenes.SceneContextScene<ContextMessageUpdate>
     i18n: I18n
     sessionTmp: {
         analyticsScene: AnalyticsStateTmp
     },
-    session: {
-        topsScene: TopsSceneState
-        packsScene: PacksSceneState
-        search: SearchSceneState
-        customize: CustomizeSceneState
-        timetable: TimetableSceneState
-        timeInterval: TimeIntervalSceneState
-        adminScene: AdminSceneState
-        feedbackScene: FeedbackSceneState
-        favorites: FavoritesState
-        analytics: AnalyticsState,
-        user: UserState
-        help: HelpSceneState,
-        paging: PagingState<unknown>
-        slider: AllSlidersState
-        language: 'en' | 'ru'
-    }
     logger: Logger
     webhookReply: boolean
     ua: Visitor
     perf: PerformanceContext
+
     now(): Date
+
     isNowOverridden(): boolean
 }
 
@@ -95,13 +95,6 @@ export interface Event {
     dislikes: number
 }
 
-export interface Event2 extends Event {
-    popularity: number
-    fake_likes: number
-    fake_dislikes: number
-}
-
-
 export type MyInterval = {
     start: Date
     end: Date
@@ -122,3 +115,8 @@ export const CAT_NAMES = {
 export type ExtIdAndId = { id: number; extId: string }
 
 export type ExtIdAndMaybeId = { id?: number; extId: string }
+export type ContextCallbackQueryUpdate = ContextMessageUpdate & {
+    update: {
+        callback_query: object
+    }
+}

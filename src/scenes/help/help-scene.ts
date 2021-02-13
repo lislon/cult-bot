@@ -1,14 +1,14 @@
-import { BaseScene, Telegraf } from 'telegraf'
+import { Scenes, Telegraf } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import middlewares, { SceneRegister } from '../../middleware-utils'
-import { InputFile } from 'telegraf/typings/telegram-types'
+import { InputFileByReadableStream } from 'telegraf/typings/telegram-types'
 import { createReadStream } from 'fs'
 import path from 'path'
 import { redisSession } from '../../util/reddis'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
 
-const scene = new BaseScene<ContextMessageUpdate>('help_scene');
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('help_scene')
 const {i18Msg} = i18nSceneHelper(scene)
 
 let cached_help_file_id = ''
@@ -16,17 +16,17 @@ let cached_help_file_id = ''
 function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>) {
     bot
         .use(middlewares.logMiddleware('postStageActionsFn scene: ' + scene.id))
-        .help(async (ctx) => {
+        .help(async (ctx: ContextMessageUpdate) => {
             ctx.ua.pv({dp: '/help', dt: 'Помощь'})
 
-            let file: InputFile
+            let photo: string | InputFileByReadableStream
             if (cached_help_file_id === '') {
-                file = {source: createReadStream(path.resolve(__dirname, './assets/help.png'))}
+                photo = {source: createReadStream(path.resolve(__dirname, './assets/help.png'))}
             } else {
-                file = cached_help_file_id
+                photo = cached_help_file_id
             }
             try {
-                const result = await ctx.replyWithPhoto(file, {
+                const result = await ctx.replyWithPhoto(photo, {
                     caption: i18Msg(ctx, 'help')
                 })
                 if (result.photo.length > 0) {
@@ -37,7 +37,7 @@ function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>) {
                 throw e
             }
         })
-        .command('reset', async (ctx, next) => {
+        .command('reset', async ctx => {
             ctx.session.help = undefined
             ctx.session.analytics.markupClicks = 0
             ctx.session.analytics.inlineClicks = 0

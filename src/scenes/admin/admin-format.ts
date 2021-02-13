@@ -1,8 +1,7 @@
 import { i18nSceneHelper, i18SharedMsg } from '../../util/scene-helper'
-import { BaseScene, Extra, Markup } from 'telegraf'
+import { Markup, Scenes } from 'telegraf'
 import { allCategories, ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { StatByCat, StatByReviewer } from '../../database/db-admin'
-import { CallbackButton } from 'telegraf/typings/markup'
 import { getNextWeekendRange, ruFormat } from '../shared/shared-logic'
 import { db } from '../../database/db'
 import { subSeconds } from 'date-fns'
@@ -11,17 +10,18 @@ import { EventToSave } from '../../interfaces/db-interfaces'
 import { menuCats, totalValidationErrors } from './admin-common'
 import { SpreadSheetValidationError } from '../../dbsync/parserSpresdsheetEvents'
 import { EventPackValidated } from '../../dbsync/packsSyncLogic'
+import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
-const scene = new BaseScene<ContextMessageUpdate>('admin_scene');
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 
-const {actionName, i18SharedBtn, i18Btn, i18Msg} = i18nSceneHelper(scene)
+const {actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessageUpdate) {
     const btn = []
-    let thisRow: CallbackButton[] = []
+    let thisRow: InlineKeyboardButton.CallbackButton[] = []
     statsByReviewer.forEach(({reviewer, count}) => {
         const icon = i18Msg(ctx, `admin_icons.${reviewer}`, undefined, '') || i18Msg(ctx, 'admin_icons.default')
-        thisRow.push(Markup.callbackButton(i18Btn(ctx, 'byReviewer', {
+        thisRow.push(Markup.button.callback(i18Btn(ctx, 'byReviewer', {
             count,
             icon,
             reviewer
@@ -43,12 +43,12 @@ export const formatMainAdminMenu = async (ctx: ContextMessageUpdate) => {
     return await db.task(async (dbTask) => {
         const statsByName: StatByCat[] = await dbTask.repoAdmin.findChangedEventsByCatStats(dateRanges)
 
-        let adminButtons: CallbackButton[][] = []
+        let adminButtons: InlineKeyboardButton.CallbackButton[][] = []
 
         const snapshotMeta = await dbTask.repoSnapshot.getSnapshotMeta()
         if (snapshotMeta !== undefined) {
 
-            adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_changed_snapshot', {
+            adminButtons = [...adminButtons, [Markup.button.callback(i18Btn(ctx, 'menu_changed_snapshot', {
                     date: ruFormat(snapshotMeta.createdAt, 'dd MMMM HH:mm:ss'),
                     user: snapshotMeta.createdBy
                 }),
@@ -58,21 +58,21 @@ export const formatMainAdminMenu = async (ctx: ContextMessageUpdate) => {
             adminButtons = [...adminButtons, ...await menuCats.map(row =>
                 row.map(btnName => {
                     const count = statsByName.find(r => r.category === btnName)
-                    return Markup.callbackButton(i18Btn(ctx, btnName, {count: count === undefined ? 0 : count.count}), actionName(btnName));
+                    return Markup.button.callback(i18Btn(ctx, btnName, {count: count === undefined ? 0 : count.count}), actionName(btnName))
                 })
             )]
         }
 
-        adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_per_names'), 'fake')]]
+        adminButtons = [...adminButtons, [Markup.button.callback(i18Btn(ctx, 'menu_per_names'), 'fake')]]
 
         const statsByReviewer = await dbTask.repoAdmin.findStatsByReviewer(dateRanges)
         adminButtons = [...adminButtons, ...addReviewersMenu(statsByReviewer, ctx)]
 
-        adminButtons = [...adminButtons, [Markup.callbackButton(i18Btn(ctx, 'menu_actions'), 'fake')]]
+        adminButtons = [...adminButtons, [Markup.button.callback(i18Btn(ctx, 'menu_actions'), 'fake')]]
 
         adminButtons.push([
-            Markup.callbackButton(i18Btn(ctx, 'sync'), actionName('sync')),
-            Markup.callbackButton(i18Btn(ctx, 'version'), actionName('version')),
+            Markup.button.callback(i18Btn(ctx, 'sync'), actionName('sync')),
+            Markup.button.callback(i18Btn(ctx, 'version'), actionName('version')),
         ])
 
         return {
@@ -80,7 +80,7 @@ export const formatMainAdminMenu = async (ctx: ContextMessageUpdate) => {
                 start: ruFormat(dateRanges.start, 'dd MMMM HH:mm'),
                 end: ruFormat(subSeconds(dateRanges.end, 1), 'dd MMMM HH:mm')
             }),
-            markup: Extra.HTML().markup(Markup.inlineKeyboard(adminButtons))
+            markup: Markup.inlineKeyboard(adminButtons)
         }
     })
 }

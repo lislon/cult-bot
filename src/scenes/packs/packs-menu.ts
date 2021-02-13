@@ -28,7 +28,7 @@ export async function displayMainMenu(ctx: ContextMessageUpdate, options?: EditM
 
     const buttons = [
         ...packs.map(({id, title}, idx) => {
-            return [Markup.callbackButton(
+            return [Markup.button.callback(
                 i18Btn(ctx, 'single_pack', {title}),
                 actionName(`pack_${idx}`))]
         }),
@@ -51,10 +51,10 @@ export async function displayPackMenu(ctx: ContextMessageUpdate, options?: EditM
     })
 
     const buttons = [
-        [Markup.callbackButton(i18Btn(ctx, 'pack_card_open', {
+        [Markup.button.callback(i18Btn(ctx, 'pack_card_open', {
             packTitle: pack.title
         }), actionName(`pack_open`))],
-        [Markup.callbackButton(i18Btn(ctx, 'pack_back'), actionName(`pack_back`))]
+        [Markup.button.callback(i18Btn(ctx, 'pack_back'), actionName(`pack_back`))]
     ]
 
     await editMessageAndButtons(ctx, buttons, text, options)
@@ -77,18 +77,18 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
 
     const buttons = [
         [
-            Markup.callbackButton(i18Btn(ctx, 'event_back', {
+            Markup.button.callback(i18Btn(ctx, 'event_back', {
                 packTitle: packTitleNoEmoji
             }), actionName(`event_back`)),
             ...getLikesRow(ctx, event)
         ],
         [
-            Markup.callbackButton(i18Btn(ctx, 'event_prev'), actionName(`event_prev`)),
-            Markup.callbackButton(i18Btn(ctx, 'event_curr', {
+            Markup.button.callback(i18Btn(ctx, 'event_prev'), actionName(`event_prev`)),
+            Markup.button.callback(i18Btn(ctx, 'event_curr', {
                 page: getPacksCurEventIndex(ctx) + 1,
                 total: await getEventsCount(ctx)
             }), actionName(`event_curr`)),
-            Markup.callbackButton(i18Btn(ctx, 'event_next'), actionName(`event_next`)),
+            Markup.button.callback(i18Btn(ctx, 'event_next'), actionName(`event_next`)),
         ]
     ]
 

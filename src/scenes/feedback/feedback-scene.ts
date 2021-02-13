@@ -1,4 +1,4 @@
-import { BaseScene, Extra, Telegraf } from 'telegraf'
+import { Markup, Scenes, Telegraf } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
@@ -10,7 +10,7 @@ import * as tt from 'telegraf/typings/telegram-types'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
 import { formatUserName } from '../../util/misc-utils'
 
-const scene = new BaseScene<ContextMessageUpdate>('feedback_scene');
+const scene = new Scenes.BaseScene<ContextMessageUpdate>('feedback_scene')
 const {actionName, i18nModuleBtnName, scanKeys, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>) {
@@ -38,15 +38,15 @@ async function saveSurveyToDb(ctx: ContextMessageUpdate) {
 }
 
 scene
-    .enter(async (ctx: ContextMessageUpdate) => {
+    .enter(async ctx => {
         prepareSessionStateIfNeeded(ctx)
 
         await replyWithBackToMainMarkup(ctx, i18Msg(ctx, 'welcome'))
 
         await menuMiddleware.replyToContext(ctx)
         // await ctx.replyWithMarkdown(i18Msg(ctx, 'take_survey'), Extra.HTML(true).markup(Markup.inlineKeyboard(
-        //     [[Markup.callbackButton(i18Btn(ctx, 'take_survey'), 'take_survey')],
-        //             [Markup.callbackButton(i18Btn(ctx, 'send_letter'), 'take_survey')]]
+        //     [[Markup.button.callback(i18Btn(ctx, 'take_survey').reply_markup, 'take_survey')],
+        //             [Markup.button.callback(i18Btn(ctx, 'send_letter'), 'take_survey')]]
         // )))
 
         ctx.session.feedbackScene.messagesSent = 0
@@ -91,13 +91,13 @@ scene
         await next()
     })
     .use(menuMiddleware)
-    .hears(backToMainButtonTitle(), async (ctx: ContextMessageUpdate) => {
+    .hears(backToMainButtonTitle(), async ctx => {
         await ctx.scene.enter('main_scene')
     })
-    .hears(/^[^/].*$/, async (ctx: ContextMessageUpdate) => {
+    .hears(/^[^/].*$/, async ctx => {
         await sendFeedbackIfListening(ctx)
     })
-    .on(['voice', 'sticker', 'document', 'photo', 'animation'], async (ctx: ContextMessageUpdate) => {
+    .on(['voice', 'sticker', 'document', 'photo', 'animation'], async ctx => {
         await sendFeedbackIfListening(ctx)
     })
 
@@ -133,7 +133,7 @@ function getBasicTemplateForAdminMessage(ctx: ContextMessageUpdate) {
     return {
         userId: ctx.session.user.id,
         user: formatUserName(ctx),
-        text: ctx.message?.text,
+        text: ctx.message && 'text' in ctx.message ? ctx.message.text : undefined,
         clickCount: countInteractions(ctx),
         uaUuid: ctx.session.user.uaUuid
     }
@@ -144,7 +144,9 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
         const tplData = getBasicTemplateForAdminMessage(ctx)
 
         let adminMessage: tt.Message
-        if (ctx.message.text !== undefined) {
+        let feedbackText
+        if ('text' in ctx.message) {
+            feedbackText = ctx.message.text
             let template
             if (ctx.session.feedbackScene.isListening === 'text') {
                 template = i18Msg(ctx, 'admin_feedback_template_text', tplData)
@@ -159,17 +161,25 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
                     ...userSelected(ctx, ctx.session.feedbackScene.whyDontLike, 'q_why_not_like')
                 })
             }
-            adminMessage = await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, Extra.HTML().markup(undefined))
+            adminMessage = await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, {
+                ...Markup.removeKeyboard(),
+                parse_mode: 'HTML',
+            })
         } else {
+            feedbackText = 'other media: ' + JSON.stringify(ctx.message)
             const template = i18Msg(ctx, 'admin_feedback_template_other', tplData)
-            await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, Extra.HTML().markup(undefined))
+            await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, {
+                ...Markup.removeKeyboard(),
+                parse_mode: 'HTML',
+            })
             adminMessage = await ctx.telegram.forwardMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, ctx.chat.id, ctx.message.message_id)
         }
+
 
         await db.repoFeedback.saveFeedback({
             userId: ctx.session.user.id,
             messageId: ctx.message.message_id,
-            feedbackText: ctx.message.text || 'other media: ' + JSON.stringify(ctx.message),
+            feedbackText,
             adminChatId: botConfig.SUPPORT_FEEDBACK_CHAT_ID,
             adminMessageId: adminMessage.message_id
         })
@@ -191,7 +201,7 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
         ctx.session.feedbackScene.messagesSent++
 
     } else {
-        console.log(`ERROR: SUPPORT_FEEDBACK_CHAT_ID IS NULL, But we have message: '${ctx.message.text}'`)
+        console.log(`ERROR: SUPPORT_FEEDBACK_CHAT_ID IS NULL, But we have message: '${'text' in ctx.message ? ctx.message.text : '?'}'`)
     }
 }
 

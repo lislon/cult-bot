@@ -1,8 +1,9 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { CardOptions } from './card-format'
-import { CallbackButton } from 'telegraf/typings/markup'
+
 import { LimitOffsetLast } from '../../database/db'
 import { botConfig } from '../../util/bot-config'
+import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
 export interface PagerSliderState<Q> {
     selectedIdx: number
@@ -23,7 +24,7 @@ export interface PagingCommonConfig<Q, E> {
 
     noResults?(ctx: ContextMessageUpdate): Promise<void>
 
-    cardButtons?(ctx: ContextMessageUpdate, event: E): Promise<CallbackButton[]>
+    cardButtons?(ctx: ContextMessageUpdate, event: E): Promise<InlineKeyboardButton.CallbackButton[]>
 
     preloadIds(ctx: ContextMessageUpdate, limitOffset: LimitOffsetLast, query: Q): Promise<number[]>
 
