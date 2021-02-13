@@ -19,6 +19,7 @@ export class BotConfig {
     public TELEGRAM_TOKEN: string
     public WEBHOOK_PORT: number
     public REDIS_URL: string
+    public REDIS_TTL: number
     public NODE_ENV: Envs
     public DEBUG: string | undefined
     public BOT_DISABLED: boolean
@@ -62,6 +63,8 @@ export class BotConfig {
         this.TELEGRAM_TOKEN = envVars.TELEGRAM_TOKEN
         this.WEBHOOK_PORT = +envVars.WEBHOOK_PORT
         this.REDIS_URL = envVars.REDIS_URL
+        this.REDIS_TTL = envVars.REDIS_TTL === undefined ? 3600 * 24 * 30 : +envVars.REDIS_TTL
+
         this.NODE_ENV = envVars.NODE_ENV === undefined ? 'development' : envVars.NODE_ENV as Envs
         this.DEBUG = envVars.DEBUG
         this.BOT_DISABLED = !!envVars.BOT_DISABLED

@@ -48,8 +48,9 @@ function getRedis(): MyRedisSession {
                 host: undefined,
                 port: undefined,
                 url: botConfig.REDIS_URL
-            }
-        }) as unknown as MyRedisSession
+            },
+            ttl: botConfig.REDIS_TTL
+        }) as undefined as MyRedisSession
     }
 }
 

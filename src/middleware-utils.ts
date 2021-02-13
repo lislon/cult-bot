@@ -26,7 +26,7 @@ export async function saveSession(ctx: ContextMessageUpdate) {
     logger.warn('Emergency saving session')
 }
 
-const dateTimeMiddleware = async (ctx: ContextMessageUpdate, next: any) => {
+const dateTimeMiddleware = async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
     ctx.isNowOverridden = () => ctx.session.adminScene !== undefined && ctx.session.adminScene.overrideDate !== undefined
     ctx.now = () => {
         if (ctx.isNowOverridden()) {
@@ -41,7 +41,7 @@ const dateTimeMiddleware = async (ctx: ContextMessageUpdate, next: any) => {
 
 
 function sessionTmp() {
-    return async (ctx: ContextMessageUpdate, next: any) => {
+    return async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
         ctx.sessionTmp = {
             analyticsScene: undefined
         }
@@ -56,7 +56,7 @@ function sessionTmp() {
 }
 
 function logMiddleware(str: string) {
-    return (ctx: ContextMessageUpdate, next: any) => {
+    return (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
         logger.silly(`before ${str}  (uauuId=${ctx.session?.user?.uaUuid})`)
         return Promise.resolve(next()).then(() => {
             logger.silly(`after ${str} (uauuId=${ctx.session?.user?.uaUuid})`)
@@ -65,7 +65,7 @@ function logMiddleware(str: string) {
 }
 
 function loggerInjectMiddleware() {
-    return (ctx: ContextMessageUpdate, next: any) => {
+    return (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
         ctx.logger = logger.child({user: formatUserName(ctx)})
         return Promise.resolve(next())
     }
