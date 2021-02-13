@@ -893,10 +893,10 @@
     "@types/node" "*"
     form-data "^3.0.0"
 
-"@types/node@*", "@types/node@^14.14.11":
-  version "14.14.11"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.11.tgz#fc25a4248a5e8d0837019b1d170146d07334abe0"
-  integrity sha512-BJ97wAUuU3NUiUCp44xzUFquQEvnk1wu7q4CMEUYKJWjdkr0YWYDsm4RFtAvxYsNjLsKcrFt6RvK8r+mnzMbEQ==
+"@types/node@*", "@types/node@^14.14.27":
+  version "14.14.27"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.27.tgz#c7127f8da0498993e13b1a42faf1303d3110d2f2"
+  integrity sha512-Ecfmo4YDQPwuqTCl1yBxLV5ihKfRlkBmzUEDcfIRvDxOTGQEeikr317Ln7Gcv0tjA8dVgKI3rniqW2G1OyKDng==
 
 "@types/node@^13.7.0":
   version "13.13.32"
@@ -6880,8 +6880,10 @@ telegraf-session-redis@^5.1.0:
     debug "^4.1.1"
     redis "^2.6.0-1"
 
-"telegraf-throttler@file:../../node/telegraf-throttler":
-  version "0.4.0"
+telegraf-throttler@^0.5.1:
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/telegraf-throttler/-/telegraf-throttler-0.5.1.tgz#3b5e5458d0f393d8b20f68796e14426c44fd0086"
+  integrity sha512-Xy8gmXGuyV0yMsZ6KewS8Kw9ZU6sFku5f2R9lotWP1OpCgXyJJwVeRdWaCi8jSkQ9iT0uXpQ/42wEokESHQ/lA==
   dependencies:
     bottleneck "^2.19.5"
 
