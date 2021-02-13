@@ -968,10 +968,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/request-promise@^4.1.46":
-  version "4.1.46"
-  resolved "https://registry.yarnpkg.com/@types/request-promise/-/request-promise-4.1.46.tgz#37df6efae984316dfbfbbe8fcda37f3ba52822f2"
-  integrity sha512-3Thpj2Va5m0ji3spaCk8YKrjkZyZc6RqUVOphA0n/Xet66AW/AiOAs5vfXhQIL5NmkaO7Jnun7Nl9NEjJ2zBaw==
+"@types/request-promise@^4.1.47":
+  version "4.1.47"
+  resolved "https://registry.yarnpkg.com/@types/request-promise/-/request-promise-4.1.47.tgz#62f58a52476ef6cfe4f38d689cb826959a33a268"
+  integrity sha512-eRSZhAS8SMsrWOM8vbhxFGVZhTbWSJvaRKyufJTdIf4gscUouQvOBlfotPSPHbMR3S7kfkyKbhb1SWPmQdy3KQ==
   dependencies:
     "@types/bluebird" "*"
     "@types/request" "*"
@@ -6880,8 +6880,10 @@ telegraf-session-redis@^5.1.0:
     debug "^4.1.1"
     redis "^2.6.0-1"
 
-"telegraf-throttler@file:../../node/telegraf-throttler":
-  version "0.4.0"
+telegraf-throttler@^0.5.1:
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/telegraf-throttler/-/telegraf-throttler-0.5.1.tgz#3b5e5458d0f393d8b20f68796e14426c44fd0086"
+  integrity sha512-Xy8gmXGuyV0yMsZ6KewS8Kw9ZU6sFku5f2R9lotWP1OpCgXyJJwVeRdWaCi8jSkQ9iT0uXpQ/42wEokESHQ/lA==
   dependencies:
     bottleneck "^2.19.5"
 
