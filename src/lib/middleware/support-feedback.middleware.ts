@@ -19,8 +19,9 @@ import { ScenePack } from '../../database/db-packs'
 import { formatUserName } from '../../util/misc-utils'
 import { InlineKeyboardButton, Message } from 'telegraf/typings/telegram-types'
 import Telegram from 'telegraf/typings/telegram'
-import TextMessage = Message.TextMessage;
-import { ReplyMessage } from 'typegram';
+import { ReplyMessage } from 'typegram'
+import emojiRegex from 'emoji-regex'
+import TextMessage = Message.TextMessage
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('support_chat_scene')
 
@@ -37,32 +38,55 @@ interface FormattedMailedMessages {
     webPreview: boolean
 }
 
+function isSurvey(msg: string) {
+    return !!msg.match(/^\s*Опрос:?\s*$/mi)
+}
+
+export function getSurveyBtnsAndMsg(input: string): FormattedMailedMessages {
+    const [text, buttons] = input.split(/^\s*Опрос:?\s*$/im, 2)
+    const surveyAnswers = buttons.match(/(?<=\[).+(?=\])/mg)
+
+    return {
+        text: text.trim(),
+        btns: (surveyAnswers || []).map(answer => [Markup.button.callback(
+            answer.trim(), `mail_survey_` + mySlugify(answer.replace(emojiRegex(), '').trim())
+        )]),
+        webPreview: false
+    }
+}
+
 async function formatMessage(ctx: ContextMessageUpdate, msg: Omit<Message.TextMessage, 'reply_to_message'>, allPacks: ScenePack[], webPreview: boolean): Promise<FormattedMailedMessages & { hasErrors: boolean }> {
     let text = parseTelegramMessageToHtml(msg)
     const matchButtonAtEnd = text.match(/^\s*\[.+\]\s*$/gm)
     const btns: InlineKeyboardButton.CallbackButton[][] = []
-    let hasErrors = false;
+    let hasErrors = false
 
-    (matchButtonAtEnd || []).forEach((btnMatch: string) => {
-        const searchForPackTitle = btnMatch.replace(/^\s*\[\s*/, '').replace(/\s*\]\s*$/, '').toLowerCase().trim()
+    if (isSurvey(msg.text)) {
+        const result = getSurveyBtnsAndMsg(msg.text)
 
-        let replaceOnTo = ''
-        if (searchForPackTitle === 'подборки' || searchForPackTitle === 'подборка') {
-            btns.push([Markup.button.callback(' 📚 Подборки', `packs_scene.direct_menu`)])
-        } else {
-            const packData = allPacks.find(p => p.title.toLowerCase().trim() === searchForPackTitle)
+        return {...result, hasErrors: result.btns.length <= 1}
+    } else {
+        (matchButtonAtEnd || []).forEach((btnMatch: string) => {
+            const searchForPackTitle = btnMatch.replace(/^\s*\[\s*/, '').replace(/\s*\]\s*$/, '').toLowerCase().trim()
 
-            if (packData !== undefined) {
-                btns.push([Markup.button.callback(packData.title, `packs_scene.direct_${packData.id}`)])
+            let replaceOnTo = ''
+            if (searchForPackTitle === 'подборки' || searchForPackTitle === 'подборка') {
+                btns.push([Markup.button.callback(' 📚 Подборки', `packs_scene.direct_menu`)])
             } else {
-                replaceOnTo = i18Msg(ctx, 'pack_not_found', {
-                    title: searchForPackTitle,
-                })
-                hasErrors = true
+                const packData = allPacks.find(p => p.title.toLowerCase().trim() === searchForPackTitle)
+
+                if (packData !== undefined) {
+                    btns.push([Markup.button.callback(packData.title, `packs_scene.direct_${packData.id}`)])
+                } else {
+                    replaceOnTo = i18Msg(ctx, 'pack_not_found', {
+                        title: searchForPackTitle,
+                    })
+                    hasErrors = true
+                }
             }
-        }
-        text = text.replace(btnMatch, replaceOnTo).trimEnd()
-    })
+            text = text.replace(btnMatch, replaceOnTo).trimEnd()
+        })
+    }
 
     return {text, btns, webPreview, hasErrors}
 }

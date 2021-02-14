@@ -1,4 +1,4 @@
-import { Markup, Scenes } from 'telegraf'
+import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
@@ -223,8 +223,31 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     }
 }
 
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+    bot
+        .action(/^mail_survey_(.+)/, async ctx => {
+            await ctx.answerCbQuery()
+            if ('message' in ctx.update.callback_query && 'text' in ctx.update.callback_query.message) {
+                const original = ctx.update.callback_query.message.text
+                const choosenText = ctx.update.callback_query.message.reply_markup.inline_keyboard
+                    .flatMap(r => r)
+                    .find(btn => 'callback_data' in btn && btn.callback_data === ctx.match[0])
+                    .text
+
+                await db.repoFeedback.saveQuiz({
+                    userId: ctx.session.user.id,
+                    question: original.substr(0, 20),
+                    answer: choosenText
+                })
+
+                await ctx.editMessageText(i18Msg(ctx, 'mail_survey_edit', {original, choosen: choosenText}))
+            }
+        })
+}
+
 export const feedbackScene = {
-    scene
+    scene,
+    postStageActionsFn
 } as SceneRegister
 
 export type IsListening = 'like' | 'dislike' | 'text'

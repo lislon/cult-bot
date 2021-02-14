@@ -1,4 +1,4 @@
-import { mapKeys, mapValues } from 'lodash';
+import { mapKeys, mapValues } from 'lodash'
 import { ColumnSet, IDatabase, IMain } from 'pg-promise'
 
 
@@ -10,11 +10,17 @@ export interface FeedbackData {
     adminMessageId: number
 }
 
-export interface QuizData {
+export interface QuizPersistent {
     userId: number
     isFound: boolean
     why_not_like?: string[]
     what_is_important?: string[]
+}
+
+export interface QuizMailing {
+    userId: number
+    question: string
+    answer: string
 }
 
 export interface QuizRow {
@@ -36,7 +42,7 @@ export class FeedbackRepository {
     private readonly columnsFeedback: ColumnSet
     private readonly columnsSurvey: ColumnSet
 
-    private readonly QUIZ_VERSION = 'is_found_event'
+    private readonly QUIZ_PERSISTENT_VERSION = 'is_found_event'
 
     constructor(private db: IDatabase<any>, private pgp: IMain) {
         this.columnsFeedback = new pgp.helpers.ColumnSet(
@@ -61,7 +67,7 @@ export class FeedbackRepository {
         return +(await this.db.one(sql))['id']
     }
 
-    public async findFeedbackMessage(query: QueryUserFeedbackMsgId): Promise<ResultUserFeedbackMsgId|null> {
+    public async findFeedbackMessage(query: QueryUserFeedbackMsgId): Promise<ResultUserFeedbackMsgId | null> {
         return await this.db.oneOrNone(`
             SELECT cu.tid, cf.message_id
             FROM cb_feedbacks cf
@@ -70,15 +76,30 @@ export class FeedbackRepository {
         `, query)
     }
 
-    public async saveQuiz(quizData: QuizData): Promise<number> {
+    private static isPersistentQuiz(quizData: QuizPersistent | QuizMailing): quizData is QuizPersistent {
+        return 'isFound' in quizData
+    }
+
+    public async saveQuiz(quizData: QuizPersistent | QuizMailing): Promise<number> {
+        const getData = () => {
+            if (FeedbackRepository.isPersistentQuiz(quizData)) {
+                return {
+                    v: this.QUIZ_PERSISTENT_VERSION,
+                    is_found: quizData.isFound,
+                    why_not_like: quizData.why_not_like,
+                    what_is_important: quizData.what_is_important
+                }
+            } else {
+                return {
+                    v: quizData.question,
+                    answer: quizData.answer
+                }
+            }
+        }
+
         const sql = this.pgp.helpers.insert({
             user_id: +quizData.userId,
-            answers: {
-                v: this.QUIZ_VERSION,
-                is_found: quizData.isFound,
-                why_not_like: quizData.why_not_like,
-                what_is_important: quizData.what_is_important
-            }
+            answers: getData()
         }, this.columnsSurvey) + ' returning id'
         return +(await this.db.one(sql))['id']
     }
