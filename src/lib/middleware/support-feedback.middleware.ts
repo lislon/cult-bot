@@ -61,8 +61,8 @@ async function formatMessage(ctx: ContextMessageUpdate, msg: Omit<Message.TextMe
     const btns: InlineKeyboardButton.CallbackButton[][] = []
     let hasErrors = false
 
-    if (isSurvey(msg.text)) {
-        const result = getSurveyBtnsAndMsg(msg.text)
+    if (isSurvey(text)) {
+        const result = getSurveyBtnsAndMsg(text)
 
         return {...result, hasErrors: result.btns.length <= 1}
     } else {
