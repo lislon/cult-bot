@@ -71,3 +71,9 @@ Feature: Tops scene
     Then I click markup [~tops_scene.exhibitions_perm]
     Then Bot responds '*на 05 января*'
 
+  Scenario: I see top holiday range
+    Given now is 2020-01-05 12:00
+    Given bot config HOLIDAYS=2020-01-05,2020-01-06,2020-01-07,2020-01-09
+    When I click markup [~tops_scene.exhibitions]
+    Then I click markup [~tops_scene.exhibitions_perm]
+    Then Bot responds '*05-09 января*'

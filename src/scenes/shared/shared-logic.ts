@@ -26,7 +26,7 @@ export function getNextWeekendRange(now: Date, range?: Range): MyInterval {
     if (holidays.length > 0) {
         return {
             start: max([now, first(holidays)]),
-            end: last(holidays)
+            end: startOfDay(addDays(1, last(holidays)))
         }
     }
     // }
