@@ -8,15 +8,15 @@ import {
     getMsgId,
     replyWithBackToMainMarkup
 } from '../shared/shared-logic'
-import { formatExplainFormat, formatExplainpriorities, formatExplainRubrics, formatExplainTime } from './format-explain'
+import { formatExplainPriorities, formatExplainRubrics } from './format-explain'
 import { resetSessionIfProblem } from './customize-utils'
 import { SceneRegister } from '../../middleware-utils'
 import { isEmpty } from 'lodash'
 import { prepareRepositoryQuery, prepareSessionStateIfNeeded, StageType } from './customize-common'
 import { customizepriorities, prioritiesOptionLogic } from './filters/customize-priorities'
 import { customizeRubrics, rubricsOptionLogic } from './filters/customize-rubrics'
-import { getKeyboardTime, timeOptionLogic } from './filters/customize-time'
-import { formatOptionLogic, getKeyboardFormat } from './filters/customize-format'
+import { formatExplainTime, getKeyboardTime, timeOptionLogic } from './filters/customize-time'
+import { formatExplainFormat, formatOptionLogic, getKeyboardFormat } from './filters/customize-format'
 import { SliderPager } from '../shared/slider-pager'
 import { CustomizePagerConfig } from './customize-pager-config'
 import { db } from '../../database/db'
@@ -87,7 +87,7 @@ function getExplainFilterBody(ctx: ContextMessageUpdate): string {
     lines = [
         prepareLine(formatExplainFormat(ctx, i18Msg)),
         prepareLine(formatExplainRubrics(ctx, i18Msg)),
-        prepareLine(formatExplainpriorities(ctx, i18Msg)),
+        prepareLine(formatExplainPriorities(ctx, i18Msg)),
         prepareLine(formatExplainTime(ctx, i18Msg))
     ].filter(s => s !== '')
 

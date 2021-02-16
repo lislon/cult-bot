@@ -26,10 +26,10 @@ export class DropdownMenu {
         this.section = section
     }
 
-    button(tag: string): InlineKeyboardButton {
-        const isSelected = this.selected.includes(tag)
-        const text = i18Btn(this.ctx, `${this.section}.${tag}`) + checkboxi18nBtnId(this.ctx, isSelected)
-        return Markup.button.callback(text, this.actionName(`${tag}`))
+    button(actionName: string, title?: string): InlineKeyboardButton {
+        const isSelected = this.selected.includes(actionName)
+        const text = (title ?? i18Btn(this.ctx, `${this.section}.${actionName}`)) + checkboxi18nBtnId(this.ctx, isSelected)
+        return Markup.button.callback(text, this.actionName(`${actionName}`))
     }
 
     private actionName(postfix: string) {
@@ -47,9 +47,9 @@ export class DropdownMenu {
         }
     }
 
-    dropDownButtons(menuTitle: string, submenus: string[][], menuTitleData = {}): InlineKeyboardButton[][] {
-        const decorateTag = (tag: string) => ['rubrics_section', 'time_section'].includes(this.section)
-            ? `${menuTitle.replace('menu_', '')}.${tag}`
+    dropDownButtons(menuTitle: string, submenus: string[][], menuTitleData = {}, menuId = menuTitle): InlineKeyboardButton[][] {
+        const decorateTag = (tag: string) => ['rubrics_section'].includes(this.section)
+            ? `${menuId.replace('menu_', '')}.${tag}`
             : tag
 
         const isAnySubmenuSelected = submenus
@@ -57,15 +57,24 @@ export class DropdownMenu {
             .find(tag => this.selected.includes(decorateTag(tag))) !== undefined
 
         const menuTitleWord = i18Btn(this.ctx, `${this.section}.${menuTitle}`, menuTitleData)
-        const isOpen = this.openedMenus.includes(menuTitle)
+        const isOpen = this.openedMenus.includes(menuId)
         const menuTitleFull = i18Btn(this.ctx, `menu_${isOpen ? 'open' : 'closed'}`, {
             title: menuTitleWord,
             checkbox: checkboxi18nBtnId(this.ctx, isAnySubmenuSelected),
         })
-        const map: InlineKeyboardButton[][] = isOpen ? submenus.map(rows => rows.map(tag => this.button(decorateTag(tag)))) : []
+        const map: InlineKeyboardButton[][] = isOpen ? submenus
+                .map(rows => rows
+                    .map(tag => {
+                        if (this.section === 'time_section') {
+                            return this.button(decorateTag(tag), i18Btn(this.ctx, `${this.section}.date_title.${tag.substring('yyyy-MM-dd.'.length)}`))
+                        } else {
+                            return this.button(decorateTag(tag))
+                        }
+                    }))
+            : []
 
         return [
-            [Markup.button.callback(menuTitleFull, this.actionName(menuTitle))],
+            [Markup.button.callback(menuTitleFull, this.actionName(menuId))],
             ...map
         ]
     }

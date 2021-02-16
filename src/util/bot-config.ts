@@ -13,6 +13,7 @@ export class BotConfig {
     public HEROKU_RELEASE_VERSION: string | undefined
     public HEROKU_SLUG_COMMIT: string | undefined
     public HEROKU_RELEASE_CREATED_AT: string | undefined
+    public HOLIDAYS: string
 
 
     public PORT: number
@@ -72,6 +73,8 @@ export class BotConfig {
         if (this.LOG_LEVEL === undefined) {
             this.LOG_LEVEL = (this.NODE_ENV === 'production' || this.NODE_ENV === 'test') ? 'info' : 'debug'
         }
+
+        this.HOLIDAYS = envVars.HOLIDAYS || ''
 
         this.SUPPORT_FEEDBACK_CHAT_ID = +envVars.SUPPORT_FEEDBACK_CHAT_ID || undefined
         this.MAILINGS_PER_WEEK_MAX = +envVars.MAILINGS_PER_WEEK_MAX || 2

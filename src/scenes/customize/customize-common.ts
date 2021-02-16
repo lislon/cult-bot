@@ -65,3 +65,5 @@ export function prepareRepositoryQuery(ctx: ContextMessageUpdate, filters: Custo
         format: mapFormatToDbQuery(filters.format)
     }
 }
+
+export const MAX_EXPLAIN_LINE_LEN = 35

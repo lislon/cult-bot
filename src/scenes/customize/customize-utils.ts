@@ -1,27 +1,26 @@
-import { addDays, addHours } from 'date-fns/fp'
+import { addHours } from 'date-fns/fp'
 import { ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
-import { startOfISOWeek } from 'date-fns'
+import { parse, startOfDay } from 'date-fns'
 import { filterByRange } from '../../lib/timetable/intervals'
 import { saveSession } from '../../middleware-utils'
 
 export function mapUserInputToTimeIntervals(times: string[], weekendInterval: MyInterval): MyInterval[] {
     const hours = (times)
-        .map(t => t.split(/[-.]/))
-        .map(([day, from, to]) => [
-            day,
+        .map(t => t.split(/\.|-(?=\d\d:\d\d$)/))
+        .map(([dateStr, from, to]) => [
+            parse(dateStr, 'yyyy-MM-dd', new Date()),
             +from.replace(/:00/, ''),
             +to.replace(/:00/, '')
         ])
-        .flatMap(([day, from, to]) => {
+        .flatMap(([date, from, to]) => {
             if (from < to) {
-                return [[day, from, to]]
+                return [[date, from, to]]
             } else {
-                return [[day, 0, to], [day, from, 24]]
+                return [[date, 0, to], [date, from, 24]]
             }
         })
-        .map(([day, from, to]: [string, number, number]) => {
-            const baseDay = addDays(day === 'saturday' ? 5 : 6)(startOfISOWeek(weekendInterval.start))
-            return [addHours(from)(baseDay), addHours(to)(baseDay)]
+        .map(([date, from, to]: [Date, number, number]) => {
+            return [addHours(from)(startOfDay(date)), addHours(to)(startOfDay(date))]
         })
 
     const range = filterByRange(hours, weekendInterval, 'in')

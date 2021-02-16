@@ -125,3 +125,25 @@ Feature: Customize time
       """
     When I click inline [0 найдено]
     Then Bot responds with cb '*строгий*'
+
+  Scenario: I see overrided weekends ahead
+    Given now is 2020-01-01 12:00
+    Given bot config HOLIDAYS=2020-01-02,2020-01-04
+    When I click inline [#️⃣ Время]
+    Then Bot edits inline buttons:
+      """
+      [➕ Четверг (02.01) ]
+      [➕ Суббота (04.01) ]
+      [◀️ Назад] [⚠️ 0 найдено]
+      """
+
+  Scenario: I see regular weekends when holidays past
+    Given now is 2020-01-03 12:00
+    Given bot config HOLIDAYS=2020-01-02
+    When I click inline [#️⃣ Время]
+    Then Bot edits inline buttons:
+      """
+      [➕ Суббота (04.01) ]
+      [➕ Воскресенье (05.01) ]
+      [◀️ Назад] [⚠️ 0 найдено]
+      """

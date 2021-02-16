@@ -108,8 +108,12 @@ Given(/^I blocked the bot$/, async function () {
     await this.blockBotByUser()
 })
 
-Given(/^bot config ([A-Z_]+)=(\d+)$/, async function (key: string, intValue: number) {
-    (botConfig as any)[key] = +intValue
+Given(/^bot config ([A-Z_]+)=(.+)$/, async function (key: string, strValue: string) {
+    if (isNaN(+strValue)) {
+        (botConfig as any)[key] = strValue
+    } else {
+        (botConfig as any)[key] = +strValue
+    }
 })
 
 When(/^I type '(.+)'$/, async function (text: string) {

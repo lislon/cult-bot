@@ -1,9 +1,9 @@
 import { mapUserInputToTimeIntervals } from '../../../src/scenes/customize/customize-utils'
 import { mkInterval } from '../../lib/timetable/test-utils'
-import { formatExplainTime } from '../../../src/scenes/customize/format-explain'
 import { i18n } from '../../../src/util/i18n'
 import { ContextMessageUpdate, I18MsgFunction, MyInterval } from '../../../src/interfaces/app-interfaces'
 import { parseISO } from 'date-fns'
+import { formatExplainTime } from '../../../src/scenes/customize/filters/customize-time'
 
 function formatExplainTimeEx(now: string, time: string[]): string[] {
     const ctx: Pick<ContextMessageUpdate, 'i18n' | 'now' | 'session'> = {
@@ -36,13 +36,13 @@ describe('convert_to_intervals', () => {
 
 
     test.each([
-        ['saturday.12:00-15:00',
+        ['2020-01-04.12:00-15:00',
             weekendsInterval('[2020-01-04 00:00, 2020-01-06 00:00)'),
             [expectedInterval('[2020-01-04 12:00, 2020-01-04 15:00)')]],
-        ['saturday.12:00-15:00',
+        ['2020-01-04.12:00-15:00',
             weekendsInterval('[2020-01-04 13:00, 2020-01-06 00:00)'),
             [expectedInterval('[2020-01-04 13:00, 2020-01-04 15:00)')]],
-        ['sunday.20:00-24:00',
+        ['2020-01-05.20:00-24:00',
             weekendsInterval('[2020-01-05 10:00, 2020-01-06 00:00)'),
             [
                 expectedInterval('[2020-01-05 20:00, 2020-01-06 00:00)')
@@ -54,7 +54,7 @@ describe('convert_to_intervals', () => {
 
     describe('formatExplainTime', () => {
         test('single day', () => {
-            const actual = formatExplainTimeEx('2020-01-01 12:00', ['sunday.12:00-14:00'])
+            const actual = formatExplainTimeEx('2020-01-01 12:00', ['2020-01-05.12:00-14:00'])
             expect(actual).toEqual([
                 '🕒 <b>Время</b>:  ВС (05.01): 12.00-14.00'
             ])
@@ -62,19 +62,21 @@ describe('convert_to_intervals', () => {
 
         test('two days simple', () => {
             const actual = formatExplainTimeEx('2020-01-01 12:00', [
-                'saturday.12:00-14:00',
-                'sunday.12:00-14:00'
+                '2020-01-04.12:00-14:00',
+                '2020-01-05.12:00-14:00'
             ])
             expect(actual).toEqual([
-                '🕒 <b>Время</b>:  СБ (04.01) - ВС (05.01): 12.00-14.00'
+                '🕒 <b>Время</b>: ',
+                ' - СБ (04.01): 12.00-14.00',
+                ' - ВС (05.01): 12.00-14.00',
             ])
         })
 
         test('two days complex', () => {
             const actual = formatExplainTimeEx('2020-01-01 12:00', [
-                'saturday.12:00-14:00',
-                'sunday.06:00-08:00',
-                'sunday.18:00-20:00'
+                '2020-01-04.12:00-14:00',
+                '2020-01-05.06:00-08:00',
+                '2020-01-05.18:00-20:00'
             ])
             expect(actual).toEqual([
                 '🕒 <b>Время</b>: ',
@@ -85,8 +87,8 @@ describe('convert_to_intervals', () => {
 
         test('hide past time', () => {
             const actual = formatExplainTimeEx('2020-01-05 12:00', [
-                'sunday.06:00-08:00',
-                'sunday.18:00-20:00'
+                '2020-01-05.06:00-08:00',
+                '2020-01-05.18:00-20:00'
             ])
             expect(actual).toEqual([
                 '🕒 <b>Время</b>:  ВС (05.01): 18.00-20.00'
