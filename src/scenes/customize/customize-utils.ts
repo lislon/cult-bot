@@ -1,16 +1,17 @@
 import { addHours } from 'date-fns/fp'
 import { ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
-import { parse, startOfDay } from 'date-fns'
+import { startOfDay } from 'date-fns'
 import { filterByRange } from '../../lib/timetable/intervals'
 import { saveSession } from '../../middleware-utils'
+import { parseSlot } from './customize-common'
 
 export function mapUserInputToTimeIntervals(times: string[], weekendInterval: MyInterval): MyInterval[] {
     const hours = (times)
-        .map(t => t.split(/\.|-(?=\d\d:\d\d$)/))
-        .map(([dateStr, from, to]) => [
-            parse(dateStr, 'yyyy-MM-dd', new Date()),
-            +from.replace(/:00/, ''),
-            +to.replace(/:00/, '')
+        .map(t => parseSlot(t))
+        .map(({date, startTime, endTime}) => [
+            date,
+            +startTime.replace(/:00/, ''),
+            +endTime.replace(/:00/, '')
         ])
         .flatMap(([date, from, to]) => {
             if (from < to) {

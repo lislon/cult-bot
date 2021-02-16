@@ -3,7 +3,7 @@ Feature: Customize time
 
    январь 2020
    пн	вт	ср	чт	пт	сб	вс
-            1	2	3	4	5
+   30   31  1	2	3	4	5
    6	7	8	9	10	11	12
    13	14	15	16	17	18	19
    20	21	22	23	24	25	26
@@ -88,7 +88,7 @@ Feature: Customize time
     * I click inline [Назад]
     Then Bot edits text '*Нет событий, подходящих под заданный фильтр*'
 
-  Scenario: I don't want to see buttons with time in past
+  Scenario: I dont want to see buttons with time in past
     Given now is 2020-01-05 21:50
     * I click inline [#️⃣ Время]
     * I click inline [➕ Воскресенье (05.01)]
@@ -129,12 +129,39 @@ Feature: Customize time
   Scenario: I see overrided weekends ahead
     Given now is 2020-01-01 12:00
     Given bot config HOLIDAYS=2020-01-02,2020-01-04
+    Given there is events:
+      | title   | category  | timetable      |
+      | A       | movies    | чт: 21:59      |
+      | B       | movies    | пт: 22:00      |
     When I click inline [#️⃣ Время]
     Then Bot edits inline buttons:
       """
       [➕ Четверг (02.01) ]
       [➕ Суббота (04.01) ]
-      [◀️ Назад] [⚠️ 0 найдено]
+      [◀️ Назад] [🎯 2 найдено]
+      """
+
+  Scenario: I can filter by custom holidays
+    Given now is 2020-01-01 12:00
+    Given bot config HOLIDAYS=2020-01-02,2020-01-04
+    Given there is events:
+      | title   | category  | timetable      |
+      | A       | movies    | чт: 07:59      |
+      | B       | movies    | пт: 07:00      |
+    When I click inline [#️⃣ Время]
+    * I click inline [➕ Четверг (02.01)]
+    * I click inline [🌅 06:00-12:00]
+    Then Bot edits inline buttons:
+      """
+      [➖ Четверг (02.01) ✔]
+      [🌃 00:00-06:00 ]
+      [🌅 06:00-12:00 ✔]
+      [🏞 12:00-15:00 ]
+      [🌇 15:00-19:00 ]
+      [🏙 19:00-22:00 ]
+      [🌃 22:00-24:00 ]
+      [➕ Суббота (04.01) ]
+      [◀️ Назад] [🎯 1 найдено]
       """
 
   Scenario: I see regular weekends when holidays past

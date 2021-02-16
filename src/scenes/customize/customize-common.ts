@@ -2,6 +2,7 @@ import { ContextMessageUpdate, EventFormat, MyInterval, TagLevel2 } from '../../
 import { getNextWeekendRange, SessionEnforcer } from '../shared/shared-logic'
 import { mapUserInputToTimeIntervals } from './customize-utils'
 import { cleanRubricsTag } from './filters/customize-rubrics'
+import { parse } from 'date-fns'
 
 export type StageType = 'root' | 'time' | 'rubrics' | 'priorities' | 'format' | 'results'
 
@@ -67,3 +68,10 @@ export function prepareRepositoryQuery(ctx: ContextMessageUpdate, filters: Custo
 }
 
 export const MAX_EXPLAIN_LINE_LEN = 35
+export const SLOT_DATE_FORMAT = 'yyyy-MM-dd'
+
+export function parseSlot(str: string): { date: Date, startTime: string, endTime: string } {
+    const [date, startTime, endTime] = str.split(/\.|-(?=\d\d:\d\d$)/)
+    return {date: parse(date, SLOT_DATE_FORMAT, new Date()), startTime, endTime}
+}
+
