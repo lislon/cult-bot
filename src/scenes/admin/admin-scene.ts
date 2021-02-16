@@ -326,7 +326,7 @@ scene
         await prepareSessionStateIfNeeded(ctx)
         await replyWithBackToMainMarkup(ctx)
         const {msg, markup} = await formatMainAdminMenu(ctx)
-        await ctx.replyWithMarkdown(msg, markup)
+        await ctx.replyWithHTML(msg, markup)
     })
     .use(pager.middleware())
     .action(actionName('sync'), async ctx => {
