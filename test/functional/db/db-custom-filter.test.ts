@@ -120,6 +120,20 @@ describe('Filtering', () => {
 
     }, 1000000)
 
+    test('do not include upper interval', async () => {
+        const [A, B] = await syncEventsDb4Test([
+            getMockEvent({title: 'A', eventTime: [date('2020-01-01 10:00')]}),
+            getMockEvent({title: 'B', eventTime: [[date('2020-01-01 10:00'), date('2020-01-01 11:00')]]}),
+        ])
+        const weekendAlreadyStartedRange = mkInterval('[2020-01-01 00:00, 2020-01-03 00:00)')
+
+        expectedIds([], await db.repoCustomEvents.findEventIdsCustomFilter({
+            weekendRange: weekendAlreadyStartedRange, timeIntervals: [
+                mkInterval('[2020-01-01 00:00, 2020-01-01 10:00)'),
+            ]
+        }))
+    }, 1000000)
+
 })
 
 describe('Логика с детьми', () => {

@@ -11,12 +11,10 @@ export function mapToPgInterval(interval: MyInterval) {
  * @param entrance
  */
 export function rangeHalfOpenIntersect(s: string, entrance: string) {
-    return `${s} && ${entrance} AND
-               (
-                    UPPER(${entrance}) = LOWER(${entrance})
-                        OR
-                    (UPPER(${s}) != LOWER(${entrance}) AND LOWER(${s}) != UPPER(${entrance}))
-                )`
+    return `(${s} && ${entrance}) AND UPPER(${s}) != LOWER(${entrance}) AND
+       (
+            UPPER(${entrance}) = LOWER(${entrance}) OR LOWER(${s}) != UPPER(${entrance})
+        )`
 }
 
 export function fieldStr(column: string) {
