@@ -139,7 +139,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
             ]]
             const msgId = await replyWithHTMLMaybeChunk(ctx, i18Msg(ctx, 'sync_ask_user_to_confirm', {
                 body
-            }), {...Markup.inlineKeyboard(keyboard).reply_markup, parse_mode: 'HTML'})
+            }), {...Markup.inlineKeyboard(keyboard), parse_mode: 'HTML'})
 
             GLOBAL_SYNC_STATE.saveConfirmIdMessage(msgId)
 
@@ -337,30 +337,6 @@ scene
         await ctx.answerCbQuery()
         await showBotVersion(ctx)
     })
-    .action(actionName('sync_back'), async ctx => {
-        await ctx.answerCbQuery()
-        if (GLOBAL_SYNC_STATE.isRunning(ctx)) {
-            GLOBAL_SYNC_STATE.abort()
-            await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]).reply_markup)
-            await ctx.replyWithHTML(i18Msg(ctx, 'sync_cancelled'))
-        } else {
-            await replySyncNoTransaction(ctx)
-        }
-    })
-    .action(actionName('sync_confirm'), async ctx => {
-        await ctx.answerCbQuery()
-        if (GLOBAL_SYNC_STATE.isRunning(ctx)) {
-            await db.tx(async (dbTx: ITask<IExtensions> & IExtensions) => {
-                await GLOBAL_SYNC_STATE.executeSync(dbTx)
-            })
-            await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]).reply_markup)
-            await ctx.replyWithHTML(i18Msg(ctx, 'sync_confirmed', {
-                rows: await db.repoAdmin.countTotalRows()
-            }))
-        } else {
-            await replySyncNoTransaction(ctx)
-        }
-    })
     .action(new RegExp(`${actionName('r_')}(.+)`), async ctx => {
         // db.repoAdmin.findAllEventsByReviewer(ctx.match[1], getNextWeekEndRange(ctx.now()), )
         await ctx.answerCbQuery()
@@ -512,6 +488,30 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                 pgLogVerbose()
             } else {
                 pgLogOnlyErrors()
+            }
+        })
+        .action(actionName('sync_back'), async ctx => {
+            await ctx.answerCbQuery()
+            if (GLOBAL_SYNC_STATE.isRunning(ctx)) {
+                GLOBAL_SYNC_STATE.abort()
+                await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]).reply_markup)
+                await ctx.replyWithHTML(i18Msg(ctx, 'sync_cancelled'))
+            } else {
+                await replySyncNoTransaction(ctx)
+            }
+        })
+        .action(actionName('sync_confirm'), async ctx => {
+            await ctx.answerCbQuery()
+            if (GLOBAL_SYNC_STATE.isRunning(ctx)) {
+                await db.tx(async (dbTx: ITask<IExtensions> & IExtensions) => {
+                    await GLOBAL_SYNC_STATE.executeSync(dbTx)
+                })
+                await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]).reply_markup)
+                await ctx.replyWithHTML(i18Msg(ctx, 'sync_confirmed', {
+                    rows: await db.repoAdmin.countTotalRows()
+                }))
+            } else {
+                await replySyncNoTransaction(ctx)
             }
         })
         .command('bot_config', async (ctx) => {
