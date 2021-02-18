@@ -72,10 +72,16 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
 function googleAnalyticsSource(ctx: ContextMessageUpdate & { startPayload: string }) {
     function getSourceTitle(sourceCode: string) {
         switch (sourceCode) {
-            case 'i': return 'instagram'
-            case 'f': return 'facebook'
-            case 'v': return 'vk'
-            case 't': return 'telegram'
+            case 'a':
+                return 'advert'
+            case 'i':
+                return 'instagram'
+            case 'f':
+                return 'facebook'
+            case 'v':
+                return 'vk'
+            case 't':
+                return 'telegram'
             case 'o':
                 return 'other'
             case 'm':
@@ -87,26 +93,50 @@ function googleAnalyticsSource(ctx: ContextMessageUpdate & { startPayload: strin
 
     function getSourceFrom(sourceCode: string) {
         switch (sourceCode) {
-            case '1': return 'igor'
-            case '2': return 'elena'
-            case '3': return 'anna'
-            case '4': return 'masha'
-            case 'L': return 'marina'
+            case '1':
+                return 'igor'
+            case '2':
+                return 'elena'
+            case '3':
+                return 'anna'
+            case '4':
+                return 'masha'
+            case 'L':
+                return 'marina'
             default:
                 return sourceCode
         }
     }
 
-    if (ctx.startPayload !== '') {
+    const payload = ctx.startPayload
+
+    function getSource() {
+        switch (payload) {
+            case 'a1f6b':
+                return 'cofe-i-bileti'
+            case 'a9481':
+                return 'kosmos-oliferovich'
+            default: {
+                let source = getSourceTitle(payload[0])
+
+                if (payload.length > 1) {
+                    source += `-` + getSourceFrom(payload.substring(1))
+                }
+                return source
+            }
+        }
+    }
+
+    if (payload !== '') {
         ctx.ua.set('cm', 'referral')
 
-        let source = getSourceTitle(ctx.startPayload[0])
-
-        if (ctx.startPayload.length > 1) {
-            source += `-` + getSourceFrom(ctx.startPayload[1])
+        try {
+            const source = getSource()
+            ctx.ua.set('cs', source)
+        } catch (e) {
+            ctx.ua.set('cs', 'fallback')
+            ctx.logger.error(e)
         }
-        // vk-igor
-        ctx.ua.set('cs', source)
     }
 }
 
