@@ -45,7 +45,7 @@ async function notifyAdminsAboutRestart() {
 }
 
 class BotStart {
-    static PATH = 'tlg'
+    static PATH = botConfig.TELEGRAM_TOKEN;
 
     public static expressMiddleware(bot: Telegraf<ContextMessageUpdate>) {
         return bot.webhookCallback(`/${BotStart.PATH}`)
