@@ -2,7 +2,6 @@ import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, ifAdmin, isAdmin, sleep } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
-import { botConfig } from '../../util/bot-config'
 import { db } from '../../database/db'
 import { generatePlural, getNextWeekendRange } from '../shared/shared-logic'
 
@@ -10,7 +9,7 @@ const scene = new Scenes.BaseScene<ContextMessageUpdate>('main_scene')
 
 const {i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
-const quick = botConfig.NODE_ENV === 'development' || botConfig.NODE_ENV === 'test'
+const quick = false
 export type MainSceneEnterState = { override_main_scene_msg?: string }
 
 const content = (ctx: ContextMessageUpdate) => {
@@ -154,19 +153,15 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
         // cn Campaign Name
         // cs
         const name = ctx.message.from.first_name
-        if (!quick) await sleep(500)
+        if (!quick) await sleep(5000)
 
-        try {
-            const count = await db.repoEventsCommon.countEvents({
-                interval: getNextWeekendRange(ctx.now())
-            })
-            await ctx.replyWithHTML(ctx.i18n.t('root.welcome1', {
-                name: name,
-                eventPlural: generatePlural(ctx, 'event_prepositional', count)
-            }))
-        } catch (e) {
-            ctx.logger.error(e)
-        }
+        const count = await db.repoEventsCommon.countEvents({
+            interval: getNextWeekendRange(ctx.now())
+        })
+        await ctx.replyWithHTML(ctx.i18n.t('root.welcome1', {
+            name: name,
+            eventPlural: generatePlural(ctx, 'event_prepositional', count)
+        }))
         if (!quick) await sleep(1000)
 
         // if (!quick) await sleep(1000)

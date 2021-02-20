@@ -2,8 +2,9 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { db } from '../../database/db'
 import { countInteractions } from './analytics-middleware'
 import { botConfig } from '../../util/bot-config'
+import { isBlockedError } from '../../util/error-handler';
 
-const UPDATE_EVERY_N_SECONDS = 5 * 60
+const UPDATE_EVERY_N_SECONDS = 1 * 30
 
 export interface UserState {
     id: number
@@ -71,7 +72,7 @@ export function forceSaveUserDataInDb(ctx: ContextMessageUpdate) {
     ctx.session.user.lastDbUpdated = 0
 }
 
-async function updateOrInsertUser(ctx: ContextMessageUpdate) {
+export async function updateOrInsertUser(ctx: ContextMessageUpdate, blockedAt: Date = undefined) {
     if (ctx.session.user.id === 0) {
         ctx.session.user.id = await db.repoUser.insertUser({
             tid: ctx.from.id,
@@ -82,10 +83,10 @@ async function updateOrInsertUser(ctx: ContextMessageUpdate) {
             ua_uuid: ctx.session.user.uaUuid
         })
         ctx.session.user.lastDbUpdated = new Date().getTime()
-    } else if (isTimeToRefreshDb(ctx)) {
+    } else if (isTimeToRefreshDb(ctx) || blockedAt !== undefined) {
         await db.repoUser.updateUser(ctx.session.user.id, {
             active_at: new Date(),
-            blocked_at: undefined,
+            blocked_at: blockedAt,
             events_favorite: ctx.session.user.eventsFavorite,
             clicks: countInteractions(ctx)
         })
@@ -97,7 +98,14 @@ async function updateOrInsertUser(ctx: ContextMessageUpdate) {
 export const userMiddleware = async (ctx: ContextMessageUpdate, next: any) => {
     await prepareSessionIfNeeded(ctx)
 
-    await next()
+    try {
+        await next()
+    } catch (e) {
+        if (isBlockedError(e)) {
+            await updateOrInsertUser(ctx, new Date())
+        }
+        throw e;
+    }
 
     await updateOrInsertUser(ctx)
 }

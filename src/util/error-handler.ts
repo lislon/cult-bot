@@ -15,7 +15,7 @@ export async function botErrorHandler(error: any, ctx: ContextMessageUpdate) {
             logger.debug(error.message)
             // ignore
         } else if (isBlockedError(error)) {
-            logger.debug(`${formatUserName(ctx)}: blocked bot`)
+            logger.warn(`${formatUserName(ctx)}: blocked bot`)
             // ignore
         } else {
             logger.error(`Ooops, encountered an error for ${ctx.updateType}`, error)

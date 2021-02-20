@@ -7,6 +7,8 @@ import { createReadStream } from 'fs'
 import path from 'path'
 import { redisSession } from '../../util/reddis'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
+import { botErrorHandler, isBlockedError } from '../../util/error-handler';
+import { updateOrInsertUser } from '../../lib/middleware/user-middleware';
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('help_scene')
 const {i18Msg} = i18nSceneHelper(scene)
@@ -93,8 +95,15 @@ function throttleActionsToShowHelpForNewComers(ctx: ContextMessageUpdate) {
 
                 if (freshSession && (countInteractions(ctx) == countInteractionsAfterMiddlewaresDone)) {
 
-                    if (await newcomerIsIdle(ctx)) {
-                        await redisSession.saveSession(sessionKey, ctx.session)
+                    try {
+                        if (await newcomerIsIdle(ctx)) {
+                            await redisSession.saveSession(sessionKey, ctx.session)
+                        }
+                    } catch (e) {
+                        await botErrorHandler(e, ctx);
+                        if (isBlockedError(e)) {
+                            await updateOrInsertUser(ctx, new Date())
+                        }
                     }
                 }
             }
@@ -108,6 +117,7 @@ async function newcomerIsIdle(ctx: ContextMessageUpdate): Promise<boolean> {
     if (ctx.session.help.cnt < MAX_COUNT_SHOW_HELP && secondsFromLastHelp > MIN_INTERVAL_BETWEEN_HELPS_SECONDS) {
         ctx.session.help.lastTimeShow = new Date().getTime()
         ctx.session.help.cnt++
+        ctx.logger.info("Displaying /help")
         await ctx.replyWithHTML(i18Msg(ctx, 'newcomer_hint'), {disable_notification: true})
         return true
     }
