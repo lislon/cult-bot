@@ -14,8 +14,6 @@ export class BotConfig {
     public HEROKU_SLUG_COMMIT: string | undefined
     public HEROKU_RELEASE_CREATED_AT: string | undefined
     public HOLIDAYS: string
-    public ACME_CHALLENGE: string | undefined
-
 
     public PORT: number
     public TELEGRAM_TOKEN: string
@@ -86,7 +84,6 @@ export class BotConfig {
         this.SLIDER_MAX_STATES_SAVED = +envVars.SLIDER_MAX_STATES_SAVED || 5
         this.SLIDER_MAX_IDS_CACHED = +envVars.SLIDER_MAX_IDS_CACHED || 10
         this.SLIDER_INSTA_VIEW = !!envVars.SLIDER_INSTA_VIEW || false
-        this.ACME_CHALLENGE = envVars.ACME_CHALLENGE || undefined
     }
 }
 

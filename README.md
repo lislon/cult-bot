@@ -1,4 +1,20 @@
 
+## View logs
+
+```bash
+heroku logs --tail -a cult-hub-bot-dev
+```
+
+## Install TLS
+
+
+Bot should be on hobby plan.
+
+```bash
+heroku certs:auto:enable -a cult-hub-bot-dev
+```
+
+
 ## Debug
 
 debug `npm dev` with `-r dotenv/config` node options. 

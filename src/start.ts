@@ -129,14 +129,6 @@ app.use('/me', (request: Request, response: Response) => {
     response.send(JSON.stringify(request.headers))
 })
 
-if (botConfig.ACME_CHALLENGE !== undefined) {
-    app.use(`/.well-known/acme-challenge/${botConfig.ACME_CHALLENGE.replace(/[.].+/, '')}`,
-        (request: Request, response: Response) => {
-            response.send(botConfig.ACME_CHALLENGE);
-        })
-}
-
-
 app.use(function (err: any, req: any, res: any, next: any) {
     logger.error(err.stack)
     next(err)
