@@ -9,7 +9,6 @@ const scene = new Scenes.BaseScene<ContextMessageUpdate>('main_scene')
 
 const {i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
-const quick = false
 export type MainSceneEnterState = { override_main_scene_msg?: string }
 
 const content = (ctx: ContextMessageUpdate) => {
@@ -153,7 +152,7 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
         // cn Campaign Name
         // cs
         const name = ctx.message.from.first_name
-        if (!quick) await sleep(5000)
+        await sleep(500)
 
         const count = await db.repoEventsCommon.countEvents({
             interval: getNextWeekendRange(ctx.now())
@@ -162,7 +161,7 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
             name: name,
             eventPlural: generatePlural(ctx, 'event_prepositional', count)
         }))
-        if (!quick) await sleep(1000)
+        await sleep(1000)
 
         // if (!quick) await sleep(1000)
         // await ctx.replyWithHTML(ctx.i18n.t('root.welcome4'), {disable_notification: true})
