@@ -12,11 +12,11 @@ export interface LikeDislikeChange {
     plusDislikes: number
 }
 
-export function mapEvent(row: any) {
-    return {
+export function mapEvent(row: any): Event {
+    return row ? {
         ...row,
         id: +row.id
-    } as Event
+    } as Event : undefined
 }
 
 const selectCbLikesDislikes = `cb.likes + cb.likes_fake AS likes, cb.dislikes + cb.dislikes_fake as dislikes`
@@ -183,6 +183,14 @@ export class EventsCommonRepository {
             JOIN unnest('{$(eventIds:list)}'::int[]) WITH ORDINALITY t(id, ord) USING (id)
             ORDER BY ord
         `, {eventIds}, mapEvent)
+    }
+
+    public async getEventsByExtId(extId: string): Promise<Event | undefined> {
+        return await this.db.oneOrNone(`
+            select ${SELECT_ALL_EVENTS_FIELDS}
+            from cb_events cb
+            WHERE cb.ext_id = $(extId)
+        `, {extId}, mapEvent)
     }
 
     public async logViews(eventIds: number[]): Promise<void> {

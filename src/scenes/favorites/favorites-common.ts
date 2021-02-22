@@ -1,13 +1,14 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { Markup, Scenes } from 'telegraf'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { leftDate, MomentIntervals, rightDate } from '../../lib/timetable/intervals'
-import { compareAsc, compareDesc, isAfter } from 'date-fns'
-import { first, last } from 'lodash'
+import { leftDate } from '../../lib/timetable/intervals'
+import { compareAsc, compareDesc } from 'date-fns'
+import { first } from 'lodash'
 import { db } from '../../database/db'
 import { parseAndPredictTimetable } from '../../lib/timetable/timetable-utils'
 import { FavoriteEvent } from './favorites-scene'
 import { getLikeDislikeButtonText, isEventInFavorites } from '../likes/likes-common'
+import { isEventInFuture } from '../shared/shared-logic'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 
@@ -18,10 +19,6 @@ export function getFavoriteBtnText(ctx: ContextMessageUpdate, isFavorite: boolea
 }
 
 export async function loadEventsAsFavorite(eventIds: number[], now: Date): Promise<FavoriteEvent[]> {
-    function hasEventsInFuture(timeIntervals: MomentIntervals, date: Date) {
-        return timeIntervals.length > 0 && isAfter(rightDate(last(timeIntervals)), date)
-    }
-
     const events = await db.repoEventsCommon.getEventsByIds(eventIds)
 
     const eventsWithNearestDate = events.map(e => {
@@ -30,7 +27,7 @@ export async function loadEventsAsFavorite(eventIds: number[], now: Date): Promi
             ...e,
             parsedTimetable,
             firstDate: parsedTimetable.timeIntervals.length > 0 ? leftDate(first(parsedTimetable.timeIntervals)) : new Date(0),
-            isFuture: hasEventsInFuture(parsedTimetable.timeIntervals, now)
+            isFuture: isEventInFuture(parsedTimetable.timeIntervals, now)
         } as FavoriteEvent
     })
 

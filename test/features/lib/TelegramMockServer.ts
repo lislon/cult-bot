@@ -1,4 +1,4 @@
-import { Context, MiddlewareFn, Telegraf, TelegramError, Telegram } from 'telegraf'
+import { Context, MiddlewareFn, Telegraf, Telegram, TelegramError } from 'telegraf'
 import {
     ExtraEditMessageText,
     ExtraReplyMessage,
@@ -177,7 +177,7 @@ export class TelegramMockServer {
             return
         }
         if (this.lastCbQuery === undefined) {
-            throw new Error('cbQuery is empty after click')
+            throw new Error('Bad behaviour! Missing cbQuery call after action')
         }
     }
 

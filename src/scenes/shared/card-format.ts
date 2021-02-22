@@ -63,7 +63,7 @@ export interface CardOptions {
     deleted?: boolean
 }
 
-export interface EventFavorite extends Event {
+export interface EventWithPast extends Event {
     isFuture: boolean
 }
 
@@ -71,11 +71,11 @@ export function filterTagLevel2(row: Event | AdminEvent) {
     return row.tag_level_2.filter(t => !t.startsWith('#_'))
 }
 
-function isFavoriteCard(row: Event | EventFavorite): row is EventFavorite {
-    return (row as EventFavorite).isFuture !== undefined
+function isCardWithPossiblePast(row: Event | EventWithPast): row is EventWithPast {
+    return (row as EventWithPast).isFuture !== undefined
 }
 
-export function cardFormat(row: Event | AdminEvent | EventFavorite, options: CardOptions = {showAdminInfo: false}) {
+export function cardFormat(row: Event | AdminEvent | EventWithPast, options: CardOptions = {showAdminInfo: false}) {
     let text = ``
     const rowWithOldVersion = row as AdminEvent
     if (rowWithOldVersion.snapshotStatus !== undefined) {
@@ -87,7 +87,7 @@ export function cardFormat(row: Event | AdminEvent | EventFavorite, options: Car
             text += '[OLD] '
         }
     }
-    const isFuture = !(isFavoriteCard(row) && row.isFuture == false)
+    const isFuture = !(isCardWithPossiblePast(row) && row.isFuture == false)
 
     // if (options.packs) {
     //     text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`

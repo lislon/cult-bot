@@ -10,11 +10,9 @@ Feature: Main scene
       [~main_scene.search]
       [~main_scene.feedback] [~main_scene.favorites]
       """
-
     Then Google analytics pageviews will be:
       | dp                | dt                |
       | /                 | Главное меню      |
-
     Then Google analytics params will be:
       | key | value          |
       | cs  | instagram-igor |
@@ -48,3 +46,32 @@ Feature: Main scene
     Given Scene is 'main_scene'
     When I type 'Бред'
     Then Bot responds '*/menu*'
+
+  Scenario: I can view particular card on bot start
+    Given now is 2020-01-02 12:00
+    Given there is events:
+      | ext_id | title | category | timetable            |
+      | K1     | A     | movies   | 1 января 2020: 21:59 |
+    When I start bot with payload 'i1_event-K1'
+    Then Bot responds '*<b>A</b> <i>(прошло)</i>*' with inline buttons:
+      """
+      [👍 0] [👎 0] [⭐]
+      [🚀 Открыть бот]
+      """
+    When I click inline [Открыть бот]
+    Then Bot edits inline buttons:
+      """
+      [👍 0] [👎 0] [⭐]
+      """
+    Then Bot responds '*Приветствую, TestFirstName*'
+    Then Google analytics pageviews will be:
+      | dp               | dt                |
+      | /start-event/k1  | Прямая ссылка > A |
+      | /                | Главное меню      |
+    Then Google analytics params will be:
+      | key | value          |
+      | cs  | instagram-igor |
+
+  Scenario: I will be redirect to standart start scene if event not found
+    When I start bot with payload 'i1_event-bad'
+    Then Bot responds '*Приветствую, TestFirstName*'

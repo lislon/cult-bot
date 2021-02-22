@@ -12,9 +12,9 @@ import {
     generatePlural,
     getInlineKeyboardFromCallbackQuery,
     getMsgId,
-    parseAndUpdateBtn,
     replyWithBackToMainMarkup,
     ruFormat,
+    updateKeyboardButtons,
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
 import { rightDate } from '../../lib/timetable/intervals'
@@ -169,7 +169,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                         const card = cardFormat(event, {deleted: !isEventInFavorites(ctx, eventId)})
                         let newKeyboard = getInlineKeyboardFromCallbackQuery(ctx)
 
-                        newKeyboard = await parseAndUpdateBtn(newKeyboard, /(restore|remove)/, () => {
+                        newKeyboard = await updateKeyboardButtons(newKeyboard, /(restore|remove)/, () => {
                             return removeFavoriteButton(ctx, event)
                         })
 

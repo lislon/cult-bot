@@ -4,7 +4,7 @@ import { i18nSceneHelper } from '../../util/scene-helper'
 
 import { ITask } from 'pg-promise'
 import { IExtensions } from '../../database/db'
-import { getInlineKeyboardFromCallbackQuery, parseAndUpdateBtn } from '../shared/shared-logic'
+import { getInlineKeyboardFromCallbackQuery, updateKeyboardButtons } from '../shared/shared-logic'
 import { getFavoriteBtnText } from '../favorites/favorites-common'
 import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
@@ -41,7 +41,7 @@ export async function updateLikeDislikeInlineButtons(ctx: ContextCallbackQueryUp
 
     const [likes, dislikes] = await dbTask.repoEventsCommon.getLikesDislikes(eventId)
 
-    let newKeyboard = await parseAndUpdateBtn(originalKeyboard, /^(like|dislike)_/, (btn) => {
+    let newKeyboard = await updateKeyboardButtons(originalKeyboard, /^(like|dislike)_/, (btn) => {
         if (btn.callback_data.startsWith('like_')) {
             return {...btn, text: i18Btn(ctx, 'like', {count: likes})}
         } else {
@@ -49,7 +49,7 @@ export async function updateLikeDislikeInlineButtons(ctx: ContextCallbackQueryUp
         }
     })
 
-    newKeyboard = await parseAndUpdateBtn(newKeyboard, /^(favorite)_/, (btn) => {
+    newKeyboard = await updateKeyboardButtons(newKeyboard, /^(favorite)_/, (btn) => {
         return {...btn, text: getFavoriteBtnText(ctx, isEventInFavorites(ctx, eventId))}
     })
 

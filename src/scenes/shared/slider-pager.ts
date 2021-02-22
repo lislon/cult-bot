@@ -5,7 +5,7 @@ import {
     EditMessageAndButtonsOptions,
     getInlineKeyboardFromCallbackQuery,
     getMsgId,
-    parseAndUpdateBtn
+    updateKeyboardButtons
 } from './shared-logic'
 import { getLikesRow } from '../likes/likes-common'
 import { cardFormat } from './card-format'
@@ -169,7 +169,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                 const buttonsAndText = await this.handleExistingCard(ctx, cardId, state)
                 buttonsAndText.text += i18SharedMsg(ctx, `slider.reset_to_zero_postfix`)
 
-                buttonsAndText.buttons = (await parseAndUpdateBtn(
+                buttonsAndText.buttons = (await updateKeyboardButtons(
                     {inline_keyboard: buttonsAndText.buttons},
                     /^slider_keyboard[.].+[.]next$/, (btn) => {
                         btn.text = `* ${btn.text}`

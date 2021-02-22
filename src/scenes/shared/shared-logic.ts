@@ -1,6 +1,6 @@
 import { ContextCallbackQueryUpdate, ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
 import { addDays, max, parseISO, startOfDay, startOfISOWeek } from 'date-fns/fp'
-import { format, formatDistanceToNow, Locale, parse } from 'date-fns'
+import { format, formatDistanceToNow, isAfter, Locale, parse } from 'date-fns'
 import flow from 'lodash/fp/flow'
 import { ru } from 'date-fns/locale'
 import { i18n } from '../../util/i18n'
@@ -14,6 +14,7 @@ import { ExtraReplyMessage, InlineKeyboardButton, InlineKeyboardMarkup, Message 
 import { SLOT_DATE_FORMAT } from '../customize/customize-common'
 import { isAfterOrEquals } from '../../util/moment-msk'
 import { first, last } from 'lodash'
+import { MomentIntervals, rightDate } from '../../lib/timetable/intervals'
 
 type Range = '2weekends_only'
 
@@ -116,8 +117,8 @@ export function extraInlineMenu(rows: InlineKeyboardButton[][]): ExtraReplyMessa
     }
 }
 
-export async function parseAndUpdateBtn(replyMarkup: InlineKeyboardMarkup,
-                                        callbackDataToken: RegExp, updateFunc: (text: InlineKeyboardButton.CallbackButton) => (InlineKeyboardButton.CallbackButton | InlineKeyboardButton.CallbackButton[])): Promise<undefined | InlineKeyboardMarkup> {
+export async function updateKeyboardButtons(replyMarkup: InlineKeyboardMarkup,
+                                            callbackDataToken: RegExp, updateFunc: (text: InlineKeyboardButton.CallbackButton) => (InlineKeyboardButton.CallbackButton | InlineKeyboardButton.CallbackButton[])): Promise<undefined | InlineKeyboardMarkup> {
     if (replyMarkup !== undefined) {
         const newKeyboard: InlineKeyboardButton.CallbackButton[][] = []
         for (const row of replyMarkup.inline_keyboard) {
@@ -243,4 +244,8 @@ export function getConfiguredHolidaysIfAny(now: Date) {
         .split(/\s*,\s*/)
         .map(str => parse(str.trim(), SLOT_DATE_FORMAT, new Date()))
         .filter(holidayDate => isAfterOrEquals(holidayDate, startOfDay(now)))
+}
+
+export function isEventInFuture(timeIntervals: MomentIntervals, date: Date) {
+    return timeIntervals.length > 0 && isAfter(rightDate(last(timeIntervals)), date)
 }
