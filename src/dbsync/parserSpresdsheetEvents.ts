@@ -66,7 +66,7 @@ function getDueDate(mapped: ExcelRowResult) {
     }
 }
 
-export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, spreadsheetId: string) {
+export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, spreadsheetId: string): Promise<ExcelSheetResult[]> {
     const ranges = Object.values(CAT_TO_SHEET_NAME).map(name => `${name}!A1:AA`)
 
     logger.debug(`Loading from excel [${ranges}]...`)
@@ -108,7 +108,7 @@ export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, sp
     return sheetsParsedRows
 }
 
-export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheets): Promise<ExcelParseResult> {
+export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheets, statusCb?: (sheetTitle: string) => Promise<void>): Promise<ExcelParseResult> {
     const sheetsParsedRows = await parseRawSheetsEventSpreedsheet(excel, botConfig.GOOGLE_DOCS_ID)
     logger.debug('Saving to db...')
 
@@ -124,6 +124,8 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
     ]
 
     sheetsParsedRows.forEach(({rows, sheetId, totalNumberOfRows, sheetTitle}) => {
+
+        statusCb?.(sheetTitle)
 
         columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, 1, totalNumberOfRows))
 
@@ -203,6 +205,8 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
             extIds: erroredExtIds
         })
     })
+
+    await statusCb?.('Раскрашиваем эксельку')
 
     await excelUpdater.update(botConfig.GOOGLE_DOCS_ID)
 

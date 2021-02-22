@@ -94,9 +94,11 @@ class BotStart {
         const webhookStatus = await bot.telegram.getWebhookInfo()
 
         logger.info('Webhook status: ' + JSON.stringify(webhookStatus))
-        await notifyAdminsAboutRestart()
+
         process.once('SIGINT', () => bot.stop('SIGINT'))
         process.once('SIGTERM', () => bot.stop('SIGTERM'))
+
+        await notifyAdminsAboutRestart()
     }
 }
 

@@ -105,12 +105,20 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 
     try {
 
-        await ctx.replyWithHTML(i18Msg(ctx, 'sync_start', {url: getGoogleSpreadSheetURL()}), {
+        const message = await ctx.replyWithHTML(i18Msg(ctx, 'sync_status_step_auth', {url: getGoogleSpreadSheetURL()}), {
             disable_web_page_preview: true
         })
 
         const excel = await authToExcel()
-        const syncResult = await parseAndValidateGoogleSpreadsheets(db, excel)
+
+        await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, 'sync_status_downloading'))
+
+        const syncResult = await parseAndValidateGoogleSpreadsheets(db, excel, async sheetTitle => {
+            await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, 'sync_status_processing', {sheetTitle}))
+        })
+
+        await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, 'sync_status_saving'))
+
         // const {validationErrors, rows, excelUpdater} = await parseAndValidateGoogleSpreadsheets()
 
         const {dbDiff, askUserToConfirm, eventPacks} = await db.tx('sync', async (dbTx) => {
