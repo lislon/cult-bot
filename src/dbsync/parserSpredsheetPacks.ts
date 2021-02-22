@@ -42,9 +42,11 @@ export interface ExcelPacksSyncResult {
 
 const PACKS_SHEET_NAME = 'Подборки'
 
-function getEventExtId(rowValue: string) {
-    const match = rowValue.match(/^(.\d+[A-Z]?)/)
-    if (match) return match[1]
+function getEventExtId(rowValue?: string | number) {
+    if (typeof rowValue === 'string') {
+        const match = rowValue?.match(/^(.\d+[A-Z]?)/)
+        if (match) return match[1]
+    }
 }
 
 export async function saveValidationErrors(excel: Sheets, validatedEvents: EventPackValidated[]): Promise<void> {
@@ -119,7 +121,7 @@ export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncR
             currentPack.weight = +rowValue
         } else if (rowLabel === 'Описание') {
             currentPack.description = rowValue
-        } else if (rowValue !== undefined && getEventExtId(rowValue) !== undefined) {
+        } else if (rowValue !== undefined && getEventExtId(rowValue) !== undefined && (rowLabel === 'События' || rowLabel === '')) {
             currentPack.events.push({
                 extId: getEventExtId(rowValue),
                 rowNumber,

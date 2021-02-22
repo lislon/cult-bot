@@ -139,6 +139,8 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
             return {dbDiff, askUserToConfirm, eventPacks}
         })
 
+        await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, 'sync_status_done'))
+
         const body = await formatMessageForSyncReport(syncResult.errors, dbDiff, eventPacks, ctx)
         if (askUserToConfirm === true) {
             const keyboard = [[
