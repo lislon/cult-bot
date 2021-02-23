@@ -7,23 +7,7 @@ export function fieldIsQuestionMarkOrEmpty(str: string) {
 }
 
 export function formatUserName(ctx: ContextMessageUpdate) {
-    const from = ctx.from
-
-    const result: string[] = []
-    if (from.first_name) {
-        result.push(from.first_name)
-    }
-    if (from.last_name) {
-        result.push(from.last_name)
-    }
-    if (from.username) {
-        result.push(`@${from.username}`)
-    }
-    if (result.length === 0) {
-        result.push(`Аноним (id=${ctx.from.id})`)
-    }
-
-    return result.join(' ')
+    return formatUserName2(ctx.from)
 }
 
 export function formatUserName2(user: User) {

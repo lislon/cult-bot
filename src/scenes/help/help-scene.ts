@@ -7,8 +7,8 @@ import { createReadStream } from 'fs'
 import path from 'path'
 import { redisSession } from '../../util/reddis'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
-import { botErrorHandler, isBlockedError } from '../../util/error-handler';
-import { updateOrInsertUser } from '../../lib/middleware/user-middleware';
+import { botErrorHandler, isBlockedError } from '../../util/error-handler'
+import { updateOrInsertUser } from '../../lib/middleware/user-middleware'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('help_scene')
 const {i18Msg} = i18nSceneHelper(scene)
@@ -129,8 +129,8 @@ export class HelpSceneState {
     cnt: number
 }
 
-export const helpScene = {
+export const helpScene : SceneRegister = {
     scene,
     postStageActionsFn,
     preSceneGlobalActionsFn
-} as SceneRegister
+}

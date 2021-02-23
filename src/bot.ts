@@ -4,7 +4,6 @@ import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import middlewares, { myRegisterScene } from './middleware-utils'
 import 'source-map-support/register'
 import { performanceMiddleware } from './lib/middleware/performance-middleware'
-import { botConfig } from './util/bot-config'
 import { customizeScene } from './scenes/customize/customize-scene'
 import { adminScene } from './scenes/admin/admin-scene'
 import { searchScene } from './scenes/search/search-scene'
@@ -21,22 +20,12 @@ import { favoritesScene } from './scenes/favorites/favorites-scene'
 
 logger.info(`starting bot...`);
 
-
-export const rawBot: Telegraf<ContextMessageUpdate> = new Telegraf(botConfig.TELEGRAM_TOKEN, {
-    telegram: {
-        // feedback scene requires this, because otherwise it cannot obtain id message sent to admin feedback chat
-        // https://core.telegram.org/bots/faq#how-can-i-make-requests-in-response-to-updates
-        webhookReply: false
-    }
-})
 export const bot = new Composer<ContextMessageUpdate>()
 
 const stage = new Scenes.Stage<ContextMessageUpdate>([], {
     default: 'main_scene'
 })
 
-
-// .use(middlewares.logMiddleware('analyticsMiddleware'))
 
 bot
     .use(performanceMiddleware('total'))
@@ -78,7 +67,9 @@ const supportChat = new Composer<ContextMessageUpdate>()
     // .use(middlewares.logMiddleware('session'))
     .use(middlewares.supportFeedbackMiddleware)
 
-rawBot
-    .use(Composer.privateChat(bot))
-    .use(Composer.groupChat(supportChat))
-    .catch(botErrorHandler)
+export function initBot(rawBot: Telegraf<ContextMessageUpdate>) {
+    rawBot
+        .use(Composer.privateChat(bot))
+        .use(Composer.groupChat(supportChat))
+        .catch(botErrorHandler)
+}

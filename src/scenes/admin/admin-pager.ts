@@ -40,7 +40,7 @@ export class AdminPager implements PagingConfig<AdminSceneQueryState, AdminEvent
 
     async cardButtons(ctx: ContextMessageUpdate, event: AdminEvent): Promise<InlineKeyboardButton.CallbackButton[]> {
         if (event.snapshotStatus === 'updated') {
-            return getButtonsSwitch(ctx, event.ext_id, 'current')
+            return getButtonsSwitch(ctx, event.extId, 'current')
         }
         return []
     }

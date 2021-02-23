@@ -136,7 +136,7 @@ function isAddressValid(data: Event) {
 }
 
 function validateExtId(data: Event, errorCallback: ErrorCallback): void {
-    const extId = data.ext_id
+    const extId = data.extId
     if (extId?.match(/^[А-Я]/)) {
         return errorCallback([`Замечена русская буква '${extId.substring(0, 1)}' в ID-шнике. Допускаются только английские`])
     }
@@ -200,7 +200,7 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
     const splitTags = (s: string) => s.split(/\s+|(?<=[^\s])(?=#)/)
 
     const data: Event = {
-        'ext_id': row.ext_id,
+        'extId': row.ext_id,
         'category': category,
         'publish': row.publish,
         'title': row.title,

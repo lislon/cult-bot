@@ -98,7 +98,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
 }
 
-export const packsScene = {
+export const packsScene : SceneRegister = {
     scene,
     postStageActionsFn
-} as SceneRegister
+}

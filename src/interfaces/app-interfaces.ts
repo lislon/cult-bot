@@ -71,7 +71,7 @@ export interface ContextMessageUpdate extends Context {
 
 export interface Event {
     id?: number
-    ext_id: string
+    extId: string
     category: EventCategory
     publish: string
     title: string

@@ -39,7 +39,7 @@ export class TopsPagerConfig implements SliderConfig<TopEventsStageQuery> {
         const {dp, dt} = analyticsTopParams(state)
 
         ctx.ua.pv({
-            dp: `${dp}p${offset + 1}/${event.ext_id}-${mySlugify(event.title)}/`,
+            dp: `${dp}p${offset + 1}/${event.extId}-${mySlugify(event.title)}/`,
             dt: `${dt} > ${event.title} [${offset + 1}/${total}]`.trim()
         })
     }

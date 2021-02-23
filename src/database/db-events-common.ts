@@ -1,7 +1,8 @@
-import { Event, MyInterval } from '../interfaces/app-interfaces'
+import { Event, EventCategory, MyInterval } from '../interfaces/app-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { ColumnSet, IColumnConfig, IDatabase, IMain, ITask } from 'pg-promise'
 import { IExtensions } from './db'
+import { DbEvent } from '../interfaces/db-interfaces'
 
 interface CountEventsQuery {
     interval: MyInterval
@@ -12,11 +13,30 @@ export interface LikeDislikeChange {
     plusDislikes: number
 }
 
-export function mapEvent(row: any): Event {
+export function mapEvent(row: DbEvent & { id: string, likes: number, dislikes: number }): Event {
     return row ? {
-        ...row,
-        id: +row.id
-    } as Event : undefined
+        id: +row.id,
+        extId: row.ext_id,
+        category: row.category as EventCategory,
+        title: row.title,
+        place: row.place,
+        address: row.address,
+        geotag: row.geotag,
+        timetable: row.timetable,
+        duration: row.duration,
+        price: row.price,
+        notes: row.notes,
+        description: row.description,
+        url: row.url,
+        tag_level_1: row.tag_level_1,
+        tag_level_2: row.tag_level_2,
+        tag_level_3: row.tag_level_3,
+        rating: +row.rating,
+        reviewer: row.reviewer,
+        likes: +row.likes,
+        dislikes: +row.dislikes,
+        publish: 'true'
+    } : undefined
 }
 
 const selectCbLikesDislikes = `cb.likes + cb.likes_fake AS likes, cb.dislikes + cb.dislikes_fake as dislikes`

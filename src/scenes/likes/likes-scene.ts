@@ -47,6 +47,6 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
 }
 
-export const likesScene = {
+export const likesScene : SceneRegister = {
     postStageActionsFn
-} as SceneRegister
+}

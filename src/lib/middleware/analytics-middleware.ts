@@ -110,7 +110,7 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
 const {i18SharedMsg} = i18nSceneHelper(new Scenes.BaseScene<ContextMessageUpdate>(''))
 
 export function analyticRecordEventView(ctx: ContextMessageUpdate, event: Event) {
-    const label = `${i18SharedMsg(ctx, `category_icons.${event.category}`)} ${event.ext_id} ${event.title} [${event.place}]`
+    const label = `${i18SharedMsg(ctx, `category_icons.${event.category}`)} ${event.extId} ${event.title} [${event.place}]`
     ctx.ua.event('Card View', 'view', label, undefined)
     ctx.sessionTmp.analyticsScene.viewedEvents.push(+event.id)
 }

@@ -46,7 +46,7 @@ describe('Search', () => {
 
     test('search by ext_id works', async () => {
         const [A] = await syncEventsDb4Test([
-                getMockEvent({ext_id: 'ABC', title: 'event dog 5', eventTime, category: 'movies', rating: 5}),
+                getMockEvent({extId: 'ABC', title: 'event dog 5', eventTime, category: 'movies', rating: 5}),
             ]
         )
         expectedIds([A], await db.repoSearch.searchIds({

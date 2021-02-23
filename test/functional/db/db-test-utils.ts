@@ -2,7 +2,7 @@ import { db } from '../../../src/database/db'
 import { MomentIntervals } from '../../../src/lib/timetable/intervals'
 import { Event, EventCategory, TagLevel2 } from '../../../src/interfaces/app-interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
-import { EventPackForSave } from '../../../src/database/db-packs'
+import { PackToSave } from '../../../src/database/db-packs'
 import { UserSaveData } from '../../../src/database/db-users'
 
 export async function cleanDb() {
@@ -10,7 +10,7 @@ export async function cleanDb() {
 }
 
 export interface MockEvent {
-    ext_id: string
+    extId: string
     title: string
     eventTime: MomentIntervals
     category: EventCategory
@@ -27,6 +27,7 @@ export interface MockEvent {
 
 export interface MockPackForSave {
     title: string
+    extId: string
     description: string
     author: string
     eventTitles: string[]
@@ -35,7 +36,7 @@ export interface MockPackForSave {
 
 
 export function getMockEvent({
-                                 ext_id = '',
+                                 extId = '',
                                  eventTime = [],
                                  title = 'Event title',
                                  category = 'theaters',
@@ -51,7 +52,7 @@ export function getMockEvent({
                              }: Partial<MockEvent> = {}
 ): EventToSave {
     const event: Event = {
-        ext_id: ext_id,
+        extId: extId,
         category: category,
         publish: '',
         title: title,
@@ -88,19 +89,23 @@ export function getMockEvent({
 }
 
 export function getMockPack({
-                                title = 'Event title',
+                                extId = '',
+                                title = extId,
                                 description = 'desc',
                                 author = 'author',
                                 weight = 0,
                                 eventIds = [1],
-                            }: Partial<EventPackForSave> = {}
-): EventPackForSave {
+                            }: Partial<PackToSave['primaryData']> = {}
+): PackToSave {
     return {
-        title,
-        description,
-        author,
-        weight,
-        eventIds,
+        primaryData: {
+            title,
+            extId,
+            description,
+            author,
+            weight,
+            eventIds,
+        }
     }
 }
 
@@ -138,15 +143,15 @@ export function expectedTitlesStrict(titles: string[], events: Pick<Event, 'titl
 
 export async function syncEventsDb4Test(events: EventToSave[]): Promise<number[]> {
     events.forEach((e, i) => {
-        if (e.primaryData.ext_id === '') {
-            e.primaryData.ext_id = 'TEST-' + i
+        if (e.primaryData.extId === '') {
+            e.primaryData.extId = 'TEST-' + i
         }
     })
     const syncDiff = await db.repoSync.syncDatabase(events)
-    if (syncDiff.insertedEvents.length === 0 && syncDiff.notChangedEvents.length > 0) {
-        return syncDiff.notChangedEvents.map(e => +e.primaryData.id)
+    if (syncDiff.inserted.length === 0 && syncDiff.notChanged.length > 0) {
+        return syncDiff.notChanged.map(e => +e.primaryData.id)
     }
-    return syncDiff.insertedEvents.map(e => e.primaryData.id)
+    return syncDiff.inserted.map(e => e.primaryData.id)
 
 }
 
@@ -159,25 +164,30 @@ export async function syncPacksDb4Test(mockPacks: MockPackForSave[]): Promise<nu
             titles: mockPacks.flatMap(p => p.eventTitles)
         })
 
-        const packs = mockPacks.map(p => {
+        const packs: PackToSave[] = mockPacks.map(p => {
             return {
-                ...p,
-                eventIds: p.eventTitles
-                    .map(eventTitle => {
-                        const eventId = tilesAndIds
-                            .filter(tAndId => tAndId.title === eventTitle)
-                        if (eventId.length === 0) {
-                            throw new Error(`Cant find event by ${eventTitle}`)
-                        }
-                        if (eventId.length > 1) {
-                            throw new Error(`More then 1 event with ${eventTitle}`)
-                        }
-                        return +eventId[0].id
-                    }),
+                primaryData: {
+                    ...p,
+                    eventIds: p.eventTitles
+                        .map(eventTitle => {
+                            const eventId = tilesAndIds
+                                .filter(tAndId => tAndId.title === eventTitle)
+                            if (eventId.length === 0) {
+                                throw new Error(`Cant find event by ${eventTitle}`)
+                            }
+                            if (eventId.length > 1) {
+                                throw new Error(`More then 1 event with ${eventTitle}`)
+                            }
+                            return +eventId[0].id
+                        }),
+                }
             }
         })
 
-        return await db.repoPacks.sync(packs, dbTask)
+        const syncDiff = await db.repoPacks.prepareDiffForSync(packs, dbTask)
+        const syncDiffWithIds = await db.repoPacks.syncDiff(syncDiff, dbTask)
+
+        return syncDiffWithIds.inserted.map(i => i.primaryData.id)
     })
 }
 

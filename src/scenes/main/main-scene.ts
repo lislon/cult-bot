@@ -201,7 +201,7 @@ async function showDirectMessage(ctx: ContextMessageUpdate, extId: string) {
         }), extraInlineMenu([likesRow, [startUsingBot]]))
         analyticRecordEventView(ctx, event)
         ctx.ua.pv({
-            dp: `/start-event/${mySlugify(event.ext_id)}`,
+            dp: `/start-event/${mySlugify(event.extId)}`,
             dt: `Прямая ссылка > ${event.title}`
         })
     } else {
@@ -234,8 +234,8 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
     })
 }
 
-export const mainScene = {
+export const mainScene : SceneRegister = {
     scene,
     preStageGlobalActionsFn,
     postStageActionsFn
-} as SceneRegister
+}

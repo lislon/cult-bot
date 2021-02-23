@@ -10,18 +10,11 @@ import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('likes_scene')
 
-const {i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
+const {i18Btn} = i18nSceneHelper(scene)
 
-export function getLikeDislikeButtonText(ctx: ContextMessageUpdate, count: number, type: 'like' | 'dislike') {
-    return i18Btn(ctx, type, {count: count === 0 ? '' : count})
+export function getLikeDislikeButtonText(ctx: ContextMessageUpdate, count: number, type: 'like' | 'dislike'): string {
+    return i18Btn(ctx, type, {count: count === 0 ? '' : count}).trimEnd()
 }
-
-export interface BtnLikeDislikeParams {
-    eventId: number
-    likesCount: number
-    dislikesCount: number
-}
-
 export const LIKES_EVENT_ACTION_PREFIXES = ['like_', 'dislike_', 'favorite_']
 
 export function getLikesRow(ctx: ContextMessageUpdate, event: Pick<Event, 'id' | 'likes' | 'dislikes'>): InlineKeyboardButton.CallbackButton[] {
@@ -32,20 +25,20 @@ export function getLikesRow(ctx: ContextMessageUpdate, event: Pick<Event, 'id' |
     ]
 }
 
-export function isEventInFavorites(ctx: ContextMessageUpdate, eventId: number) {
+export function isEventInFavorites(ctx: ContextMessageUpdate, eventId: number): boolean {
     return ctx.session.user.eventsFavorite.includes(+eventId)
 }
 
-export async function updateLikeDislikeInlineButtons(ctx: ContextCallbackQueryUpdate, dbTask: ITask<IExtensions> & IExtensions, eventId: number) {
+export async function updateLikeDislikeInlineButtons(ctx: ContextCallbackQueryUpdate, dbTask: ITask<IExtensions> & IExtensions, eventId: number): Promise<void> {
     const originalKeyboard = getInlineKeyboardFromCallbackQuery(ctx)
 
     const [likes, dislikes] = await dbTask.repoEventsCommon.getLikesDislikes(eventId)
 
     let newKeyboard = await updateKeyboardButtons(originalKeyboard, /^(like|dislike)_/, (btn) => {
         if (btn.callback_data.startsWith('like_')) {
-            return {...btn, text: i18Btn(ctx, 'like', {count: likes})}
+            return {...btn, text: getLikeDislikeButtonText(ctx, likes, 'like')}
         } else {
-            return {...btn, text: i18Btn(ctx, 'dislike', {count: dislikes})}
+            return {...btn, text: getLikeDislikeButtonText(ctx, dislikes, 'dislike')}
         }
     })
 

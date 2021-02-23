@@ -1,5 +1,4 @@
 import { Telegraf } from 'telegraf'
-import { getGoogleSpreadSheetURL } from './scenes/shared/shared-logic'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import rp from 'request-promise'
 import express, { Request, Response } from 'express'
@@ -7,11 +6,12 @@ import { botConfig } from './util/bot-config'
 import { logger } from './util/logger'
 import { db } from './database/db'
 import { i18n } from './util/i18n'
-import { rawBot } from './bot'
 import { redis } from './util/reddis'
 import { adminIds, adminUsernames } from './util/admins-list'
 import { Event } from './template/Event'
 import ReactDOMServer from 'react-dom/server'
+import { rawBot } from './raw-bot'
+import { initBot } from './bot'
 
 const app = express()
 
@@ -51,24 +51,16 @@ class BotStart {
         return bot.webhookCallback(`/${BotStart.PATH}`)
     }
 
-    private static printDiagnostic() {
-        logger.debug(`google docs db: ${getGoogleSpreadSheetURL()}` );
-        logger.debug(`SUPPORT_FEEDBACK_CHAT_ID=%s`, botConfig.SUPPORT_FEEDBACK_CHAT_ID)
-    }
-
-    public static startDevMode(bot: Telegraf<ContextMessageUpdate>) {
+    public static async startDevMode(bot: Telegraf<ContextMessageUpdate>) {
         logger.info( 'Starting a bot in development mode');
-        BotStart.printDiagnostic()
-
-        rp(`https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook`).then(async () => {
-            return bot.launch()
-        });
+        await rp(`https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook`)
+        await bot.launch()
+        logger.info('Started')
     }
 
     public static async startProdMode(bot: Telegraf<ContextMessageUpdate>) {
         logger.info('Starting a bot in production mode');
         // If webhook not working, check fucking motherfucking UFW that probably blocks a port...
-        BotStart.printDiagnostic()
 
         if (!botConfig.HEROKU_APP_NAME) {
             logger.error('process.env.HEROKU_APP_NAME must be defined to run in PROD')
@@ -106,6 +98,7 @@ if (botConfig.BOT_DISABLED === false) {
     if (botConfig.NODE_ENV === 'development') {
         BotStart.startDevMode(rawBot)
     }
+    initBot(rawBot)
 } else {
     logger.info('Bot is disabled by BOT_DISABLED')
 }

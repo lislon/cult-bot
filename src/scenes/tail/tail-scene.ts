@@ -66,7 +66,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot.use(tail)
 }
 
-export const tailScene = {
+export const tailScene : SceneRegister = {
     scene: undefined,
     postStageActionsFn
-} as SceneRegister
+}

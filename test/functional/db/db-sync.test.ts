@@ -2,7 +2,7 @@ import { db, dbCfg } from '../../../src/database/db'
 import { cleanDb, expectedTitlesStrict, getMockEvent } from './db-test-utils'
 import { date, mkInterval } from '../../lib/timetable/test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
-import { SyncDiff } from '../../../src/database/db-sync-repository'
+import { EventsSyncDiff } from '../../../src/database/db-sync-repository'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
@@ -16,21 +16,21 @@ type ExpectedSyncResults = {
     recovered: string[]
 }
 
-function expectSyncResult(syncResults: SyncDiff, expected: ExpectedSyncResults) {
+function expectSyncResult(syncResults: EventsSyncDiff, expected: ExpectedSyncResults) {
     const actual: ExpectedSyncResults = {
-        created: syncResults.insertedEvents.map(e => e.primaryData.title),
-        notChanged: syncResults.notChangedEvents.map(e => e.primaryData.title),
-        updated: syncResults.updatedEvents.map(e => e.primaryData.title),
-        deleted: syncResults.deletedEvents.map(e => e.title),
-        recovered: syncResults.recoveredEvents.map(e => e.primaryData.title),
+        created: syncResults.inserted.map(e => e.primaryData.title),
+        notChanged: syncResults.notChanged.map(e => e.primaryData.title),
+        updated: syncResults.updated.map(e => e.primaryData.title),
+        deleted: syncResults.deleted.map(e => e.title),
+        recovered: syncResults.recovered.map(e => e.primaryData.title),
     }
     expect(actual).toStrictEqual(expected)
 }
 
-async function syncEvents4SyncTest(events: EventToSave[]): Promise<SyncDiff> {
+async function syncEvents4SyncTest(events: EventToSave[]): Promise<EventsSyncDiff> {
     events.forEach((e, i) => {
-        if (e.primaryData.ext_id === '') {
-            e.primaryData.ext_id = 'TEST-' + i
+        if (e.primaryData.extId === '') {
+            e.primaryData.extId = 'TEST-' + i
         }
     })
     return await db.repoSync.syncDatabase(events)
@@ -132,15 +132,15 @@ describe('db sync test', () => {
     test('3 operations', async () => {
         await cleanDb()
         await syncEvents4SyncTest([
-            getMockEvent({ext_id: 'A', title: 'A', eventTime}),
-            getMockEvent({ext_id: 'B', title: 'B', eventTime}),
-            getMockEvent({ext_id: 'C', title: 'C', eventTime}),
+            getMockEvent({extId: 'A', title: 'A', eventTime}),
+            getMockEvent({extId: 'B', title: 'B', eventTime}),
+            getMockEvent({extId: 'C', title: 'C', eventTime}),
         ])
 
         const sync = await syncEvents4SyncTest([
-            getMockEvent({ext_id: 'A', title: 'A', eventTime}),
-            getMockEvent({ext_id: 'B', title: 'B1', eventTime}),
-            getMockEvent({ext_id: 'D', title: 'D', eventTime}),
+            getMockEvent({extId: 'A', title: 'A', eventTime}),
+            getMockEvent({extId: 'B', title: 'B1', eventTime}),
+            getMockEvent({extId: 'D', title: 'D', eventTime}),
         ])
         expectSyncResult(sync, {
             created: ['D'],
@@ -155,20 +155,20 @@ describe('db sync test', () => {
     test('recovering works', async () => {
         await cleanDb()
         await syncEvents4SyncTest([
-            getMockEvent({ext_id: 'A', title: 'A', eventTime}),
-            getMockEvent({ext_id: 'B', title: 'B', eventTime}),
-            getMockEvent({ext_id: 'C', title: 'C', eventTime}),
+            getMockEvent({extId: 'A', title: 'A', eventTime}),
+            getMockEvent({extId: 'B', title: 'B', eventTime}),
+            getMockEvent({extId: 'C', title: 'C', eventTime}),
         ])
 
         await syncEvents4SyncTest([
-            getMockEvent({ext_id: 'A', title: 'A', eventTime}),
-            getMockEvent({ext_id: 'C', title: 'C', eventTime}),
+            getMockEvent({extId: 'A', title: 'A', eventTime}),
+            getMockEvent({extId: 'C', title: 'C', eventTime}),
         ])
 
         const sync = await syncEvents4SyncTest([
-            getMockEvent({ext_id: 'A', title: 'A1', eventTime}),
-            getMockEvent({ext_id: 'B', title: 'B1', eventTime}),
-            getMockEvent({ext_id: 'C', title: 'C', eventTime}),
+            getMockEvent({extId: 'A', title: 'A1', eventTime}),
+            getMockEvent({extId: 'B', title: 'B1', eventTime}),
+            getMockEvent({extId: 'C', title: 'C', eventTime}),
         ])
 
         expectSyncResult(sync, {
@@ -184,12 +184,12 @@ describe('db sync test', () => {
     test('tags will not be corrupted', async () => {
         await cleanDb()
         await syncEvents4SyncTest([
-            getMockEvent({ext_id: 'A', title: 'A', eventTime, tag_level_1: ['#lisa']}),
+            getMockEvent({extId: 'A', title: 'A', eventTime, tag_level_1: ['#lisa']}),
         ])
         const syncDiff = await syncEvents4SyncTest([
-            getMockEvent({ext_id: 'A', title: 'A', eventTime, tag_level_1: ['#lisa']}),
+            getMockEvent({extId: 'A', title: 'A', eventTime, tag_level_1: ['#lisa']}),
         ])
-        expect(0).toEqual(syncDiff.updatedEvents.length)
+        expect(0).toEqual(syncDiff.updated.length)
     })
 
     test('deleted items will revive', async () => {

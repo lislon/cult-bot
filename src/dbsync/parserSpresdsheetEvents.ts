@@ -44,9 +44,9 @@ function mapRowToColumnObject(row: string[]) {
 }
 
 function validateUnique(excelRows: ExcelRowResult[]) {
-    const uniqueId = countBy(excelRows, (e) => e.data.ext_id)
+    const uniqueId = countBy(excelRows, (e) => e.data.extId)
     excelRows.forEach(row => {
-        if (uniqueId[row.data.ext_id] !== 1) {
+        if (uniqueId[row.data.extId] !== 1) {
             row.errors.extId = [...row.errors.extId, 'ID не уникальный (глобально)']
             row.valid = false
         }
@@ -108,7 +108,7 @@ export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, sp
     return sheetsParsedRows
 }
 
-export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheets, statusCb?: (sheetTitle: string) => Promise<void>): Promise<ExcelParseResult> {
+export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel: Sheets, statusCb?: (sheetTitle: string) => Promise<void>): Promise<ExcelParseResult> {
     const sheetsParsedRows = await parseRawSheetsEventSpreedsheet(excel, botConfig.GOOGLE_DOCS_ID)
     logger.debug('Saving to db...')
 
@@ -187,7 +187,7 @@ export async function parseAndValidateGoogleSpreadsheets(db: BotDb, excel: Sheet
 
                     // debugTimetable(mapped, excelUpdater, sheetId, rowNo)
                 } else {
-                    erroredExtIds.push(mapped.data.ext_id)
+                    erroredExtIds.push(mapped.data.extId)
 
                     // rows.push(mapped.data);
                     excelUpdater.colorCell(sheetId, 'publish', rowNo, 'lightred')

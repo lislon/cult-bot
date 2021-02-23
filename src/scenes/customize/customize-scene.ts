@@ -434,7 +434,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
 }
 
-export const customizeScene = {
+export const customizeScene: SceneRegister = {
     scene,
     postStageActionsFn
-} as SceneRegister
+}

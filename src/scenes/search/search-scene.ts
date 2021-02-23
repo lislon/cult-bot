@@ -70,7 +70,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
 }
 
 
-export const searchScene = {
+export const searchScene : SceneRegister = {
     scene,
     postStageActionsFn
-} as SceneRegister
+}

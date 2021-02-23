@@ -54,7 +54,7 @@ export class CustomizePagerConfig implements SliderConfig<CustomizeFilters> {
 
         // const pageTitle = pageNumber > 1 ? ` [Страница ${pageNumber}]` : ''
         ctx.ua.pv({
-            dp: `/customize/${filtersStr}/p${offset + 1}/${event.ext_id}-${mySlugify(event.title)}/`,
+            dp: `/customize/${filtersStr}/p${offset + 1}/${event.extId}-${mySlugify(event.title)}/`,
             dt: `Подобрать под интересы > ${filtersStrHuman} > ${event.title} [${offset + 1}/${total}]`.trim()
         })
     }

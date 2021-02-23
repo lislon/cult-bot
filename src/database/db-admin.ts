@@ -2,7 +2,7 @@ import { Event, EventCategory, MyInterval } from '../interfaces/app-interfaces'
 import { db } from './db'
 import { mapToPgInterval } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
-import { buildPostgresMd5Expression } from './db-sync-repository'
+import { buildPostgresMd5EventsExpression } from './db-sync-repository'
 import { SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
 
 export class StatByCat {
@@ -29,11 +29,11 @@ export class AdminRepository {
     private snapshotSelectQueryPart = `
         CASE
             WHEN cbs.id IS NULL THEN 'inserted'
-            WHEN (${buildPostgresMd5Expression('cbs')}::TEXT <> ${buildPostgresMd5Expression('cb')}::TEXT) THEN 'updated'
+            WHEN (${buildPostgresMd5EventsExpression('cbs')}::TEXT <> ${buildPostgresMd5EventsExpression('cb')}::TEXT) THEN 'updated'
             ELSE 'unchanged'
         END AS snapshot_status`
 
-    private snapshotWhereQueryPart = `(cbs.id IS NULL OR (${buildPostgresMd5Expression('cbs')}::TEXT <> ${buildPostgresMd5Expression('cb')}::TEXT))`
+    private snapshotWhereQueryPart = `(cbs.id IS NULL OR (${buildPostgresMd5EventsExpression('cbs')}::TEXT <> ${buildPostgresMd5EventsExpression('cb')}::TEXT))`
 
     private snapshotOrderByQueryPart = `
         (CASE

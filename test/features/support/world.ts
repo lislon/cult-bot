@@ -16,6 +16,7 @@ import { searchScene } from '../../../src/scenes/search/search-scene'
 import { botErrorHandler } from '../../../src/util/error-handler'
 import { likesScene } from '../../../src/scenes/likes/likes-scene'
 import { favoritesScene } from '../../../src/scenes/favorites/favorites-scene'
+import { adminScene } from '../../../src/scenes/admin/admin-scene'
 import { performanceMiddleware } from '../../../src/lib/middleware/performance-middleware'
 import { Composer, Middleware, MiddlewareFn, Scenes, session, Telegraf } from 'telegraf'
 
@@ -63,6 +64,7 @@ class CustomWorld {
 
         myRegisterScene(this.bot, stage, [
             mainScene,
+            adminScene,
             customizeScene,
             topsScene,
             feedbackScene,

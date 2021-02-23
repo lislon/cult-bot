@@ -1,5 +1,5 @@
 import { Composer, Markup, Scenes } from 'telegraf'
-import { ContextMessageUpdate, EventCategory, ExtIdAndId } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, EventCategory, ExtIdAndId, ExtIdAndMaybeId } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
 import {
@@ -20,25 +20,25 @@ import { STICKER_CAT_THUMBS_UP } from '../../util/stickers'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import { EventToSave } from '../../interfaces/db-interfaces'
 import { formatMainAdminMenu, formatMessageForSyncReport } from './admin-format'
-import { getButtonsSwitch, menuCats, SYNC_CONFIRM_TIMEOUT_SECONDS, totalValidationErrors } from './admin-common'
-import { EventToRecover, SyncDiff } from '../../database/db-sync-repository'
+import { getButtonsSwitch, menuCats, SYNC_CONFIRM_TIMEOUT_SECONDS, countEventValidationErrors } from './admin-common'
+import { EventsSyncDiff, EventToRecover } from '../../database/db-sync-repository'
 import { ITask } from 'pg-promise'
-import { parseAndValidateGoogleSpreadsheets, SpreadSheetValidationError } from '../../dbsync/parserSpresdsheetEvents'
+import { parseAndValidateGoogleSpreadsheetsEvents, SpreadSheetValidationError } from '../../dbsync/parserSpresdsheetEvents'
 import { authToExcel } from '../../dbsync/googlesheets'
 import {
-    eventPacksEnrichWithIds,
+    enrichPacksSyncDiffWithSavedEventIds,
     EventPackValidated,
-    getOnlyValid,
     prepareForPacksSync
 } from '../../dbsync/packsSyncLogic'
-import { Dictionary, keyBy } from 'lodash'
+import { Dictionary, keyBy, partition } from 'lodash'
 import { AdminPager } from './admin-pager'
 import { PagingPager } from '../shared/paging-pager'
 import { botConfig } from '../../util/bot-config'
 import { adminIds, adminUsernames } from '../../util/admins-list'
 import { i18n } from '../../util/i18n'
-import { rawBot } from '../../bot'
 import { formatUserName2 } from '../../util/misc-utils'
+import { rawBot } from '../../raw-bot'
+import { PacksSyncDiff, PackToSave } from '../../database/db-packs'
 import Timeout = NodeJS.Timeout
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
@@ -54,14 +54,14 @@ export interface AdminSceneState extends AdminSceneQueryState {
     overrideDate?: string
 }
 
-const {actionName, i18SharedBtn, i18Btn, i18Msg} = i18nSceneHelper(scene)
+const {actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 async function replyWithHTMLMaybeChunk(ctx: ContextMessageUpdate, msg: string, extra?: ExtraReplyMessage) {
     return await chunkanize(msg, async (text, msgExtra) => await ctx.replyWithHTML(text, msgExtra), extra)
 }
 
 function listExtIds(eventToSaves: EventToSave[]): string {
-    return eventToSaves.map(z => z.primaryData.ext_id).join(',')
+    return eventToSaves.map(z => z.primaryData.extId).join(',')
 }
 
 function getUserFromCtx(ctx: ContextMessageUpdate): User {
@@ -85,17 +85,49 @@ function getHumanReadableUsername(user: User): string {
     return user.first_name || user.last_name || user.username || user.id + ''
 }
 
-function getExistingIdsFrom(dbDiff: SyncDiff): Dictionary<ExtIdAndId> {
-    const existingIds = [...dbDiff.insertedEvents, ...dbDiff.recoveredEvents, ...dbDiff.updatedEvents, ...dbDiff.notChangedEvents].map(i => {
+function getExistingIdsFrom(eventsDiff: EventsSyncDiff): Dictionary<ExtIdAndId> {
+    const existingIds = [...eventsDiff.inserted, ...eventsDiff.recovered, ...eventsDiff.updated, ...eventsDiff.notChanged].map(i => {
         return {
             id: i.primaryData.id ? +i.primaryData.id : undefined,
-            extId: i.primaryData.ext_id
+            extId: i.primaryData.extId
         }
     })
     return keyBy(existingIds, 'extId')
 }
 
-export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
+function mapValidatedPacksToPacksForSave(eventPacks: EventPackValidated[]): { packsForSave: PackToSave[], unsavedPackEventIds: ExtIdAndMaybeId[] } {
+    const unsavedPackEventIds: ExtIdAndMaybeId[] = []
+
+    function realIdOrNegative(extIdAndMaybeId: ExtIdAndMaybeId) {
+        if (extIdAndMaybeId.id) {
+            return extIdAndMaybeId.id;
+        } else {
+            unsavedPackEventIds.push(extIdAndMaybeId)
+            return -unsavedPackEventIds.length
+        }
+    }
+
+    const packsForSave: PackToSave[] = eventPacks.map(p => {
+        return {
+            primaryData: {
+                ...p.pack,
+                eventIds: p.pack.events.map(realIdOrNegative),
+            }
+        }
+    })
+    return { packsForSave, unsavedPackEventIds }
+}
+
+function shouldUserConfirmSync(eventsDiff: EventsSyncDiff, packsDiff: PacksSyncDiff, packsErrors: EventPackValidated[]): boolean {
+    const countDangers = eventsDiff.deleted.length
+        + eventsDiff.recovered
+            .filter((i: EventToRecover) => i.old.title !== i.primaryData.title).length
+        + packsDiff.deleted.length
+        + packsErrors.length
+    return countDangers > 0
+}
+
+export async function synchronizeDbByUser(ctx: ContextMessageUpdate): Promise<void> {
     const oldUser = GLOBAL_SYNC_STATE.lockOnSync(ctx)
     if (oldUser !== undefined) {
         await ctx.replyWithHTML(i18Msg(ctx, 'sync_is_locked',
@@ -113,7 +145,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 
         await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, 'sync_status_downloading'))
 
-        const syncResult = await parseAndValidateGoogleSpreadsheets(db, excel, async sheetTitle => {
+        const eventsSyncResult = await parseAndValidateGoogleSpreadsheetsEvents(db, excel, async sheetTitle => {
             await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, 'sync_status_processing', {sheetTitle}))
         })
 
@@ -121,27 +153,31 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 
         // const {validationErrors, rows, excelUpdater} = await parseAndValidateGoogleSpreadsheets()
 
-        const {dbDiff, askUserToConfirm, eventPacks} = await db.tx('sync', async (dbTx) => {
+        const {eventsDiff, askUserToConfirm, packsDiff, packsErrors} = await db.tx('sync', async (dbTx) => {
 
-            const dbDiff = await dbTx.repoSync.prepareDiffForSync(syncResult.rawEvents, dbTx)
+            const eventsDiff = await dbTx.repoSync.prepareDiffForSync(eventsSyncResult.rawEvents, dbTx)
 
-            const eventPacks = await prepareForPacksSync(excel, getExistingIdsFrom(dbDiff))
+            const packsAll = await prepareForPacksSync(excel, getExistingIdsFrom(eventsDiff))
+            const [packsValidated, packsErrors] = partition(packsAll.filter(s => s.published), p => p.isValid)
 
-            GLOBAL_SYNC_STATE.chargeEventsSync(dbDiff, eventPacks, syncResult.errors)
+            const { packsForSave, unsavedPackEventIds } = mapValidatedPacksToPacksForSave(packsValidated)
+            const packsDiff = await dbTx.repoPacks.prepareDiffForSync(packsForSave, dbTx)
 
-            const askUserToConfirm = dbDiff.deletedEvents.length
-                + dbDiff.recoveredEvents
-                    .filter((i: EventToRecover) => i.old.title !== i.primaryData.title).length > 0
+
+            GLOBAL_SYNC_STATE.chargeEventsSync(eventsDiff, packsDiff, unsavedPackEventIds, eventsSyncResult.errors, packsErrors)
+
+            const askUserToConfirm = shouldUserConfirmSync(eventsDiff, packsDiff, packsErrors)
 
             if (askUserToConfirm === false) {
                 await GLOBAL_SYNC_STATE.executeSync(dbTx)
             }
-            return {dbDiff, askUserToConfirm, eventPacks}
+
+            return {eventsDiff, askUserToConfirm, packsDiff, packsValidated, packsErrors}
         })
 
         await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, 'sync_status_done'))
 
-        const body = await formatMessageForSyncReport(syncResult.errors, dbDiff, eventPacks, ctx)
+        const body = await formatMessageForSyncReport(eventsSyncResult.errors, packsErrors, eventsDiff, packsDiff, ctx)
         if (askUserToConfirm === true) {
             const keyboard = [[
                 Markup.button.callback(i18Btn(ctx, 'sync_back'), actionName('sync_back')),
@@ -157,11 +193,11 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 
             ctx.logger.info([
                 `Database updated.`,
-                `Insertion done.`,
-                `inserted={${listExtIds(dbDiff.insertedEvents)}}`,
-                `recovered={${listExtIds(dbDiff.recoveredEvents)}}`,
-                `updated={${listExtIds(dbDiff.updatedEvents)}}`,
-                `deleted={${dbDiff.deletedEvents.map(d => d.ext_id).join(',')}}`
+                `Events.`,
+                `inserted={${listExtIds(eventsDiff.inserted)}}`,
+                `recovered={${listExtIds(eventsDiff.recovered)}}`,
+                `updated={${listExtIds(eventsDiff.updated)}}`,
+                `deleted={${eventsDiff.deleted.map(d => d.extId).join(',')}}`
             ].join(' '))
 
             const msg = i18Msg(ctx, `sync_stats_message`, {
@@ -171,11 +207,16 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 
             await replyWithHTMLMaybeChunk(ctx, msg)
 
-            const isSomethingChanged = dbDiff.deletedEvents.length
-                + dbDiff.recoveredEvents.length
-                + dbDiff.insertedEvents.length
-                + dbDiff.updatedEvents.length > 0
-            if (totalValidationErrors(syncResult.errors) === 0 && isSomethingChanged) {
+            const isSomethingChanged = eventsDiff.deleted.length
+                + eventsDiff.recovered.length
+                + eventsDiff.inserted.length
+                + eventsDiff.updated.length
+                + packsDiff.deleted.length
+                + packsDiff.recovered.length
+                + packsDiff.inserted.length
+                + packsDiff.deleted.length
+                > 0
+            if (countEventValidationErrors(eventsSyncResult.errors) + packsErrors.length === 0 && isSomethingChanged) {
                 await sleep(500)
                 await ctx.replyWithSticker(STICKER_CAT_THUMBS_UP)
             }
@@ -192,11 +233,13 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate) {
 
 class GlobalSync {
     private timeoutId: Timeout
-    private syncDiff: SyncDiff
-    private eventPacks: EventPackValidated[]
+    private eventsSyncDiff: EventsSyncDiff
+    private packsSyncDiff: PacksSyncDiff
+    private packsErrors: EventPackValidated[]
     private confirmIdMsg: Message
     private user: User
-    private validationErrors: SpreadSheetValidationError[] = []
+    private eventsErrors: SpreadSheetValidationError[] = []
+    private unsavedPackEventIds: ExtIdAndMaybeId[]
 
     public getStatus() {
         if (this.user === undefined) {
@@ -207,13 +250,14 @@ class GlobalSync {
     }
 
     public async executeSync(dbTx: ITask<IExtensions> & IExtensions) {
-        logger.debug('hasData?', this.syncDiff !== undefined)
+        logger.debug('hasData?', this.eventsSyncDiff !== undefined)
         this.stopOldTimerIfExists()
         try {
-            logger.debug('hasData?', this.syncDiff !== undefined)
-            await dbTx.repoSync.syncDiff(this.syncDiff, dbTx)
-            const eventPackForSaves = eventPacksEnrichWithIds(getOnlyValid(this.eventPacks), getExistingIdsFrom(this.syncDiff))
-            await dbTx.repoPacks.sync(eventPackForSaves)
+            logger.debug('hasData?', this.eventsSyncDiff !== undefined)
+            await dbTx.repoSync.syncDiff(this.eventsSyncDiff, dbTx)
+
+            enrichPacksSyncDiffWithSavedEventIds(this.packsSyncDiff, getExistingIdsFrom(this.eventsSyncDiff), this.unsavedPackEventIds)
+            await dbTx.repoPacks.syncDiff(this.packsSyncDiff, dbTx)
 
             await this.notifyAdminsAboutSync()
 
@@ -230,11 +274,13 @@ class GlobalSync {
     }
 
     private cleanup() {
-        this.syncDiff = undefined
+        this.eventsSyncDiff = undefined
+        this.packsSyncDiff = undefined
+        this.unsavedPackEventIds = undefined
         this.user = undefined
         this.confirmIdMsg = undefined
-        this.eventPacks = undefined
-        this.validationErrors = []
+        this.eventsErrors = []
+        this.packsErrors = []
     }
 
     public isRunning(ctx: ContextMessageUpdate) {
@@ -272,11 +318,13 @@ class GlobalSync {
         return this.user
     }
 
-    chargeEventsSync(dbDiff: SyncDiff, eventPacks: EventPackValidated[], validationErrors: SpreadSheetValidationError[]) {
+    chargeEventsSync(eventsDiff: EventsSyncDiff, packsSyncDiff: PacksSyncDiff, unsavedPackEventIds: ExtIdAndMaybeId[], validationErrors: SpreadSheetValidationError[], packsErrors: EventPackValidated[]) {
         logger.debug('Charge')
-        this.syncDiff = dbDiff
-        this.eventPacks = eventPacks
-        this.validationErrors = validationErrors
+        this.eventsSyncDiff = eventsDiff
+        this.packsSyncDiff = packsSyncDiff
+        this.unsavedPackEventIds = unsavedPackEventIds
+        this.eventsErrors = validationErrors
+        this.packsErrors = packsErrors
     }
 
     saveConfirmIdMessage(msg: Message) {
@@ -292,7 +340,7 @@ class GlobalSync {
         i18n.middleware()(ctx, () => Promise.resolve())
 
         const text = i18n.t('ru', 'scenes.admin_scene.sync_report', {
-            body: await formatMessageForSyncReport(this.validationErrors, this.syncDiff, this.eventPacks, ctx),
+            body: await formatMessageForSyncReport(this.eventsErrors, this.packsErrors, this.eventsSyncDiff, this.packsSyncDiff, ctx),
             rows: await db.repoAdmin.countTotalRows(),
             user: formatUserName2(this.user)
         })
@@ -568,7 +616,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
     bot.use(Composer.optional(ctx => isAdmin(ctx), adminGlobalCommands))
 }
 
-export const adminScene = {
+export const adminScene: SceneRegister = {
     scene,
     postStageActionsFn
-} as SceneRegister
+}

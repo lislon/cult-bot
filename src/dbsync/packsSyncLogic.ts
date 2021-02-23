@@ -1,12 +1,13 @@
 import { EventInPackExcel, EventPackExcel, fetchAndParsePacks, saveValidationErrors } from './parserSpredsheetPacks'
-import { Dictionary } from 'lodash'
+import { countBy, Dictionary } from 'lodash'
 import { sheets_v4 } from 'googleapis'
 import { ExtIdAndId, ExtIdAndMaybeId } from '../interfaces/app-interfaces'
-import { EventPackForSave } from '../database/db-packs'
+import { PacksSyncDiff } from '../database/db-packs'
 
 
 export interface EventPackForSavePrepared {
     title: string
+    extId: string
     description: string
     author: string
     events: ExtIdAndMaybeId[]
@@ -21,6 +22,7 @@ export interface EventPackValidated {
         title: string
         weight: string
         description: string
+        extId: string
         badEvents: BadEvent[]
     }
     isValid: boolean
@@ -31,11 +33,12 @@ interface BadEvent {
     error: string
 }
 
-async function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>): Promise<EventPackValidated> {
+function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>, packExtIds: Dictionary<number>): EventPackValidated {
     const errors: EventPackValidated['errors'] = {
         title: undefined,
         weight: undefined,
         description: undefined,
+        extId: undefined,
         badEvents: []
     }
 
@@ -56,12 +59,16 @@ async function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMayb
     if (p.weight === undefined || isNaN(p.weight)) {
         errors.weight = 'Пустое поле weight'
     }
+    if (packExtIds[p.extId] > 1) {
+        errors.extId = 'Есть событие с таким же ID'
+    }
 
     return {
         published: p.isPublish,
         raw: p,
         pack: {
             title: p.title,
+            extId: p.extId,
             events: p.events.map(e => idByExtId[e.extId]).filter(Boolean),
             author: p.author,
             description: p.description,
@@ -72,21 +79,24 @@ async function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMayb
     }
 }
 
-export function eventPacksEnrichWithIds(eventPacks: EventPackForSavePrepared[], idByExtId: Dictionary<ExtIdAndId>): EventPackForSave[] {
-    return eventPacks.map(pack => {
-        return {
-            title: pack.title,
-            weight: pack.weight,
-            author: pack.author,
-            description: pack.description,
-            eventIds: pack.events.map(({ extId }) => idByExtId[extId].id)
-        }
+export function enrichPacksSyncDiffWithSavedEventIds(packsSync: PacksSyncDiff, idByExtId: Dictionary<ExtIdAndId>, unsavedPackEventIds: ExtIdAndMaybeId[]): void {
+    [...packsSync.inserted, ...packsSync.recovered, ...packsSync.updated].forEach(pack => {
+        pack.primaryData.eventIds = pack.primaryData.eventIds.map(id => {
+            if (id > 0) {
+                return id;
+            } else {
+                const extId = unsavedPackEventIds[-id - 1].extId
+                return idByExtId[extId].id
+            }
+        })
     })
 }
 
 export async function prepareForPacksSync(excel: sheets_v4.Sheets, idByExtId: Dictionary<ExtIdAndMaybeId>): Promise<EventPackValidated[]> {
     const packsSyncResult = await fetchAndParsePacks(excel)
-    const validationResult = await Promise.all(packsSyncResult.packs.map(p => processPack(p, idByExtId)))
+
+    const countByExtId = countBy(packsSyncResult.packs, p => p.extId)
+    const validationResult = packsSyncResult.packs.map(p => processPack(p, idByExtId, countByExtId))
     await saveValidationErrors(excel, validationResult)
     return validationResult
 }

@@ -245,10 +245,10 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         })
 }
 
-export const feedbackScene = {
+export const feedbackScene : SceneRegister = {
     scene,
     postStageActionsFn
-} as SceneRegister
+}
 
 export type IsListening = 'like' | 'dislike' | 'text'
 

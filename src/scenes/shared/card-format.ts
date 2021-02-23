@@ -154,7 +154,7 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
     text += '\n'
     text += `${strikeIfDeleted(escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' ')))}\n`
     if (options.showAdminInfo === true) {
-        text += `<i>${row.ext_id}, ${row.reviewer}, оценка ${row.rating}</i>\n`
+        text += `<i>${row.extId}, ${row.reviewer}, оценка ${row.rating}</i>\n`
     }
 
     return text

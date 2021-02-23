@@ -19,7 +19,7 @@ export const menuCats = [
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
 
-export function totalValidationErrors(errors: SpreadSheetValidationError[]) {
+export function countEventValidationErrors(errors: SpreadSheetValidationError[]) {
     return errors.reduce((total, e) => total + e.extIds.length, 0)
 }
 

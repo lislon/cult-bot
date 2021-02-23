@@ -88,6 +88,7 @@ Given(/^there is packs:$/, async function (table: DataTable) {
 
     const mockPacks = table.hashes().map((row: any) => {
         return {
+            extId: row.title,
             title: row.title,
             author: row.author || 'Test',
             description: row.desc || 'pack desc',

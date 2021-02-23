@@ -183,7 +183,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         .use(pager.middleware())
 }
 
-export const topsScene = {
+export const topsScene : SceneRegister = {
     scene,
     postStageActionsFn
-} as SceneRegister
+}

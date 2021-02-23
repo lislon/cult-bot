@@ -1,15 +1,44 @@
 import { Event, ExtIdAndId, MyInterval } from '../interfaces/app-interfaces'
-import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
-import { ColumnSet, IBaseProtocol, IDatabase, IMain, ITask } from 'pg-promise'
+import {
+    fieldInt,
+    fieldInt8Array,
+    fieldStr,
+    fieldTimestamptzNullable,
+    mapToPgInterval,
+    rangeHalfOpenIntersect
+} from './db-utils'
+import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise'
 import { db, IExtensions } from './db'
 import { zip } from 'lodash'
-import { SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
+import { mapEvent, SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
+import {
+    BaseSyncItemDbRow,
+    BaseSyncItemDeleted,
+    BaseSyncItemToSave,
+    DbSyncCommon,
+    UniversalSyncDiff
+} from './db-sync-common'
 
-export interface EventPackForSave {
+export interface PackToSave extends BaseSyncItemToSave {
+    primaryData: {
+        id?: number
+        extId: string
+        title: string
+        description: string
+        author: string
+        eventIds: number[]
+        weight: number
+    }
+    dateDeleted?: Date | null
+}
+
+export interface PackDb extends BaseSyncItemDbRow {
+    id?: number
+    ext_id: string
     title: string
     description: string
     author: string
-    eventIds: number[]
+    event_ids: number[]
     weight: number
 }
 
@@ -28,38 +57,73 @@ export interface PacksQuery {
     interval: MyInterval
 }
 
+export interface PackRecovered extends PackToSave {
+    old: {
+        title: string
+    }
+}
+
+export interface PackDeleted extends BaseSyncItemDeleted {
+    title: string
+}
+
+export type PacksSyncDiff = UniversalSyncDiff<PackToSave, PackDeleted, PackRecovered>
+
+const packsColumnsDef = [
+    fieldStr('title'),
+    fieldStr('description'),
+    fieldStr('ext_id'),
+    fieldStr('author'),
+    fieldInt8Array('event_ids'),
+    fieldInt('weight'),
+    fieldTimestamptzNullable('updated_at'),
+    fieldTimestamptzNullable('deleted_at'),
+]
+
+
 export class PacksRepository {
     readonly columns: ColumnSet
 
+    readonly syncCommon: DbSyncCommon<PackToSave, PackDeleted, PackRecovered, PackDb>
+
     constructor(private db: IDatabase<any>, private pgp: IMain) {
-        this.columns = new pgp.helpers.ColumnSet([
-            'title',
-            'description',
-            'author',
-            'weight',
-            { name: 'event_ids', cast: '_int8' },
-            ], {table: 'cb_events_packs'})
+        this.columns = new pgp.helpers.ColumnSet(packsColumnsDef, {table: 'cb_events_packs'})
+
+        this.syncCommon = new DbSyncCommon({
+            table: 'cb_events_packs',
+            columnsDef: packsColumnsDef,
+            ignoreColumns: [],
+            mapToDbRow: PacksRepository.mapToDb,
+            deletedAuxColumns: ['title'],
+            recoveredAuxColumns: ['title']
+        }, pgp)
     }
 
-    public async sync(packs: EventPackForSave[], outerDbTx: IBaseProtocol<IExtensions> = db): Promise<number[]> {
-        return await outerDbTx.txIf({reusable: true}, async (dbTx: ITask<IExtensions> & IExtensions) => {
-            await dbTx.none('TRUNCATE cb_events_packs')
-            if (packs.length > 0) {
-                const s = this.pgp.helpers.insert(packs.map(p => {
-                    return {
-                        title: p.title,
-                        description: p.description,
-                        author: p.author,
-                        weight: p.weight,
-                        event_ids: p.eventIds,
-                    }
-                }), this.columns) + ' RETURNING id'
-
-                return await dbTx.map(s, [], r => +r.id)
-            } else {
-                return []
-            }
+    public async syncDatabase(newPacks: PackToSave[]): Promise<PacksSyncDiff> {
+        return await this.db.tx('sync-pack', async (dbTx: ITask<IExtensions>) => {
+            const syncDiff = await this.prepareDiffForSync(newPacks, dbTx)
+            await this.syncDiff(syncDiff, dbTx)
+            return syncDiff
         })
+    }
+
+
+    public async prepareDiffForSync(newEvents: PackToSave[], db: ITask<IExtensions>): Promise<PacksSyncDiff> {
+        return this.syncCommon.prepareDiffForSync(newEvents, db)
+    }
+
+    public async syncDiff(syncDiff: PacksSyncDiff, db: ITask<IExtensions>): Promise<PacksSyncDiff> {
+        return await this.syncCommon.syncDiff(syncDiff, db)
+    }
+
+    private static mapToDb(pack: PackToSave, updatedAt: Date): PackDb {
+        return {
+            ...pack.primaryData,
+            event_ids: pack.primaryData.eventIds,
+            ext_id: pack.primaryData.extId,
+            updated_at: updatedAt,
+            deleted_at: pack.dateDeleted
+        }
     }
 
     public async listPacks(query: PacksQuery): Promise<ScenePack[]> {
@@ -110,7 +174,7 @@ export class PacksRepository {
         `,
             {
                 eventId
-            });
+            }, mapEvent)
     }
 
     public async fetchAllIdsExtIds(): Promise<ExtIdAndId[]> {

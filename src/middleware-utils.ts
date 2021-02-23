@@ -101,9 +101,9 @@ export interface SceneRegister {
     preSceneGlobalActionsFn?: SceneGlobalActionsFn
 }
 
-export const myRegisterScene = (bot: Composer<ContextMessageUpdate>,
+export function myRegisterScene(bot: Composer<ContextMessageUpdate>,
                                 stage: Scenes.Stage<ContextMessageUpdate>,
-                                scenesReg: SceneRegister[]) => {
+                                scenesReg: SceneRegister[]) {
     scenesReg.map(scene => {
         scene.preSceneGlobalActionsFn?.(bot)
     })

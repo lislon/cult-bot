@@ -42,7 +42,7 @@ Feature: Packs scene
     Then Bot edits text '*<b>A</b>*'
     Then Bot edits inline buttons:
       """
-      [◀️] [👍 0] [👎 0] [⭐]
+      [◀️] [👍] [👎] [⭐]
       [«] [1 / 3] [»]
       """
     Then I click inline [◀️]

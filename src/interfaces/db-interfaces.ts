@@ -1,5 +1,6 @@
 import { Event } from './app-interfaces'
 import { EventTimetable, MomentIntervals } from '../lib/timetable/intervals'
+import { BaseSyncItemToSave } from '../database/db-sync-common'
 
 export interface DbEvent {
     category: string
@@ -27,7 +28,7 @@ export interface DbEvent {
     dislikes_fake: number
 }
 
-export interface EventToSave {
+export interface EventToSave extends BaseSyncItemToSave {
     primaryData: Event
     timetable: EventTimetable
     timeIntervals: MomentIntervals

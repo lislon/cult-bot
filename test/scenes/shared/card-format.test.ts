@@ -12,7 +12,7 @@ async function readCard(card: string) {
 }
 
 const defaultEvent: Event = {
-    ext_id: '',
+    extId: '',
     title: 'A',
     category: 'theaters',
     description: 'описание',

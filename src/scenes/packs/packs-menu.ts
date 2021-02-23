@@ -67,7 +67,7 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
     const packTitleNoEmoji = pack.title.replace(emojiRegex(), '').trim()
 
     ctx.ua.pv({
-        dp: `/packs/${mySlugify(packTitleNoEmoji)}/${mySlugify(event.ext_id)}`,
+        dp: `/packs/${mySlugify(packTitleNoEmoji)}/${mySlugify(event.extId)}`,
         dt: `Подборки > ${packTitleNoEmoji} > ${event.title}`
     })
     analyticRecordEventView(ctx, event)

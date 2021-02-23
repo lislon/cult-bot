@@ -5,12 +5,14 @@ import { StatByCat, StatByReviewer } from '../../database/db-admin'
 import { getNextWeekendRange, ruFormat } from '../shared/shared-logic'
 import { db } from '../../database/db'
 import { subSeconds } from 'date-fns'
-import { EventToRecover, SyncDiff } from '../../database/db-sync-repository'
+import { EventsSyncDiff, EventToRecover } from '../../database/db-sync-repository'
 import { EventToSave } from '../../interfaces/db-interfaces'
-import { menuCats, totalValidationErrors } from './admin-common'
+import { countEventValidationErrors, menuCats } from './admin-common'
 import { SpreadSheetValidationError } from '../../dbsync/parserSpresdsheetEvents'
 import { EventPackValidated } from '../../dbsync/packsSyncLogic'
 import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { PackRecovered, PacksSyncDiff, PackToSave } from '../../database/db-packs'
+import emojiRegex from 'emoji-regex'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 
@@ -37,7 +39,7 @@ function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessage
     return btn
 }
 
-export const formatMainAdminMenu = async (ctx: ContextMessageUpdate) => {
+export async function formatMainAdminMenu(ctx: ContextMessageUpdate) {
     const dateRanges = getNextWeekendRange(ctx.now())
 
     return await db.task(async (dbTask) => {
@@ -85,99 +87,161 @@ export const formatMainAdminMenu = async (ctx: ContextMessageUpdate) => {
     })
 }
 
-function formatPacksReport(eventPackValidated: EventPackValidated[], ctx: ContextMessageUpdate) {
-    const countGood = eventPackValidated.filter(e => e.published && e.isValid).length
-    const countBad = eventPackValidated.filter(e => e.published && !e.isValid).length
-    if (countGood > 0 || countBad > 0) {
-        return i18Msg(ctx, `sync_packs_status_${countBad ? 'bad' : 'good'}`, {
-            countGood, countBad
+function formatEventsSyncStatus(ctx: ContextMessageUpdate, eventsDiff: EventsSyncDiff): string[] {
+    const categoryRows = allCategories
+        .map(cat => {
+            const inserted = eventsDiff.inserted.filter(e => e.primaryData.category === cat)
+            const recovered = eventsDiff.recovered.filter(e => e.primaryData.category === cat)
+            const updated = eventsDiff.updated.filter(e => e.primaryData.category === cat)
+            const deleted = eventsDiff.deleted.filter(e => e.category === cat)
+            return {cat, inserted, recovered, updated, deleted}
         })
-    }
-    return ''
+        .filter(({inserted, recovered, updated, deleted}) => {
+            return inserted.length + recovered.length + updated.length + deleted.length > 0
+        })
+        .map(({cat, inserted, updated, recovered, deleted}) => {
+            let rows: string[] = [
+                i18Msg(ctx, `sync_stats_event_cat_header`, {
+                    icon: i18SharedMsg('category_icons.' + cat),
+                    categoryTitle: i18Msg(ctx, 'sync_stats_event_category_titles.' + cat)
+                })
+            ]
+
+            if (inserted.length > 0) {
+                rows = [...rows, ...inserted.map((i: EventToSave) => i18Msg(ctx, 'sync_stats_event_cat_item_inserted', {
+                    ext_id: i.primaryData.extId,
+                    title: i.primaryData.title
+                }))]
+            }
+            if (recovered.length > 0) {
+                rows = [...rows,
+                    ...recovered
+                        .filter((i: EventToRecover) => i.old.title === i.primaryData.title)
+                        .map((i: EventToRecover) => i18Msg(ctx, 'sync_stats_event_cat_item_recovered', {
+                            ext_id: i.primaryData.extId,
+                            title: i.primaryData.title
+                        })),
+                    ...recovered
+                        .filter((i: EventToRecover) => i.old.title !== i.primaryData.title)
+                        .map((i: EventToRecover) => i18Msg(ctx, 'sync_stats_event_cat_item_recovered_warn', {
+                            ext_id: i.primaryData.extId,
+                            title: i.primaryData.title,
+                            oldTitle: i.old.title
+                        }))
+                ]
+            }
+            if (updated.length > 0) {
+                rows = [...rows, ...updated.map((i: EventToSave) => i18Msg(ctx, 'sync_stats_event_cat_item_updated', {
+                    ext_id: i.primaryData.extId,
+                    title: i.primaryData.title
+                }))]
+            }
+            if (deleted.length > 0) {
+                rows = [...rows, ...deleted.map(i => i18Msg(ctx, 'sync_stats_event_cat_item_deleted', {
+                    ext_id: i.extId,
+                    title: i.title
+                }))]
+            }
+            return rows.join('\n') + (rows.length > 0 ? '\n' : '')
+        })
+    return categoryRows;
 }
 
-export async function formatMessageForSyncReport(errors: SpreadSheetValidationError[], syncResult: SyncDiff,
-                                                 eventPackValidated: EventPackValidated[],
-                                                 ctx: ContextMessageUpdate) {
-    const formatBody = () => {
-        const categoryRows = allCategories
-            .map(cat => {
-                const inserted = syncResult.insertedEvents.filter(e => e.primaryData.category === cat)
-                const recovered = syncResult.recoveredEvents.filter(e => e.primaryData.category === cat)
-                const updated = syncResult.updatedEvents.filter(e => e.primaryData.category === cat)
-                const deleted = syncResult.deletedEvents.filter(e => e.category === cat)
-                return {cat, inserted, recovered, updated, deleted}
-            })
-            .filter(({inserted, recovered, updated, deleted}) => {
-                return inserted.length + recovered.length + updated.length + deleted.length > 0
-            })
-            .map(({cat, inserted, updated, recovered, deleted}) => {
-                let rows: string[] = [
-                    i18Msg(ctx, `sync_stats_cat_header`, {
-                        icon: i18SharedMsg('category_icons.' + cat),
-                        categoryTitle: i18Msg(ctx, 'sync_stats_category_titles.' + cat)
-                    })
-                ]
 
-                if (inserted.length > 0) {
-                    rows = [...rows, ...inserted.map((i: EventToSave) => i18Msg(ctx, 'sync_stats_cat_item_inserted', {
-                        ext_id: i.primaryData.ext_id,
-                        title: i.primaryData.title
-                    }))]
-                }
-                if (recovered.length > 0) {
-                    rows = [...rows,
-                        ...recovered
-                            .filter((i: EventToRecover) => i.old.title === i.primaryData.title)
-                            .map((i: EventToRecover) => i18Msg(ctx, 'sync_stats_cat_item_recovered', {
-                                ext_id: i.primaryData.ext_id,
-                                title: i.primaryData.title
-                            })),
-                        ...recovered
-                            .filter((i: EventToRecover) => i.old.title !== i.primaryData.title)
-                            .map((i: EventToRecover) => i18Msg(ctx, 'sync_stats_cat_item_recovered_warn', {
-                                ext_id: i.primaryData.ext_id,
-                                title: i.primaryData.title,
-                                oldTitle: i.old.title
-                            }))
-                    ]
-                }
-                if (updated.length > 0) {
-                    rows = [...rows, ...updated.map((i: EventToSave) => i18Msg(ctx, 'sync_stats_cat_item_updated', {
-                        ext_id: i.primaryData.ext_id,
-                        title: i.primaryData.title
-                    }))]
-                }
-                if (deleted.length > 0) {
-                    rows = [...rows, ...deleted.map(i => i18Msg(ctx, 'sync_stats_cat_item_deleted', {
-                        ext_id: i.ext_id,
-                        title: i.title
-                    }))]
-                }
-                return rows.join('\n') + (rows.length > 0 ? '\n' : '')
-            })
-        const s = categoryRows.join('\n') + '\n'
+function formatPacksSyncStatus(ctx: ContextMessageUpdate, packsDiff: PacksSyncDiff): string[] {
+    const { inserted, recovered, updated, deleted } = packsDiff
 
-        if (categoryRows.length === 0) {
-            return ' - ничего нового'
-        } else {
-            return `\n\n${s}`
-        }
+    let rows: string[] = []
+
+    if (inserted.length > 0) {
+        rows = [...rows, ...inserted.map((i: PackToSave) => i18Msg(ctx, 'sync_stats_pack_inserted', {
+            ext_id: i.primaryData.extId,
+            count: i.primaryData.eventIds.length,
+            title: i.primaryData.title.replace(emojiRegex(), '').trim()
+        }))]
+    }
+    if (recovered.length > 0) {
+        rows = [...rows,
+            ...recovered
+                .filter((i: PackRecovered) => i.old.title === i.primaryData.title)
+                .map((i: PackRecovered) => i18Msg(ctx, 'sync_stats_pack_recovered', {
+                    ext_id: i.primaryData.extId,
+                    count: i.primaryData.eventIds.length,
+                    title: i.primaryData.title.replace(emojiRegex(), '').trim()
+                })),
+            ...recovered
+                .filter((i: PackRecovered) => i.old.title !== i.primaryData.title)
+                .map((i: PackRecovered) => i18Msg(ctx, 'sync_stats_pack_recovered_warn', {
+                    ext_id: i.primaryData.extId,
+                    title: i.primaryData.title.replace(emojiRegex(), '').trim(),
+                    count: i.primaryData.eventIds.length,
+                    oldTitle: i.old.title.replace(emojiRegex(), '').trim()
+                }))
+        ]
+    }
+    if (updated.length > 0) {
+        rows = [...rows, ...updated.map((i: PackToSave) => i18Msg(ctx, 'sync_stats_pack_updated', {
+            ext_id: i.primaryData.extId,
+            count: i.primaryData.eventIds.length,
+            title: i.primaryData.title.replace(emojiRegex(), '').trim()
+        }))]
+    }
+    if (deleted.length > 0) {
+        rows = [...rows, ...deleted.map(i => i18Msg(ctx, 'sync_stats_pack_deleted', {
+            ext_id: i.extId,
+            title: i.title.replace(emojiRegex(), '').trim()
+        }))]
     }
 
-    const formatErrors = () => {
-        return i18Msg(ctx, 'sync_error_title', {
-            totalErrors: totalValidationErrors(errors),
-            errors: errors
+    return rows.length > 0 ? [i18Msg(ctx, 'sync_stats_pack_header'), ...rows] : [];
+}
+
+function formatPackErrors(ctx: ContextMessageUpdate, packErrors: EventPackValidated[]) : string {
+    return packErrors.map(p => i18Msg(ctx, 'sync_packs_error', {
+        title: p.pack.title.replace(emojiRegex(), '').trim(),
+        errors: Object.values([p.errors.extId, p.errors.weight, p.errors.title, p.errors.description, p.errors.badEvents.map(e => e.error)])
+            .filter(v => v !== undefined).map(e => ` - ${e}\n`)
+            .join()
+    })).join('\n')
+}
+
+
+export async function formatMessageForSyncReport(eventsErrors: SpreadSheetValidationError[],
+                                                 packsErrors: EventPackValidated[],
+                                                 eventsDiff: EventsSyncDiff,
+                                                 packsDiff: PacksSyncDiff,
+                                                 ctx: ContextMessageUpdate) {
+    const formatEventErrors = (errors: SpreadSheetValidationError[]) => {
+        return errors
                 .filter(e => e.extIds.length > 0)
                 .map(e => i18Msg(ctx, 'sync_error_row', {
                     sheetName: e.sheetTitle,
                     extIds: e.extIds.join(', ')
                 }))
                 .join('\n')
-        })
     }
 
-    const packsErr = formatPacksReport(eventPackValidated, ctx)
-    return formatBody() + '\n' + (totalValidationErrors(errors) > 0 ? formatErrors() : '✅ 0 Ошибок') + (packsErr ? '\n' + packsErr : '')
+    const eventsRows = formatEventsSyncStatus(ctx, eventsDiff)
+    const packRows = formatPacksSyncStatus(ctx, packsDiff);
+
+
+    const countEventErrors = countEventValidationErrors(eventsErrors)
+
+    const updated = [...eventsRows, ...packRows]
+    const listStr = updated.length > 0 ? updated.join('\n').trim() : 'Ничего нового'
+
+    if (countEventErrors > 0 || packsErrors.length > 0) {
+        const errorsRows = [i18Msg(ctx, 'sync_error_title', { count: countEventErrors + packsErrors.length}), '']
+        if (countEventErrors > 0) {
+            errorsRows.push(formatEventErrors(eventsErrors))
+            errorsRows.push('')
+        }
+        if (packsErrors.length > 0) {
+            errorsRows.push(formatPackErrors(ctx, packsErrors))
+        }
+
+        return `${listStr}\n\n${errorsRows.join('\n')}`
+    } else {
+        return `${listStr}\n\n✅ 0 Ошибок`
+    }
 }

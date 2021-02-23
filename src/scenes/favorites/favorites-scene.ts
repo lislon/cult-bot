@@ -220,7 +220,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
         .use(eventPager.middleware())
 }
 
-export const favoritesScene = {
+export const favoritesScene : SceneRegister = {
     scene,
     postStageActionsFn
-} as SceneRegister
+}

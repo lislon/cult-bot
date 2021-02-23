@@ -8,7 +8,7 @@ export interface AutoIncrementLikeQuery {
     interval: MyInterval
 }
 
-export type LikableEvent = Pick<AdminEvent, 'ext_id' | 'fakeDislikes' | 'id' | 'fakeLikes'>
+export type LikableEvent = Pick<AdminEvent, 'extId' | 'fakeDislikes' | 'id' | 'fakeLikes'>
 
 export class LikesRepository {
     readonly columns: ColumnSet
@@ -40,7 +40,7 @@ export class LikesRepository {
             }, row => {
                 return {
                     id: +row.id,
-                    ext_id: row.ext_id,
+                    extId: row.ext_id,
                     fakeLikes: +row.likes_fake,
                     fakeDislikes: +row.dislikes_fake,
                 }

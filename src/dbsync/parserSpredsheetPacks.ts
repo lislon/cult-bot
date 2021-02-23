@@ -12,6 +12,7 @@ const EXCEL_COLUMNS_PACKS = {
 
 const VERTICAL_ORDER = {
     title: 'Название',
+    id: 'ID',
     isPublish: 'Опубликована:',
     author: 'Куратор',
     description: 'Описание',
@@ -27,6 +28,7 @@ export interface EventInPackExcel {
 
 export interface EventPackExcel {
     title: string
+    extId: string
     description: string
     author: string
     events: EventInPackExcel[]
@@ -76,6 +78,9 @@ export async function saveValidationErrors(excel: Sheets, validatedEvents: Event
         if (errors.weight) {
             markRow('weight', errors.weight)
         }
+        if (errors.extId) {
+            markRow('id', errors.extId)
+        }
     })
 
     await excelUpdater.update(botConfig.GOOGLE_DOCS_ID)
@@ -105,6 +110,7 @@ export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncR
             }
             currentPack = {
                 title: rowValue || undefined,
+                extId: undefined,
                 events: [],
                 description: undefined,
                 author: '',
@@ -121,6 +127,8 @@ export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncR
             currentPack.weight = +rowValue
         } else if (rowLabel === 'Описание') {
             currentPack.description = rowValue
+        } else if (rowLabel === 'ID') {
+            currentPack.extId = '' + rowValue
         } else if (rowValue !== undefined && getEventExtId(rowValue) !== undefined && (rowLabel === 'События' || rowLabel === '')) {
             currentPack.events.push({
                 extId: getEventExtId(rowValue),

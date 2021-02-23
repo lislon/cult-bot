@@ -16,19 +16,19 @@ describe('Packs', () => {
     })
 
     test('sync packs', async () => {
-        await db.repoPacks.sync([getMockPack({title: 'A'})])
+        await db.repoPacks.syncDatabase([getMockPack({extId: 'A'})])
     })
 
     test('packs will be filtered by date', async () => {
         const [aId, bId, cId] = await syncEventsDb4Test([
-            getMockEvent({title: 'A', eventTime}),
-            getMockEvent({title: 'B', eventTime}),
-            getMockEvent({title: 'C', eventTime: eventTimeOutRange}),
+            getMockEvent({extId: 'A', eventTime}),
+            getMockEvent({extId: 'B', eventTime}),
+            getMockEvent({extId: 'C', eventTime: eventTimeOutRange}),
         ])
 
-        await db.repoPacks.sync([
-            getMockPack({title: 'A pack', eventIds: [aId, bId]}),
-            getMockPack({title: 'B back', eventIds: [aId, cId]}),
+        await db.repoPacks.syncDatabase([
+            getMockPack({extId: 'A pack', eventIds: [aId, bId]}),
+            getMockPack({extId: 'B back', eventIds: [aId, cId]}),
         ])
         const list = await db.repoPacks.listPacks({interval: yearRange})
         expectedPacksTitle(['A pack'], list)
@@ -36,11 +36,11 @@ describe('Packs', () => {
 
     test('packs with single event will not be shown', async () => {
         const [aId, bId] = await syncEventsDb4Test([
-            getMockEvent({title: 'A', eventTime}),
+            getMockEvent({extId: 'A', eventTime}),
         ])
 
-        await db.repoPacks.sync([
-            getMockPack({title: 'A pack', eventIds: [aId]})
+        await db.repoPacks.syncDatabase([
+            getMockPack({extId: 'A pack', eventIds: [aId]})
         ])
         const list = await db.repoPacks.listPacks({interval: yearRange})
         expectedPacksTitle([], list)
@@ -54,15 +54,15 @@ describe('Packs', () => {
         const day3 = [mskMoment('2020-01-03 12:00')]
 
         const [A, B, C, D, E] = await syncEventsDb4Test([
-            getMockEvent({title: 'B', eventTime: day2}),
-            getMockEvent({title: 'E', eventTime: day2, anytime: true, rating: 10}),
-            getMockEvent({title: 'D', eventTime: day2, anytime: true, rating: 5}),
-            getMockEvent({title: 'A', eventTime: day1}),
-            getMockEvent({title: 'C', eventTime: day3}),
+            getMockEvent({extId: 'B', eventTime: day2}),
+            getMockEvent({extId: 'E', eventTime: day2, anytime: true, rating: 10}),
+            getMockEvent({extId: 'D', eventTime: day2, anytime: true, rating: 5}),
+            getMockEvent({extId: 'A', eventTime: day1}),
+            getMockEvent({extId: 'C', eventTime: day3}),
         ])
 
-        await db.repoPacks.sync([
-            getMockPack({title: 'A pack', eventIds: [A, B, C, D, E]}),
+        await db.repoPacks.syncDatabase([
+            getMockPack({extId: 'A pack', eventIds: [A, B, C, D, E]}),
         ])
 
         const events = await db.repoPacks.listPacks({ interval: yearRange })
