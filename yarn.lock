@@ -7731,9 +7731,10 @@ telegraf-throttler@^0.5.1:
   dependencies:
     bottleneck "^2.19.5"
 
-"telegraf@git://github.com/lislon/telegraf.git":
-  version "4.0.3"
-  resolved "git://github.com/lislon/telegraf.git#bf0696e442566973c0ddd051631adc44916a96f7"
+telegraf@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/telegraf/-/telegraf-4.1.0.tgz#b20d4aa6acdf6aab3fc054805e87633573f95928"
+  integrity sha512-Kradl4x8QjIWXbpaJYcG2Ts+2HR/C6576iskjowuJK11kvjn+TUxiJg+csPE4qQkfTHFmuCoqBBRwo2SaQsVQg==
   dependencies:
     abort-controller "^3.0.0"
     debug "^4.3.1"
