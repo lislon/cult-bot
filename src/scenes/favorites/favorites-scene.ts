@@ -64,7 +64,7 @@ async function formatListOfFavorites(ctx: ContextMessageUpdate, events: Favorite
             })
         } else {
 
-            const date = event.parsedTimetable.timeIntervals.length === 0 ? '> 2 недель назад' : ruFormat(rightDate(last(event.parsedTimetable.timeIntervals)), 'dd MMMM')
+            const date = event.parsedTimetable.timeIntervals.length === 0 ? 'больше 2 недель назад' : ruFormat(rightDate(last(event.parsedTimetable.timeIntervals)), 'dd MMMM')
 
             return i18Msg(ctx, 'event_item_past', {
                 icon: i18SharedMsg(ctx, 'category_icons.' + event.category),
