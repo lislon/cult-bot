@@ -8,6 +8,8 @@
   ],
   "scripts": {
       "build": "yarn workspaces run build",
+      "test": "yarn workspaces run test",
+      "db:up": "yarn workspace bot run db:up"
   },
   "version": "1.0.0",
   "main": "index.js",
