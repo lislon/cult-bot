@@ -1,0 +1,12 @@
+{
+  "references": [
+    {
+      "path": "./packages/bot"
+    }
+  ],
+  "files": [],
+  "include": [],
+  "exclude": [
+    "**/node_modules"
+  ]
+}ts-jest

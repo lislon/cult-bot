@@ -11,7 +11,6 @@ import {
 import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { MarkupHelper } from './MarkupHelper'
 import { Chat, User } from 'typegram/manage'
-import { True } from 'typegram/alias'
 import { omit } from 'lodash'
 import ServiceMessage = Message.ServiceMessage
 import TextMessage = Message.TextMessage
@@ -254,13 +253,12 @@ export class TelegramMockServer {
             await touchApiMock()
             return Promise.resolve(true)
         }
-        ctx.editMessageReplyMarkup = async (markup?: InlineKeyboardMarkup): Promise<(Update.Edited & Message) | True> => {
+        ctx.editMessageReplyMarkup = async (markup?: InlineKeyboardMarkup): Promise<(Update.Edited & Message) | true> => {
             await touchApiMock()
             const lastReply = this.findLastReply()
 
             if (lastReply === undefined) {
                 throw new Error('was false')
-                return true
             } else {
                 lastReply.extra.reply_markup = markup
                 lastReply.message.reply_markup = markup
@@ -282,7 +280,7 @@ export class TelegramMockServer {
             return result
         }
 
-        ctx.editMessageText = async (text: string, extra?: ExtraEditMessageText): Promise<(Update.Edited & Message.TextMessage) | True> => {
+        ctx.editMessageText = async (text: string, extra?: ExtraEditMessageText): Promise<(Update.Edited & Message.TextMessage) | true> => {
             await touchApiMock()
 
             if (ctx.updateType !== 'callback_query') {

@@ -9,7 +9,13 @@
   "scripts": {
       "build": "yarn workspaces run build",
       "test": "yarn workspaces run test",
-      "db:up": "yarn workspace bot run db:up"
+      "db:up": "yarn workspace bot run db:up",
+      "db:down": "yarn workspace bot run db:down",
+      "db:up-test": "yarn workspace bot run db:up-test",
+      "db:down-test": "yarn workspace bot run db:down-test",
+      "db:new": "yarn workspace bot run db:new",
+      "cron:refresh-events": "yarn workspace bot run cron:refresh-events",
+      "cron:reset-mailing-counters": "yarn workspace bot run cron:reset-mailing-counters "
   },
   "version": "1.0.0",
   "main": "index.js",
