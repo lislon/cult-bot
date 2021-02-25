@@ -9,6 +9,7 @@
     "parse:snapshot": "dotenv ts-node  -r source-map-support/register t/parser.ts -- --snapshot",
     "convert": "dotenv ts-node t/convert.ts",
     "build": "tsc",
+    "test": "tsc --help",
     "dev": "ts-node-dev -r source-map-support/register --respawn --ignore-watch node_modules t/parser.ts --cache-directory dist/ts-node-dev-cache --transpile-only",
     "dev-no-restart": "tsc && nodemon --inspect"
   },
