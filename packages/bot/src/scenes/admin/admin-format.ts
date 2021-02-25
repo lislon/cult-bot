@@ -199,7 +199,7 @@ function formatPacksSyncStatus(ctx: ContextMessageUpdate, packsDiff: PacksSyncDi
 function formatPackErrors(ctx: ContextMessageUpdate, packErrors: EventPackValidated[]) : string {
     return packErrors.map(p => i18Msg(ctx, 'sync_packs_error', {
         title: p.pack.title.replace(emojiRegex(), '').trim(),
-        errors: Object.values([p.errors.extId, p.errors.weight, p.errors.title, p.errors.description, p.errors.badEvents.map(e => e.error)])
+        errors: Object.values([p.errors.extId, p.errors.weight, p.errors.title, p.errors.description, ...p.errors.badEvents.map(e => e.error)])
             .filter(v => v !== undefined).map(e => ` - ${e}\n`)
             .join()
     })).join('\n')

@@ -66,7 +66,7 @@ function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>, 
         errors.weight = 'Пустое поле weight'
     }
     if (packExtIds[p.extId] > 1) {
-        errors.extId = 'Есть событие с таким же ID'
+        errors.extId = `Есть подборка с таким же ID=${p.extId}`
     }
 
     return {
@@ -81,7 +81,7 @@ function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>, 
             weight: p.weight,
         },
         errors,
-        isValid: errors.title === undefined && errors.description === undefined && errors.badEvents.length == 0 && errors.weight === undefined
+        isValid: [errors.title, errors.description, errors.weight, errors.extId].filter(e => e !== undefined).length === 0 && errors.badEvents.length == 0
     }
 }
 
