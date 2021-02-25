@@ -1,9 +1,9 @@
 {
-  "defaultEnv": {"ENV": "NODE_ENV"},
-  "development": {
+  "defaultEnv": {"ENV": "DATABASE_SSL"},
+  "no": {
     "ssl": false
   },
-  "production": {
+  "yes": {
     "ssl":  {
       "rejectUnauthorized": false
     }

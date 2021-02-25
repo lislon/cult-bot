@@ -25,6 +25,7 @@ jobs:
 
     env:
       DATABASE_URL: postgres://cult-test:cult-test@localhost:5434/cult-test
+      DATABASE_SSL: no
 
     steps:
       - uses: actions/checkout@v2
@@ -33,5 +34,5 @@ jobs:
       - run: yarn build
         env:
           CI: true
-      - run: yarn db:up
+      - run: yarn db:up-test
       - run: yarn test

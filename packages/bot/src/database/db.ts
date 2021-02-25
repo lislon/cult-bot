@@ -35,7 +35,7 @@ export type BotDb = IDatabase<IExtensions> & IExtensions;
 const initOptions: IInitOptions<IExtensions> = {
 
     extend(dbEx: BotDb) {
-        dbEx.repoSync = new EventsSyncRepository(dbEx, pgp);
+        dbEx.repoSync = new EventsSyncRepository(dbEx, pgp)
         dbEx.repoCustomEvents = new CustomFilterRepository(dbEx, pgp)
         dbEx.repoTopEvents = new TopEventsRepository(dbEx, pgp)
         dbEx.repoAdmin = new AdminRepository(dbEx, pgp)
@@ -52,7 +52,7 @@ const initOptions: IInitOptions<IExtensions> = {
         // console.log(e.query)
     }
 
-};
+}
 
 
 const pgp: IMain = pg_promise(initOptions)
@@ -61,14 +61,14 @@ export function pgLogVerbose() {
     if (pgMonitor.isAttached()) {
         pgMonitor.detach()
     }
-    pgMonitor.attach(initOptions, undefined);
+    pgMonitor.attach(initOptions, undefined)
 }
 
 export function pgLogOnlyErrors() {
     if (pgMonitor.isAttached()) {
         pgMonitor.detach()
     }
-    pgMonitor.attach(initOptions, ['error']);
+    pgMonitor.attach(initOptions, ['error'])
 }
 
 if (botConfig.NODE_ENV === 'production') {
@@ -91,7 +91,7 @@ pgMonitor.setLog((msg, info) => {
 const dbCfg: IConnectionParameters<pg.IClient> = {
     connectionString: botConfig.DATABASE_URL,
     max: botConfig.DATABASE_MAX_POOL,
-    ssl: botConfig.HEROKU_APP_ID === undefined ? undefined : {rejectUnauthorized: false},
+    ssl: botConfig.DATABASE_SSL === 'yes' ? {rejectUnauthorized: false} : undefined,
 }
 
 const db: BotDb = pgp(dbCfg) // database instance;

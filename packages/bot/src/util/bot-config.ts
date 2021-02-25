@@ -5,6 +5,8 @@ type Envs = 'development' | 'production' | 'test'
 export class BotConfig {
     public DATABASE_URL: string
     public DATABASE_MAX_POOL: number
+    public DATABASE_SSL: 'yes' | 'no'
+
     public GOOGLE_ANALYTICS_ID: string | undefined
     public GOOGLE_ANALYTICS_COUNT_ADMINS: boolean
     public GOOGLE_DOCS_ID: string
@@ -84,6 +86,7 @@ export class BotConfig {
         this.SLIDER_MAX_STATES_SAVED = +envVars.SLIDER_MAX_STATES_SAVED || 5
         this.SLIDER_MAX_IDS_CACHED = +envVars.SLIDER_MAX_IDS_CACHED || 10
         this.SLIDER_INSTA_VIEW = !!envVars.SLIDER_INSTA_VIEW || false
+        this.DATABASE_SSL = envVars.DATABASE_SSL || 'yes'
     }
 }
 
