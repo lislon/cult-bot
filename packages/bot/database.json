@@ -1,10 +1,15 @@
 {
+  "defaultEnv": {"ENV": "NODE_ENV"},
   "development": {
-    "ssl":  {"ENV": "DATABASE_USE_SSL" }
+    "ssl": false
+  },
+  "production": {
+    "ssl":  {
+      "rejectUnauthorized": false
+    }
   },
   "pg": {
-    "driver": "pg",
-    "ENV": "DATABASE_URL"
+    "driver": "pg"
   },
   "sql-file": true
 }
