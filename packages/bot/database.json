@@ -1,8 +1,9 @@
 {
-  "development": {
-  },
   "pg": {
-    "driver": "pg"
+    "ENV": "DATABASE_URL",
+    "addIfNotExists": {
+      "ssl": true
+    }
   },
   "sql-file": true
 }
