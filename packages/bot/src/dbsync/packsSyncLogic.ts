@@ -1,4 +1,10 @@
-import { EventInPackExcel, EventPackExcel, fetchAndParsePacks, saveValidationErrors } from './parserSpredsheetPacks'
+import {
+    EventInPackExcel,
+    EventPackExcel,
+    ExcelPacksSyncResult,
+    fetchAndParsePacks,
+    savePacksValidationErrors
+} from './parserSpredsheetPacks'
 import { countBy, Dictionary } from 'lodash'
 import { sheets_v4 } from 'googleapis'
 import { ExtIdAndId, ExtIdAndMaybeId } from '../interfaces/app-interfaces'
@@ -92,12 +98,10 @@ export function enrichPacksSyncDiffWithSavedEventIds(packsSync: PacksSyncDiff, i
     })
 }
 
-export async function prepareForPacksSync(excel: sheets_v4.Sheets, idByExtId: Dictionary<ExtIdAndMaybeId>): Promise<EventPackValidated[]> {
-    const packsSyncResult = await fetchAndParsePacks(excel)
+export async function validatePacksForSync(packsSyncResult: ExcelPacksSyncResult, idByExtId: Dictionary<ExtIdAndMaybeId>): Promise<EventPackValidated[]> {
 
     const countByExtId = countBy(packsSyncResult.packs, p => p.extId)
     const validationResult = packsSyncResult.packs.map(p => processPack(p, idByExtId, countByExtId))
-    await saveValidationErrors(excel, validationResult)
     return validationResult
 }
 

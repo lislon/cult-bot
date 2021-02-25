@@ -28,7 +28,7 @@ import { authToExcel } from '../../dbsync/googlesheets'
 import {
     enrichPacksSyncDiffWithSavedEventIds,
     EventPackValidated,
-    prepareForPacksSync
+    validatePacksForSync
 } from '../../dbsync/packsSyncLogic'
 import { Dictionary, keyBy, partition } from 'lodash'
 import { AdminPager } from './admin-pager'
@@ -40,6 +40,7 @@ import { formatUserName2 } from '../../util/misc-utils'
 import { rawBot } from '../../raw-bot'
 import { PacksSyncDiff, PackToSave } from '../../database/db-packs'
 import Timeout = NodeJS.Timeout
+import { ExcelPacksSyncResult, fetchAndParsePacks, savePacksValidationErrors } from '../../dbsync/parserSpredsheetPacks'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 
@@ -127,6 +128,14 @@ function shouldUserConfirmSync(eventsDiff: EventsSyncDiff, packsDiff: PacksSyncD
     return countDangers > 0
 }
 
+async function statusUpdate(ctx: ContextMessageUpdate, message: Message.TextMessage, id: string, tplData: any = undefined) {
+    try {
+        await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, id, tplData))
+    } catch (e) {
+        ctx.logger.warn(e)
+    }
+}
+
 export async function synchronizeDbByUser(ctx: ContextMessageUpdate): Promise<void> {
     const oldUser = GLOBAL_SYNC_STATE.lockOnSync(ctx)
     if (oldUser !== undefined) {
@@ -143,24 +152,25 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate): Promise<vo
 
         const excel = await authToExcel()
 
-        await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, 'sync_status_downloading'))
+        await statusUpdate(ctx, message, 'sync_status_downloading')
 
         const eventsSyncResult = await parseAndValidateGoogleSpreadsheetsEvents(db, excel, async sheetTitle => {
+            await statusUpdate(ctx, message, 'sync_status_processing', {sheetTitle})
             await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, 'sync_status_processing', {sheetTitle}))
         })
 
-        await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, 'sync_status_saving'))
+        await statusUpdate(ctx, message, 'sync_status_packs_downloading')
+        const packsSyncResult: ExcelPacksSyncResult = await fetchAndParsePacks(excel)
+        await statusUpdate(ctx, message, 'sync_status_saving')
 
-        // const {validationErrors, rows, excelUpdater} = await parseAndValidateGoogleSpreadsheets()
-
-        const {eventsDiff, askUserToConfirm, packsDiff, packsErrors} = await db.tx('sync', async (dbTx) => {
+        const {eventsDiff, askUserToConfirm, packsDiff, allValidatesPacks, packsErrors} = await db.tx('sync', async (dbTx) => {
 
             const eventsDiff = await dbTx.repoSync.prepareDiffForSync(eventsSyncResult.rawEvents, dbTx)
 
-            const packsAll = await prepareForPacksSync(excel, getExistingIdsFrom(eventsDiff))
-            const [packsValidated, packsErrors] = partition(packsAll.filter(s => s.published), p => p.isValid)
+            const allValidatesPacks = await validatePacksForSync(packsSyncResult, getExistingIdsFrom(eventsDiff))
+            const [packsValid, packsErrors] = partition(allValidatesPacks.filter(s => s.published), p => p.isValid)
 
-            const { packsForSave, unsavedPackEventIds } = mapValidatedPacksToPacksForSave(packsValidated)
+            const { packsForSave, unsavedPackEventIds } = mapValidatedPacksToPacksForSave(packsValid)
             const packsDiff = await dbTx.repoPacks.prepareDiffForSync(packsForSave, dbTx)
 
 
@@ -172,10 +182,12 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate): Promise<vo
                 await GLOBAL_SYNC_STATE.executeSync(dbTx)
             }
 
-            return {eventsDiff, askUserToConfirm, packsDiff, packsValidated, packsErrors}
+            return {eventsDiff, askUserToConfirm, packsDiff, allValidatesPacks, packsErrors}
         })
+        await statusUpdate(ctx, message, 'sync_status_packs_validating')
+        await savePacksValidationErrors(excel, allValidatesPacks)
 
-        await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, 'sync_status_done'))
+        await statusUpdate(ctx, message, 'sync_status_done')
 
         const body = await formatMessageForSyncReport(eventsSyncResult.errors, packsErrors, eventsDiff, packsDiff, ctx)
         if (askUserToConfirm === true) {

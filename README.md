@@ -63,6 +63,8 @@ heroku addons:create -a <app name> heroku-postgresql:hobby-dev
 heroku pg:credentials:url -a <app name> DATABASE
 heroku labs:enable runtime-dyno-metadata -a <app name>
 heroku addons:create heroku-redis:hobby-dev -a <app name>
+heroku buildpacks:add --index 0 heroku/nodejs -a <app name>
+heroku buildpacks:add "https://github.com/blockhq/heroku-buildpack-yarn-workspaces#master" -a <app name>
 ```
 
 
@@ -74,12 +76,18 @@ GOOGLE_DOCS_ID = ??
 TELEGRAM_TOKEN = ??
 NODE_ENV = production
 WEBHOOK_PORT = 443
+DATABASE_SSL = yes
+APP_ROOT = packages/bot
 ```
 
 This env vars will be configured automatically:
 ```
 REDIS_URL
 DATABASE_URL
+HEROKU_APP_NAME
+HEROKU_RELEASE_CREATED_AT
+HEROKU_RELEASE_VERSION
+HEROKU_SLUG_COMMIT
 ```
 
 Use values for SUPPORT_FEEDBACK_CHAT_ID:
@@ -136,7 +144,7 @@ heroku addons:open scheduler -a cult-hub-bot-dev
 
 ### Reset malings
 ```
-heroku run -a cult-hub-bot-<env> -- cron:reset-mailing-counters
+heroku run -a cult-hub-bot-<env> -- yarn cron:reset-mailing-counters
 ```
 
 ### Db migrations

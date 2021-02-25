@@ -46,16 +46,17 @@ const PACKS_SHEET_NAME = 'Подборки'
 
 function getEventExtId(rowValue?: string | number) {
     if (typeof rowValue === 'string') {
-        const match = rowValue?.match(/^(.\d+[A-Z]?)/)
+        const match = rowValue?.match(/^(.\d+[A-Z]?)(\s+|$)/)
         if (match) return match[1]
     }
 }
 
-export async function saveValidationErrors(excel: Sheets, validatedEvents: EventPackValidated[]): Promise<void> {
+export async function savePacksValidationErrors(excel: Sheets, allValidatedEvents: EventPackValidated[]): Promise<void> {
     const excelUpdater = new ExcelUpdater(excel, EXCEL_COLUMNS_PACKS)
 
 
-    validatedEvents.forEach(({ raw, errors }) => {
+    allValidatedEvents.forEach(({raw, errors}, index) => {
+
 
         function markRow(rowName: keyof typeof VERTICAL_ORDER, errorText: string) {
             const rowNumber = raw.rowNumber + Object.keys(VERTICAL_ORDER).indexOf(rowName)
@@ -63,9 +64,10 @@ export async function saveValidationErrors(excel: Sheets, validatedEvents: Event
             excelUpdater.annotateCell(raw.sheetId, 'values', rowNumber, errorText)
         }
 
-        excelUpdater.clearColumnFormat(raw.sheetId, 'values', raw.rowNumber, Object.keys(VERTICAL_ORDER).length + raw.events.length - 1)
+        const numberOfRowsTillNextPack = index === allValidatedEvents.length - 1 ? 10 : (allValidatedEvents[index + 1].raw.rowNumber - raw.rowNumber - 1)
+        excelUpdater.clearColumnFormat(raw.sheetId, 'values', raw.rowNumber, numberOfRowsTillNextPack)
 
-        errors.badEvents.forEach(({ rawEvent, error }) => {
+        errors.badEvents.forEach(({rawEvent, error}) => {
             excelUpdater.colorCell(raw.sheetId, 'values', rawEvent.rowNumber, 'red')
             excelUpdater.annotateCell(raw.sheetId, 'values', rawEvent.rowNumber, error)
         })
@@ -89,20 +91,24 @@ export async function saveValidationErrors(excel: Sheets, validatedEvents: Event
 export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncResult> {
     const packs: EventPackExcel[] = []
 
-    const range = `${PACKS_SHEET_NAME}!A1:AA`;
+    const range = `${PACKS_SHEET_NAME}!A1:AA`
 
     logger.debug(`Loading from excel [${range}]...`)
 
     const [sheetsMetaData, sheetsData] = await Promise.all([
-        excel.spreadsheets.get({ spreadsheetId: botConfig.GOOGLE_DOCS_ID, ranges: [range] }),
-        excel.spreadsheets.values.get({ spreadsheetId: botConfig.GOOGLE_DOCS_ID, range: range, valueRenderOption: 'FORMULA' })
-    ]);
+        excel.spreadsheets.get({spreadsheetId: botConfig.GOOGLE_DOCS_ID, ranges: [range]}),
+        excel.spreadsheets.values.get({
+            spreadsheetId: botConfig.GOOGLE_DOCS_ID,
+            range: range,
+            valueRenderOption: 'FORMULA'
+        })
+    ])
 
     // const excelUpdater = new ExcelUpdater(excel)
 
     let currentPack: EventPackExcel = undefined
 
-    let rowNumber = 0;
+    let rowNumber = 0
     for (const [rowLabel, rowValue] of sheetsData.data.values) {
         if (rowLabel === 'Название') {
             if (currentPack !== undefined) {
@@ -129,9 +135,10 @@ export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncR
             currentPack.description = rowValue
         } else if (rowLabel === 'ID') {
             currentPack.extId = '' + rowValue
-        } else if (rowValue !== undefined && getEventExtId(rowValue) !== undefined && (rowLabel === 'События' || rowLabel === '')) {
+        } else if (rowValue !== undefined && (rowLabel === 'События' || rowLabel === '') && currentPack !== undefined) {
+            const extId = getEventExtId(rowValue)
             currentPack.events.push({
-                extId: getEventExtId(rowValue),
+                extId: extId ?? rowValue,
                 rowNumber,
                 title: rowValue
             })
@@ -142,5 +149,5 @@ export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncR
 
     return {
         packs,
-    };
+    }
 }
