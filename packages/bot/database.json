@@ -1,9 +1,10 @@
 {
+  "development": {
+    "ssl":  {"ENV": "DATABASE_USE_SSL" }
+  },
   "pg": {
-    "ENV": "DATABASE_URL",
-    "addIfNotExists": {
-      "ssl": true
-    }
+    "driver": "pg",
+    "ENV": "DATABASE_URL"
   },
   "sql-file": true
 }
