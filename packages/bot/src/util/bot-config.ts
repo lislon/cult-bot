@@ -1,4 +1,6 @@
 import { config } from 'dotenv'
+import Bottleneck from "bottleneck"
+import { ThrottlerOptions } from 'telegraf-throttler'
 
 type Envs = 'development' | 'production' | 'test'
 
@@ -36,6 +38,20 @@ export class BotConfig {
     public SLIDER_MAX_IDS_CACHED: number
     public SLIDER_INSTA_VIEW: boolean
 
+    // https://www.npmjs.com/package/telegraf-throttler
+    public THROTTLE_IN_HIGH_WATER?: number
+    public THROTTLE_IN_MAX_CONCURRENT?: number
+    public THROTTLE_IN_MIN_TIME?: number
+    public THROTTLE_IN_RESERVOIR?: number
+    public THROTTLE_IN_REFRESH_AMOUNT?: number
+    public THROTTLE_IN_REFRESH_INTERVAL?: number
+
+    public THROTTLE_OUT_HIGH_WATER?: number
+    public THROTTLE_OUT_MAX_CONCURRENT?: number
+    public THROTTLE_OUT_MIN_TIME?: number
+    public THROTTLE_OUT_RESERVOIR?: number
+    public THROTTLE_OUT_REFRESH_AMOUNT?: number
+    public THROTTLE_OUT_REFRESH_INTERVAL?: number
 
     /**
      * Chat used to receive user feedback and send reply to it.
@@ -87,6 +103,55 @@ export class BotConfig {
         this.SLIDER_MAX_IDS_CACHED = +envVars.SLIDER_MAX_IDS_CACHED || 10
         this.SLIDER_INSTA_VIEW = !!envVars.SLIDER_INSTA_VIEW || false
         this.DATABASE_SSL = envVars.DATABASE_SSL || 'yes'
+
+        const number = (key: unknown, defaultValue: number|undefined): void => {
+            if (envVars.key === undefined) {
+                // @ts-expect-error: Later
+                this[key] = defaultValue
+            } else if (envVars.key === '') {
+                // @ts-expect-error: Later
+                this[key] = undefined
+            } else {
+                // @ts-expect-error: Later
+                this[key] = +envVars.key
+            }
+        }
+
+        number('THROTTLE_IN_HIGH_WATER', 3)             // Trigger strategy if throttler is not ready for a new job
+        number('THROTTLE_IN_MAX_CONCURRENT', 1)         // Only 1 job at a time
+        number('THROTTLE_IN_MIN_TIME', 333)             // Wait this many milliseconds to be ready, after a job
+        number('THROTTLE_IN_RESERVOIR', undefined)
+        number('THROTTLE_IN_REFRESH_AMOUNT', undefined)
+        number('THROTTLE_IN_REFRESH_INTERVAL', undefined)
+
+        number('THROTTLE_OUT_HIGH_WATER', undefined)
+        number('THROTTLE_OUT_MAX_CONCURRENT', undefined)
+        number('THROTTLE_OUT_MIN_TIME', 25)               // Wait this many milliseconds to be ready, after a job
+        number('THROTTLE_OUT_RESERVOIR', 30)              // Number of new jobs that throttler will accept at start
+        number('THROTTLE_OUT_REFRESH_AMOUNT', 30)         // Number of jobs that throttler will accept after refresh
+        number('THROTTLE_OUT_REFRESH_INTERVAL', 1000)     // Interval in milliseconds where reservoir will refresh
+    }
+
+    get throttlerOptions(): ThrottlerOptions {
+        return {
+            in: {
+                highWater: this.THROTTLE_IN_HIGH_WATER,
+                maxConcurrent: this.THROTTLE_IN_MAX_CONCURRENT,
+                minTime: this.THROTTLE_IN_MIN_TIME,
+                reservoir: this.THROTTLE_IN_RESERVOIR,
+                reservoirRefreshAmount: this.THROTTLE_IN_REFRESH_AMOUNT,
+                reservoirRefreshInterval: this.THROTTLE_IN_REFRESH_INTERVAL,
+                strategy: Bottleneck.strategy.LEAK,
+            },
+            out: {
+                highWater: this.THROTTLE_OUT_HIGH_WATER,
+                maxConcurrent: this.THROTTLE_OUT_MAX_CONCURRENT,
+                minTime: this.THROTTLE_OUT_MIN_TIME,
+                reservoir: this.THROTTLE_OUT_RESERVOIR,
+                reservoirRefreshAmount: this.THROTTLE_OUT_REFRESH_AMOUNT,
+                reservoirRefreshInterval: this.THROTTLE_OUT_REFRESH_INTERVAL,
+            }
+        }
     }
 }
 

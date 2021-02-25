@@ -17,6 +17,7 @@ import { filterOnlyFeedbackChat } from './lib/middleware/support-feedback.middle
 import { botErrorHandler } from './util/error-handler'
 import { likesScene } from './scenes/likes/likes-scene'
 import { favoritesScene } from './scenes/favorites/favorites-scene'
+import { botConfig } from './util/bot-config'
 
 logger.info(`starting bot...`);
 
@@ -32,7 +33,7 @@ bot
     .use(middlewares.i18n)
     .use(middlewares.loggerInject)
     .use(middlewares.logger)
-    .use(middlewares.telegrafThrottler())
+    .use(middlewares.telegrafThrottler(botConfig.throttlerOptions))
     .use(middlewares.session)
     .use(middlewares.sessionTmp)
     // .use(middlewares.logMiddleware('session'))
