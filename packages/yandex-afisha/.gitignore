@@ -23,6 +23,3 @@ dump
 dist.zip
 /report.*.json
 *.log
-
-# TypeScript incremental compilation cache
-*.tsbuildinfo

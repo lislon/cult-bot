@@ -123,6 +123,7 @@ heroku run -a cult-hub-bot-<env> -- yarn db:down
 ```
 
 heroku container:run web bash
+heroku run bash
 
 
 ### Cron setup

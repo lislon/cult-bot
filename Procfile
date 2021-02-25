@@ -1,2 +1,2 @@
-release: yarn workspace bot run db:up
-web: yarn workspace bot run start
+release: yarn run db:up
+web: yarn run start
