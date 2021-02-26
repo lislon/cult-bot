@@ -48,7 +48,7 @@ tail
     .hears('hi', (ctx) => ctx.reply('Hey there'))
     .use(backButtonsCatch)
     .hears(/.+/, async (ctx) => {
-        await ctx.replyWithHTML('Введена непонятная команда. Вернемся вначало? /menu')
+        await ctx.replyWithHTML(ctx.i18n.t('root.bad_text'))
         ctx.logger.warn(`@${ctx.from.username} (id=${ctx.from.id}): [text=${ctx.message.text}] Введена непонятная команда`)
     })
     .action('go_to_main', async (ctx) => {

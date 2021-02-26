@@ -246,19 +246,3 @@ In IDEA:
 - args: `--transpile-only`
 - path to ts script
 
-
-# Upgrade DB plan (hobby-dev -> hobby-basic)
-
-```
-heroku addons:create heroku-postgresql:hobby-basic -a cult-hub-bot-dev
-heroku pg:wait -a cult-hub-bot-dev
-# Created postgresql-flexible-85900 as HEROKU_POSTGRESQL_SILVER_URL
-heroku ps:scale web=0
-heroku maintenance:on
-heroku pg:copy DATABASE_URL HEROKU_POSTGRESQL_SILVER_URL --confirm cult-hub-bot-dev -a cult-hub-bot-dev
-heroku pg:promote HEROKU_POSTGRESQL_SILVER_URL -a cult-hub-bot-dev
-heroku ps:scale web=1 -a cult-hub-bot-dev
-heroku maintenance:off -a cult-hub-bot-dev
-heroku pg:info -a cult-hub-bot-dev
-heroku addons:destroy HEROKU_POSTGRESQL_AQUA_URL -a cult-hub-bot-dev --
-```

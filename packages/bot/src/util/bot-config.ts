@@ -1,5 +1,5 @@
 import { config } from 'dotenv'
-import Bottleneck from "bottleneck"
+import Bottleneck from 'bottleneck'
 import { ThrottlerOptions } from 'telegraf-throttler'
 
 type Envs = 'development' | 'production' | 'test'
