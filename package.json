@@ -1,25 +1,33 @@
 {
   "name": "culthub",
   "private": true,
-  "devDependencies": {
-  },
   "workspaces": [
-    "packages/*"
+    "packages/google-docs",
+    "packages/yandex-afisha",
+    "packages/bot"
   ],
   "scripts": {
-      "build": "yarn workspaces run build",
-      "test": "yarn workspaces run test",
-      "db:up": "yarn workspace bot run db:up",
-      "db:down": "yarn workspace bot run db:down",
-      "db:up-test": "yarn workspace bot run db:up-test",
-      "db:down-test": "yarn workspace bot run db:down-test",
-      "db:new": "yarn workspace bot run db:new",
-      "cron:refresh-events": "yarn workspace bot run cron:refresh-events",
-      "cron:reset-mailing-counters": "yarn workspace bot run cron:reset-mailing-counters "
+    "build": "yarn workspaces run build",
+    "test": "yarn workspaces run test",
+    "db:up": "yarn workspace bot run db:up",
+    "db:down": "yarn workspace bot run db:down",
+    "db:up-test": "yarn workspace bot run db:up-test",
+    "db:down-test": "yarn workspace bot run db:down-test",
+    "db:new": "yarn workspace bot run db:new",
+    "cron:refresh-events": "yarn workspace bot run cron:refresh-events",
+    "cron:reset-mailing-counters": "yarn workspace bot run cron:reset-mailing-counters "
   },
   "version": "1.0.0",
   "main": "index.js",
   "repository": "https://github.com/lislon/cult-bot",
   "author": "Igor Golovin <lislon@mail.ru>",
-  "license": "private"
+  "license": "private",
+  "devDependencies": {
+    "@types/jest": "^26.0.14",
+    "@typescript-eslint/eslint-plugin": "4.15.2",
+    "@typescript-eslint/parser": "4.15.1",
+    "typescript": "^4.1.5",
+    "dotenv-cli": "^4.0.0",
+    "eslint": "7.20.0"
+  }
 }

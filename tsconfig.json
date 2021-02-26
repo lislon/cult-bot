@@ -2,6 +2,9 @@
   "references": [
     {
       "path": "./packages/bot"
+    },
+    {
+      "path": "./packages/google-docs"
     }
   ],
   "files": [],

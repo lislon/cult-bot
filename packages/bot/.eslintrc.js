@@ -1,10 +1,13 @@
 module.exports = {
-    root: true,
     parser: '@typescript-eslint/parser',
     plugins: [
         '@typescript-eslint',
         'jest'
     ],
+    rules: {
+        "no-misleading-character-class": "warn",
+        "@typescript-eslint/no-unused-vars": "off"
+    },
     extends: [
         'eslint:recommended',
         'plugin:@typescript-eslint/recommended',
@@ -12,9 +15,4 @@ module.exports = {
         // 'prettier',
         // 'prettier/@typescript-eslint'
     ],
-    "env": {
-        "browser": true,
-        "es6": true,
-        "node": true
-    }
 };

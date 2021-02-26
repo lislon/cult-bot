@@ -17,7 +17,7 @@ import { isEqual, parseISO } from 'date-fns'
 import { botConfig } from '../util/bot-config'
 import { logger } from '../util/logger'
 import { countBy, last } from 'lodash'
-import { ExcelUpdater } from './ExcelUpdater'
+import { ExcelUpdater } from '@culthub/google-docs'
 import Sheets = sheets_v4.Sheets
 
 export interface SpreadSheetValidationError {

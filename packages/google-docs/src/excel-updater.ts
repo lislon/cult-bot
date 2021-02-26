@@ -1,6 +1,5 @@
 import { sheets_v4 } from 'googleapis'
 import { CellColor, mkAnnotateCell, mkClearFormat, mkColorCell, mkEditCellDate, mkEditCellValue } from './googlesheets'
-import { botConfig } from '../util/bot-config'
 import Schema$Request = sheets_v4.Schema$Request
 
 type StringKeysOf<TObj> = { [K in keyof TObj]: K extends string ? K : never }[keyof TObj]
@@ -19,7 +18,7 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
         return Object.keys(this.columns).indexOf(column) + 1
     }
 
-    clearColumnFormat(sheetId: number, column: K, startRow: number, numOfRows: number) {
+    clearColumnFormat(sheetId: number, column: K, startRow: number, numOfRows: number): void {
         this.requests.push(mkClearFormat(sheetId, {
             startColumnIndex: this.getColumnIndex(column) - 1,
             endColumnIndex: this.getColumnIndex(column),
@@ -28,26 +27,26 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
         }))
     }
 
-    colorCell(sheetId: number, column: K, rowNo: number, color: CellColor) {
+    colorCell(sheetId: number, column: K, rowNo: number, color: CellColor): void {
         this.requests.push(mkColorCell(sheetId, color, this.getColumnIndex(column), rowNo))
     }
 
-    annotateCell(sheetId: number, column: K, rowNo: number, note: string) {
+    annotateCell(sheetId: number, column: K, rowNo: number, note: string): void {
         this.requests.push(mkAnnotateCell(sheetId, note, this.getColumnIndex(column), rowNo))
     }
 
-    async update(spreadsheetId: string = botConfig.GOOGLE_DOCS_ID) {
+    async update(spreadsheetId: string): Promise<void> {
         await this.excel.spreadsheets.batchUpdate({
             spreadsheetId,
             requestBody: {requests: this.requests}
         })
     }
 
-    editCellDate(sheetId: number, column: K, rowNo: number, value: Date) {
+    editCellDate(sheetId: number, column: K, rowNo: number, value: Date): void {
         this.requests.push(mkEditCellDate(sheetId, value, this.getColumnIndex(column), rowNo))
     }
 
-    editCellValue(sheetId: number, column: K, rowNo: number, value: string) {
+    editCellValue(sheetId: number, column: K, rowNo: number, value: string): void {
         this.requests.push(mkEditCellValue(sheetId, value, this.getColumnIndex(column), rowNo))
     }
 }

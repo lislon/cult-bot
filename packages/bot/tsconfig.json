@@ -7,7 +7,8 @@
       "../../node_modules/@types",
       "./node_modules/@types",
       "./src/types"
-    ]
+    ],
+    "strictNullChecks": false
   },
   "include": ["src/**/*", "src/locales/*.json"]
 }
