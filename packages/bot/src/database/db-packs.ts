@@ -148,6 +148,7 @@ export class PacksRepository {
                 WHERE cb.deleted_at IS NULL
                 ORDER BY cb.is_anytime ASC, cbet.first_entrance ASC, cb.rating DESC, cb.title ASC
             ) pe on (pe.id = any(p.event_ids))
+            WHERE p.deleted_at IS NULL
             GROUP BY p.id
             HAVING COUNT(pe.id) >= 2
             ORDER BY p.weight ASC, p.title ASC
@@ -169,8 +170,7 @@ export class PacksRepository {
         return await db.one(`
             SELECT ${SELECT_ALL_EVENTS_FIELDS}
             FROM cb_events cb
-            WHERE cb.id = $(eventId)
-                  AND cb.deleted_at IS NULL
+            WHERE cb.id = $(eventId) AND cb.deleted_at IS NULL
         `,
             {
                 eventId
