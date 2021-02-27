@@ -1,9 +1,5 @@
 import { Event, ExtIdAndId, MyInterval } from '../interfaces/app-interfaces'
 import {
-    fieldInt,
-    fieldInt8Array,
-    fieldStr,
-    fieldTimestamptzNullable,
     mapToPgInterval,
     rangeHalfOpenIntersect
 } from './db-utils'
@@ -14,10 +10,11 @@ import { mapEvent, SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
 import {
     BaseSyncItemDbRow,
     BaseSyncItemDeleted,
-    BaseSyncItemToSave,
-    DbSyncCommon,
+    BaseSyncItemToSave, SyncConfig,
+    UniversalDbSync,
     UniversalSyncDiff
-} from './db-sync-common'
+} from '@culthub/universal-db-sync'
+import { fieldInt, fieldInt8Array, fieldStr, fieldTimestamptzNullable } from '@culthub/pg-utils'
 
 export interface PackToSave extends BaseSyncItemToSave {
     primaryData: {
@@ -84,19 +81,20 @@ const packsColumnsDef = [
 export class PacksRepository {
     readonly columns: ColumnSet
 
-    readonly syncCommon: DbSyncCommon<PackToSave, PackDeleted, PackRecovered, PackDb>
+    readonly syncCommon: UniversalDbSync<PackToSave, PackDeleted, PackRecovered, PackDb>
 
     constructor(private db: IDatabase<any>, private pgp: IMain) {
         this.columns = new pgp.helpers.ColumnSet(packsColumnsDef, {table: 'cb_events_packs'})
 
-        this.syncCommon = new DbSyncCommon({
+        const cfg: SyncConfig<PackToSave, PackDb> = {
             table: 'cb_events_packs',
             columnsDef: packsColumnsDef,
             ignoreColumns: [],
             mapToDbRow: PacksRepository.mapToDb,
             deletedAuxColumns: ['title'],
             recoveredAuxColumns: ['title']
-        }, pgp)
+        }
+        this.syncCommon = new UniversalDbSync(cfg, pgp)
     }
 
     public async syncDatabase(newPacks: PackToSave[]): Promise<PacksSyncDiff> {

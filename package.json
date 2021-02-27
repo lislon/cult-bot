@@ -2,6 +2,8 @@
   "name": "culthub",
   "private": true,
   "workspaces": [
+    "packages/pg-utils",
+    "packages/universal-db-sync",
     "packages/google-docs",
     "packages/yandex-afisha",
     "packages/bot"

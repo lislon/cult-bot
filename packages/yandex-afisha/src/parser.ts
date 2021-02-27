@@ -3,6 +3,8 @@ import * as fs from "fs";
 import {ParseType} from "./interfaces";
 import {dates} from "./settings";
 
+
+
 const allData: any[][] = []
 
 
@@ -23,7 +25,7 @@ fs.mkdirSync('data', { recursive: true })
 
 const c = new Crawler({
     maxConnections: 1,
-    rateLimit: 67000,
+    rateLimit: 17 * 1000,
     // This will be called for each crawled page
     callback: function (error: Error, res: CrawlerRequestResponse, done: any) {
         if (error) {

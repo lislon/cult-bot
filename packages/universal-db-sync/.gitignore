@@ -15,7 +15,8 @@ node_modules
 Thumbs.db
 
 # Ignore built ts files
-dist/**/*
+/dist/**/*
+/typings/
 
 # Other
 debug.log
@@ -23,10 +24,3 @@ dump
 dist.zip
 /report.*.json
 *.log
-
-# TypeScript incremental compilation cache
-*.tsbuildinfo
-/packages/*/dist/
-/packages/*/typings/
-
-data

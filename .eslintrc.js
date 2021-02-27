@@ -5,6 +5,14 @@ module.exports = {
         '@typescript-eslint',
         'jest'
     ],
+    ignorePatterns: [
+        '/packages/*/dist/',
+        '/packages/*/docs/',
+        '/packages/*/typings/',
+        '/packages/*/migrations/',
+        '/packages/*/**/*.js',
+        '/packages/bot/test/',
+    ],
     extends: [
         'eslint:recommended',
         'plugin:@typescript-eslint/recommended',

@@ -49,4 +49,41 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
     editCellValue(sheetId: number, column: K, rowNo: number, value: string): void {
         this.requests.push(mkEditCellValue(sheetId, value, this.getColumnIndex(column), rowNo))
     }
+
+    addSheet(title: string): void {
+        this.requests.push({
+            addSheet: {
+                properties: {
+                    title: title,
+                    // gridProperties: {
+                    //     rowCount: 20,
+                    //     columnCount: 12
+                    // },
+                    // tabColor: {
+                    //     red: 1.0,
+                    //     green: 0.3,
+                    //     blue: 0.4
+                    // }
+                }
+            }
+        })
+    }
+
+
+    async updateValues(spreadsheetId: string, title: string, values: string[][]): Promise<void> {
+        await this.excel.spreadsheets.values.update({
+                // The A1 notation of the values to update.
+                range: `${title}!A1:AA`,
+                spreadsheetId: spreadsheetId,
+                valueInputOption: 'USER_ENTERED',
+
+                // Request body metadata
+                requestBody: {
+                    "majorDimension": "ROWS",
+                    // "range": "A1:B2",
+                    "values": values,
+                }
+            }
+        )
+    }
 }

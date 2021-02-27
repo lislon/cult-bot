@@ -3,8 +3,8 @@ import { encodeTagsLevel1 } from '../util/tag-level1-encoder'
 import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise'
 import { db, IExtensions } from './db'
 import { MomentIntervals } from '../lib/timetable/intervals'
-import { fieldInt, fieldStr, fieldTextArray, fieldTimestamptzNullable } from './db-utils'
-import { BaseSyncItemDeleted, DbSyncCommon, UniversalSyncDiff } from './db-sync-common'
+import { BaseSyncItemDeleted, SyncConfig, UniversalDbSync, UniversalSyncDiff } from '@culthub/universal-db-sync'
+import { fieldInt, fieldStr, fieldTextArray, fieldTimestamptzNullable } from '@culthub/pg-utils'
 
 function generateRandomOrder() {
     return Math.ceil(Math.random() * 1000000)
@@ -83,20 +83,21 @@ export const eventColumnsDef = [
 export class EventsSyncRepository {
     readonly dbColIntervals: ColumnSet
     readonly dbColEvents: ColumnSet
-    readonly syncCommon: DbSyncCommon<EventToSave, DeletedEvent, EventToRecover, DbEvent>
+    readonly syncCommon: UniversalDbSync<EventToSave, DeletedEvent, EventToRecover, DbEvent>
 
     constructor(private db: IDatabase<any>, private pgp: IMain) {
         this.dbColIntervals = new pgp.helpers.ColumnSet(['event_id', 'entrance'], {table: 'cb_events_entrance_times'})
         this.dbColEvents = new pgp.helpers.ColumnSet(eventColumnsDef, {table: 'cb_events'})
 
-        this.syncCommon = new DbSyncCommon({
+        const cfg: SyncConfig<EventToSave, DbEvent> = {
             table: 'cb_events',
             columnsDef: eventColumnsDef,
             ignoreColumns: MD5_IGNORE,
             mapToDbRow: EventsSyncRepository.mapToDb,
             deletedAuxColumns: ['category', 'title'],
             recoveredAuxColumns: ['title']
-        }, pgp)
+        }
+        this.syncCommon = new UniversalDbSync(cfg, pgp)
     }
 
     public async syncDatabase(newEvents: EventToSave[]): Promise<EventsSyncDiff> {

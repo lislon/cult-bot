@@ -3,11 +3,9 @@
   "compilerOptions": {
     "rootDir": "src/",
     "outDir": "dist/",
-    "esModuleInterop": true,
     "composite": true,
     "declaration": true,
     "declarationMap": true,
-    "strictNullChecks": true,
     "declarationDir": "typings/",
     "tsBuildInfoFile": "typings/tsconfig.tsbuildinfo",
     "typeRoots": [

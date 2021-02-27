@@ -1,10 +1,19 @@
 {
   "references": [
     {
-      "path": "./packages/bot"
+      "path": "./packages/pg-utils"
+    },
+    {
+      "path": "./packages/universal-db-sync"
     },
     {
       "path": "./packages/google-docs"
+    },
+    {
+      "path": "./packages/bot"
+    },
+    {
+      "path": "./packages/yandex-afisha"
     }
   ],
   "files": [],

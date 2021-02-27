@@ -12,6 +12,6 @@ const ruDateFormat: {
     weekStartsOn: 1
 }
 
-export function ruFormat(date: Date | number, pattern: string) {
+export function ruFormat(date: Date | number, pattern: string): string {
     return format(date, pattern, ruDateFormat)
 }

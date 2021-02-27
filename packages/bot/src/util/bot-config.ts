@@ -56,6 +56,8 @@ export class BotConfig {
     public SCHEDULE_WEEKS_AGO: number
     public SCHEDULE_WEEKS_AHEAD: number
 
+    public YANDEX_AFISHA_URL?: string
+
     /**
      * Chat used to receive user feedback and send reply to it.
      */
@@ -69,6 +71,7 @@ export class BotConfig {
     public setFromKeyValue(envVars: any) {
         this.DATABASE_URL = envVars.DATABASE_URL
         this.DATABASE_MAX_POOL = envVars.DATABASE_MAX_POOL === undefined ? 18 : +envVars.DATABASE_MAX_POOL
+        this.DATABASE_SSL = envVars.DATABASE_SSL || 'yes'
 
         this.GOOGLE_ANALYTICS_ID = envVars.GOOGLE_ANALYTICS_ID
         this.GOOGLE_ANALYTICS_COUNT_ADMINS = !!envVars.GOOGLE_ANALYTICS_COUNT_ADMINS || false
@@ -105,7 +108,7 @@ export class BotConfig {
         this.SLIDER_MAX_STATES_SAVED = +envVars.SLIDER_MAX_STATES_SAVED || 5
         this.SLIDER_MAX_IDS_CACHED = +envVars.SLIDER_MAX_IDS_CACHED || 10
         this.SLIDER_INSTA_VIEW = !!envVars.SLIDER_INSTA_VIEW || false
-        this.DATABASE_SSL = envVars.DATABASE_SSL || 'yes'
+        this.YANDEX_AFISHA_URL = envVars.YANDEX_AFISHA_URL
 
         const number = (key: unknown, defaultValue: number|undefined): void => {
             // @ts-expect-error: Later

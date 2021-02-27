@@ -1,5 +1,5 @@
 {
-  "name": "@culthub/google-docs",
+  "name": "@culthub/pg-utils",
   "version": "1.0.0",
   "license": "unlicensed",
   "private": true,
@@ -16,10 +16,9 @@
     "typings/**/*.d.ts.map"
   ],
   "dependencies": {
-    "googleapis": "^67.1.0"
+    "pg-promise": "^10.9.4"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
     "ts-node": "^9.1.1"
   },
   "type": "commonjs",

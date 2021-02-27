@@ -41,6 +41,8 @@ import { rawBot } from '../../raw-bot'
 import { PacksSyncDiff, PackToSave } from '../../database/db-packs'
 import Timeout = NodeJS.Timeout
 import { ExcelPacksSyncResult, fetchAndParsePacks, savePacksValidationErrors } from '../../dbsync/parserSpredsheetPacks'
+import rp from 'request-promise'
+import { apiYandexAfishaRequest } from './api'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 
@@ -402,6 +404,17 @@ scene
     .action(actionName('sync'), async ctx => {
         await ctx.answerCbQuery()
         await synchronizeDbByUser(ctx)
+    })
+    .action(actionName('check_yandex'), async ctx => {
+        try {
+            await ctx.replyWithHTML(`Посылаем запрос к ${botConfig.YANDEX_AFISHA_URL}...`)
+            await apiYandexAfishaRequest()
+            await ctx.replyWithHTML('Успех!')
+        } catch (e) {
+            ctx.logger.error(e)
+        }
+        await ctx.answerCbQuery()
+
     })
     .action(actionName('version'), async ctx => {
         await ctx.answerCbQuery()

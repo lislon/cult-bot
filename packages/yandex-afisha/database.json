@@ -1,0 +1,15 @@
+{
+  "defaultEnv": {"ENV": "DATABASE_SSL"},
+  "no": {
+    "ssl": false
+  },
+  "yes": {
+    "ssl":  {
+      "rejectUnauthorized": false
+    }
+  },
+  "pg": {
+    "driver": "pg"
+  },
+  "sql-file": true
+}
