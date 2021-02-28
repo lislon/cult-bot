@@ -108,15 +108,17 @@ export class BotConfig {
         this.DATABASE_SSL = envVars.DATABASE_SSL || 'yes'
 
         const number = (key: unknown, defaultValue: number|undefined): void => {
-            if (envVars.key === undefined) {
+            // @ts-expect-error: Later
+            if (envVars[key] === undefined) {
                 // @ts-expect-error: Later
                 this[key] = defaultValue
-            } else if (envVars.key === '') {
+                // @ts-expect-error: Later
+            } else if (envVars[key] === '') {
                 // @ts-expect-error: Later
                 this[key] = undefined
             } else {
                 // @ts-expect-error: Later
-                this[key] = +envVars.key
+                this[key] = +envVars[key]
             }
         }
 
