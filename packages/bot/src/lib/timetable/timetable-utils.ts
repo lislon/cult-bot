@@ -32,7 +32,9 @@ export interface ParseAndPredictTimetableResult {
     timetable?: EventTimetable
 }
 
-export function parseAndPredictTimetable(rawTimetable: string, now: Date): ParseAndPredictTimetableResult {
+type PredictTimetableConfig = { SCHEDULE_WEEKS_AGO: number, SCHEDULE_WEEKS_AHEAD: number }
+
+export function parseAndPredictTimetable(rawTimetable: string, now: Date, config: PredictTimetableConfig): ParseAndPredictTimetableResult {
     const result: ParseAndPredictTimetableResult = {
         errors: [],
         timetable: undefined,
@@ -43,11 +45,9 @@ export function parseAndPredictTimetable(rawTimetable: string, now: Date): Parse
     if (timetable.status === true) {
 
         // TODO: Timzezone
-        const WEEKS_AGO = 2
-        const WEEKS_AHEAD = 4
-        const dateFrom = subWeeks(WEEKS_AGO)(startOfISOWeek(now))
+        const dateFrom = subWeeks(config.SCHEDULE_WEEKS_AGO)(startOfISOWeek(now))
 
-        result.timeIntervals = predictIntervals(dateFrom, timetable.value, (WEEKS_AGO + WEEKS_AHEAD) * 7)
+        result.timeIntervals = predictIntervals(dateFrom, timetable.value, (config.SCHEDULE_WEEKS_AGO + config.SCHEDULE_WEEKS_AHEAD) * 7)
         result.timetable = timetable.value
         const errors = validateIntervals(result.timeIntervals)
         if (errors.length > 0) {

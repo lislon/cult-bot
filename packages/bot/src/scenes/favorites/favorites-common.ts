@@ -9,6 +9,7 @@ import { parseAndPredictTimetable } from '../../lib/timetable/timetable-utils'
 import { FavoriteEvent } from './favorites-scene'
 import { getLikeDislikeButtonText, isEventInFavorites } from '../likes/likes-common'
 import { isEventInFuture } from '../shared/shared-logic'
+import { botConfig } from '../../util/bot-config'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 
@@ -22,7 +23,7 @@ export async function loadEventsAsFavorite(eventIds: number[], now: Date): Promi
     const events = await db.repoEventsCommon.getEventsByIds(eventIds)
 
     const eventsWithNearestDate = events.map(e => {
-        const parsedTimetable = parseAndPredictTimetable(e.timetable, now)
+        const parsedTimetable = parseAndPredictTimetable(e.timetable, now, botConfig)
         return {
             ...e,
             parsedTimetable,

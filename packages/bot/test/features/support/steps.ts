@@ -72,7 +72,7 @@ Given(/^there is events:$/, async function (table: DataTable) {
             expect(row.category).toEqual(`to be one of ${allCategories.join(',')}`)
         }
 
-        const timetableResult = parseAndPredictTimetable(row.timetable, this.now)
+        const timetableResult = parseAndPredictTimetable(row.timetable, this.now, botConfig)
 
         if (timetableResult.errors.length > 0) {
             expect(row.timetable).toEqual(timetableResult.errors.join('\n'))

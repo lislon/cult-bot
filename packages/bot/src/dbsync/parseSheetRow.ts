@@ -5,6 +5,7 @@ import { parseAndPredictTimetable } from '../lib/timetable/timetable-utils'
 import { i18n } from '../util/i18n'
 import { parseISO } from 'date-fns'
 import { parsePrice } from '../lib/price-parser'
+import { botConfig } from '../util/bot-config'
 
 export const EXCEL_COLUMNS_EVENTS = {
     ext_id: '№',
@@ -243,7 +244,7 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
         fakeLikes: row.fake_likes === '' || row.fake_likes === undefined ? undefined : +(row.fake_likes.replace(/\D/g, '')),
         fakeDislikes: row.fake_dislikes === '' || row.fake_dislikes === undefined ? undefined : +(row.fake_dislikes.replace(/\D/g, ''))
     }
-    const predictTimetableResult = parseAndPredictTimetable(data.timetable, now)
+    const predictTimetableResult = parseAndPredictTimetable(data.timetable, now, botConfig)
 
     result.timeIntervals = predictTimetableResult.timeIntervals
     result.timetable = predictTimetableResult.timetable

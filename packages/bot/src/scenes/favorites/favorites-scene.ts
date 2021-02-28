@@ -28,6 +28,7 @@ import { SliderPager } from '../shared/slider-pager'
 import { FavoritesPagerConfig } from './favorites-pager-config'
 import { loadEventsAsFavorite, removeFavoriteButton, sortFavorites } from './favorites-common'
 import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { botConfig } from '../../util/bot-config'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 
@@ -64,7 +65,7 @@ async function formatListOfFavorites(ctx: ContextMessageUpdate, events: Favorite
             })
         } else {
 
-            const date = event.parsedTimetable.timeIntervals.length === 0 ? 'больше 2 недель назад' : ruFormat(rightDate(last(event.parsedTimetable.timeIntervals)), 'dd MMMM')
+            const date = event.parsedTimetable.timeIntervals.length === 0 ? `больше ${botConfig.SCHEDULE_WEEKS_AHEAD} недель назад` : ruFormat(rightDate(last(event.parsedTimetable.timeIntervals)), 'dd MMMM')
 
             return i18Msg(ctx, 'event_item_past', {
                 icon: i18SharedMsg(ctx, 'category_icons.' + event.category),

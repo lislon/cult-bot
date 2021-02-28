@@ -5,6 +5,7 @@ import { ITask } from 'pg-promise'
 import { keyBy } from 'lodash'
 import { EventForRefresh } from '../database/db-sync-repository'
 import { isEqual } from 'date-fns'
+import { botConfig } from '../util/bot-config'
 
 async function refreshDates() {
     const now = new Date()
@@ -17,7 +18,7 @@ async function refreshDates() {
                 .map(e => {
                     return {
                         eventId: e.id,
-                        timeIntervals: parseAndPredictTimetable(e.timetable, now).timeIntervals
+                        timeIntervals: parseAndPredictTimetable(e.timetable, now, botConfig).timeIntervals
                     }
                 })
                 .filter(({eventId, timeIntervals}) => {

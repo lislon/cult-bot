@@ -53,6 +53,9 @@ export class BotConfig {
     public THROTTLE_OUT_REFRESH_AMOUNT?: number
     public THROTTLE_OUT_REFRESH_INTERVAL?: number
 
+    public SCHEDULE_WEEKS_AGO: number
+    public SCHEDULE_WEEKS_AHEAD: number
+
     /**
      * Chat used to receive user feedback and send reply to it.
      */
@@ -130,6 +133,9 @@ export class BotConfig {
         number('THROTTLE_OUT_RESERVOIR', 30)              // Number of new jobs that throttler will accept at start
         number('THROTTLE_OUT_REFRESH_AMOUNT', 30)         // Number of jobs that throttler will accept after refresh
         number('THROTTLE_OUT_REFRESH_INTERVAL', 1000)     // Interval in milliseconds where reservoir will refresh
+
+        number('SCHEDULE_WEEKS_AGO', 2)
+        number('SCHEDULE_WEEKS_AHEAD', 5)
     }
 
     get throttlerOptions(): ThrottlerOptions {

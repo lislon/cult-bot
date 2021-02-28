@@ -189,7 +189,7 @@ async function showDirectMessage(ctx: ContextMessageUpdate, extId: string) {
     const event = await db.repoEventsCommon.getEventsByExtId(extId)
     if (event !== undefined) {
 
-        const parsedTimetable = parseAndPredictTimetable(event.timetable, ctx.now())
+        const parsedTimetable = parseAndPredictTimetable(event.timetable, ctx.now(), botConfig)
 
 
         const likesRow = getLikesRow(ctx, event)
