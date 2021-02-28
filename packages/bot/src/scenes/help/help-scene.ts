@@ -5,7 +5,7 @@ import middlewares, { SceneRegister } from '../../middleware-utils'
 import { InputFileByReadableStream } from 'telegraf/typings/telegram-types'
 import { createReadStream } from 'fs'
 import path from 'path'
-import { redisSession } from '../../util/reddis'
+import { getRedisSession } from '../../util/reddis'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
 import { botErrorHandler, isBlockedError } from '../../util/error-handler'
 import { updateOrInsertUser } from '../../lib/middleware/user-middleware'
@@ -89,15 +89,15 @@ function throttleActionsToShowHelpForNewComers(ctx: ContextMessageUpdate) {
 
             const countInteractionsAfterMiddlewaresDone = countInteractions(ctx)
             if (countInteractionsAfterMiddlewaresDone == countInteractionsBefore) {
-                const sessionKey = (redisSession as any).options.getSessionKey(ctx)
-                const freshSession = await redisSession.getSession(sessionKey) as unknown as ContextMessageUpdate['session']
+                const sessionKey = getRedisSession().options.getSessionKey(ctx)
+                const freshSession = await getRedisSession().getSession(sessionKey) as unknown as ContextMessageUpdate['session']
                 ctx.session = freshSession
 
                 if (freshSession && (countInteractions(ctx) == countInteractionsAfterMiddlewaresDone)) {
 
                     try {
                         if (await newcomerIsIdle(ctx)) {
-                            await redisSession.saveSession(sessionKey, ctx.session)
+                            await getRedisSession().saveSession(sessionKey, ctx.session)
                         }
                     } catch (e) {
                         await botErrorHandler(e, ctx);

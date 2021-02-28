@@ -6,23 +6,29 @@ import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
 import { supportFeedbackMiddleware } from './lib/middleware/support-feedback.middleware'
 import { logger } from './util/logger'
 import { i18n } from './util/i18n'
-import { MyRedisSession, redisSession } from './util/reddis'
+import { getRedisSession, MyRedisSession } from './util/reddis'
 import { botConfig } from './util/bot-config'
 import { formatUserName } from './util/misc-utils'
 import { loggerMiddleware } from './lib/middleware/logger-middleware'
 import { Composer, Scenes, session } from 'telegraf'
 
-let sessionMechanism: MyRedisSession
 
-if (botConfig.REDIS_URL !== undefined && botConfig.NODE_ENV !== 'test') {
-    sessionMechanism = redisSession
-} else {
-    sessionMechanism = session() as any
+let sessionMechanism: MyRedisSession = undefined
+
+function getSessionMechism(): MyRedisSession {
+    if (sessionMechanism === undefined) {
+        if (botConfig.REDIS_URL !== undefined && botConfig.NODE_ENV !== 'test') {
+            sessionMechanism = getRedisSession()
+        } else {
+            sessionMechanism = session() as any
+        }
+    }
+    return sessionMechanism;
 }
 
 export async function saveSession(ctx: ContextMessageUpdate) {
-    const key = sessionMechanism.options.getSessionKey(ctx)
-    await sessionMechanism.saveSession(key, ctx.session)
+    const key = getSessionMechism().options.getSessionKey(ctx)
+    await getSessionMechism().saveSession(key, ctx.session)
     logger.warn('Emergency saving session')
 }
 

@@ -4,23 +4,23 @@ import rp from 'request-promise'
 import express, { Request, Response } from 'express'
 import { botConfig } from './util/bot-config'
 import { logger } from './util/logger'
-import { db } from './database/db'
+import { db, pgp } from './database/db'
 import { i18n } from './util/i18n'
-import { redis } from './util/reddis'
 import { adminIds, adminUsernames } from './util/admins-list'
 import { Event } from './template/Event'
 import ReactDOMServer from 'react-dom/server'
 import { rawBot } from './raw-bot'
 import { initBot } from './bot'
+import { getRedis } from './util/reddis'
 
 const app = express()
 
 async function notifyAdminsAboutRestart() {
     const redisVersionKey = 'HEROKU_SLUG_COMMIT'
     try {
-        const version = await redis.get(redisVersionKey)
+        const version = await getRedis().get(redisVersionKey)
         if (version !== botConfig.HEROKU_SLUG_COMMIT) {
-            await redis.set(redisVersionKey, botConfig.HEROKU_SLUG_COMMIT)
+            await getRedis().set(redisVersionKey, botConfig.HEROKU_SLUG_COMMIT)
             const admins = await db.repoUser.findUsersByUsernamesOrIds(adminUsernames, adminIds)
 
             const text = i18n.t('ru', 'scenes.admin_scene.update_report', {
@@ -87,8 +87,13 @@ class BotStart {
 
         logger.info('Webhook status: ' + JSON.stringify(webhookStatus))
 
-        process.once('SIGINT', () => bot.stop('SIGINT'))
-        process.once('SIGTERM', () => bot.stop('SIGTERM'))
+        const closeAllConnections = () => {
+            bot.stop('SIGINT')
+            pgp.end()
+            getRedis().end();
+        }
+        process.once('SIGINT', closeAllConnections)
+        process.once('SIGTERM', closeAllConnections)
 
         await notifyAdminsAboutRestart()
     }

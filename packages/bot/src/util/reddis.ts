@@ -15,11 +15,11 @@ export interface MyRedisSession {
     client: RedisClient
 
     options: {
-        getSessionKey: (ctx: Context) => string
+        getSessionKey: (ctx: Context) => any
     }
 }
 
-function getRedis(): MyRedisSession {
+function createRedisClient(): MyRedisSession {
     if (botConfig.NODE_ENV === 'test') {
         const client = redisMock.createClient()
 
@@ -54,9 +54,30 @@ function getRedis(): MyRedisSession {
     }
 }
 
-export const redisSession: MyRedisSession = getRedis()
-export const redis = {
-    get: promisify(redisSession.client.get.bind(redisSession.client)),
-    set: promisify(redisSession.client.set.bind(redisSession.client))
+let redisSession: MyRedisSession = undefined
+let mySimpleRedis: MySimpleRedis = undefined
+
+interface MySimpleRedis {
+    get: (key: string) => Promise<string>,
+    set: (key: string, value: string) => Promise<void>
+    end: (flush?: boolean) => void
 }
 
+export function getRedisSession(): MyRedisSession {
+    if (redisSession === undefined) {
+        redisSession = createRedisClient()
+    }
+    return undefined
+}
+
+export function getRedis(): MySimpleRedis {
+    if (mySimpleRedis === undefined) {
+        const r = getRedisSession()
+        mySimpleRedis = {
+            get: promisify(r.client.get.bind(r.client)),
+            set: promisify(r.client.set.bind(r.client)),
+            end: promisify(r.client.end.bind(r.client))
+        }
+    }
+    return mySimpleRedis;
+}
