@@ -67,7 +67,7 @@ export function getRedisSession(): MyRedisSession {
     if (redisSession === undefined) {
         redisSession = createRedisClient()
     }
-    return undefined
+    return redisSession
 }
 
 export function getRedis(): MySimpleRedis {

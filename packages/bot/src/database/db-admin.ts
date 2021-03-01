@@ -191,6 +191,7 @@ export class AdminRepository {
         const newRow: AdminEvent = {
             ...row,
             id: +row.id,
+            extId: row.ext_id,
             snapshotStatus: row.snapshot_status,
             fakeLikes: +row.likes_fake,
             fakeDislikes: +row.dislikes_fake,

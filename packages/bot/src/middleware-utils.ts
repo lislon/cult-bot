@@ -89,9 +89,9 @@ export default {
         })
     },
     loggerInject: loggerInjectMiddleware(),
-    logger: loggerMiddleware(),
-    session: sessionMechanism,
-    sessionTmp: sessionTmp(),
+    logger: loggerMiddleware,
+    session: getSessionMechism,
+    sessionTmp: sessionTmp,
     logMiddleware: logMiddleware,
     userMiddleware: userMiddleware,
     analyticsMiddleware,
