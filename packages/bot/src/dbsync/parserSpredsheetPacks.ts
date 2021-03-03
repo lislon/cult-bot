@@ -64,7 +64,7 @@ export async function savePacksValidationErrors(excel: Sheets, allValidatedEvent
             excelUpdater.annotateCell(raw.sheetId, 'values', rowNumber, errorText)
         }
 
-        const numberOfRowsTillNextPack = index === allValidatedEvents.length - 1 ? 10 : (allValidatedEvents[index + 1].raw.rowNumber - raw.rowNumber - 1)
+        const numberOfRowsTillNextPack = index === allValidatedEvents.length - 1 ? 25 : (allValidatedEvents[index + 1].raw.rowNumber - raw.rowNumber - 1)
         excelUpdater.clearColumnFormat(raw.sheetId, 'values', raw.rowNumber, numberOfRowsTillNextPack)
 
         errors.badEvents.forEach(({rawEvent, error}) => {
