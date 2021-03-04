@@ -26,3 +26,5 @@ dist.zip
 
 # TypeScript incremental compilation cache
 *.tsbuildinfo
+/packages/*/dist/
+/packages/*/typings/

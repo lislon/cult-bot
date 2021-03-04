@@ -216,6 +216,10 @@ Then(/^Bot edits slider with event '(.+)'$/, function (eventTitle: string) {
 
 Then(/^Bot edits slider with event '(.+)' \[(\d+)\/(\d+)\]$/, function (eventTitle: string, page: number, total: number) {
     const markup = this.getLastEditedInline() as BotReply
+    if (markup === undefined) {
+        expect('').toEqual('Expected bot will edit slider but nothing happened')
+    }
+
     expect(markup.text).toContain(`<b>${eventTitle}</b>\n`)
     expect((markup.extra.reply_markup as InlineKeyboardMarkup).inline_keyboard[1][1].text).toContain(`${page} / ${total}`)
 })

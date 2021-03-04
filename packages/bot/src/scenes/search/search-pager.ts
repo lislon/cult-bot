@@ -1,12 +1,11 @@
-import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, Event, MyInterval } from '../../interfaces/app-interfaces'
 import { db, LimitOffset } from '../../database/db'
-import { getNextWeekendRange } from '../shared/shared-logic'
 import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
 import { Scenes } from 'telegraf'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('search_scene')
-const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)
+const {i18Msg, backButton} = i18nSceneHelper(scene)
 
 export class SearchPagerConfig implements SliderConfig<string> {
     readonly limit = 1
@@ -15,7 +14,7 @@ export class SearchPagerConfig implements SliderConfig<string> {
     async getTotal(ctx: ContextMessageUpdate, query: string): Promise<number> {
         return await db.repoSearch.searchGetTotal({
             query,
-            interval: getNextWeekendRange(ctx.now()),
+            interval: this.getSearchInterval(ctx.now()),
             allowSearchById: isAdmin(ctx)
         })
     }
@@ -27,7 +26,7 @@ export class SearchPagerConfig implements SliderConfig<string> {
     async preloadIds(ctx: ContextMessageUpdate, limitOffset: LimitOffset, query: string): Promise<number[]> {
         return (await db.repoSearch.searchIds({
             query: ctx.session.search.request,
-            interval: getNextWeekendRange(ctx.now()),
+            interval: this.getSearchInterval(ctx.now()),
             allowSearchById: isAdmin(ctx),
             ...limitOffset
         }))
@@ -52,4 +51,12 @@ export class SearchPagerConfig implements SliderConfig<string> {
             dt: `Поиск по '${ctx.session.search.request}' [${offset + 1}/${total}]`
         })
     }
+
+    private getSearchInterval(now: Date): MyInterval {
+        return {
+            start: now,
+            end: new Date(3000, 1, 1)
+        }
+    }
+
 }
