@@ -10,7 +10,7 @@ import {
 import { getLikesRow } from '../likes/likes-common'
 import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
-import { i18nSceneHelper } from '../../util/scene-helper'
+import { i18nSceneHelper, i18SharedBtn } from '../../util/scene-helper'
 import { EventsPagerSliderBase, PagerSliderState, PagingCommonConfig } from './events-common'
 import { botConfig } from '../../util/bot-config'
 import { clone } from 'lodash'
@@ -142,13 +142,14 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             const nextButton = Markup.button.callback(i18nSharedBtnName('slider_keyboard.next'), this.btnActionNext)
 
             const buttons: InlineKeyboardButton.CallbackButton[][] = [
+                [Markup.button.callback(i18SharedBtn('show_tags'), this.btnTagToggle)],
                 [backButton, ...cardButtons],
                 [prevButton, position, nextButton]
             ]
 
-            const text = cardFormat(event, this.config.cardFormatOptions?.(ctx, event))
-            return {buttons, text}
+            const text = cardFormat(event, { showTags: ctx.session.user.showTags, ...this.config.cardFormatOptions?.(ctx, event) })
             analyticRecordEventView(ctx, event)
+            return {buttons, text}
         } else {
             ctx.logger.warn(`Cannot load card by cardId = ${cardId}`)
             return {buttons: [[backButton]], text: i18SharedMsg(ctx, 'slider.card_content_not_available')}
@@ -196,6 +197,10 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
 
     private get btnActionPrev() {
         return `slider_keyboard.${this.config.sceneId}.prev`
+    }
+
+    private get btnTagToggle() {
+        return `slider_keyboard.${this.config.sceneId}.tag`
     }
 
     private async nextPrev(ctx: ContextCallbackQueryUpdate, leftRightLogic: (state: SliderState<Q>) => void) {
@@ -280,6 +285,23 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                 .action(this.btnActionPosition, async ctx => {
                     await ctx.answerCbQuery()
                 })
+                .action(this.btnTagToggle, async ctx => {
+                    await ctx.answerCbQuery()
+                    ctx.session.user.showTags = !ctx.session.user.showTags
+
+                    const state = this.getSliderStateIfExists(ctx)
+                    if (state !== undefined) {
+                        // const eventId = +ctx.match[1]
+                        // const { buttons, text } = await this.handleExistingCard(ctx, eventId, state)
+                        await this.showOrUpdateCard(ctx, state)
+                    } else {
+                        await this.answerCbSliderIsOld(ctx)
+                    }
+
+
+
+                    await ctx.answerCbQuery()
+                })
         ).middleware()
     }
 
@@ -294,20 +316,6 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
     public getActiveSliderState(ctx: ContextMessageUpdate): SliderState<Q> | undefined {
         const [activeSlider] = this.getValidStageSliders(ctx)
         return activeSlider
-    }
-
-    public cloneActiveStateWithNewMsgId(ctx: ContextMessageUpdate, msgId: number) {
-        const activeSliderState = this.getActiveSliderState(ctx)
-
-        if (activeSliderState !== undefined) {
-            const stateWithoutCurrentMsgId = getSliderState(ctx).sliders
-                .filter(this.isNotExpired)
-            getSliderState(ctx).sliders = [{
-                ...clone(activeSliderState),
-                msgId
-            }, ...stateWithoutCurrentMsgId].slice(0, botConfig.SLIDER_MAX_STATES_SAVED)
-            ctx.logger.silly(`cloneActiveStateWithNewMsgId (msgId=${activeSliderState.msgId} -> ${msgId}`)
-        }
     }
 
     public async answerCbSliderIsOld(ctx: ContextMessageUpdate) {

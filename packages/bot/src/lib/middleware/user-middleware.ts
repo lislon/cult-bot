@@ -13,6 +13,7 @@ export interface UserState {
     eventsFavorite: number[]
     version: string
     clicks: number
+    showTags: boolean
 }
 
 
@@ -48,6 +49,7 @@ async function prepareSessionIfNeeded(ctx: ContextMessageUpdate) {
             version: botConfig.HEROKU_RELEASE_VERSION,
             id: 0,
             uaUuid: undefined,
+            showTags: false,
             eventsFavorite: []
         }
     }
