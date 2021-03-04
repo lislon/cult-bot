@@ -15,6 +15,7 @@
     "db:new": "cross-env TZ=Europe/Moscow db-migrate create --table=p_migrations",
     "parse:orig": "dotenv ts-node-dev -r source-map-support/register src/parser.ts -- --orig",
     "parse:snapshot": "dotenv ts-node-dev  -r source-map-support/register src/parser.ts -- --snapshot",
+    "parse:upload": "dotenv ts-node-dev  -r source-map-support/register src/upload.ts",
     "convert": "dotenv ts-node t/convert.ts",
     "build": "tsc --build && eslint .",
     "test": "tsc --help",

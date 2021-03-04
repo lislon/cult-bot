@@ -89,6 +89,9 @@ export class ParsedEventRepository {
     }
 
     public async loadEventEntranceDates(extIds: string[], db: ITask<unknown>): Promise<ExtIdDates[]> {
+        if (extIds.length === 0) {
+            return []
+        }
         return await db.map(`
             SELECT ext_id, entrance_dates 
             FROM p_events pe

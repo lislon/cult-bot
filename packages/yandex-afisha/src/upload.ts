@@ -8,6 +8,8 @@ import { db, pgp } from './database/db'
 import { EventsSyncDiff, ExtIdDates, ParsedEventToSave } from './database/parsed-event'
 import { ITask } from 'pg-promise'
 import { keyBy, Dictionary } from 'lodash'
+import { saveCurrentToExcel } from './export-to-excel';
+import { authToExcel } from '@culthub/google-docs';
 
 function getParsedDate(file: string): string {
     const m = file.match(/[\d]+-[\d]+-[\d]+/)
@@ -105,15 +107,16 @@ function filterOnlyRealChange(diff: EventsSyncDiff): EventsSyncDiff {
     }
 }
 
-function syncAndSaveDiff() {
-
+function filterOnlyBotSpecificEvents(allEvents: ParsedEventToSave[]): ParsedEventToSave[] {
+    return allEvents.filter(e => e.primaryData.category !== 'Квесты')
 }
 
 (async function () {
     const allEvents = await loadEvents(dates);
     // const event: PlaceWithMeta = allEvents[0]
 
-    const newEvents: ParsedEventToSave[] = allEvents.map(mapEvent)
+    const newEvents: ParsedEventToSave[] = filterOnlyBotSpecificEvents(allEvents.map(mapEvent))
+
     const diff = await db.task(async (t) => {
         const newEventsWithDates = await enrichEventsWithPastDates(newEvents, new Date(), t)
 
@@ -133,7 +136,9 @@ function syncAndSaveDiff() {
     console.log("recovered:")
     console.log(realDiff.recovered)
 
+    const excel = await authToExcel()
 
+    await saveCurrentToExcel(excel, newEvents.map(e => e.primaryData), [])
     await db.$pool.end()
     // pgp.end()
 })()
