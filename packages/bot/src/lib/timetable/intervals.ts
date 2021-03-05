@@ -109,10 +109,13 @@ function filterOneMoment(i: MomentOrInterval, restrict: MyInterval, inRange: 'in
         }
 
         if (inRange === 'in') {
-            return [[
-                max([start, restrict.start]),
-                min([end, restrict.end])
-            ]];
+            const from = max([start, restrict.start]);
+            const to = min([end, restrict.end]);
+            if (from.getTime() !== to.getTime()) {
+                return [[from, to]]
+            } else {
+                return [undefined]
+            }
         } else {
             const isInsideRestrict = start < restrict.start && end > restrict.end
             if (isInsideRestrict) {

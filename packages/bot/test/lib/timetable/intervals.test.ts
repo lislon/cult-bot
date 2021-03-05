@@ -293,4 +293,14 @@ describe('integration', () => {
             ])
     })
 
+    test('test ranges are limited by dates 2', () => {
+        assert2('03 января 2020 - 10 января 2020: в любое время',
+            [
+                [
+                    '2020-Jan-03 00:00',
+                    '2020-Jan-04 00:00'
+                ],
+            ], {start: date('2020-01-01 01:00'), daysAhead: 3})
+    })
+
 });
