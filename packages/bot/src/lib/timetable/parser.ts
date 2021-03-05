@@ -1,6 +1,6 @@
 import * as P from 'parsimmon'
 import { Result, Success } from 'parsimmon'
-import { DateExact, DateOrDateRange, DateRange, EventTimetable, mapInterval, WeekTime } from './intervals'
+import { DateExact, DateOrDateRange, DateRange, DayTime, EventTimetable, mapInterval, WeekTime } from './intervals'
 import { cleanText } from './timetable-utils'
 import { addYears, format, isValid, parseISO, setYear, subMonths } from 'date-fns'
 import cloneDeep from 'lodash/cloneDeep'
@@ -11,6 +11,7 @@ export const YEAR_UNKNOWN_VALUE = 9999
 
 export type RawParseResultV = {
     dateRange?: DateRange
+    times?: DayTime[]
     weekTimes?: WeekTime[]
     dateRangesTimetable?: {
         dateRange: DateRange
@@ -175,8 +176,8 @@ function validateAndFixDate(p: string, errors: string[], now: Date): string {
     return p;
 }
 
-function fillUnkownYearsAndValidate(parse: Success<RawParseResult>, dateValidation: string[], now: Date): Success<RawParseResult> {
-    const fixed = cloneDeep(parse)
+function fillUnknownYearsAndValidate(parse: Success<RawParseResult>, dateValidation: string[], now: Date): Success<RawParseResult> {
+    const fixed: Success<RawParseResult> = cloneDeep(parse)
 
     const validationAndFixation = (d: string) => validateAndFixDate(d, dateValidation, now)
     const validateDateRangeOrder = (d: DateOrDateRange) => {
@@ -217,7 +218,7 @@ export function parseTimetable(text: string, now: Date): TimetableParseResult {
     if (parseRes.status === true) {
 
         const dateValidation: string[] = []
-        parseRes = fillUnkownYearsAndValidate(parseRes, dateValidation, subMonths(now, 3))
+        parseRes = fillUnknownYearsAndValidate(parseRes, dateValidation, subMonths(now, 3))
         if (dateValidation.length > 0) {
             return {status: false, errors: dateValidation}
         }
@@ -230,7 +231,11 @@ export function parseTimetable(text: string, now: Date): TimetableParseResult {
         }
         for (const p of parseRes.value) {
             if (p.dateRange !== undefined) {
-                result.dateRangesTimetable.push(p)
+                result.dateRangesTimetable.push({
+                    dateRange: p.dateRange,
+                    weekTimes: p.weekTimes,
+                    times: p.times
+                })
             } else if (p.weekTimes !== undefined) {
                 result.weekTimes = [...result.weekTimes, ...p.weekTimes]
             } else if (p.dateRangesTimetable !== undefined) {

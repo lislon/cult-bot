@@ -1,7 +1,7 @@
 import React from 'react'
 import { Event } from '../interfaces/app-interfaces'
 import { formatPrice, parsePrice } from '../lib/price-parser'
-import { filterTagLevel2, formatEventDuration, formatTimetable } from '../scenes/shared/card-format'
+import { filterTagLevel2, formatCardTimetable, formatEventDuration } from '../scenes/shared/card-format'
 import { cleanTagLevel1 } from '../util/tag-level1-encoder'
 import { i18n } from '../util/i18n'
 
@@ -37,7 +37,7 @@ export function Event(event: Event) {
                     <a href={event.geotag}>(Я.Карта)</a>
                 </address>
                 <p className='timetable'>
-                    {formatTimetable(event)}
+                    {formatCardTimetable(event)}
                 </p>
                 <p className='timetable'>
                     🕐 {formatEventDuration(event.duration)}

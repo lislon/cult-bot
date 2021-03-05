@@ -14,7 +14,7 @@ import {
 import { MyInterval } from '../../interfaces/app-interfaces'
 import flow from 'lodash/fp/flow'
 
-type DayTime = string | [string, string]
+export type DayTime = string | [string, string]
 export type DateRange = [string, string]
 export type DateOrDateRange = [string] | [string, string]
 
@@ -30,7 +30,7 @@ export interface WeekTime {
 }
 
 export interface DateRangeTimetable {
-    dateRange?: DateRange
+    dateRange: DateRange
     weekTimes?: WeekTime[]    // по-недельно
     times?: DayTime[]         // ежедневно часы
 }

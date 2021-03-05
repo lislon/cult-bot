@@ -166,7 +166,8 @@ describe('parser', () => {
                                 '12:00',
                                 '20:00'
                             ]
-                        ]
+                        ],
+                        'weekTimes': undefined
                     }
                 ],
             }

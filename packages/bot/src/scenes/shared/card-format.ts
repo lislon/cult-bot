@@ -19,7 +19,7 @@ export function formatUrl(text: string) {
     return niceUrls
 }
 
-export function formatTimetable(event: Event) {
+export function formatCardTimetable(event: Event) {
     const humanTimetable = getOnlyHumanTimetable(event.timetable);
 
     function formatCinemaUrls(humanTimetable: string) {
@@ -135,9 +135,9 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
         text += `📍 ${addHtmlNiceUrls(escapeHTML(row.address))}${map}\n`
     }
     if (isFuture) {
-        text += formatTimetable(row)
+        text += formatCardTimetable(row)
     } else {
-        text += `<s>${formatTimetable(row)}</s>`
+        text += `<s>${formatCardTimetable(row)}</s>`
     }
     if (!fieldIsQuestionMarkOrEmpty(row.duration)) {
         text += `🕐 ${escapeHTML(formatEventDuration(row.duration))}\n`
