@@ -128,8 +128,3 @@ export class ParsedEventRepository {
         }
     }
 }
-
-function pgMapToDateArray(dates: Date[]): string[] {
-    return dates.map(d => formatISO(d))
-    // return `[${dates.map(d => formatISO(d)).join(',')}]`
-}

@@ -1,4 +1,4 @@
-import { ContextMessageUpdate, Event, MyInterval } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, Event, DateInterval } from '../../interfaces/app-interfaces'
 import { db, LimitOffset } from '../../database/db'
 import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
@@ -52,7 +52,7 @@ export class SearchPagerConfig implements SliderConfig<string> {
         })
     }
 
-    private getSearchInterval(now: Date): MyInterval {
+    private getSearchInterval(now: Date): DateInterval {
         return {
             start: now,
             end: new Date(3000, 1, 1)

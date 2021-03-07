@@ -1,5 +1,5 @@
 import { getNextWeekendRange } from '../../../src/scenes/shared/shared-logic'
-import { date, mkInterval } from '../../lib/timetable/test-utils'
+import { date, mkInterval } from '../../util/timetable-util'
 
 
 // январь 2020

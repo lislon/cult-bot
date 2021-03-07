@@ -4,6 +4,9 @@
       "path": "./packages/pg-utils"
     },
     {
+      "path": "./packages/timetable"
+    },
+    {
       "path": "./packages/universal-db-sync"
     },
     {

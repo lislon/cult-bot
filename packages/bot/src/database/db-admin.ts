@@ -1,4 +1,4 @@
-import { Event, EventCategory, MyInterval } from '../interfaces/app-interfaces'
+import { Event, EventCategory, DateInterval } from '../interfaces/app-interfaces'
 import { db } from './db'
 import { mapToPgInterval } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
@@ -45,7 +45,7 @@ export class AdminRepository {
     constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
-    async findChangedEventsByCatStats(interval: MyInterval): Promise<StatByCat[]> {
+    async findChangedEventsByCatStats(interval: DateInterval): Promise<StatByCat[]> {
         const finalQuery = `
         SELECT cb.category, COUNT(cb.id)
         FROM cb_events cb
@@ -68,7 +68,7 @@ export class AdminRepository {
             }) as StatByCat[];
     }
 
-    async findStatsByReviewer(interval: MyInterval): Promise<StatByReviewer[]> {
+    async findStatsByReviewer(interval: DateInterval): Promise<StatByReviewer[]> {
         const finalQuery = `
         SELECT cb.reviewer, COUNT(cb.id)
         FROM cb_events cb
@@ -89,7 +89,7 @@ export class AdminRepository {
             }) as StatByReviewer[];
     }
 
-    async findAllChangedEventsByCat(category: EventCategory, interval: MyInterval, limit = 50, offset = 0): Promise<AdminEvent[]> {
+    async findAllChangedEventsByCat(category: EventCategory, interval: DateInterval, limit = 50, offset = 0): Promise<AdminEvent[]> {
         const finalQuery = `
         select * FROM (
             SELECT ${SELECT_ADMIN_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}
@@ -117,7 +117,7 @@ export class AdminRepository {
             }, AdminRepository.mapToEventWithId) as AdminEvent[]
     }
 
-    async findAllEventsByReviewer(reviewer: string, interval: MyInterval, limit = 50, offset = 0): Promise<AdminEvent[]> {
+    async findAllEventsByReviewer(reviewer: string, interval: DateInterval, limit = 50, offset = 0): Promise<AdminEvent[]> {
         const finalQuery = `
         select * FROM (
             SELECT ${SELECT_ADMIN_EVENTS_FIELDS}, ${this.snapshotSelectQueryPart}

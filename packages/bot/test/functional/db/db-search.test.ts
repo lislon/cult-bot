@@ -1,7 +1,7 @@
 import { cleanDb, expectedIds, getMockEvent, syncEventsDb4Test } from './db-test-utils'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { db, dbCfg } from '../../../src/database/db'
-import { mkInterval } from '../../lib/timetable/test-utils'
+import { mkInterval } from '../../util/timetable-util'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);

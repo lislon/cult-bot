@@ -1,19 +1,10 @@
-import { EventTimetable, MomentIntervals, predictIntervals, validateIntervals } from './intervals'
 import { subWeeks } from 'date-fns/fp'
 import { startOfISOWeek } from 'date-fns'
-import { parseTimetable } from './parser'
-
-export function cleanText(text: string) {
-    const englishC = 'c'
-    const russianC = 'с'
-    return text.toLowerCase()
-        .replace(englishC, russianC)
-        .replace(/[—‑–－﹘]/g, '-')
-        .replace(/[ ]+/g, ' ')
-        .replace(/[;\s]$/g, '')
-        .trim()
-        ;
-}
+import {
+    EventTimetable,
+    MomentIntervals, parseTimetable,
+    predictIntervals, validateIntervals
+} from '@culthub/timetable'
 
 export function getOnlyBotTimetable(timetable: string): string {
     let botTimetable = timetable

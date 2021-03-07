@@ -3,7 +3,6 @@
   "compilerOptions": {
     "rootDir": "src/",
     "outDir": "dist/",
-    "esModuleInterop": true,
     "composite": true,
     "declaration": true,
     "declarationMap": true,

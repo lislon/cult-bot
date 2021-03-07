@@ -1,11 +1,11 @@
 import { addHours } from 'date-fns/fp'
-import { ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, DateInterval } from '../../interfaces/app-interfaces'
 import { startOfDay } from 'date-fns'
-import { filterByRange } from '../../lib/timetable/intervals'
+import { filterByRange } from '@culthub/timetable'
 import { saveSession } from '../../middleware-utils'
 import { parseSlot } from './customize-common'
 
-export function mapUserInputToTimeIntervals(times: string[], weekendInterval: MyInterval): MyInterval[] {
+export function mapUserInputToTimeIntervals(times: string[], weekendInterval: DateInterval): DateInterval[] {
     const hours = (times)
         .map(t => parseSlot(t))
         .map(({date, startTime, endTime}) => [

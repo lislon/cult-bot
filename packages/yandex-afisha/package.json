@@ -1,5 +1,5 @@
 {
-  "name": "yandex-afisha",
+  "name": "@culthub/yandex-afisha",
   "version": "1.0.0",
   "main": "dist/index.js",
   "author": "Igor Golovin <lislon@mail.ru>",
@@ -18,7 +18,7 @@
     "parse:upload": "dotenv ts-node-dev  -r source-map-support/register src/upload.ts",
     "convert": "dotenv ts-node t/convert.ts",
     "build": "tsc --build && eslint .",
-    "test": "tsc --help",
+    "test": "jest --passWithNoTests",
     "dev-no-restart": "tsc && nodemon --inspect"
   },
   "dependencies": {
@@ -42,11 +42,6 @@
     "@types/crawler": "^1.2.0",
     "@types/express": "^4.17.11",
     "@types/jsdom": "^16.2.5",
-    "@types/node": "^14.14.31",
-    "@types/pg": "^7.14.4",
-    "cross-env": "^7.0.3",
-    "dotenv-cli": "^4.0.0",
-    "ts-node": "^9.1.1",
-    "ts-node-dev": "^1.1.1"
+    "@types/pg": "^7.14.4"
   }
 }

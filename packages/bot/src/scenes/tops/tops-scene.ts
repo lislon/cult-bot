@@ -1,5 +1,5 @@
 import { Composer, Markup, Scenes } from 'telegraf'
-import { ContextMessageUpdate, EventCategory, MyInterval } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, EventCategory, DateInterval } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import * as events from 'events'
 import { backToMainButtonTitle, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
@@ -47,14 +47,14 @@ const content = (ctx: ContextMessageUpdate) => {
 }
 
 
-function removeLastSecond(range: MyInterval): MyInterval {
+function removeLastSecond(range: DateInterval): DateInterval {
     return {
         start: range.start,
         end: startOfDay(range.end).getTime() === range.end.getTime() ? subSeconds(1)(range.end) : range.end
     }
 }
 
-function intervalTemplateParams(range: MyInterval) {
+function intervalTemplateParams(range: DateInterval) {
     return {
         from: ruFormat(range.start, 'dd.MM HH:mm'),
         to: ruFormat(subSeconds(1)(range.end), 'dd.MM HH:mm')

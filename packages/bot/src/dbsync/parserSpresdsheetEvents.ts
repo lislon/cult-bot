@@ -9,7 +9,6 @@ import {
     processExcelRow
 } from './parseSheetRow'
 import { sheets_v4 } from 'googleapis'
-import { rightDate } from '../lib/timetable/intervals'
 import { EventToSave } from '../interfaces/db-interfaces'
 import { WrongExcelColumnsError } from './WrongFormatException'
 import { BotDb } from '../database/db'
@@ -19,6 +18,7 @@ import { logger } from '../util/logger'
 import { countBy, last } from 'lodash'
 import { ExcelUpdater } from '@culthub/google-docs'
 import Sheets = sheets_v4.Sheets
+import { rightDate } from '@culthub/timetable'
 
 export interface SpreadSheetValidationError {
     sheetTitle: string,

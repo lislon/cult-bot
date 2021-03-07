@@ -1,6 +1,7 @@
 import { config } from 'dotenv'
 import Bottleneck from 'bottleneck'
 import { ThrottlerOptions } from 'telegraf-throttler'
+import path from "path"
 
 type Envs = 'development' | 'production' | 'test'
 
@@ -57,6 +58,7 @@ export class BotConfig {
     public SCHEDULE_WEEKS_AHEAD: number
 
     public YANDEX_AFISHA_URL?: string
+    public readonly GOOGLE_AUTH_FILE = path.resolve(__dirname, '../../secrets/culthubbot-google-account.json')
 
     /**
      * Chat used to receive user feedback and send reply to it.

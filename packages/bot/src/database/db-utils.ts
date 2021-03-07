@@ -1,7 +1,7 @@
-import { MyInterval } from '../interfaces/app-interfaces'
+import { DateInterval } from '../interfaces/app-interfaces'
 import { formatISO } from 'date-fns'
 
-export function mapToPgInterval(interval: MyInterval): string {
+export function mapToPgInterval(interval: DateInterval): string {
     return `[${[interval.start, interval.end].map(i => formatISO(i)).join(',')}]`
 }
 

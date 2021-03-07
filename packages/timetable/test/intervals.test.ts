@@ -1,7 +1,8 @@
-import { filterByRange, mapInterval, MomentIntervals, predictIntervals } from '../../../src/lib/timetable/intervals'
-import { parseTimetable } from '../../../src/lib/timetable/parser'
+import { filterByRange, mapInterval, predictIntervals } from '../src/intervals'
+
 import { date, mkInterval } from './test-utils'
 import { format } from 'date-fns'
+import { MomentIntervals, parseTimetable } from '../src'
 
 
 function format2(e: Date) {
@@ -96,13 +97,13 @@ describe('integration', () => {
         if (timetable.status === true) {
             const intervals = predictIntervals(start, timetable.value, daysAhead)
 
-            const formatIntervals = intervals.map(i =>
+            const formatIntervals = intervals.map((i: Date | Date[]) =>
                 mapInterval(i, (ms) => format(ms, 'yyyy-MMM-dd HH:mm'))
             )
 
             expect(formatIntervals).toStrictEqual(expected)
         } else {
-            fail(timetable.errors.join('\n'))
+            throw new Error(timetable.errors.join('\n'))
         }
     }
 
@@ -259,7 +260,7 @@ describe('integration', () => {
             ], { daysAhead: 7, start: date('2020-01-01 00:00')})
     })
 
-    test('test ranges are limited by dates', () => {
+    test('ranges are limited by dates', () => {
         assert2('1 декабря 2019 - 1 февраля 2020: с 12 до 20',
             [
                 [
@@ -293,7 +294,7 @@ describe('integration', () => {
             ])
     })
 
-    test('test ranges are limited by dates 2', () => {
+    test('ranges are limited by dates start before range start', () => {
         assert2('03 января 2020 - 10 января 2020: в любое время',
             [
                 [

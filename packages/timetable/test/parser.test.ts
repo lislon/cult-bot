@@ -1,6 +1,5 @@
-import { parseTimetable } from '../../../src/lib/timetable/parser'
 import { date } from './test-utils'
-import { fail } from 'parsimmon'
+import { parseTimetable } from '../src/parser'
 
 describe('parser', () => {
     test.each([
@@ -196,10 +195,9 @@ describe('parser', () => {
 
     test('year rollolver', () => {
         const actual = parseTimetable('1 января: 12:00', date('2020-07-02'))
-        if (actual.status === true) {
-            expect(actual.value.datesExact).toStrictEqual([{'dateRange': ['2021-01-01'], 'times': ['12:00']}])
-        } else {
-            fail('Not success')
+        if (actual.status === false) {
+            throw new Error("failed to parse timetable")
         }
+        expect(actual.value.datesExact).toStrictEqual([{'dateRange': ['2021-01-01'], 'times': ['12:00']}])
     })
 })

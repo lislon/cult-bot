@@ -1,4 +1,4 @@
-import { Event, ExtIdAndId, MyInterval } from '../interfaces/app-interfaces'
+import { Event, ExtIdAndId, DateInterval } from '../interfaces/app-interfaces'
 import {
     mapToPgInterval,
     rangeHalfOpenIntersect
@@ -51,7 +51,7 @@ export interface PackEventSummary {
     title: string
 }
 export interface PacksQuery {
-    interval: MyInterval
+    interval: DateInterval
 }
 
 export interface PackRecovered extends PackToSave {

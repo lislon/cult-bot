@@ -1,15 +1,7 @@
-import {
-    DateExact,
-    DateOrDateRange,
-    DateRangeTimetable,
-    DayTime,
-    EventTimetable,
-    WeekTime
-} from '../../../src/lib/timetable/intervals'
-import { parseTimetable } from '../../../src/lib/timetable/parser'
-import { date } from './test-utils'
+import { DayTime} from './intervals'
+import { ruFormat } from './ruFormat'
 import { addDays, differenceInDays, getMonth, parseISO } from 'date-fns'
-import { ruFormat } from '../../../src/scenes/shared/shared-logic'
+import { DateExact, DateOrDateRange, DateRangeTimetable, EventTimetable, WeekTime } from './interfaces'
 
 export interface FormattedTimetable {
     weekTimes?: string[]
@@ -25,11 +17,11 @@ export interface FormattedTimetable {
     anytime?: string
 }
 
-interface TimetableConfig {
+export interface TimetableConfig {
     hidePast?: boolean
 }
 
-class TimetableFormatter {
+export class TimetableFormatter {
 
     private FIXED_MONDAY = new Date(2021, 1, 7)
     private DAYS_DIFF_TO_PRINT_YEAR = 180
@@ -50,9 +42,9 @@ class TimetableFormatter {
 
     formatWeekdays(weekdays: number[]): string {
         const fmtSingle = (dayInWeek: number) =>
-            ruFormat(addDays(this.FIXED_MONDAY, dayInWeek), 'eeeeee');
+            ruFormat(addDays(this.FIXED_MONDAY, dayInWeek), 'eeeeee')
 
-        let from = -1;
+        let from = -1
         let prev = -1
         const result = []
         let isContinueSeq = false
@@ -85,13 +77,14 @@ class TimetableFormatter {
         if (anytime) {
             return anytime
         }
-        const strWeekTimes = weekTimes.join('\n')
-        const strDatesExact = datesExact.map(({date, times}) => `${date}: ${times}`).join('\n')
-        const strDateRangesTimetable = dateRangesTimetable
-            .map(({dateRange, times, weekTimes}) => {
-                return `${dateRange}: ${times ?? weekTimes.join(', ')}`
+        const strWeekTimes = weekTimes?.join('\n')
+        const strDatesExact = datesExact?.map(({date, times}) => `${date}: ${times}`).join('\n')
+        const strDateRangesTimetable =
+            dateRangesTimetable
+                ?.map(({dateRange, times, weekTimes}) => {
+                return `${dateRange}: ${times ?? (weekTimes ? weekTimes.join(', ') : '')}`
             })
-            .join('\n')
+                .join('\n')
         return [strWeekTimes, strDatesExact, strDateRangesTimetable]
             .filter(s => s !== undefined && s !== '')
             .join('\n')
@@ -114,7 +107,7 @@ class TimetableFormatter {
                 return {
                     dateRange: this.formatDateOrDateRange(dateRange),
                     weekTimes: this.formatWeekTimes(weekTimes),
-                    times: this.formatTimes(times)
+                    times: times ? this.formatTimes(times) : undefined
                 }
             }
         )
@@ -140,7 +133,7 @@ class TimetableFormatter {
 
     private filterOnlyFuture(dateRange: DateOrDateRange) {
         if (dateRange.length === 1 && this.config.hidePast) {
-            const parsedDate = parseISO(dateRange[0]);
+            const parsedDate = parseISO(dateRange[0])
             if (parsedDate < this.now) {
                 return false
             }
@@ -150,15 +143,15 @@ class TimetableFormatter {
 
     private formatDateOrDateRange(dateRange: DateOrDateRange): string {
         if (dateRange.length === 1) {
-            const parsedDate = parseISO(dateRange[0]);
+            const parsedDate = parseISO(dateRange[0])
             if (this.isFarDate(parsedDate)) {
                 return ruFormat(parsedDate, 'dd MMMM yyyy')
             } else {
                 return ruFormat(parsedDate, 'dd MMMM')
             }
         } else {
-            const from = parseISO(dateRange[0]);
-            const to = parseISO(dateRange[1]);
+            const from = parseISO(dateRange[0])
+            const to = parseISO(dateRange[1])
             if (this.isFarDate(from) || this.isFarDate(to)) {
                 return `${ruFormat(from, 'dd MMMM yyyy')} - ${ruFormat(to, 'dd MMMM yyyy')}`
             } else if (getMonth(from) != getMonth(to)) {
@@ -170,88 +163,6 @@ class TimetableFormatter {
     }
 
     private isFarDate(parsedDate: Date) {
-        return Math.abs(differenceInDays(parsedDate, this.now)) > this.DAYS_DIFF_TO_PRINT_YEAR;
+        return Math.abs(differenceInDays(parsedDate, this.now)) > this.DAYS_DIFF_TO_PRINT_YEAR
     }
 }
-
-const NOW = date('2020-01-01 15:00')
-
-function expectWillBeFormatted(expected: string, text: string = expected, now: Date = NOW, config: TimetableConfig = {}): void {
-    let timetable = parseTimetable(text, now);
-    if (timetable.status === true) {
-        const result = new TimetableFormatter(now, config).formatTimetable(timetable.value)
-        expect(result).toEqual(expected)
-    } else {
-        fail('failed to parse: ' + text + '\n' + timetable.errors.join('\n'))
-    }
-}
-
-describe('timetable formatter', () => {
-
-    test('anytime', () => {
-        let input = `в любое время`;
-        const expected = 'В любое время'
-        expectWillBeFormatted(expected, input);
-    })
-
-    test('time_multiply_with_range', () => {
-        expectWillBeFormatted(`сб: 10:00-12:00,14:00`);
-    })
-
-    test('week_regular_single', () => {
-        expectWillBeFormatted('сб: 10:00');
-    })
-
-    test('week_regular_range', () => {
-        expectWillBeFormatted('пн,сб-вс: 10:00');
-    })
-
-    test('concrete_dates_single_far', () => {
-        let input = `12 января 2020: 10:00`;
-        const expected = '12 января 2020: 10:00'
-        expectWillBeFormatted(expected, input, new Date(2000, 1, 1));
-    })
-
-    test('concrete_dates_single_short', () => {
-        let input = `12 января 2020: 10:00`;
-        const expected = '12 января: 10:00'
-        expectWillBeFormatted(expected, input);
-    })
-
-    test('concrete_dates_dual_short', () => {
-        let input = `12 января 2020: 10:00; 13 января 2020: 10:00`;
-        const expected = '12 января: 10:00\n13 января: 10:00'
-        expectWillBeFormatted(expected, input);
-    })
-
-    test('concrete_dates_range_far', () => {
-        expectWillBeFormatted('12 января 2020 - 12 января 2030: 10:00');
-    })
-
-    test('concrete_dates_range_short_diff_months', () => {
-        expectWillBeFormatted(`28 января - 01 февраля: 10:00`);
-    })
-
-    test('concrete_dates_range_short_same_months', () => {
-        let input = `25 января 2020 - 28 января 2020: 10:00`;
-        let expected = `25-28 января: 10:00`;
-        expectWillBeFormatted(expected, input);
-    })
-
-    test('week_regular + concrete_dates_single_short', () => {
-        let expected = `сб: 10:00\n12 января: 10:00`;
-        expectWillBeFormatted(expected);
-    })
-
-    test('week_range_every_day', () => {
-        let input = `25 января 2020 - 28 января 2020: в любое время`;
-        let expected = `25-28 января: 00:00-24:00`;
-        expectWillBeFormatted(expected, input);
-    })
-
-    test('concrete_dates_hide_past', () => {
-        let input = `12 декабря 2019: 10:00\n12 января 2020: 10:00`;
-        const expected = '12 января: 10:00'
-        expectWillBeFormatted(expected, input, NOW, {hidePast: true});
-    })
-})

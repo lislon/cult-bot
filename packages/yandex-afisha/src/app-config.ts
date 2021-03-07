@@ -1,4 +1,5 @@
 import { config } from 'dotenv'
+import path from "path"
 
 type Envs = 'development' | 'production' | 'test'
 
@@ -18,12 +19,14 @@ export class AppConfig {
 
     public PORT: number
     public NODE_ENV: Envs
+    public readonly GOOGLE_AUTH_FILE = path.resolve(__dirname, '../secrets/culthubbot-google-account.json')
 
     constructor() {
         config()
         this.setFromKeyValue(process.env)
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public setFromKeyValue(envVars: any): void {
         this.DATABASE_URL = envVars.DATABASE_URL
         this.DATABASE_MAX_POOL = envVars.DATABASE_MAX_POOL === undefined ? 18 : +envVars.DATABASE_MAX_POOL

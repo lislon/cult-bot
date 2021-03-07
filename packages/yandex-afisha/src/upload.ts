@@ -10,6 +10,7 @@ import { ITask } from 'pg-promise'
 import { keyBy, Dictionary } from 'lodash'
 import { saveCurrentToExcel } from './export-to-excel';
 import { authToExcel } from '@culthub/google-docs';
+import { appConfig } from './app-config'
 
 function getParsedDate(file: string): string {
     const m = file.match(/[\d]+-[\d]+-[\d]+/)
@@ -108,7 +109,7 @@ function filterOnlyRealChange(diff: EventsSyncDiff): EventsSyncDiff {
 }
 
 function filterOnlyBotSpecificEvents(allEvents: ParsedEventToSave[]): ParsedEventToSave[] {
-    return allEvents.filter(e => e.primaryData.category !== 'Квесты')
+    return allEvents.filter(e => e.primaryData.category !== 'Квест')
 }
 
 (async function () {
@@ -136,7 +137,7 @@ function filterOnlyBotSpecificEvents(allEvents: ParsedEventToSave[]): ParsedEven
     console.log("recovered:")
     console.log(realDiff.recovered)
 
-    const excel = await authToExcel()
+    const excel = await authToExcel(appConfig.GOOGLE_AUTH_FILE)
 
     await saveCurrentToExcel(excel, newEvents.map(e => e.primaryData), [])
     await db.$pool.end()

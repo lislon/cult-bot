@@ -2,7 +2,7 @@ import { DbEvent, EventToSave } from '../interfaces/db-interfaces'
 import { encodeTagsLevel1 } from '../util/tag-level1-encoder'
 import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise'
 import { db, IExtensions } from './db'
-import { MomentIntervals } from '../lib/timetable/intervals'
+import { MomentIntervals } from '@culthub/timetable'
 import { BaseSyncItemDeleted, SyncConfig, UniversalDbSync, UniversalSyncDiff } from '@culthub/universal-db-sync'
 import { fieldInt, fieldStr, fieldTextArray, fieldTimestamptzNullable } from '@culthub/pg-utils'
 

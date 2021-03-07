@@ -7,7 +7,7 @@
   "author": "Igor Golovin <lislon@mail.ru>",
   "scripts": {
     "build": "tsc --build && eslint .",
-    "test": "tsc --help"
+    "test": "jest --passWithNoTests"
   },
   "files": [
     "src/**/*.ts",

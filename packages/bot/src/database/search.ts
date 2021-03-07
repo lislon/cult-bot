@@ -1,12 +1,12 @@
 import { IDatabase, IMain } from 'pg-promise'
-import { MyInterval } from '../interfaces/app-interfaces'
+import { DateInterval } from '../interfaces/app-interfaces'
 import { mapToPgInterval } from './db-utils'
 import { limitEventsToPage } from '../scenes/shared/shared-logic'
 import { LimitOffset } from './db'
 
 export interface SearchRequest extends Partial<LimitOffset> {
     query: string
-    interval: MyInterval
+    interval: DateInterval
     allowSearchById?: boolean
 }
 

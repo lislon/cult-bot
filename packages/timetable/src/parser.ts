@@ -1,9 +1,9 @@
 import * as P from 'parsimmon'
 import { Result, Success } from 'parsimmon'
-import { DateExact, DateOrDateRange, DateRange, DayTime, EventTimetable, mapInterval, WeekTime } from './intervals'
-import { cleanText } from './timetable-utils'
+import { DayTime, mapInterval} from './intervals'
 import { addYears, format, isValid, parseISO, setYear, subMonths } from 'date-fns'
 import cloneDeep from 'lodash/cloneDeep'
+import { DateExact, DateOrDateRange, DateRange, EventTimetable, WeekTime } from './interfaces'
 
 
 type FromToPair = { from: string, to: string }
@@ -145,7 +145,7 @@ const timetableLang = P.createLanguage({
         r.AnyTime.result([{anytime: true}]),
         P.sepBy1(r.DateRangeTimetablesOrExactDatesOrWeekDateTimetable, r.Divider)),
     Divider: (r) => P.seq(r._, P.alt(r[';'], r.NewLine), r._),
-    NewLine: (r) => P.regex(/[\n\r]+/).desc('новая строка'),
+    NewLine: () => P.regex(/[\n\r]+/).desc('новая строка'),
     [';']: () => P.string(';').desc('точка с запятой'),
     [',']: () => P.string(',').desc('запятая'),
     ['-']: () => P.string('-').desc('диапазон через дефис'),
@@ -158,7 +158,7 @@ const timetableLang = P.createLanguage({
 })
 
 
-function arrayfie(): (result: any[]) => any[] {
+function arrayfie<T>(): (result: T[]) => T[] {
     return (d) => Array.isArray(d) ? d : [d];
 }
 
@@ -179,7 +179,7 @@ function validateAndFixDate(p: string, errors: string[], now: Date): string {
 function fillUnknownYearsAndValidate(parse: Success<RawParseResult>, dateValidation: string[], now: Date): Success<RawParseResult> {
     const fixed: Success<RawParseResult> = cloneDeep(parse)
 
-    const validationAndFixation = (d: string) => validateAndFixDate(d, dateValidation, now)
+    const validationAndFixation: (d: string) => string = (d: string) => validateAndFixDate(d, dateValidation, now)
     const validateDateRangeOrder = (d: DateOrDateRange) => {
         if (d.length === 2 && d[0] > d[1]) {
             dateValidation.push(`Дата '${d[0]}' должна быть меньше, чем '${d[1]}'`)
@@ -188,13 +188,13 @@ function fillUnknownYearsAndValidate(parse: Success<RawParseResult>, dateValidat
 
     for (const p of fixed.value) {
         if (p.dateRange !== undefined) {
-            p.dateRange = mapInterval(p.dateRange, validationAndFixation) as any
+            p.dateRange = mapInterval(p.dateRange, validationAndFixation)
             validateDateRangeOrder(p.dateRange)
         } else if (p.dateRangesTimetable !== undefined) {
-            p.dateRangesTimetable.dateRange = mapInterval(p.dateRangesTimetable.dateRange, validationAndFixation) as any
+            p.dateRangesTimetable.dateRange = mapInterval(p.dateRangesTimetable.dateRange, validationAndFixation)
             validateDateRangeOrder(p.dateRangesTimetable.dateRange)
         } else if (p.exactDate) {
-            p.exactDate.dateRange = mapInterval(p.exactDate.dateRange, validationAndFixation) as any
+            p.exactDate.dateRange = mapInterval(p.exactDate.dateRange, validationAndFixation)
             validateDateRangeOrder(p.exactDate.dateRange)
         }
     }
@@ -209,13 +209,23 @@ export type TimetableParseResult = {
     errors: string[]
 }
 
+export function cleanTimetableText(text: string): string {
+    const englishC = 'c'
+    const russianC = 'с'
+    return text.toLowerCase()
+        .replace(englishC, russianC)
+        .replace(/[—‑–－﹘]/g, '-')
+        .replace(/[ ]+/g, ' ')
+        .replace(/[;\s]$/g, '')
+        .trim()
+}
 
-export function parseTimetable(text: string, now: Date): TimetableParseResult {
-    const input = cleanText(text)
-    let parseRes: Result<RawParseResult> = timetableLang.Everything.parse(input);
+export function parseTimetable(input: string, now: Date): TimetableParseResult {
+    const text = cleanTimetableText(input)
+    let parseRes: Result<RawParseResult> = timetableLang.Everything.parse(text);
     // const fixYear = (date: string) => parse(date, 'yyyy-MM-dd')
 
-    if (parseRes.status === true) {
+    if (parseRes.status) {
 
         const dateValidation: string[] = []
         parseRes = fillUnknownYearsAndValidate(parseRes, dateValidation, subMonths(now, 3))
@@ -223,7 +233,7 @@ export function parseTimetable(text: string, now: Date): TimetableParseResult {
             return {status: false, errors: dateValidation}
         }
 
-        const result: EventTimetable = {
+        const result: Required<EventTimetable> = {
             dateRangesTimetable: [],
             datesExact: [],
             weekTimes: [],
@@ -252,19 +262,19 @@ export function parseTimetable(text: string, now: Date): TimetableParseResult {
         return {status: parseRes.status, value: result}
     } else {
         const errors: string[] = []
-        if (input.length === 0) {
+        if (text.length === 0) {
             errors.push(`Пустая строка`)
-        } else if (parseRes.index.offset === input.length) {
-            errors.push(`После строки "${input}" я ожидала получить, например, следующее:`)
+        } else if (parseRes.index.offset === text.length) {
+            errors.push(`После строки "${text}" я ожидала получить, например, следующее:`)
             parseRes.expected.forEach(e => errors.push(` - ${e}`))
             errors.push(`Но в строке больше ничего нет`)
         } else if (parseRes.index.offset === 0) {
-            errors.push(`Не смогла понять что это: "${input}". Я ожидала одно из:`)
+            errors.push(`Не смогла понять что это: "${text}". Я ожидала одно из:`)
             parseRes.expected.forEach(e => errors.push(` - ${e}`))
         } else {
-            errors.push(`После строки "${input.substr(0, parseRes.index.offset)}" я ожидала:`)
+            errors.push(`После строки "${text.substr(0, parseRes.index.offset)}" я ожидала:`)
             parseRes.expected.forEach(e => errors.push(` - ${e}`))
-            errors.push(`И текст "${input.substr(parseRes.index.offset)}" не подходит к вышеперечисленному`)
+            errors.push(`И текст "${text.substr(parseRes.index.offset)}" не подходит к вышеперечисленному`)
         }
         return {status: parseRes.status, errors: errors}
     }

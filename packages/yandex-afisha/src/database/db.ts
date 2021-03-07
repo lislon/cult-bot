@@ -16,7 +16,7 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoSync = new ParsedEventRepository(dbEx, pgp)
     },
 
-    query(e) {
+    query() {
         // console.log(e.query)
     }
 }

@@ -4,9 +4,10 @@ import glob from 'glob-promise'
 import { Place, PlaceWithMeta } from './interfaces'
 import { sheets_v4 } from 'googleapis'
 import { ExcelUpdater, authToExcel } from '@culthub/google-docs'
-import { ruFormat } from './lib/utils'
+import { ruFormat } from './lib/ruFormat'
 import { parseISO } from 'date-fns'
 import { dates } from './settings'
+import { appConfig } from './app-config'
 
 // options is optional
 
@@ -39,7 +40,7 @@ async function loadEvents(dates: string[]) {
     const allEvents = await loadEvents(dates);
 
 
-    const excel = await authToExcel()
+    const excel = await authToExcel(appConfig.GOOGLE_AUTH_FILE)
     if (excel !== undefined) {
         await saveToExcel(excel, allEvents, dates)
         console.log(dates[0] + ' done')

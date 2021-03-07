@@ -1,5 +1,5 @@
 import { Event } from './app-interfaces'
-import { EventTimetable, MomentIntervals } from '../lib/timetable/intervals'
+import { EventTimetable, MomentIntervals } from '@culthub/timetable'
 import { BaseSyncItemToSave } from '@culthub/universal-db-sync'
 
 export interface DbEvent {

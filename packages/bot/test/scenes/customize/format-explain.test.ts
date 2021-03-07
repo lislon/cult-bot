@@ -1,7 +1,7 @@
 import { mapUserInputToTimeIntervals } from '../../../src/scenes/customize/customize-utils'
-import { mkInterval } from '../../lib/timetable/test-utils'
+import { mkInterval } from '../../util/timetable-util'
 import { i18n } from '../../../src/util/i18n'
-import { ContextMessageUpdate, I18MsgFunction, MyInterval } from '../../../src/interfaces/app-interfaces'
+import { ContextMessageUpdate, I18MsgFunction, DateInterval } from '../../../src/interfaces/app-interfaces'
 import { parseISO } from 'date-fns'
 import { formatExplainTime } from '../../../src/scenes/customize/filters/customize-time'
 
@@ -47,7 +47,7 @@ describe('convert_to_intervals', () => {
             [
                 expectedInterval('[2020-01-05 20:00, 2020-01-06 00:00)')
             ]],
-    ])('%s', (text: string, weekends: MyInterval, expected: Interval[]) => {
+    ])('%s', (text: string, weekends: DateInterval, expected: Interval[]) => {
         const actual = mapUserInputToTimeIntervals([text], weekends)
         expect(actual).toEqual(expected)
     })

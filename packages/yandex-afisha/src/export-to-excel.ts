@@ -4,7 +4,7 @@ import { ExcelUpdater } from '@culthub/google-docs';
 import { ParsedEvent } from './database/parsed-event';
 
 export async function saveDiffToExcel(excel: sheets_v4.Sheets, events: PlaceWithMeta[], dates: string[]): Promise<void> {
-
+    return;
 }
 
 export async function saveCurrentToExcel(excel: sheets_v4.Sheets, events: Omit<ParsedEvent, 'id'>[], dates: string[]): Promise<void> {
@@ -48,9 +48,9 @@ export async function saveCurrentToExcel(excel: sheets_v4.Sheets, events: Omit<P
             dates: e.entranceDates.join(', '),
             place: e.place,
             argument: e.description || '',
-            tags: e.tags.map(t => `#${t}`).join(' '),
+            tags: e.tags.join(' '),
             price: e.price,
-            url: `https://afisha.yandex.ru${e.url}`
+            url: e.url
         } as { [key in keyof typeof header]: string }
         const result = []
         const strings = Object.keys(header) as (keyof typeof header)[]

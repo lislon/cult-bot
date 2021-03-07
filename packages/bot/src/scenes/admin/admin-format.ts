@@ -76,7 +76,6 @@ export async function formatMainAdminMenu(ctx: ContextMessageUpdate) {
             Markup.button.callback(i18Btn(ctx, 'sync'), actionName('sync')),
         ])
         adminButtons.push([
-            Markup.button.callback(i18Btn(ctx, 'check_yandex'), actionName('check_yandex')),
             Markup.button.callback(i18Btn(ctx, 'version'), actionName('version'))
         ])
 
