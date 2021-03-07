@@ -416,7 +416,7 @@
       "cb_answer_unfavorited": "«${title}» убрано из избранного",
       "date_anytime": "в любое время",
       "deleted_card": "${icon} - <s>${title}</s>",
-      "slider_is_empty": "Избранное очищенно\n\nДзен и ничего лишнего 😌",
+      "slider_is_empty": "Избранное очищено\n\nДзен и ничего лишнего 😌",
       "keyboard": {
         "show_cards": "🖼 Показать карточки (${count})",
         "wipe": "🗑 Убрать старые",
