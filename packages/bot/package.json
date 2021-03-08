@@ -81,7 +81,7 @@
     "@types/request-promise": "^4.1.46",
     "@types/universal-analytics": "^0.4.4",
     "@types/uuid": "^8.3.0",
-    "@typescript-eslint/eslint-plugin": "4.15.2",
+    "@typescript-eslint/eslint-plugin": "4.16.1",
     "@typescript-eslint/parser": "4.16.1",
     "concurrently": "^6.0.0",
     "copyfiles": "^2.4.1",
