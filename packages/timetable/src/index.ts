@@ -1,8 +1,4 @@
 export {
-    DateInterval
-} from './interfaces'
-
-export {
     FormattedTimetable, TimetableConfig, TimetableFormatter
 } from './formatter'
 
@@ -19,7 +15,6 @@ export {
     TimetableParseResult, parseTimetable,
     cleanTimetableText
 } from './parser'
-export { MomentIntervals } from './interfaces'
-export { MomentOrInterval } from './interfaces'
-export { EventTimetable } from './interfaces'
-export { DateRange } from './interfaces'
+export {
+    MomentIntervals, MomentOrInterval, EventTimetable, DateRange, DateExact, WeekTime, DateInterval, DateOrDateRange
+} from './interfaces'

@@ -1,5 +1,5 @@
 import { sheets_v4 } from 'googleapis'
-import { CellColor, mkAnnotateCell, mkClearFormat, mkColorCell, mkEditCellDate, mkEditCellValue } from './googlesheets'
+import { CellColor, mkAnnotateCell, mkClearFormat, mkClearValue, mkColorCell, mkEditCellDate, mkEditCellValue } from './googlesheets'
 import Schema$Request = sheets_v4.Schema$Request
 
 type StringKeysOf<TObj> = { [K in keyof TObj]: K extends string ? K : never }[keyof TObj]
@@ -22,6 +22,15 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
         this.requests.push(mkClearFormat(sheetId, {
             startColumnIndex: this.getColumnIndex(column) - 1,
             endColumnIndex: this.getColumnIndex(column),
+            startRowIndex: startRow,
+            endRowIndex: startRow + numOfRows
+        }))
+    }
+
+    clearValues(sheetId: number, fromColumn: K, toColumn: K, startRow: number, numOfRows: number): void {
+        this.requests.push(mkClearValue(sheetId, {
+            startColumnIndex: this.getColumnIndex(fromColumn) - 1,
+            endColumnIndex: this.getColumnIndex(toColumn),
             startRowIndex: startRow,
             endRowIndex: startRow + numOfRows
         }))
@@ -70,7 +79,7 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
     }
 
 
-    async updateValues(spreadsheetId: string, title: string, values: string[][]): Promise<void> {
+    async updateOnlyValues(spreadsheetId: string, title: string, values: string[][]): Promise<void> {
         await this.excel.spreadsheets.values.update({
                 // The A1 notation of the values to update.
                 range: `${title}!A1:AA`,

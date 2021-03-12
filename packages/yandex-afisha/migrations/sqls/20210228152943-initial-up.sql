@@ -3,7 +3,7 @@ CREATE TABLE p_events (
 	ext_id text NOT NULL,
 	title text NOT NULL,
 	category text NOT NULL,
-	entrance_dates _timestamptz NULL,
+	timetable text NOT NULL,
 	place text NOT NULL,
 	description text NOT NULL,
 	tags _text NOT NULL,

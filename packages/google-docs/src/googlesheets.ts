@@ -77,6 +77,21 @@ export function mkClearFormat(sheetId: number, {startRowIndex, endRowIndex, star
     }
 }
 
+export function mkClearValue(sheetId: number, {startRowIndex, endRowIndex, startColumnIndex, endColumnIndex}: Range): Schema$Request {
+    return {
+        updateCells: {
+            range: {
+                sheetId: sheetId,
+                startRowIndex,
+                endRowIndex,
+                startColumnIndex,
+                endColumnIndex,
+            },
+            fields: 'userEnteredValue'
+        }
+    }
+}
+
 
 export function mkColorCell(sheetId: number, color: CellColor, column: number, row: number): Schema$Request {
     return {

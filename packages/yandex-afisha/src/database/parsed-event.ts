@@ -1,7 +1,6 @@
 import { BaseSyncItemDeleted, BaseSyncItemToSave, UniversalDbSync, UniversalSyncDiff } from '@culthub/universal-db-sync'
-import { fieldStr, fieldTimestamptzArray, fieldTimestamptzNullable } from '@culthub/pg-utils'
+import { fieldStr, fieldTimestamptzNullable } from '@culthub/pg-utils'
 import { ColumnSet, IColumnConfig, IDatabase, IMain, ITask } from 'pg-promise'
-import { formatISO } from 'date-fns'
 
 export interface ParsedEventDeleted extends BaseSyncItemDeleted {
     category: string
@@ -19,7 +18,7 @@ export interface ParsedEvent {
     extId: string
     title: string
     category: string
-    entranceDates: Date[]
+    timetable: string
     place: string
     price: string
     description: string
@@ -27,17 +26,19 @@ export interface ParsedEvent {
     url: string
     parseUrl: string
     deletedAt: Date | null
+    updatedAt: Date | null
 }
 
 export interface ParsedEventToSave extends BaseSyncItemToSave {
     primaryData: Omit<ParsedEvent, 'id'>
+    rawDates: string[]
 }
 
 export interface DbParsedEvent {
     ext_id: string
     category: string
     title: string
-    entrance_dates: Date[]
+    timetable: string
     place: string
     description: string
     tags: string[]
@@ -49,13 +50,13 @@ export interface DbParsedEvent {
 
 export type EventsSyncDiff = UniversalSyncDiff<ParsedEventToSave, ParsedEventDeleted, ParsedEventToRecover>
 
-const MD5_IGNORE: (keyof DbParsedEvent)[] = []
+const MD5_IGNORE: (keyof DbParsedEvent)[] = ['parse_url']
 
 export const parsedEventColumnsDef: IColumnConfig<DbParsedEvent>[] = [
     fieldStr('ext_id'),
     fieldStr('title'),
     fieldStr('category'),
-    fieldTimestamptzArray('entrance_dates'),
+    fieldStr('timetable'),
     fieldStr('place'),
     fieldStr('description'),
     fieldStr('tags'),
@@ -93,13 +94,13 @@ export class ParsedEventRepository {
             return []
         }
         return await db.map(`
-            SELECT ext_id, entrance_dates 
+            SELECT ext_id, timetable 
             FROM p_events pe
             WHERE pe.ext_id IN ($(extIds:csv)) 
         `, { extIds }, (row) => {
             return {
                 extId: row.ext_id,
-                dates: row.entrance_dates
+                dates: row.timetable
             }
         })
     }
@@ -117,7 +118,7 @@ export class ParsedEventRepository {
             title: event.primaryData.title,
             category: event.primaryData.category,
             ext_id: event.primaryData.extId,
-            entrance_dates: event.primaryData.entranceDates,
+            timetable: event.primaryData.timetable,
             place: event.primaryData.place,
             description: event.primaryData.description,
             tags: event.primaryData.tags,

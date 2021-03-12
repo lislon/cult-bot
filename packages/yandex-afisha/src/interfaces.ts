@@ -1,11 +1,9 @@
-export type ParseType = 'orig' | 'snapshot';
-
 export interface PlaceWithMeta extends Place {
     parseDate: Date
 }
 
 export interface Place {
-    distance: any
+    distance: unknown
     event: {
         id: string,
         url: string,
@@ -29,7 +27,7 @@ export interface Place {
                     "min": number,
                     "max": number
                 },
-                "discount": any,
+                "discount": unknown,
                 saleStatus: 'available',
             }[],
         "image": {

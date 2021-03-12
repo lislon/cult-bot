@@ -1,1 +1,1 @@
-DROP TABLE p_events;
+DROP TABLE IF EXISTS p_events;
