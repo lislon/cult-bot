@@ -1,6 +1,6 @@
 import { db, dbCfg } from '../../../src/database/db'
 import { getMockEvent, syncEventsDb4Test } from './db-test-utils'
-import { date } from '../../lib/timetable/test-utils'
+import { date } from '../../util/timetable-util'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
@@ -11,7 +11,7 @@ describe('Users', () => {
 
     test('Snapshot can be taken', async () => {
         const eventTime = [[date('2020-01-01 12:00'), date('2020-01-03 15:00')]]
-        const [A, B, C] = await syncEventsDb4Test([
+        await syncEventsDb4Test([
             getMockEvent({title: 'A', category: 'theaters', eventTime, tag_level_1: ['#A', '#B', '#C']}),
         ])
 

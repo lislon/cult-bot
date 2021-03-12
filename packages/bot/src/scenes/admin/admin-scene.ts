@@ -20,11 +20,13 @@ import { STICKER_CAT_THUMBS_UP } from '../../util/stickers'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import { EventToSave } from '../../interfaces/db-interfaces'
 import { formatMainAdminMenu, formatMessageForSyncReport } from './admin-format'
-import { getButtonsSwitch, menuCats, SYNC_CONFIRM_TIMEOUT_SECONDS, countEventValidationErrors } from './admin-common'
+import { countEventValidationErrors, getButtonsSwitch, menuCats, SYNC_CONFIRM_TIMEOUT_SECONDS } from './admin-common'
 import { EventsSyncDiff, EventToRecover } from '../../database/db-sync-repository'
 import { ITask } from 'pg-promise'
-import { parseAndValidateGoogleSpreadsheetsEvents, SpreadSheetValidationError } from '../../dbsync/parserSpresdsheetEvents'
-import { authToExcel } from '../../dbsync/googlesheets'
+import {
+    parseAndValidateGoogleSpreadsheetsEvents,
+    SpreadSheetValidationError
+} from '../../dbsync/parserSpresdsheetEvents'
 import {
     enrichPacksSyncDiffWithSavedEventIds,
     EventPackValidated,
@@ -39,8 +41,9 @@ import { i18n } from '../../util/i18n'
 import { formatUserName2 } from '../../util/misc-utils'
 import { rawBot } from '../../raw-bot'
 import { PacksSyncDiff, PackToSave } from '../../database/db-packs'
-import Timeout = NodeJS.Timeout
 import { ExcelPacksSyncResult, fetchAndParsePacks, savePacksValidationErrors } from '../../dbsync/parserSpredsheetPacks'
+import Timeout = NodeJS.Timeout
+import { authToExcel } from '@culthub/google-docs'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 
@@ -128,7 +131,7 @@ function shouldUserConfirmSync(eventsDiff: EventsSyncDiff, packsDiff: PacksSyncD
     return countDangers > 0
 }
 
-async function statusUpdate(ctx: ContextMessageUpdate, message: Message.TextMessage, id: string, tplData: any = undefined) {
+async function statusUpdate(ctx: ContextMessageUpdate, message: Message.TextMessage, id: string, tplData: any = undefined): Promise<void> {
     try {
         await ctx.telegram.editMessageText(message.chat.id, message.message_id, undefined, i18Msg(ctx, id, tplData))
     } catch (e) {
@@ -150,7 +153,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate): Promise<vo
             disable_web_page_preview: true
         })
 
-        const excel = await authToExcel()
+        const excel = await authToExcel(botConfig.GOOGLE_AUTH_FILE)
 
         await statusUpdate(ctx, message, 'sync_status_downloading')
 
@@ -488,7 +491,7 @@ async function switchCard(ctx: ContextMessageUpdate & { match: RegExpExecArray }
     })
 }
 
-function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     const adminGlobalCommands = new Composer<ContextMessageUpdate>()
         .command('adminGlobalCommands', async ctx => {
             await ctx.scene.enter('admin_scene')

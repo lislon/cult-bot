@@ -1,6 +1,6 @@
 import { cleanDb, expectedTitles, expectedTitlesStrict, getMockEvent, syncEventsDb4Test } from './db-test-utils'
 import { db, dbCfg } from '../../../src/database/db'
-import { date, mkInterval } from '../../lib/timetable/test-utils'
+import { date, mkInterval } from '../../util/timetable-util'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end)

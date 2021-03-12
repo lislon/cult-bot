@@ -1,4 +1,4 @@
-import { ContextMessageUpdate, EventFormat, MyInterval, TagLevel2 } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, EventFormat, DateInterval, TagLevel2 } from '../../interfaces/app-interfaces'
 import { getNextWeekendRange, SessionEnforcer } from '../shared/shared-logic'
 import { mapUserInputToTimeIntervals } from './customize-utils'
 import { cleanRubricsTag } from './filters/customize-rubrics'
@@ -46,7 +46,7 @@ export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     }
 }
 
-export function getNextWeekendRangeForCustom(now: Date): MyInterval {
+export function getNextWeekendRangeForCustom(now: Date): DateInterval {
     return getNextWeekendRange(now, '2weekends_only')
 }
 

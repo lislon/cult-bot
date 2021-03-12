@@ -1,7 +1,7 @@
 import { sheets_v4 } from 'googleapis'
 import { logger } from '../util/logger'
 import { botConfig } from '../util/bot-config'
-import { ExcelUpdater } from './ExcelUpdater'
+import { ExcelUpdater } from '@culthub/google-docs'
 import { EventPackValidated } from './packsSyncLogic'
 import Sheets = sheets_v4.Sheets
 

@@ -1,11 +1,11 @@
-import { MyInterval } from '../interfaces/app-interfaces'
+import { DateInterval } from '../interfaces/app-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { ColumnSet, IDatabase, IMain } from 'pg-promise'
 import { AdminEvent } from './db-admin'
 
 
 export interface AutoIncrementLikeQuery {
-    interval: MyInterval
+    interval: DateInterval
 }
 
 export type LikableEvent = Pick<AdminEvent, 'extId' | 'fakeDislikes' | 'id' | 'fakeLikes'>

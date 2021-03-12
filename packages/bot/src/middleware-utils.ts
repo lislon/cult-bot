@@ -90,7 +90,7 @@ export default {
     },
     loggerInject: loggerInjectMiddleware(),
     logger: loggerMiddleware,
-    session: getSessionMechism,
+    session:  getSessionMechism,
     sessionTmp: sessionTmp,
     logMiddleware: logMiddleware,
     userMiddleware: userMiddleware,

@@ -1,5 +1,5 @@
 import { db, dbCfg } from '../../../src/database/db'
-import { date, mkInterval } from '../../lib/timetable/test-utils'
+import { date, mkInterval } from '../../util/timetable-util'
 import { cleanDb, expectedIds, getMockEvent, MockEvent, syncEventsDb4Test } from './db-test-utils'
 
 

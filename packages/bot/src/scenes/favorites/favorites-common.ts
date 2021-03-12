@@ -1,7 +1,7 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { Markup, Scenes } from 'telegraf'
 import { i18nSceneHelper } from '../../util/scene-helper'
-import { leftDate } from '../../lib/timetable/intervals'
+import { leftDate } from '@culthub/timetable'
 import { compareAsc, compareDesc } from 'date-fns'
 import { first } from 'lodash'
 import { db } from '../../database/db'

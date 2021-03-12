@@ -1,11 +1,11 @@
 import { CHEAP_PRICE_THRESHOLD, Event, EventCategory, TagLevel2 } from '../interfaces/app-interfaces'
-import { EventTimetable, MomentOrInterval } from '../lib/timetable/intervals'
 import { fieldIsQuestionMarkOrEmpty } from '../util/misc-utils'
 import { parseAndPredictTimetable } from '../lib/timetable/timetable-utils'
 import { i18n } from '../util/i18n'
 import { parseISO } from 'date-fns'
 import { parsePrice } from '../lib/price-parser'
 import { botConfig } from '../util/bot-config'
+import { EventTimetable, MomentOrInterval } from '@culthub/timetable'
 
 export const EXCEL_COLUMNS_EVENTS = {
     ext_id: '№',
@@ -94,7 +94,7 @@ function preparePublish(data: Event, result: ExcelRowResult) {
     }
 }
 
-export function getOnlyHumanTimetable(timetable: string) {
+export function getOnlyHumanTimetable(timetable: string): string {
     return timetable.replace(/{(?:бот|bot):([^}]+)}/, '').trim()
 }
 

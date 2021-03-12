@@ -1,12 +1,12 @@
-import { chidrensTags, EventFormat, moneyTags, MyInterval, TagLevel2 } from '../interfaces/app-interfaces'
+import { chidrensTags, EventFormat, moneyTags, DateInterval, TagLevel2 } from '../interfaces/app-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
 import { LimitOffset } from './db'
 
 
 export interface CustomFilter extends Partial<LimitOffset> {
-    weekendRange: MyInterval
-    timeIntervals?: MyInterval[]
+    weekendRange: DateInterval
+    timeIntervals?: DateInterval[]
     format?: EventFormat
     rubrics?: string[]
     priorities?: TagLevel2[]

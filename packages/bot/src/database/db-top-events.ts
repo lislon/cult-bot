@@ -1,4 +1,4 @@
-import { EventCategory, MyInterval } from '../interfaces/app-interfaces'
+import { EventCategory, DateInterval } from '../interfaces/app-interfaces'
 import { TagCategory } from '../interfaces/db-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { IDatabase, IMain } from 'pg-promise'
@@ -8,7 +8,7 @@ import { LimitOffset } from './db'
 
 export interface TopEventsDbQuery extends Partial<LimitOffset> {
     category: EventCategory
-    interval: MyInterval
+    interval: DateInterval
     rubrics?: string[]
 }
 

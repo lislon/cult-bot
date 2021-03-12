@@ -1,9 +1,9 @@
 import { db } from '../../../src/database/db'
-import { MomentIntervals } from '../../../src/lib/timetable/intervals'
 import { Event, EventCategory, TagLevel2 } from '../../../src/interfaces/app-interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
 import { PackToSave } from '../../../src/database/db-packs'
 import { UserSaveData } from '../../../src/database/db-users'
+import { MomentIntervals } from '@culthub/timetable'
 
 export async function cleanDb() {
     return await db.none('TRUNCATE cb_events_entrance_times, cb_events, cb_events_packs RESTART identity')

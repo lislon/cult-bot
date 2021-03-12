@@ -1,0 +1,30 @@
+{
+  "name": "@culthub/google-docs",
+  "version": "1.0.0",
+  "license": "unlicensed",
+  "private": true,
+  "main": "dist/index.js",
+  "author": "Igor Golovin <lislon@mail.ru>",
+  "scripts": {
+    "build": "tsc --build && eslint .",
+    "test": "jest --passWithNoTests"
+  },
+  "files": [
+    "src/**/*.ts",
+    "dist/**/*.js",
+    "typings/**/*.d.ts",
+    "typings/**/*.d.ts.map"
+  ],
+  "dependencies": {
+    "googleapis": "^67.1.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "ts-node": "^9.1.1"
+  },
+  "type": "commonjs",
+  "types": "./typings/index.d.ts",
+  "engines": {
+    "node": ">=12"
+  }
+}

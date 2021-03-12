@@ -1,6 +1,6 @@
 import { db, dbCfg } from '../../../src/database/db'
 import { cleanDb, expectedTitlesStrict, getMockEvent } from './db-test-utils'
-import { date, mkInterval } from '../../lib/timetable/test-utils'
+import { date, mkInterval } from '../../util/timetable-util'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { EventsSyncDiff } from '../../../src/database/db-sync-repository'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'

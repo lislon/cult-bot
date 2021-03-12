@@ -1,6 +1,6 @@
 import { cleanDb, getMockEvent, syncEventsDb4Test } from './db-test-utils'
 import { db, dbCfg } from '../../../src/database/db'
-import { date, mkInterval } from '../../lib/timetable/test-utils'
+import { date, mkInterval } from '../../util/timetable-util'
 import { mskMoment } from '../../../src/util/moment-msk'
 
 

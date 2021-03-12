@@ -1,0 +1,6 @@
+packages/*/test/**/*
+packages/*/dist/
+packages/*/docs/
+packages/*/migrations/
+packages/*/secrets/
+packages/*/**/*.js

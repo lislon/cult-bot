@@ -1,11 +1,11 @@
-import { Event, EventCategory, MyInterval } from '../interfaces/app-interfaces'
+import { Event, EventCategory, DateInterval } from '../interfaces/app-interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { ColumnSet, IColumnConfig, IDatabase, IMain, ITask } from 'pg-promise'
 import { IExtensions } from './db'
 import { DbEvent } from '../interfaces/db-interfaces'
 
 interface CountEventsQuery {
-    interval: MyInterval
+    interval: DateInterval
 }
 
 export interface LikeDislikeChange {

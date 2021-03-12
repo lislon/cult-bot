@@ -1,4 +1,4 @@
-import { CAT_NAMES, ContextMessageUpdate, EventCategory, MyInterval } from '../../interfaces/app-interfaces'
+import { CAT_NAMES, ContextMessageUpdate, EventCategory, DateInterval } from '../../interfaces/app-interfaces'
 import { getNextWeekendRange } from '../shared/shared-logic'
 import { db, LimitOffset } from '../../database/db'
 import { encodeTagsLevel1 } from '../../util/tag-level1-encoder'
@@ -31,7 +31,7 @@ export function getTopRangeInterval(ctx: ContextMessageUpdate) {
     return getNextWeekendRange(ctx.now())
 }
 
-export async function getTopEventIds(ctx: ContextMessageUpdate, query: TopEventsStageQuery, range: MyInterval, limitOffset: LimitOffset): Promise<number[]> {
+export async function getTopEventIds(ctx: ContextMessageUpdate, query: TopEventsStageQuery, range: DateInterval, limitOffset: LimitOffset): Promise<number[]> {
     return await db.repoTopEvents.getTopIds({
         category: query.cat,
         interval: range,
@@ -40,7 +40,7 @@ export async function getTopEventIds(ctx: ContextMessageUpdate, query: TopEvents
     })
 }
 
-export async function getTopEventCount(ctx: ContextMessageUpdate, query: TopEventsStageQuery, range: MyInterval): Promise<number> {
+export async function getTopEventCount(ctx: ContextMessageUpdate, query: TopEventsStageQuery, range: DateInterval): Promise<number> {
     return await db.repoTopEvents.getTopIdsCount({
         category: query.cat,
         interval: range,

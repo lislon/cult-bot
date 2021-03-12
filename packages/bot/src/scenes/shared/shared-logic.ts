@@ -1,4 +1,4 @@
-import { ContextCallbackQueryUpdate, ContextMessageUpdate, MyInterval } from '../../interfaces/app-interfaces'
+import { ContextCallbackQueryUpdate, ContextMessageUpdate, DateInterval } from '../../interfaces/app-interfaces'
 import { addDays, max, parseISO, startOfDay, startOfISOWeek } from 'date-fns/fp'
 import { format, formatDistanceToNow, isAfter, Locale, parse } from 'date-fns'
 import flow from 'lodash/fp/flow'
@@ -14,11 +14,11 @@ import { ExtraReplyMessage, InlineKeyboardButton, InlineKeyboardMarkup, Message 
 import { SLOT_DATE_FORMAT } from '../customize/customize-common'
 import { isAfterOrEquals } from '../../util/moment-msk'
 import { first, last } from 'lodash'
-import { MomentIntervals, rightDate } from '../../lib/timetable/intervals'
+import { MomentIntervals, rightDate } from '@culthub/timetable'
 
 type Range = '2weekends_only'
 
-export function getNextWeekendRange(now: Date, range?: Range): MyInterval {
+export function getNextWeekendRange(now: Date, range?: Range): DateInterval {
 
     // 2weekends_only is used by customize filter. It has it own logic working with configured holidays
     // if (range !== '2weekends_only') {
@@ -38,7 +38,7 @@ export function getNextWeekendRange(now: Date, range?: Range): MyInterval {
     }
 }
 
-export function getNextWeekRange(now: Date): MyInterval {
+export function getNextWeekRange(now: Date): DateInterval {
     return {
         start: max([now, (flow(startOfISOWeek, startOfDay, addDays(0))(now))]),
         end: flow(startOfISOWeek, startOfDay, addDays(7))(now)

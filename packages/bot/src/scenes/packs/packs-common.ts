@@ -1,4 +1,4 @@
-import { ContextMessageUpdate, Event, MyInterval } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, Event, DateInterval } from '../../interfaces/app-interfaces'
 import { ScenePack } from '../../database/db-packs'
 import { SessionEnforcer } from '../shared/shared-logic'
 import { db } from '../../database/db'
@@ -15,7 +15,7 @@ export interface PacksSceneState {
     eventSelectedIdx?: number
 }
 
-export function getNextRangeForPacks(now: Date): MyInterval {
+export function getNextRangeForPacks(now: Date): DateInterval {
     return {
         start: max([now, (flow(startOfISOWeek, startOfDay, addDays(0))(now))]),
         end: flow(startOfISOWeek, startOfDay, addMonths(1))(now)

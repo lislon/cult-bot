@@ -1,5 +1,5 @@
 import { ColumnSet, IDatabase, IMain } from 'pg-promise'
-import { fieldInt, fieldInt8Array, fieldStr, fieldTimestamptzNullable } from './db-utils'
+import { fieldInt, fieldInt8Array, fieldStr, fieldTimestamptzNullable } from '@culthub/pg-utils'
 
 interface UserRow {
     username: string

@@ -469,6 +469,7 @@
       "back": "◀️ Назад",
       "checkbox_on": " ✔",
       "checkbox_off": " ",
+      "show_tags": "#",
       "paging_show_more": "Показать еще (${countLeft})",
       "slider_keyboard": {
         "back": "◀️",

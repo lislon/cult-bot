@@ -93,7 +93,7 @@ export interface Event {
     dislikes: number
 }
 
-export type MyInterval = {
+export type DateInterval = {
     start: Date
     end: Date
 }

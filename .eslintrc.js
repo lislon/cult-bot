@@ -5,6 +5,14 @@ module.exports = {
         '@typescript-eslint',
         'jest'
     ],
+    ignorePatterns: [
+        '/packages/*/dist/',
+        '/packages/*/docs/',
+        '/packages/*/typings/',
+        '/packages/*/migrations/',
+        '/packages/*/**/*.js',
+        '/packages/bot/test/',
+    ],
     extends: [
         'eslint:recommended',
         'plugin:@typescript-eslint/recommended',
@@ -16,9 +24,5 @@ module.exports = {
         "browser": true,
         "es6": true,
         "node": true
-    },
-    "rules": {
-        "no-misleading-character-class": "warn",
-        "@typescript-eslint/no-unused-vars": "off"
     }
 };

@@ -17,7 +17,7 @@ import {
     updateKeyboardButtons,
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
-import { rightDate } from '../../lib/timetable/intervals'
+import { rightDate } from '@culthub/timetable'
 import { ParseAndPredictTimetableResult } from '../../lib/timetable/timetable-utils'
 import { first, last } from 'lodash'
 import { isAfter } from 'date-fns'

@@ -1,13 +1,9 @@
 import { google, sheets_v4 } from 'googleapis'
 import { GoogleAuth } from 'google-auth-library'
-import * as path from 'path'
-import { logger } from '../util/logger'
 import { differenceInSeconds, parseISO } from 'date-fns'
 import Sheets = sheets_v4.Sheets
 import Schema$Request = sheets_v4.Schema$Request
 
-
-const SERVICE_ACCOUNT_CREDENTIALS_FILE = path.resolve(__dirname, '../../secrets/culthubbot-google-account.json')
 
 const CELL_BG_COLORS = {
     green: {red: 0.95, green: 1, blue: 0.95},
@@ -19,24 +15,14 @@ const CELL_BG_COLORS = {
 export type CellColor = keyof typeof CELL_BG_COLORS
 
 
-export async function authToExcel(): Promise<Sheets> {
-    try {
-        const auth = authorizeByServiceAccount();
-        return google.sheets({version: 'v4', auth})
-    } catch (e) {
-        logger.error('Error loading client secret file:', e);
-        return undefined;
-    }
-}
-
-
-function authorizeByServiceAccount(): any {
-    // Docs: https://developers.google.com/sheets/api/guides/authorizing
-    return new GoogleAuth({
-        keyFile: SERVICE_ACCOUNT_CREDENTIALS_FILE,
+export async function authToExcel(authJsonPath: string): Promise<Sheets> {
+    const auth = new GoogleAuth({
+        keyFile: authJsonPath,
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
+    return google.sheets({version: 'v4', auth})
 }
+
 
 function repeat<T>(param: T, columnsNo: number): T[] {
     return [...Array(columnsNo)].fill(param)
@@ -87,6 +73,21 @@ export function mkClearFormat(sheetId: number, {startRowIndex, endRowIndex, star
                 endColumnIndex,
             },
             fields: 'userEnteredFormat, note'
+        }
+    }
+}
+
+export function mkClearValue(sheetId: number, {startRowIndex, endRowIndex, startColumnIndex, endColumnIndex}: Range): Schema$Request {
+    return {
+        updateCells: {
+            range: {
+                sheetId: sheetId,
+                startRowIndex,
+                endRowIndex,
+                startColumnIndex,
+                endColumnIndex,
+            },
+            fields: 'userEnteredValue'
         }
     }
 }

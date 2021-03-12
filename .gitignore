@@ -28,3 +28,5 @@ dist.zip
 *.tsbuildinfo
 /packages/*/dist/
 /packages/*/typings/
+
+data-snapshots

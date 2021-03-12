@@ -1,7 +1,22 @@
 {
   "references": [
     {
+      "path": "./packages/pg-utils"
+    },
+    {
+      "path": "./packages/timetable"
+    },
+    {
+      "path": "./packages/universal-db-sync"
+    },
+    {
+      "path": "./packages/google-docs"
+    },
+    {
       "path": "./packages/bot"
+    },
+    {
+      "path": "./packages/yandex-afisha"
     }
   ],
   "files": [],

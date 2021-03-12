@@ -58,13 +58,15 @@ heroku config -a <app name>
 
 ### New app :
 ```
-heroku create <app name>
-heroku addons:create -a <app name> heroku-postgresql:hobby-dev
-heroku pg:credentials:url -a <app name> DATABASE
-heroku labs:enable runtime-dyno-metadata -a <app name>
-heroku addons:create heroku-redis:hobby-dev -a <app name>
-heroku buildpacks:add --index 0 heroku/nodejs -a <app name>
-heroku buildpacks:add "https://github.com/blockhq/heroku-buildpack-yarn-workspaces#master" -a <app name>
+$app = "cult-hub-yandex-afisha-dev"
+
+heroku create $app
+heroku addons:create -a $app heroku-postgresql:hobby-dev
+heroku pg:credentials:url -a $app DATABASE
+heroku labs:enable runtime-dyno-metadata -a $app
+heroku buildpacks:add heroku/nodejs -a $app
+heroku buildpacks:add "https://github.com/blockhq/heroku-buildpack-yarn-workspaces#master" -a $app
+heroku addons:create heroku-redis:hobby-dev -a $app
 ```
 
 

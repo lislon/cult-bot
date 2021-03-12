@@ -61,6 +61,7 @@ export interface CardOptions {
     showAdminInfo?: boolean
     packs?: boolean
     deleted?: boolean
+    showTags?: boolean
 }
 
 export interface EventWithPast extends Event {
@@ -152,7 +153,9 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
         text += `${formatUrl(escapeHTML(row.url))}\n`
     }
     text += '\n'
-    text += `${strikeIfDeleted(escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' ')))}\n`
+    if (options.showTags) {
+        text += `${strikeIfDeleted(escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' ')))}\n`
+    }
     if (options.showAdminInfo === true) {
         text += `<i>${row.extId}, ${row.reviewer}, оценка ${row.rating}</i>\n`
     }
