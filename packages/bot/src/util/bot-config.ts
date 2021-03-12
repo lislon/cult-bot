@@ -60,6 +60,8 @@ export class BotConfig {
     public YANDEX_AFISHA_URL?: string
     public readonly GOOGLE_AUTH_FILE = path.resolve(__dirname, '../../secrets/culthubbot-google-account.json')
 
+    public FEATURE_CARD_TAG_TOGGLE: boolean
+
     /**
      * Chat used to receive user feedback and send reply to it.
      */
@@ -111,6 +113,8 @@ export class BotConfig {
         this.SLIDER_MAX_IDS_CACHED = +envVars.SLIDER_MAX_IDS_CACHED || 10
         this.SLIDER_INSTA_VIEW = !!envVars.SLIDER_INSTA_VIEW || false
         this.YANDEX_AFISHA_URL = envVars.YANDEX_AFISHA_URL
+        this.FEATURE_CARD_TAG_TOGGLE = !!envVars.FEATURE_CARD_TAG_TOGGLE || false
+
 
         const number = (key: unknown, defaultValue: number|undefined): void => {
             // @ts-expect-error: Later

@@ -29,7 +29,7 @@ export class AppConfig {
         this.setFromKeyValue(process.env)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types
     public setFromKeyValue(envVars: any): void {
         this.DATABASE_URL = envVars.DATABASE_URL
         this.DATABASE_MAX_POOL = envVars.DATABASE_MAX_POOL === undefined ? 18 : +envVars.DATABASE_MAX_POOL

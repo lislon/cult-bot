@@ -142,7 +142,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             const nextButton = Markup.button.callback(i18nSharedBtnName('slider_keyboard.next'), this.btnActionNext)
 
             const buttons: InlineKeyboardButton.CallbackButton[][] = [
-                [Markup.button.callback(i18SharedBtn('show_tags'), this.btnTagToggle)],
+                ...(botConfig.FEATURE_CARD_TAG_TOGGLE ? [[Markup.button.callback(i18SharedBtn('show_tags'), this.btnTagToggle)]] : []),
                 [backButton, ...cardButtons],
                 [prevButton, position, nextButton]
             ]
