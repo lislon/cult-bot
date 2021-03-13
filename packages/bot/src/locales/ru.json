@@ -119,7 +119,7 @@
       "just_a_button": "Просто кнопка, ничего не делает",
       "keyboard": {
         "sync_back": "✖️ Отмена",
-        "sync_confirm": "✅ Подтвердить",
+        "sync_confirm": "⚠️  Подтвердить",
 
         "menu_changed_snapshot": "Разница с ${date} (${user})",
 
