@@ -5,9 +5,33 @@
 
 version: 2
 updates:
-  - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/packages/bot/" # Location of package manifests
+  - package-ecosystem: "npm"
+    directory: "/packages/bot/"
     schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+      directory: "/packages/google-docs"
+      schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+      directory: "/packages/pg-utils"
+      schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+      directory: "/packages/timetable"
+      schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+      directory: "/packages/universal-db-sync"
+      schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+      directory: "/packages/yandex-afisha"
+      schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"
     # Workflow files stored in the
