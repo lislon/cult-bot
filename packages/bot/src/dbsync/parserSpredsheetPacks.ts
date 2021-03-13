@@ -32,7 +32,7 @@ export interface EventPackExcel {
     description: string
     author: string
     events: EventInPackExcel[]
-    isPublish: boolean
+    isPublish?: boolean
     weight: number
     sheetId: number
     rowNumber: number
@@ -80,6 +80,9 @@ export async function savePacksValidationErrors(excel: Sheets, allValidatedEvent
         if (errors.weight) {
             markRow('weight', errors.weight)
         }
+        if (errors.isPublish) {
+            markRow('isPublish', errors.isPublish)
+        }
         if (errors.extId) {
             markRow('id', errors.extId)
         }
@@ -125,7 +128,7 @@ export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncR
                 rowNumber,
                 sheetId: sheetsMetaData.data.sheets[0].properties.sheetId
             }
-        } else if (rowLabel === 'Опубликована') {
+        } else if (rowLabel === 'Опубликована' && rowValue !== undefined) {
             currentPack.isPublish = !!(rowValue as string).toLocaleLowerCase().match(/(yes|да|true)/)
         } else if (rowLabel === 'Куратор') {
             currentPack.author = rowValue

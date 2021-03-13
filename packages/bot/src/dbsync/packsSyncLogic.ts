@@ -20,6 +20,7 @@ export interface EventPackValidated {
     errors: {
         title: string
         weight: string
+        isPublish: string
         description: string
         extId: string
         badEvents: BadEvent[]
@@ -34,6 +35,7 @@ interface BadEvent {
 
 function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>, packExtIds: Dictionary<number>): EventPackValidated {
     const errors: EventPackValidated['errors'] = {
+        isPublish: undefined,
         title: undefined,
         weight: undefined,
         description: undefined,
@@ -51,6 +53,9 @@ function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>, 
         })
     if (p.description === undefined) {
         errors.description = 'Пустое поле description'
+    }
+    if (p.isPublish === undefined) {
+        errors.isPublish = 'Пустое поле публиковать'
     }
     if (p.title === undefined) {
         errors.title = 'Пустое поле title'
@@ -74,7 +79,7 @@ function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>, 
             weight: p.weight,
         },
         errors,
-        isValid: [errors.title, errors.description, errors.weight, errors.extId].filter(e => e !== undefined).length === 0 && errors.badEvents.length == 0
+        isValid: [errors.title, errors.description, errors.weight, errors.extId, errors.isPublish].filter(e => e !== undefined).length === 0 && errors.badEvents.length == 0
     }
 }
 
@@ -97,8 +102,3 @@ export async function validatePacksForSync(packsSyncResult: ExcelPacksSyncResult
     const validationResult = packsSyncResult.packs.map(p => processPack(p, idByExtId, countByExtId))
     return validationResult
 }
-
-export function getOnlyValid(all: EventPackValidated[]): EventPackForSavePrepared[] {
-    return all.filter(vr => vr.isValid && vr.published).map(vr => vr.pack)
-}
-
