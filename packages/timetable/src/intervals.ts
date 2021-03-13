@@ -18,7 +18,7 @@ import {
     DateOrDateRange,
     DateRange,
     DateRangeTimetable,
-    EventTimetable,
+    EventTimetable, isDateRange,
     MomentIntervals,
     MomentOrInterval,
     WeekTime
@@ -42,10 +42,10 @@ function toDateOrUndefined(dateStr?: string) {
 }
 
 
-export function subDateRange([fromIncl, toIncl]: DateOrDateRange, dateFromStr: string, daysahead: number): DateInterval|undefined {
-    if (toIncl === undefined) {
-        toIncl = fromIncl
-    }
+export function subDateRange(dateOrDateRange: DateOrDateRange, dateFromStr: string, daysahead: number): DateInterval|undefined {
+    let fromIncl = isDateRange(dateOrDateRange) ? dateOrDateRange[0] : dateOrDateRange
+    const toIncl = isDateRange(dateOrDateRange) ? dateOrDateRange[1] : dateOrDateRange
+
     if (dateFromStr > toIncl) return undefined
     if (dateFromStr > fromIncl) fromIncl = dateFromStr
     // TODO +7 day
@@ -252,14 +252,14 @@ export class IntervalGenerator {
 
         const dateStr = format('yyyy-MM-dd', this.fromTime)
 
-        for (const {dateRange, times} of (datesExact || [])) {
+        for (const {date, times} of (datesExact || [])) {
 
-            const start = toDateOrUndefined(dateRange[0])
-            const end = toDateOrUndefined(dateRange[1] as string) || addDays(1)(start)
+            const start = parseISO(isDateRange(date) ? date[0] : date)
+            const end = isDateRange(date) ? parseISO(date[1]) : addDays(1)(start)
 
             intervals = filterByRange(intervals, { start, end }, 'out')
 
-            const interval = subDateRange(dateRange, dateStr, this.daysAhead)
+            const interval = subDateRange(date, dateStr, this.daysAhead)
             if (interval === undefined) continue
 
             for (let d: Date = interval.start; d < interval.end; d = addDays(1)(d)) {

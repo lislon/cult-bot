@@ -1,7 +1,7 @@
-import { DayTime} from './intervals'
+import { DayTime } from './intervals'
 import { ruFormat } from './ruFormat'
 import { addDays, differenceInDays, getMonth, parseISO } from 'date-fns'
-import { DateExact, DateOrDateRange, DateRangeTimetable, EventTimetable, WeekTime } from './interfaces'
+import { DateExact, DateOrDateRange, DateRangeTimetable, EventTimetable, isSingleDate, WeekTime } from './interfaces'
 
 export interface FormattedTimetable {
     weekTimes?: string[]
@@ -13,6 +13,7 @@ export interface FormattedTimetable {
     datesExact?: {
         date: string
         times?: string
+        comment?: string
     }[]
     anytime?: string
 }
@@ -78,12 +79,16 @@ export class TimetableFormatter {
             return anytime
         }
         const strWeekTimes = weekTimes?.join('\n')
-        const strDatesExact = datesExact?.map(({date, times}) => `${date}: ${times}`).join('\n')
+        const strDatesExact = datesExact
+            ?.map(({date, times, comment}) =>
+                `${date}: ${times}${this.maybeAppendComment(comment)}`
+            )
+            .join('\n')
         const strDateRangesTimetable =
             dateRangesTimetable
                 ?.map(({dateRange, times, weekTimes}) => {
-                return `${dateRange}: ${times ?? (weekTimes ? weekTimes.join(', ') : '')}`
-            })
+                    return `${dateRange}: ${times ?? (weekTimes ? weekTimes.join(', ') : '')}`
+                })
                 .join('\n')
         return [strWeekTimes, strDatesExact, strDateRangesTimetable]
             .filter(s => s !== undefined && s !== '')
@@ -114,26 +119,31 @@ export class TimetableFormatter {
     }
 
     private formatWeekTimes(weekTimes?: WeekTime[]): FormattedTimetable['weekTimes'] {
-        return weekTimes?.map(({weekdays, times}) => {
-            return `${this.formatWeekdays(weekdays)}: ${this.formatTimes(times)}`
+        return weekTimes?.map(({weekdays, times, comment}) => {
+            return `${this.formatWeekdays(weekdays)}: ${this.formatTimes(times)}${this.maybeAppendComment(comment)}`
         })
     }
 
+    private maybeAppendComment(comment?: string): string {
+        return comment ? ` (${comment})` : ''
+    }
+
     private formatDatesExact(datesExact?: DateExact[]): FormattedTimetable['datesExact'] {
-        return datesExact?.filter(({dateRange}) =>
-            this.filterOnlyFuture(dateRange)
+        return datesExact?.filter(({date}) =>
+            this.filterOnlyFuture(date)
         )
-            .map(({dateRange, times}) => {
+            .map(({date, times, comment}) => {
                 return {
-                    date: this.formatDateOrDateRange(dateRange),
-                    times: this.formatTimes(times)
+                    date: this.formatDateOrDateRange(date),
+                    times: this.formatTimes(times),
+                    comment
                 }
             })
     }
 
-    private filterOnlyFuture(dateRange: DateOrDateRange) {
-        if (dateRange.length === 1 && this.config.hidePast) {
-            const parsedDate = parseISO(dateRange[0])
+    private filterOnlyFuture(date: string) {
+        if (this.config.hidePast) {
+            const parsedDate = parseISO(date)
             if (parsedDate < this.now) {
                 return false
             }
@@ -142,8 +152,8 @@ export class TimetableFormatter {
     }
 
     private formatDateOrDateRange(dateRange: DateOrDateRange): string {
-        if (dateRange.length === 1) {
-            const parsedDate = parseISO(dateRange[0])
+        if (isSingleDate(dateRange)) {
+            const parsedDate = parseISO(dateRange)
             if (this.isFarDate(parsedDate)) {
                 return ruFormat(parsedDate, 'dd MMMM yyyy')
             } else {

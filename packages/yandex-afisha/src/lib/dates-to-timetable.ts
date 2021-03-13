@@ -4,7 +4,7 @@ import { uniq } from 'lodash'
 
 function getDatesExact(dates: Date[]): DateExact[] {
     return dates.map(d => ({
-        dateRange: [formatISO(d, {representation: 'date'})],
+        date: formatISO(d, {representation: 'date'}),
         times: [format(d, 'HH:mm')]
     }))
 }

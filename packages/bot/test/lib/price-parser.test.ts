@@ -1,6 +1,6 @@
 import { EventPrice, parsePrice } from '../../src/lib/price-parser'
 
-function expectPriceParser(text: string, expected: EventPrice) {
+function expectPriceParser(text: string, expected: EventPrice): void {
     const actual = parsePrice(text)
     expect(actual).toEqual(expected)
 }

@@ -3,7 +3,7 @@ import { Result, Success } from 'parsimmon'
 import { DayTime, mapInterval} from './intervals'
 import { addYears, format, isValid, parseISO, setYear, subMonths } from 'date-fns'
 import cloneDeep from 'lodash/cloneDeep'
-import { DateExact, DateOrDateRange, DateRange, EventTimetable, WeekTime } from './interfaces'
+import { DateExact, DateOrDateRange, DateRange, EventTimetable, isDateRange, WeekTime } from './interfaces'
 
 
 type FromToPair = { from: string, to: string }
@@ -31,14 +31,14 @@ const timetableLang = P.createLanguage({
         .fallback(YEAR_UNKNOWN_VALUE)
         .desc('Год')
     ,
-    Month: () => P.regexp(/[а-я]+/)
+    Month: () => P.regexp(/[а-я]+/i)
         .desc('Название месяца')
         .chain(s => {
             const monthNames = [
                 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
                 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
             ];
-            const n = monthNames.indexOf(s) + 1;
+            const n = monthNames.indexOf(onlyRussianLetters(s.toLowerCase())) + 1;
             if (n > 0) {
                 return P.succeed((n + '').padStart(2, '0'));
             } else {
@@ -55,8 +55,9 @@ const timetableLang = P.createLanguage({
                 ['понедельника', 'вторника', 'среды', 'четверга', 'пятницы', 'субботы', 'воскресенья'],
             ];
             let n = 0
+            const lowS = onlyRussianLetters(s.toLowerCase())
             for (const weekday of weekdaysFlavors) {
-                n = weekday.indexOf(s) + 1;
+                n = weekday.indexOf(lowS) + 1;
                 if (n > 0) {
                     break;
                 }
@@ -69,7 +70,7 @@ const timetableLang = P.createLanguage({
             }
         }),
     AnyTime: () => P
-        .alt(P.string('в любое время'))
+        .alt(stringIgnoreCase('в любое время'))
         .desc('Фраза "в любое время"'),
     Date: (r) => P.seq(r.DayOfMonth, r.__, r.Month, r._, r.Year)
         .map(([dayOfMonth, , month, , year]) => {
@@ -98,7 +99,7 @@ const timetableLang = P.createLanguage({
         .map(({from, to}) => {
             return [from, to];
         }).desc('Интервал дат'),
-    DateOrDateRange: (r) => r.Date.or(r.DateRange).map(arrayfie()),
+    DateOrDateRange: (r) => r.Date.or(r.DateRange),
     WeekDayRange: (r) => P.seq(r.WeekDaySingle, r._, r['-'], r._, r.WeekDaySingle)
         .chain(([from, , , , to]) => {
             if (+to - +from + 1 <= 0) {
@@ -109,20 +110,23 @@ const timetableLang = P.createLanguage({
                 return P.succeed([...Array(+to - +from + 1).keys()].map(x => +x + +from))
             }
         }),
-    WeekDayEveryDay: () => P.string('ежедневно').map(() => [1, 2, 3, 4, 5, 6, 7]),
+    WeekDayEveryDay: () => stringIgnoreCase('ежедневно').map(() => [1, 2, 3, 4, 5, 6, 7]),
     WeekDay: (r) => r.WeekDayRange.or(r.WeekDaySingle.map(r => [r])),
     WeekDays: (r) => P.alt(
         P.sepBy1(r.WeekDay, P.seq(r._, r[','], r._))
             .map(results => results.flatMap(z => z)),
         r.WeekDayEveryDay
     ),
-    ExactDateTimes: (r) => P.seq(r.DateOrDateRange, r[':'], r._, r.TimesOrTimeRanges)
-        .map(([dateRange, , , times]) => {
-            return {exactDate: {dateRange, times}}
+    MaybeComment: (r) => P.seq(r._, r.TextInBraces)
+        .map(([,comment]) => ({ comment }))
+        .fallback({}),
+    ExactDateTimes: (r) => P.seq(r.Date, r[':'], r._, r.TimesOrTimeRanges, r.MaybeComment)
+        .map(([date, , , times, comment]) => {
+            return { exactDate: {date, times, ...comment} }
         }),
-    WeekDateTimetable: (r) => P.seq(r.WeekDays, r[':'], r._, r.TimesOrTimeRanges)
-        .map(([weekdays, , , times]) => {
-            return {weekdays, times}
+    WeekDateTimetable: (r) => P.seq(r.WeekDays, r[':'], r._, r.TimesOrTimeRanges, r.MaybeComment)
+        .map(([weekdays, , , times, comment]): WeekTime => {
+            return {weekdays, times, ...comment}
         }),
     WeekDatesTimetable: (r) => P.sepBy1(r.WeekDateTimetable, P.seq(r._, r[','], r._))
         .map((weekTimes) => {
@@ -148,20 +152,30 @@ const timetableLang = P.createLanguage({
     NewLine: () => P.regex(/[\n\r]+/).desc('новая строка'),
     [';']: () => P.string(';').desc('точка с запятой'),
     [',']: () => P.string(',').desc('запятая'),
-    ['-']: () => P.string('-').desc('диапазон через дефис'),
+    ['-']: () => P.oneOf('-—‑–－﹘').desc('диапазон через дефис'),
     [':']: () => P.string(':').desc('двоеточие'),
-    From: () => P.string('с').desc('диапазон через дефис "с xxx до xxx"'),
-    To: () => P.string('до').desc('фраза "до"'),
-    ToDate: () => P.alt(P.string('до'), P.string('по')),
+    ['(']: () => P.string('(').desc('('),
+    [')']: () => P.string(')').desc(')'),
+    From: () => stringIgnoreCase('с').desc('диапазон через дефис "с xxx до xxx"'),
+    To: () => stringIgnoreCase('до').desc('фраза "до"'),
+    ToDate: () => P.alt(stringIgnoreCase('до'), stringIgnoreCase('по')),
+    TextInBraces: () => P.regex(/[(]([^)]+)[)]/, 1).desc('текст в скобках'),
     _: () => P.regex(/[^\S\r\n]*/).desc('пробелы'),
     __: () => P.regex(/[^\S\r\n]+/).desc('пробелы'),
 })
 
-
-function arrayfie<T>(): (result: T[]) => T[] {
-    return (d) => Array.isArray(d) ? d : [d];
+function stringIgnoreCase(str: string): P.Parser<string> {
+    const expected = "'" + str + "'";
+    return P.Parser(function(input, i) {
+        const j = i + str.length;
+        const head = input.slice(i, j);
+        if (head.toLowerCase() === str.toLowerCase()) {
+            return P.makeSuccess(j, head);
+        } else {
+            return P.makeFailure(i, expected);
+        }
+    })
 }
-
 
 function validateAndFixDate(p: string, errors: string[], now: Date): string {
     const date = parseISO(p)
@@ -181,7 +195,7 @@ function fillUnknownYearsAndValidate(parse: Success<RawParseResult>, dateValidat
 
     const validationAndFixation: (d: string) => string = (d: string) => validateAndFixDate(d, dateValidation, now)
     const validateDateRangeOrder = (d: DateOrDateRange) => {
-        if (d.length === 2 && d[0] > d[1]) {
+        if (isDateRange(d) && d[0] > d[1]) {
             dateValidation.push(`Дата '${d[0]}' должна быть меньше, чем '${d[1]}'`)
         }
     }
@@ -194,8 +208,8 @@ function fillUnknownYearsAndValidate(parse: Success<RawParseResult>, dateValidat
             p.dateRangesTimetable.dateRange = mapInterval(p.dateRangesTimetable.dateRange, validationAndFixation)
             validateDateRangeOrder(p.dateRangesTimetable.dateRange)
         } else if (p.exactDate) {
-            p.exactDate.dateRange = mapInterval(p.exactDate.dateRange, validationAndFixation)
-            validateDateRangeOrder(p.exactDate.dateRange)
+            p.exactDate.date = validationAndFixation(p.exactDate.date)
+            validateDateRangeOrder(p.exactDate.date)
         }
     }
     return fixed;
@@ -209,12 +223,19 @@ export type TimetableParseResult = {
     errors: string[]
 }
 
-export function cleanTimetableText(text: string): string {
+export function onlyRussianLetters(text: string): string {
     const englishC = 'c'
     const russianC = 'с'
-    return text.toLowerCase()
+    const englishCBig = 'C'
+    const russianCBig = 'С'
+    return text
         .replace(englishC, russianC)
-        .replace(/[—‑–－﹘]/g, '-')
+        .replace(englishCBig, russianCBig)
+}
+
+
+export function cleanTimetableText(text: string): string {
+    return text
         .replace(/[ ]+/g, ' ')
         .replace(/[;\s]$/g, '')
         .trim()

@@ -94,6 +94,10 @@ function preparePublish(data: Event, result: ExcelRowResult) {
     }
 }
 
+export function hasHumanTimetable(timetable: string): boolean {
+    return !!timetable.match(/{(?:бот|bot):([^}]+)}/)
+}
+
 export function getOnlyHumanTimetable(timetable: string): string {
     return timetable.replace(/{(?:бот|bot):([^}]+)}/, '').trim()
 }

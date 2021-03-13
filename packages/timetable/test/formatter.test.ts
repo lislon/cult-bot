@@ -68,9 +68,20 @@ describe('timetable formatter', () => {
         expectWillBeFormatted(expected);
     })
 
+    test('week_regular + comment', () => {
+        const expected = `сб: 10:00 (Давай давай)`;
+        expectWillBeFormatted(expected);
+    })
+
     test('week_range_every_day', () => {
         const input = `25 января 2020 - 28 января 2020: в любое время`;
         const expected = `25-28 января: 00:00-24:00`;
+        expectWillBeFormatted(expected, input);
+    })
+
+    test('date_exact + comment', () => {
+        const input = `25 января 2020: в любое время (Ку-ку рябята)`;
+        const expected = `25 января: 00:00-24:00 (Ку-ку рябята)`;
         expectWillBeFormatted(expected, input);
     })
 
@@ -78,5 +89,13 @@ describe('timetable formatter', () => {
         const input = `12 декабря 2019: 10:00\n12 января 2020: 10:00`;
         const expected = '12 января: 10:00'
         expectWillBeFormatted(expected, input, NOW, {hidePast: true});
+    })
+
+    test('cinema', () => {
+        const input = [
+            `17 января: 11:30-23:45 (https://afisha.yandex.ru/saint-petersburg/cinema/dovod?source=search-page&schedule-preset=tomorrow)`,
+            `18 января: 11:30-23:45 (https://afisha.yandex.ru/saint-petersburg/cinema/dovod?source=search-page&schedule-date=2020-10-18)`
+        ].join('\n')
+        expectWillBeFormatted(input, input, NOW, {hidePast: true});
     })
 })

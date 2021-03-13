@@ -1,15 +1,9 @@
 import { date } from './test-utils'
-import { parseTimetable } from '../src/parser'
+import { EventTimetable, parseTimetable } from '../src'
 
+const DATE_2020_JAN_1 = date('2020-01-01')
 describe('parser', () => {
     test.each([
-        ['06 февраля: 11:30, 14:00\n07 февраля: 11:30, 14:00',
-            {
-                datesExact: [
-                    {'dateRange': ['2020-02-06'], 'times': ['11:30', '14:00']},
-                    {'dateRange': ['2020-02-07'], 'times': ['11:30', '14:00']}],
-            }
-        ],
         ['ежедневно: 12:00',
             {
                 'weekTimes': [
@@ -21,25 +15,6 @@ describe('parser', () => {
                     }
                 ]
             }
-        ],
-        ['пн-пт: 12:00',
-            {
-                'weekTimes': [
-                    {
-                        'times': [
-                            '12:00'
-                        ],
-                        'weekdays': [
-                            1,
-                            2,
-                            3,
-                            4,
-                            5
-                        ]
-                    }
-                ]
-            }
-
         ],
         ['пн-пт: с 12 до 18',
             {
@@ -114,9 +89,7 @@ describe('parser', () => {
             {
                 'datesExact': [
                     {
-                        'dateRange': [
-                            '2020-01-01',
-                        ],
+                        'date': '2020-01-01',
                         'times': [
                             '01:01'
                         ]
@@ -128,9 +101,7 @@ describe('parser', () => {
             {
                 'datesExact': [
                     {
-                        'dateRange': [
-                            '2019-10-17'
-                        ],
+                        'date': '2019-10-17',
                         'times': [
                             [
                                 '10:10',
@@ -139,9 +110,7 @@ describe('parser', () => {
                         ]
                     },
                     {
-                        'dateRange': [
-                            '2019-10-18'
-                        ],
+                        'date': '2019-10-18',
                         'times': [
                             [
                                 '10:00',
@@ -184,7 +153,7 @@ describe('parser', () => {
             expected.datesExact = expected.datesExact || []
             expected.weekTimes = expected.weekTimes || []
         }
-        const actual = parseTimetable(text, date('2020-01-01'))
+        const actual = parseTimetable(text, DATE_2020_JAN_1)
         if (actual.status === true) {
             expect(actual.value).toStrictEqual(expected)
         } else {
@@ -194,10 +163,33 @@ describe('parser', () => {
     })
 
     test('year rollolver', () => {
-        const actual = parseTimetable('1 января: 12:00', date('2020-07-02'))
-        if (actual.status === false) {
-            throw new Error("failed to parse timetable")
-        }
-        expect(actual.value.datesExact).toStrictEqual([{'dateRange': ['2021-01-01'], 'times': ['12:00']}])
+        const actual = doParseTimetable('1 января: 12:00', date('2020-07-02'))
+        expect(actual.datesExact).toStrictEqual([{'date': '2021-01-01', 'times': ['12:00']}])
+    })
+
+    test('single dates with comments', () => {
+        const actual = doParseTimetable('06 февраля: 11:30, 14:00 (давай давай)\n07 февраля: 11:30, 14:00', DATE_2020_JAN_1)
+        expect(actual.datesExact).toStrictEqual([
+            {'date': '2020-02-06', 'times': ['11:30', '14:00'], 'comment': 'давай давай'},
+            {'date': '2020-02-07', 'times': ['11:30', '14:00']}]
+        )
+    })
+
+    test('week dates with comments', () => {
+        const actual = doParseTimetable('пн-пт: 12:00 (давай давай)', DATE_2020_JAN_1)
+        expect(actual.weekTimes).toStrictEqual([{
+                'times': ['12:00'],
+                'weekdays': [1, 2, 3, 4, 5],
+                'comment': 'давай давай'
+            }]
+        )
     })
 })
+
+function doParseTimetable(input: string, now: Date): EventTimetable {
+    const actual = parseTimetable(input, now)
+    if (actual.status === false) {
+        throw new Error(`failed to parse timetable: ${actual.errors.join('\n')}`)
+    }
+    return actual.value
+}

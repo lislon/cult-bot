@@ -7,14 +7,11 @@ import {
 } from '@culthub/timetable'
 
 export function getOnlyBotTimetable(timetable: string): string {
-    let botTimetable = timetable
-        .replace(/[(].+?[)]/g, '')
-
-    const matches = botTimetable.match(/{(?:бот|bot):([^}]+)}/)
+    const matches = timetable.match(/{(?:бот|bot):([^}]+)}/)
     if (matches) {
-        botTimetable = matches[1]
+        return matches[1]
     }
-    return botTimetable
+    return timetable
 }
 
 export interface ParseAndPredictTimetableResult {

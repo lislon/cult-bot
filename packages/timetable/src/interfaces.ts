@@ -4,17 +4,27 @@ export type DateInterval = {
     start: Date
     end: Date
 }
+export type SingleDate = string
 export type DateRange = [string, string]
-export type DateOrDateRange = [string] | DateRange
+export type DateOrDateRange = SingleDate | DateRange
+
+export function isDateRange(dateOrDateRange: DateOrDateRange): dateOrDateRange is DateRange {
+    return Array.isArray(dateOrDateRange)
+}
+export function isSingleDate(dateOrDateRange: DateOrDateRange): dateOrDateRange is SingleDate {
+    return typeof dateOrDateRange === 'string'
+}
 
 export interface DateExact {
-    dateRange: DateOrDateRange
+    date: SingleDate
     times: DayTime[]
+    comment?: string
 }
 
 export interface WeekTime {
     weekdays: number[]
     times: DayTime[]
+    comment?: string
 }
 
 export interface DateRangeTimetable {

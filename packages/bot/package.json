@@ -11,7 +11,7 @@
     "dev": "dotenv ts-node-dev -r source-map-support/register --respawn --ignore-watch node_modules src/start.ts --cache-directory dist/ts-node-dev-cache --transpile-only",
     "dev-no-restart": "tsc && nodemon --inspect",
     "lint": "eslint . --quiet",
-    "test": "cross-env TZ=Europe/Moscow jest && cross-env TZ=Europe/Moscow cucumber-js",
+    "test": "cross-env TZ=Europe/Moscow jest --runInBand && cross-env TZ=Europe/Moscow cucumber-js",
     "test-cucumber": "cross-env TZ=Europe/Moscow cucumber-js",
     "db:sync": "cross-env TZ=Europe/Moscow node dist/dbsync/run-dbsync.js",
     "db:up": "cross-env TZ=Europe/Moscow db-migrate up",

@@ -1,6 +1,6 @@
 import { escapeHTML } from '../../util/string-utils'
 import { Event } from '../../interfaces/app-interfaces'
-import { getOnlyHumanTimetable } from '../../dbsync/parseSheetRow'
+import { getOnlyHumanTimetable, hasHumanTimetable } from '../../dbsync/parseSheetRow'
 import { cleanTagLevel1 } from '../../util/tag-level1-encoder'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
 import { i18n } from '../../util/i18n'
@@ -20,7 +20,9 @@ export function formatUrl(text: string) {
 }
 
 export function formatCardTimetable(event: Event) {
-    const humanTimetable = getOnlyHumanTimetable(event.timetable);
+    if (hasHumanTimetable(event.timetable)) {
+        return getOnlyHumanTimetable(event.timetable);
+    }
 
     function formatCinemaUrls(humanTimetable: string) {
         const lines = humanTimetable.split(/[\n\r]+/)
@@ -28,6 +30,7 @@ export function formatCardTimetable(event: Event) {
             .map(l => l.trim())
             .map(l => l.replace(/:[^(]*[(](http.+?)[)]/, ': <a href="$1">расписание</a>'))
             .map(l => l.replace(/ 202\d/, ''))
+            .filter(l => l !== '')
             .map(l => `🗓 ${l}\n`)
             .join('')
     }
@@ -36,7 +39,7 @@ export function formatCardTimetable(event: Event) {
         return humanTimetable.replace(/^\d+ [а-яА-Я]+(\s+\d+)?\s*-\s*/g, 'до ')
     }
 
-    return formatCinemaUrls(cutYear(humanTimetable))
+    return formatCinemaUrls(cutYear((event.timetable)))
 }
 
 export function formatEventDuration(text: string) {

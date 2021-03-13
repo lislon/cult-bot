@@ -60,7 +60,7 @@ describe('test card format', () => {
         }
         const card = cardFormat(event, { showTags: true })
         const expected = (await readCard('show-timetable-prefix-cinema.html')).toString()
-        expect(prepare(card)).toEqual(prepare(expected))
+        expect(prepare(card)).toStrictEqual(prepare(expected))
     })
 
     test('Cut first half of timetable', async () => {
@@ -83,6 +83,17 @@ describe('test card format', () => {
         const card = cardFormat(event, { showTags: true })
         const expected = (await readCard('show-timetable-prefix-event.html')).toString()
         expect(prepare(card)).toEqual(prepare(expected))
+    })
+
+    test('Human formatting timetable should not change', async () => {
+        const event: Event = {
+            ...defaultEvent,
+            category: 'events',
+            timetable: '{bot: пн: 12:00\nвт: 12:00} Лиса',
+        }
+        const card = cardFormat(event, { showTags: true })
+        expect(card).toContain('Лиса')
+        expect(card).not.toContain('вт: 12:00')
     })
 
     test('Show where icon', async () => {

@@ -11,10 +11,6 @@ import { afishaDownload } from '../lib/afisha-download'
 import { logger } from '../logger'
 import { format } from 'date-fns'
 
-
-const debug = debugNamespace('yandex-parser');
-
-
 (async function () {
     try {
         const dates = getNextWeekendDates(new Date())
