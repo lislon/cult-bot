@@ -10,5 +10,6 @@
     ],
     "strictNullChecks": false
   },
-  "include": ["src/**/*", "src/locales/*.json"]
+  "include": ["src/**/*", "src/locales/*.json"],
+  "exclude": ["**/node_modules", "**/.*/"]
 }

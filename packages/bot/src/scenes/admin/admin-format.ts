@@ -13,6 +13,7 @@ import { EventPackValidated } from '../../dbsync/packsSyncLogic'
 import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 import { PackRecovered, PacksSyncDiff, PackToSave } from '../../database/db-packs'
 import emojiRegex from 'emoji-regex'
+import * as tt from 'telegraf/src/telegram-types'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 
@@ -39,7 +40,7 @@ function addReviewersMenu(statsByReviewer: StatByReviewer[], ctx: ContextMessage
     return btn
 }
 
-export async function formatMainAdminMenu(ctx: ContextMessageUpdate) {
+export async function formatMainAdminMenu(ctx: ContextMessageUpdate): Promise<{ msg: string; markup: tt.ExtraReplyMessage }> {
     const dateRanges = getNextWeekendRange(ctx.now())
 
     return await db.task(async (dbTask) => {

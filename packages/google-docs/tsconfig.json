@@ -3,11 +3,8 @@
   "compilerOptions": {
     "rootDir": "src/",
     "outDir": "dist/",
-//    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
     "declarationDir": "typings/",
-//    "tsBuildInfoFile": "typings/tsconfig.tsbuildinfo",
+    "tsBuildInfoFile": "typings/tsconfig.tsbuildinfo",
     "typeRoots": [
       "../../node_modules/@types",
       "./node_modules/@types"
