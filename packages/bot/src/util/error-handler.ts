@@ -3,8 +3,12 @@ import { formatUserName } from './misc-utils'
 import { isAdmin } from './scene-helper'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 
-export function isBlockedError(error: any) {
+export function isBlockedError(error: any): boolean {
     return error?.code === 403 && error.message.includes('bot was blocked by the user')
+}
+
+export function isTooManyRequests(error: any): boolean {
+    return error?.code === 429 && error.message.includes('Too Many Requests')
 }
 
 export const ERROR_MESSAGE_NOT_MODIFIED = '400: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message'
@@ -13,6 +17,9 @@ export async function botErrorHandler(error: any, ctx: ContextMessageUpdate) {
     try {
         if (error.message.includes('query is too old and response timeout expired')) {
             logger.debug(error.message)
+            // ignore
+        } else if (isTooManyRequests(error.message)) {
+            logger.warn(`${formatUserName(ctx)}: ` + error.message)
             // ignore
         } else if (isBlockedError(error)) {
             logger.warn(`${formatUserName(ctx)}: blocked bot`)
