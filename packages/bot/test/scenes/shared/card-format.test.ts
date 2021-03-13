@@ -70,7 +70,7 @@ describe('test card format', () => {
             category: 'movies',
             timetable: `12 ноября 2020 - 29 ноября 2020: сб-вс: 10:00 - 18:00`,
         }
-        const card = cardFormat(event, { showTags: true, now: date('2020-01-01') })
+        const card = cardFormat(event, { showTags: true, now: date('2020-11-15') })
         const expected = (await readCard('show-timetable-cut-year.html')).toString()
         expect(prepare(card)).toEqual(prepare(expected))
     })

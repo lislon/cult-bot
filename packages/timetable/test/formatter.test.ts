@@ -97,11 +97,22 @@ describe('timetable formatter', () => {
         expectWillBeFormatted(expected, input, date('2020-01-13 15:00'), {hidePast: true});
     })
 
+    test('do hide past event by default', () => {
+        const input = `12 декабря 2018: 10:00,20:00`;
+        expectWillBeFormatted(input, input, date('2020-01-13 15:00'));
+    })
+
     test('cinema', () => {
         const input = [
             `17 января: 11:30-23:45 (https://afisha.yandex.ru/saint-petersburg/cinema/dovod?source=search-page&schedule-preset=tomorrow)`,
             `18 января: 11:30-23:45 (https://afisha.yandex.ru/saint-petersburg/cinema/dovod?source=search-page&schedule-date=2020-10-18)`
         ].join('\n')
         expectWillBeFormatted(input, input, NOW, {hidePast: true});
+    })
+
+    test('remove first part of range if flag', () => {
+        const input = '12 ноября 2019 - 29 ноября 2021: сб-вс: 10:00-18:00'
+        const expected = 'до 29 ноября 2021: сб-вс: 10:00-18:00'
+        expectWillBeFormatted(expected, input, NOW, {hidePast: true});
     })
 })

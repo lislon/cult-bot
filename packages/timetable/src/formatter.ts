@@ -1,6 +1,6 @@
 import { DayTime, rightDate } from './intervals'
 import { ruFormat } from './ruFormat'
-import { addDays, differenceInDays, format, formatISO, getMonth, parseISO } from 'date-fns'
+import { addDays, differenceInDays, format, formatISO, getMonth, isAfter, parseISO } from 'date-fns'
 import {
     DateExact,
     DateOrDateRange,
@@ -168,7 +168,7 @@ export class TimetableFormatter {
         const isoTime = format(this.now, 'HH:mm')
         return datesExact
             ?.filter((dateTimes) =>
-                this.config.hidePast == false || hasDateTimeInFuture(dateTimes, isoDate, isoTime)
+                this.config.hidePast === undefined || !this.config.hidePast || hasDateTimeInFuture(dateTimes, isoDate, isoTime)
             )
             .map(({date, times, comment}) => {
                 return {
@@ -190,12 +190,22 @@ export class TimetableFormatter {
         } else {
             const from = parseISO(dateRange[0])
             const to = parseISO(dateRange[1])
-            if (this.isFarDate(from) || this.isFarDate(to)) {
-                return `${ruFormat(from, 'dd MMMM yyyy')} - ${ruFormat(to, 'dd MMMM yyyy')}`
-            } else if (getMonth(from) != getMonth(to)) {
-                return `${ruFormat(from, 'dd MMMM')} - ${ruFormat(to, 'dd MMMM')}`
+
+            if (this.config.hidePast && isAfter(this.now, from)) {
+                if (this.isFarDate(to)) {
+                    return `до ${ruFormat(to, 'dd MMMM yyyy')}`
+                } else {
+                    return `до ${ruFormat(to, 'dd MMMM')}`
+                }
             } else {
-                return `${ruFormat(from, 'dd')}-${ruFormat(to, 'dd MMMM')}`
+
+                if (this.isFarDate(from) || this.isFarDate(to)) {
+                    return `${ruFormat(from, 'dd MMMM yyyy')} - ${ruFormat(to, 'dd MMMM yyyy')}`
+                } else if (getMonth(from) != getMonth(to)) {
+                    return `${ruFormat(from, 'dd MMMM')} - ${ruFormat(to, 'dd MMMM')}`
+                } else {
+                    return `${ruFormat(from, 'dd')}-${ruFormat(to, 'dd MMMM')}`
+                }
             }
         }
     }
