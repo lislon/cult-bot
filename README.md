@@ -58,7 +58,7 @@ heroku config -a <app name>
 
 ### New app :
 ```
-$app = "cult-hub-yandex-afisha-dev"
+$app = "cult-hub-bot-dev"
 
 heroku create $app
 heroku addons:create -a $app heroku-postgresql:hobby-dev
@@ -68,9 +68,6 @@ heroku buildpacks:add heroku/nodejs -a $app
 heroku buildpacks:add "https://github.com/blockhq/heroku-buildpack-yarn-workspaces#master" -a $app
 heroku addons:create heroku-redis:hobby-dev -a $app
 ```
-
-
-rdcli -h ec2-52-31-207-5.eu-west-1.compute.amazonaws.com -p 12729 -c p450a8f512bd92a3aa3836bb5ab9d8398e37fef2894a85684bb4d358b62eeca61
 
 Configure ENV:
 ```

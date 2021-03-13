@@ -8,15 +8,16 @@ import { filterOnlyRealChange } from '../lib/diff-logic'
 import { db } from '../database/db'
 import { getNextWeekendDates } from '../lib/cron-common'
 import debugNamespace from 'debug'
-import { ruFormat } from '../lib/ruFormat'
 import { afishaDownload } from '../lib/afisha-download'
+import { logger } from '../logger'
+import { format } from 'date-fns'
 
 const debug = debugNamespace('yandex-parser');
 
 (async function () {
     try {
         const dates = getNextWeekendDates(new Date())
-        debug(`Start parsing dates ${dates.map(d => ruFormat(d, 'dd MMMM')).join(', ')}...`)
+        logger.info(`parse-diff: ${dates.map(d => format(d, 'MMMM dd')).join(', ')}...`)
 
         const allEvents = await afishaDownload(dates, { limitEvents: appConfig.LIMIT_EVENTS_PER_PARSE, snapshotDirectory: appConfig.JSON_SNAPSHOT_DIR })
 
@@ -40,11 +41,12 @@ const debug = debugNamespace('yandex-parser');
         // console.log("recovered:")
         // console.log(realDiff.recovered)
 
-        // const parsedEventToRecovers = ([...diff.recovered, ...diff.updated, ...diff.inserted, ...diff.notChanged])
         const excel = await authToExcel(appConfig.GOOGLE_AUTH_FILE)
         await saveDiffToExcel(excel, realDiff, dates)
         await db.$pool.end()
+        logger.info(`Success. ${[...diff.recovered, ...diff.updated, ...diff.inserted].length} changed`)
     } catch (e) {
-        console.log(e)
+        logger.error(e)
+        process.exit(1)
     }
 })()
