@@ -75,13 +75,13 @@ describe('timetable formatter', () => {
 
     test('week_range_every_day', () => {
         const input = `25 января 2020 - 28 января 2020: в любое время`;
-        const expected = `25-28 января: 00:00-24:00`;
+        const expected = `25-28 января: в любое время`;
         expectWillBeFormatted(expected, input);
     })
 
     test('date_exact + comment', () => {
         const input = `25 января 2020: в любое время (Ку-ку рябята)`;
-        const expected = `25 января: 00:00-24:00 (Ку-ку рябята)`;
+        const expected = `25 января: в любое время (Ку-ку рябята)`;
         expectWillBeFormatted(expected, input);
     })
 
@@ -89,6 +89,12 @@ describe('timetable formatter', () => {
         const input = `12 декабря 2019: 10:00\n12 января 2020: 10:00`;
         const expected = '12 января: 10:00'
         expectWillBeFormatted(expected, input, NOW, {hidePast: true});
+    })
+
+    test('hide past on last date time', () => {
+        const input = `12 декабря 2019: 10:00,20:00\n13 января 2020: 10:00,20:00`;
+        const expected = '13 января: 10:00,20:00'
+        expectWillBeFormatted(expected, input, date('2020-01-13 15:00'), {hidePast: true});
     })
 
     test('cinema', () => {

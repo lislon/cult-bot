@@ -32,7 +32,7 @@ export class AdminPager implements PagingConfig<AdminSceneQueryState, AdminEvent
         return events.map(e => e.id)
     }
 
-    cardFormatOptions(ctx: ContextMessageUpdate, event: AdminEvent): CardOptions {
+    cardFormatOptions(ctx: ContextMessageUpdate, event: AdminEvent): Omit<CardOptions, 'now'> {
         return {
             showAdminInfo: true
         }

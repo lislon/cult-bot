@@ -26,12 +26,13 @@ import {
 
 export type DayTime = string | [string, string]
 
-
-export function rightDate(q: MomentOrInterval): Date {
+export function rightDate<T>(q: T | T[]): T
+export function rightDate<T>(q: T | [T, T]): T {
     return Array.isArray(q) ? q[1] : q
 }
 
-export function leftDate(q: MomentOrInterval): Date {
+export function leftDate<T>(q: T | T[]): T
+export function leftDate<T>(q: T | [T, T]): T {
     return Array.isArray(q) ? q[0] : q
 }
 

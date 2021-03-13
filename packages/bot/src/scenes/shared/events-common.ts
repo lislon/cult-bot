@@ -18,7 +18,7 @@ export interface PagingCommonConfig<Q, E> {
 
     maxIdsToCache?(ctx: ContextMessageUpdate): number
 
-    cardFormatOptions?(ctx: ContextMessageUpdate, event: E): CardOptions
+    cardFormatOptions?(ctx: ContextMessageUpdate, event: E): Omit<CardOptions, 'now'>
 
     getTotal(ctx: ContextMessageUpdate, query: Q): Promise<number>
 

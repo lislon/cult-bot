@@ -199,7 +199,7 @@ async function showDirectMessage(ctx: ContextMessageUpdate, extId: string) {
         await ctx.replyWithHTML(cardFormat({
             ...event,
             isFuture: isEventInFuture(parsedTimetable.timeIntervals, ctx.now())
-        }), extraInlineMenu([likesRow, [startUsingBot]]))
+        }, { now: ctx.now() }), extraInlineMenu([likesRow, [startUsingBot]]))
         analyticRecordEventView(ctx, event)
         ctx.ua.pv({
             dp: `/start-event/${mySlugify(event.extId)}`,

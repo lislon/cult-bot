@@ -92,13 +92,15 @@ export async function displayEventsMenu(ctx: ContextMessageUpdate) {
     await editMessageAndButtons(ctx, {
         text: cardFormat(event, {
             showAdminInfo: false,
-            packs: true
+            packs: true,
+            now: ctx.now()
         }),
         buttons
     }.buttons, {
         text: cardFormat(event, {
             showAdminInfo: false,
-            packs: true
+            packs: true,
+            now: ctx.now()
         }),
         buttons
     }.text)

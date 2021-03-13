@@ -1,7 +1,39 @@
-import { DayTime } from './intervals'
+import { DayTime, rightDate } from './intervals'
 import { ruFormat } from './ruFormat'
-import { addDays, differenceInDays, getMonth, parseISO } from 'date-fns'
-import { DateExact, DateOrDateRange, DateRangeTimetable, EventTimetable, isSingleDate, WeekTime } from './interfaces'
+import { addDays, differenceInDays, format, formatISO, getMonth, parseISO } from 'date-fns'
+import {
+    DateExact,
+    DateOrDateRange,
+    DateRangeTimetable,
+    EventTimetable,
+    isSingleDate,
+    SingleDate,
+    WeekTime
+} from './interfaces'
+
+export function hasAnyEventsInFuture(timetable: EventTimetable, now: Date): boolean {
+    if (timetable.anytime || timetable.weekTimes?.length) {
+        return true
+    }
+    const isoDate = formatISO(now, {representation: 'date'})
+    const isoTime = format(now, 'HH:mm')
+    if (timetable.datesExact?.find(d => hasDateTimeInFuture(d, isoDate, isoTime))) {
+        return true
+    }
+    return !!timetable.dateRangesTimetable?.find(({dateRange}) => rightDate(dateRange) > isoDate || (rightDate(dateRange) === isoDate))
+
+}
+
+function hasDateTimeInFuture(dateTimes: { date: SingleDate, times: DayTime[] }, isoDate: string, isoTime: string): boolean {
+    if (dateTimes.date > isoDate) {
+        return true
+    }
+    if (dateTimes.date === isoDate) {
+        return !!dateTimes.times.find(t => rightDate(t) > isoTime)
+    }
+    return false
+}
+
 
 export interface FormattedTimetable {
     weekTimes?: string[]
@@ -31,9 +63,12 @@ export class TimetableFormatter {
 
     }
 
-    formatTimes(times: DayTime[]): string {
+    private formatTimes(times: DayTime[]): string {
         return times.map(time => {
             if (Array.isArray(time)) {
+                if (time[0] === '00:00' && time[1] === '24:00') {
+                    return `в любое время`
+                }
                 return `${time[0]}-${time[1]}`
             } else {
                 return time
@@ -41,7 +76,7 @@ export class TimetableFormatter {
         }).join(',')
     }
 
-    formatWeekdays(weekdays: number[]): string {
+    private formatWeekdays(weekdays: number[]): string {
         const fmtSingle = (dayInWeek: number) =>
             ruFormat(addDays(this.FIXED_MONDAY, dayInWeek), 'eeeeee')
 
@@ -107,7 +142,7 @@ export class TimetableFormatter {
         }
     }
 
-    formatDateRangesTimetable(dateRangesTimetable?: DateRangeTimetable[]): FormattedTimetable['dateRangesTimetable'] {
+    private formatDateRangesTimetable(dateRangesTimetable?: DateRangeTimetable[]): FormattedTimetable['dateRangesTimetable'] {
         return dateRangesTimetable?.map(({dateRange, weekTimes, times}) => {
                 return {
                     dateRange: this.formatDateOrDateRange(dateRange),
@@ -129,9 +164,12 @@ export class TimetableFormatter {
     }
 
     private formatDatesExact(datesExact?: DateExact[]): FormattedTimetable['datesExact'] {
-        return datesExact?.filter(({date}) =>
-            this.filterOnlyFuture(date)
-        )
+        const isoDate = formatISO(this.now, {representation: 'date'})
+        const isoTime = format(this.now, 'HH:mm')
+        return datesExact
+            ?.filter((dateTimes) =>
+                this.config.hidePast == false || hasDateTimeInFuture(dateTimes, isoDate, isoTime)
+            )
             .map(({date, times, comment}) => {
                 return {
                     date: this.formatDateOrDateRange(date),
@@ -139,16 +177,6 @@ export class TimetableFormatter {
                     comment
                 }
             })
-    }
-
-    private filterOnlyFuture(date: string) {
-        if (this.config.hidePast) {
-            const parsedDate = parseISO(date)
-            if (parsedDate < this.now) {
-                return false
-            }
-        }
-        return true
     }
 
     private formatDateOrDateRange(dateRange: DateOrDateRange): string {

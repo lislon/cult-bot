@@ -13,7 +13,6 @@ import { analyticRecordEventView } from '../../lib/middleware/analytics-middlewa
 import { i18nSceneHelper, i18SharedBtn } from '../../util/scene-helper'
 import { EventsPagerSliderBase, PagerSliderState, PagingCommonConfig } from './events-common'
 import { botConfig } from '../../util/bot-config'
-import { clone } from 'lodash'
 import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('')
@@ -147,7 +146,11 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                 [prevButton, position, nextButton]
             ]
 
-            const text = cardFormat(event, { showTags: ctx.session.user.showTags, ...this.config.cardFormatOptions?.(ctx, event) })
+            const text = cardFormat(event, {
+                showTags: ctx.session.user.showTags,
+                now: ctx.now(),
+                ...this.config.cardFormatOptions?.(ctx, event)
+            })
             analyticRecordEventView(ctx, event)
             return {buttons, text}
         } else {

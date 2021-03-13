@@ -3,7 +3,7 @@ import type {Config} from '@jest/types';
 
 // Sync object
 const config: Config.InitialOptions = {
-  verbose: true,
+  verbose: false,
   moduleDirectories: [
     "../../node_modules",
     "node_modules",

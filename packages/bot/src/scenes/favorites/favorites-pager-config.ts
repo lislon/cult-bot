@@ -28,7 +28,7 @@ export class FavoritesPagerConfig implements SliderConfig<void> {
     }
 
     cardFormatOptions(ctx: ContextMessageUpdate, event: Event): CardOptions {
-        return {deleted: !isEventInFavorites(ctx, event.id)}
+        return {deleted: !isEventInFavorites(ctx, event.id), now: ctx.now()}
     }
 
     noCardsText(ctx: ContextMessageUpdate) {

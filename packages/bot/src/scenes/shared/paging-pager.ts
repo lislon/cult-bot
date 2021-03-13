@@ -111,7 +111,7 @@ export class PagingPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                 ...[isLastEvent && this.config.lastEventEndButton ? this.config.lastEventEndButton(ctx) : []]
             ]
 
-            const html = cardFormat(event, this.config.cardFormatOptions?.(ctx, event))
+            const html = cardFormat(event, { now: ctx.now(), ...this.config.cardFormatOptions?.(ctx, event)})
             await ctx.replyWithHTML(html, {
                 disable_web_page_preview: true,
                 reply_markup: Markup.inlineKeyboard(buttons).reply_markup

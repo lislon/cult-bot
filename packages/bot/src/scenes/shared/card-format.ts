@@ -6,6 +6,12 @@ import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
 import { i18n } from '../../util/i18n'
 import { AdminEvent } from '../../database/db-admin'
 import { formatPrice, parsePrice } from '../../lib/price-parser'
+import { parseTimetable, TimetableFormatter } from '@culthub/timetable'
+import debugNamespace from 'debug'
+import { logger } from '../../util/logger'
+import { hasAnyEventsInFuture } from '@culthub/timetable'
+
+const debug = debugNamespace('card-format')
 
 export function addHtmlNiceUrls(text: string) {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
@@ -19,9 +25,10 @@ export function formatUrl(text: string) {
     return niceUrls
 }
 
-export function formatCardTimetable(event: Event) {
-    if (hasHumanTimetable(event.timetable)) {
-        return getOnlyHumanTimetable(event.timetable);
+export function formatCardTimetable(event: Event, now: Date) {
+    const rawTimetable = event.timetable
+    if (hasHumanTimetable(rawTimetable)) {
+        return getOnlyHumanTimetable(rawTimetable);
     }
 
     function formatCinemaUrls(humanTimetable: string) {
@@ -29,17 +36,35 @@ export function formatCardTimetable(event: Event) {
         return lines
             .map(l => l.trim())
             .map(l => l.replace(/:[^(]*[(](http.+?)[)]/, ': <a href="$1">расписание</a>'))
-            .map(l => l.replace(/ 202\d/, ''))
             .filter(l => l !== '')
-            .map(l => `🗓 ${l}\n`)
-            .join('')
+            .map(l => `🗓 ${l}`)
+            .join('\n')
     }
 
     function cutYear(humanTimetable: string) {
         return humanTimetable.replace(/^\d+ [а-яА-Я]+(\s+\d+)?\s*-\s*/g, 'до ')
     }
+    debug('start parsing timetable')
+    const structured = parseTimetable(rawTimetable, now);
+    debug('start formatting timetable')
+    let formatted: string;
+    if (structured.status === true) {
+        formatted =  new TimetableFormatter(now, {
+            hidePast: !!hasAnyEventsInFuture(structured.value, now)
+        }).formatTimetable(structured.value)
+        debug('done formatting timetable')
 
-    return formatCinemaUrls(cutYear((event.timetable)))
+        // be save
+        if (formatted === '') {
+            logger.error(`Timetable is empty! for ${event.extId}: ${event.timetable}`)
+            return event.timetable
+        }
+
+    } else {
+        logger.warn(`Fail to format timetable for event='${event.extId}'`)
+        formatted = cutYear(rawTimetable)
+    }
+    return formatCinemaUrls(formatted)
 }
 
 export function formatEventDuration(text: string) {
@@ -65,6 +90,7 @@ export interface CardOptions {
     packs?: boolean
     deleted?: boolean
     showTags?: boolean
+    now: Date
 }
 
 export interface EventWithPast extends Event {
@@ -79,7 +105,7 @@ function isCardWithPossiblePast(row: Event | EventWithPast): row is EventWithPas
     return (row as EventWithPast).isFuture !== undefined
 }
 
-export function cardFormat(row: Event | AdminEvent | EventWithPast, options: CardOptions = {showAdminInfo: false}) {
+export function cardFormat(row: Event | AdminEvent | EventWithPast, options: CardOptions) {
     let text = ``
     const rowWithOldVersion = row as AdminEvent
     if (rowWithOldVersion.snapshotStatus !== undefined) {
@@ -139,9 +165,9 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
         text += `📍 ${addHtmlNiceUrls(escapeHTML(row.address))}${map}\n`
     }
     if (isFuture) {
-        text += formatCardTimetable(row)
+        text += `${formatCardTimetable(row, options.now)}\n`
     } else {
-        text += `<s>${formatCardTimetable(row)}</s>`
+        text += `<s>${formatCardTimetable(row, options.now)}</s>\n`
     }
     if (!fieldIsQuestionMarkOrEmpty(row.duration)) {
         text += `🕐 ${escapeHTML(formatEventDuration(row.duration))}\n`
@@ -150,7 +176,7 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
         text += `💳 ${addHtmlNiceUrls(escapeHTML(formatPrice(parsePrice((row.price)))))}\n`
     }
     if (!fieldIsQuestionMarkOrEmpty(row.notes)) {
-        text += `<b>Особенности:</b>  ${addHtmlNiceUrls(escapeHTML(row.notes))}\n`
+        text += `<b>Особенности:</b> ${addHtmlNiceUrls(escapeHTML(row.notes))}\n`
     }
     if (!fieldIsQuestionMarkOrEmpty(row.url)) {
         text += `${formatUrl(escapeHTML(row.url))}\n`

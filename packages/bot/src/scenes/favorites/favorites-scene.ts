@@ -167,7 +167,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
                     if (!cardBtnIsFresh) {
                         await eventPager.updateState(ctx, {invalidateOtherSliders: true})
 
-                        const card = cardFormat(event, {deleted: !isEventInFavorites(ctx, eventId)})
+                        const card = cardFormat(event, {deleted: !isEventInFavorites(ctx, eventId), now: ctx.now()})
                         let newKeyboard = getInlineKeyboardFromCallbackQuery(ctx)
 
                         newKeyboard = await updateKeyboardButtons(newKeyboard, /(restore|remove)/, () => {

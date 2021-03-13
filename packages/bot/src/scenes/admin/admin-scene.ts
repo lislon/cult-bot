@@ -482,7 +482,7 @@ async function switchCard(ctx: ContextMessageUpdate & { match: RegExpExecArray }
     const event = await db.repoAdmin.findSnapshotEvent(extId, version)
     const existingKeyboard = findExistingButtonRow(ctx, btn => btn.callback_data === actionName('show_more'))
     const buttons = [getButtonsSwitch(ctx, extId, version), ...(existingKeyboard ? [existingKeyboard] : [])]
-    await ctx.editMessageText(cardFormat(event, {showAdminInfo: true}), {
+    await ctx.editMessageText(cardFormat(event, {showAdminInfo: true, now: ctx.now() }), {
         ...Markup.inlineKeyboard(buttons),
         parse_mode: 'HTML',
         disable_web_page_preview: true
