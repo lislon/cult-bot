@@ -1,0 +1,1 @@
+ALTER TABLE cb_users DROP COLUMN IF NOT EXISTS referral;

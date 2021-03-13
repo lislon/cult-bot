@@ -1,0 +1,1 @@
+ALTER TABLE cb_users ADD COLUMN IF NOT EXISTS referral text NOT NULL DEFAULT '';

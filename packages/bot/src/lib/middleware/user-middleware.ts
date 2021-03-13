@@ -82,7 +82,8 @@ export async function updateOrInsertUser(ctx: ContextMessageUpdate, blockedAt: D
             first_name: ctx.from.first_name,
             last_name: ctx.from.last_name,
             language_code: ctx.from.language_code,
-            ua_uuid: ctx.session.user.uaUuid
+            ua_uuid: ctx.session.user.uaUuid,
+            referral: ctx.sessionTmp.analyticsScene.referral
         })
         ctx.session.user.lastDbUpdated = new Date().getTime()
     } else if (isTimeToRefreshDb(ctx) || blockedAt !== undefined) {

@@ -32,6 +32,21 @@ describe('Users', () => {
         })
     })
 
+    test('User is saved as referral', async () => {
+        const id = await db.repoUser.insertUser({ ...user, referral: 'lisa' })
+
+        const dbUser = await db.one('SELECT * FROM cb_users WHERE id = $1', [id])
+
+        expect(dbUser).toMatchObject({
+            tid: '1',
+            username: 'lislon',
+            first_name: 'First',
+            last_name: 'Last',
+            language_code: '',
+            referral: 'lisa'
+        })
+    })
+
     test('Null will not be a problem', async () => {
         await db.repoUser.insertUser({
             ...user,

@@ -16,7 +16,7 @@ import {
 import { getLikesRow } from '../likes/likes-common'
 import { cardFormat } from '../shared/card-format'
 import { User } from 'typegram/manage'
-import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
+import { analyticRecordEventView, analyticRecordReferral } from '../../lib/middleware/analytics-middleware'
 import { parseAndPredictTimetable } from '../../lib/timetable/timetable-utils'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('main_scene')
@@ -157,6 +157,7 @@ function setGoogleAnalyticsSource(ctx: ContextMessageUpdate, payloads: string[])
 
         try {
             const source = getSource(payloads[0])
+            analyticRecordReferral(ctx, source)
             ctx.ua.set('cs', source)
         } catch (e) {
             ctx.ua.set('cs', 'fallback')

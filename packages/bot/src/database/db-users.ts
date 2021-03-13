@@ -1,16 +1,7 @@
 import { ColumnSet, IDatabase, IMain } from 'pg-promise'
 import { fieldInt, fieldInt8Array, fieldStr, fieldTimestamptzNullable } from '@culthub/pg-utils'
 
-interface UserRow {
-    username: string
-    first_name: string
-    last_name: string
-    tid: number
-    language_code: string
-    ua_uuid: string
-}
-
-export class UserSaveData {
+export interface UserSaveData {
     username?: string
     first_name?: string
     last_name?: string
@@ -23,15 +14,20 @@ export class UserSaveData {
     events_disliked?: number[]
     events_favorite?: number[]
     clicks?: number
+    referral?: string
 }
 
-export class UserDb {
+
+export interface UserIds {
     id?: number
+    tid?: number
+}
+
+export interface UserForRead extends UserIds{
     username?: string
     first_name?: string
     last_name?: string
     language_code?: string
-    tid?: number
     ua_uuid: string
     blocked_at?: Date|null
     events_liked?: number[]
@@ -40,10 +36,15 @@ export class UserDb {
     clicks?: number
 }
 
+
+export interface UserDb extends UserForRead {
+    referral: string
+}
+
 export class UserRepository {
     private readonly columns: ColumnSet
 
-    constructor(private db: IDatabase<any>, private pgp: IMain) {
+    constructor(private db: IDatabase<unknown>, private pgp: IMain) {
         this.columns = new pgp.helpers.ColumnSet([
             fieldStr('username'),
             fieldStr('first_name'),
@@ -56,14 +57,15 @@ export class UserRepository {
             fieldInt8Array('events_disliked'),
             fieldInt8Array('events_favorite'),
             fieldInt('clicks'),
+            fieldStr('referral'),
         ],
             {table: 'cb_users'}
         );
     }
 
-    public async findUserByTid(tid: number): Promise<UserDb | null> {
-        return this.db.oneOrNone<UserDb>('SELECT id, tid, ua_uuid, events_favorite, clicks FROM cb_users WHERE tid = $1', tid,
-            (row: UserDb) => {
+    public async findUserByTid(tid: number): Promise<UserForRead | null> {
+        return this.db.oneOrNone<UserForRead>('SELECT id, tid, ua_uuid, events_favorite, clicks FROM cb_users WHERE tid = $1', tid,
+            (row: UserForRead) => {
                 if (row !== null) {
                     return {
                         id: +row.id,
@@ -77,8 +79,8 @@ export class UserRepository {
             })
     }
 
-    public async findUsersByUsernamesOrIds(usernames: string[], tids: number[] = []): Promise<UserDb[] | null> {
-        return this.db.map<UserDb>(`
+    public async findUsersByUsernamesOrIds(usernames: string[], tids: number[] = []): Promise<UserIds[] | null> {
+        return this.db.map<UserIds>(`
         SELECT tid, ua_uuid
         FROM cb_users
         WHERE
@@ -107,7 +109,8 @@ export class UserRepository {
             events_liked: [],
             events_favorite: [],
             events_disliked: [],
-            blocked_at: undefined
+            blocked_at: undefined,
+            referral: user.referral || ''
         }
         const sql = this.pgp.helpers.insert(rawData, this.columns) + ' returning id'
         return +(await this.db.one(sql))['id']
