@@ -216,8 +216,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate): Promise<vo
             ].join(' '))
 
             const msg = i18Msg(ctx, `sync_stats_message`, {
-                body,
-                rows: await db.repoAdmin.countTotalRows()
+                body
             })
 
             await replyWithHTMLMaybeChunk(ctx, msg)
@@ -356,7 +355,6 @@ class GlobalSync {
 
         const text = i18n.t('ru', 'scenes.admin_scene.sync_report', {
             body: await formatMessageForSyncReport(this.eventsErrors, this.packsErrors, this.eventsSyncDiff, this.packsSyncDiff, ctx),
-            rows: await db.repoAdmin.countTotalRows(),
             user: formatUserName2(this.user)
         })
         for (const admin of admins) {
@@ -580,9 +578,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
                     await GLOBAL_SYNC_STATE.executeSync(dbTx)
                 })
                 await ctx.editMessageReplyMarkup(Markup.inlineKeyboard([]).reply_markup)
-                await ctx.replyWithHTML(i18Msg(ctx, 'sync_confirmed', {
-                    rows: await db.repoAdmin.countTotalRows()
-                }))
+                await ctx.replyWithHTML(i18Msg(ctx, 'sync_confirmed'))
             } else {
                 await replySyncNoTransaction(ctx)
             }
