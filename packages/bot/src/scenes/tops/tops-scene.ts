@@ -143,7 +143,7 @@ scene
         await ctx.scene.enter('tops_scene')
     })
 
-function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
 
     for (const cat of ['theaters', 'movies', 'events', 'walks', 'concerts', 'exhibitions_temp', 'exhibitions_perm']) {
         bot.hears(i18nModuleBtnName(cat), async ctx => {

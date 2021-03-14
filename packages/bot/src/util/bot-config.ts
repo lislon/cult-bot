@@ -34,6 +34,9 @@ export class BotConfig {
     public MAILINGS_PER_SECOND: number
     public LOG_PAGE_VIEWS_IN_DB: boolean
 
+    /**
+     * How long slider will remain workable (left/right buttons for user).
+     */
     public SLIDER_STATE_TTL_SECONDS: number
     public SLIDER_MAX_STATES_SAVED: number
     public SLIDER_MAX_IDS_CACHED: number
@@ -59,6 +62,9 @@ export class BotConfig {
 
     public YANDEX_AFISHA_URL?: string
     public readonly GOOGLE_AUTH_FILE = path.resolve(__dirname, '../../secrets/culthubbot-google-account.json')
+    /**
+     * Default threshold number of events. When packs contains number of events below threshold it will be hidden.
+     */
     public readonly DEFAULT_PACK_HIDE_WHEN_LESS_THEN_EVENTS = 2;
 
     public FEATURE_CARD_TAG_TOGGLE: boolean
@@ -67,6 +73,10 @@ export class BotConfig {
      * Chat used to receive user feedback and send reply to it.
      */
     public SUPPORT_FEEDBACK_CHAT_ID?: number
+    /**
+     * For how long list of packs will be cached before re-fetch from db.
+     */
+    public PACKS_CACHE_TTL_SECONDS: number
 
     constructor() {
         config()
@@ -74,6 +84,22 @@ export class BotConfig {
     }
 
     public setFromKeyValue(envVars: any) {
+
+        const number = (key: unknown, defaultValue: number|undefined): void => {
+            // @ts-expect-error: Later
+            if (envVars[key] === undefined) {
+                // @ts-expect-error: Later
+                this[key] = defaultValue
+                // @ts-expect-error: Later
+            } else if (envVars[key] === '') {
+                // @ts-expect-error: Later
+                this[key] = undefined
+            } else {
+                // @ts-expect-error: Later
+                this[key] = +envVars[key]
+            }
+        }
+
         this.DATABASE_URL = envVars.DATABASE_URL
         this.DATABASE_MAX_POOL = envVars.DATABASE_MAX_POOL === undefined ? 18 : +envVars.DATABASE_MAX_POOL
         this.DATABASE_SSL = envVars.DATABASE_SSL || 'yes'
@@ -104,33 +130,19 @@ export class BotConfig {
 
         this.HOLIDAYS = envVars.HOLIDAYS || ''
 
-        this.SUPPORT_FEEDBACK_CHAT_ID = +envVars.SUPPORT_FEEDBACK_CHAT_ID || undefined
-        this.MAILINGS_PER_WEEK_MAX = +envVars.MAILINGS_PER_WEEK_MAX || 2
-        this.MAILINGS_PER_SECOND = +envVars.MAILINGS_PER_SECOND || 4
+        number('SUPPORT_FEEDBACK_CHAT_ID',  undefined)
+        number('MAILINGS_PER_WEEK_MAX',  2)
+        number('MAILINGS_PER_SECOND',  4)
+        number('SLIDER_STATE_TTL_SECONDS',  3600 * 8)
+        number('PACKS_CACHE_TTL_SECONDS', 5 * 60)
+        number('SLIDER_MAX_STATES_SAVED', 5)
+        number('SLIDER_MAX_IDS_CACHED', 10)
         this.LOG_PAGE_VIEWS_IN_DB = !!envVars.LOG_PAGE_VIEWS_IN_DB || true
-
-        this.SLIDER_STATE_TTL_SECONDS = +envVars.SLIDER_STATE_TTL_SECONDS || 3600 * 8
-        this.SLIDER_MAX_STATES_SAVED = +envVars.SLIDER_MAX_STATES_SAVED || 5
-        this.SLIDER_MAX_IDS_CACHED = +envVars.SLIDER_MAX_IDS_CACHED || 10
-        this.SLIDER_INSTA_VIEW = !!envVars.SLIDER_INSTA_VIEW || false
-        this.YANDEX_AFISHA_URL = envVars.YANDEX_AFISHA_URL
         this.FEATURE_CARD_TAG_TOGGLE = !!envVars.FEATURE_CARD_TAG_TOGGLE || false
 
+        this.SLIDER_INSTA_VIEW = !!envVars.SLIDER_INSTA_VIEW || false
+        this.YANDEX_AFISHA_URL = envVars.YANDEX_AFISHA_URL
 
-        const number = (key: unknown, defaultValue: number|undefined): void => {
-            // @ts-expect-error: Later
-            if (envVars[key] === undefined) {
-                // @ts-expect-error: Later
-                this[key] = defaultValue
-                // @ts-expect-error: Later
-            } else if (envVars[key] === '') {
-                // @ts-expect-error: Later
-                this[key] = undefined
-            } else {
-                // @ts-expect-error: Later
-                this[key] = +envVars[key]
-            }
-        }
 
         number('THROTTLE_IN_HIGH_WATER', 3)             // Trigger strategy if throttler is not ready for a new job
         number('THROTTLE_IN_MAX_CONCURRENT', 1)         // Only 1 job at a time

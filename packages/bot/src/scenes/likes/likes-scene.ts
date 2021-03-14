@@ -20,7 +20,7 @@ function logLikes(plusLikes: number, ctx: ContextMessageUpdate, eventId: number,
     }
 }
 
-function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot
         .action(/^like_(\d+)/, async ctx => {
             const eventId = +ctx.match[1]

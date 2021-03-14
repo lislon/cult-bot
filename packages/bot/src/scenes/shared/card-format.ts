@@ -87,7 +87,6 @@ export function getCardHeaderCat(row: Event) {
 
 export interface CardOptions {
     showAdminInfo?: boolean
-    packs?: boolean
     deleted?: boolean
     showTags?: boolean
     now: Date
@@ -118,15 +117,6 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
         }
     }
     const isFuture = !(isCardWithPossiblePast(row) && row.isFuture == false)
-
-    // if (options.packs) {
-    //     text += `<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`
-    //     text += '\n'
-    //     text += '\n'
-    //     text += `<b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>`
-    // } else {
-    //
-    // }
 
     function strikeIfDeleted(text: string) {
         return options.deleted ? `<s>${text}</s>` : text

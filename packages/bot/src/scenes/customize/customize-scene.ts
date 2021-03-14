@@ -364,7 +364,7 @@ async function restoreOldCustomize(ctx: ContextMessageUpdate) {
     }
 }
 
-function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot
         .use(eventSlider.middleware())
         .action(actionName('format'), async ctx => {

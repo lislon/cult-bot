@@ -1,4 +1,4 @@
-import { cleanDb, expectedIds, expectedPacksTitle, getMockEvent, getMockPack, syncEventsDb4Test } from './db-test-utils'
+import { cleanDb, expectedIds, expectedPacksTitle, expectedTitlesStrict, getMockEvent, getMockPack, syncEventsDb4Test } from './db-test-utils'
 import { db, dbCfg } from '../../../src/database/db'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { mkInterval } from '../../util/timetable-util'
@@ -10,6 +10,11 @@ describe('Packs', () => {
     const eventTime = [mskMoment('2020-01-01 12:00'), mskMoment('2020-01-03 15:00')]
     const eventTimeOutRange = [mskMoment('2022-01-01 12:00'), mskMoment('2022-01-03 15:00')]
     const yearRange = mkInterval('[2020-01-01 00:00, 2021-01-02 00:00)')
+
+    const day1 = [mskMoment('2020-01-01 12:00')]
+    const day2 = [mskMoment('2020-01-02 12:00')]
+    const day3 = [mskMoment('2020-01-03 12:00')]
+
 
     beforeEach(async () => {
         await cleanDb()
@@ -35,7 +40,7 @@ describe('Packs', () => {
     })
 
     test('packs with single event will be shown if hide_if_less_then =1', async () => {
-        const [aId, bId] = await syncEventsDb4Test([
+        const [aId] = await syncEventsDb4Test([
             getMockEvent({extId: 'A', eventTime}),
         ])
 
@@ -47,7 +52,7 @@ describe('Packs', () => {
     })
 
     test('packs with 5 events will not be shown if hide_if_less_then = 6', async () => {
-        const [aId, bId] = await syncEventsDb4Test([
+        const [aId] = await syncEventsDb4Test([
             getMockEvent({extId: 'A', eventTime}),
         ])
 
@@ -60,10 +65,6 @@ describe('Packs', () => {
 
 
     test('events in packs will be sorted', async () => {
-
-        const day1 = [mskMoment('2020-01-01 12:00')]
-        const day2 = [mskMoment('2020-01-02 12:00')]
-        const day3 = [mskMoment('2020-01-03 12:00')]
 
         const [A, B, C, D, E] = await syncEventsDb4Test([
             getMockEvent({extId: 'B', eventTime: day2}),
@@ -79,6 +80,40 @@ describe('Packs', () => {
 
         const events = await db.repoPacks.listPacks({ interval: yearRange })
         expectedIds([A, B, C, D, E], events[0].events.map(e => e.id))
+    })
+
+    describe('Single pack', () => {
+
+        test('Should show sorted events', async () => {
+
+            const [aId, bId, cId] = await syncEventsDb4Test([
+                getMockEvent({extId: 'A', eventTime: day2}),
+                getMockEvent({extId: 'B', eventTime: day1}),
+                getMockEvent({extId: 'C', eventTime: eventTimeOutRange}),
+            ])
+
+            const packSync = await db.repoPacks.syncDatabase([
+                getMockPack({extId: 'A pack', eventIds: [aId, bId, cId], hideIfLessThen: 2}),
+            ])
+            const packId = packSync.inserted[0].primaryData.id
+            const eventIds = await db.repoPacks.getEventIdsByPackId({interval: yearRange, packId})
+            expect(eventIds).toStrictEqual([bId, aId])
+        })
+
+        test('packs with 2 events should be hidden when hideIfLessThen = 3', async () => {
+            const [aId, bId, cId] = await syncEventsDb4Test([
+                getMockEvent({extId: 'A', eventTime: day2}),
+                getMockEvent({extId: 'B', eventTime: day1}),
+                getMockEvent({extId: 'C', eventTime: eventTimeOutRange}),
+            ])
+
+            const packSync = await db.repoPacks.syncDatabase([
+                getMockPack({extId: 'A pack', eventIds: [aId, bId, cId], hideIfLessThen: 3}),
+            ])
+            const packId = packSync.inserted[0].primaryData.id
+            const eventIds = await db.repoPacks.getEventIdsByPackId({interval: yearRange, packId})
+            expect(eventIds).toStrictEqual([])
+        })
     })
 
 

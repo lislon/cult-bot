@@ -62,7 +62,7 @@ tail
         }
     })
 
-function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot.use(tail)
 }
 

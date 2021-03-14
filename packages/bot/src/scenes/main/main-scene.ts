@@ -56,7 +56,7 @@ scene
         ctx.ua.pv({dp: '/', dt: 'Главное меню'})
     })
 
-function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot
         // .use(middlewares.logMiddleware('postStageActionsFn scene: ' + scene.id))
         .hears(i18nModuleBtnName('tops'), async ctx => {

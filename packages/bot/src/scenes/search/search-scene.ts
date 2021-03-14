@@ -25,7 +25,7 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     }
 }
 
-const eventSlider = new SliderPager(new SearchPagerConfig())
+const slider = new SliderPager(new SearchPagerConfig())
 
 scene
     .enter(async ctx => {
@@ -37,7 +37,7 @@ scene
     .leave(async ctx => {
         ctx.session.search = undefined
     })
-    .use(eventSlider.middleware())
+    .use(slider.middleware())
     .hears(backToMainButtonTitle().trim(), async (ctx) => {
         await ctx.scene.enter('main_scene')
     })
@@ -48,12 +48,12 @@ scene
         }
         ctx.session.search.request = ctx.match[0]
         await warnAdminIfDateIsOverriden(ctx)
-        const state = await eventSlider.updateState(ctx, {state: ctx.session.search.request})
+        const state = await slider.updateState(ctx, {state: ctx.session.search.request})
         if (state.total > 0) {
             await ctx.replyWithHTML(i18Msg(ctx, 'here_your_results', {
                 query: ctx.session.search.request
             }))
-            await eventSlider.showOrUpdateSlider(ctx, state, {
+            await slider.showOrUpdateSlider(ctx, state, {
                 forceNewMsg: true
             })
         } else {
@@ -61,7 +61,7 @@ scene
         }
     })
 
-function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot
         .action(actionName('back'), async (ctx) => {
             await ctx.answerCbQuery()

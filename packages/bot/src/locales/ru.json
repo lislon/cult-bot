@@ -43,6 +43,8 @@
       "pack_card": "<b>${title}</b>\n\n${description}\n\nВ подборке ${eventsPlural}",
       "event_curr_tip": "Используйте кнопки « и » для навигации между событиями",
       "direct_not_available": "Ой, эта подборочка уже не доступна. Но вот что доступно:",
+      "slider_is_empty": "К сожалению, это событие удалено из бота",
+      "no_results": "К сожалению, все события в этой подборке закончились",
       "keyboard": {
         "single_pack": "${title}",
         "event": "${title}",

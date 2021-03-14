@@ -99,13 +99,5 @@ export class TopEventsRepository {
         }
         return {fixedTimeQuery, anyTimeQuery, queryCommonParams}
     }
-
-    private async loadTags(cat: TagCategory) {
-        return await this.db.map('' +
-            ' SELECT t.name ' +
-            ' FROM cb_tags t' +
-            ' WHERE t.category = $1' +
-            ' ORDER BY t.name', [cat], (row) => row.name) as string[]
-    }
 }
 

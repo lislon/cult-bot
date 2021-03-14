@@ -44,9 +44,9 @@ export class FavoritesPagerConfig implements SliderConfig<void> {
     }
 
     analytics(ctx: ContextMessageUpdate, event: Event, {total, offset}: TotalOffset): void {
-        const pageTitle = `[${offset}/${total}]`
+        const pageTitle = `[${offset + 1}/${total}]`
         ctx.ua.pv({
-            dp: `/favorites/p${offset}/`,
+            dp: `/favorites/p${offset + 1}/`,
             dt: `Избранное > Актуальные карточки ${pageTitle}`.trim()
         })
     }

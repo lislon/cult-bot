@@ -134,7 +134,7 @@ function removeFromFavorite(ctx: ContextMessageUpdate, eventId: number) {
     ctx.session.user.eventsFavorite = ctx.session.user.eventsFavorite.filter(e => e !== eventId)
 }
 
-function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot
         .action(/^favorite_(\d+)/, async ctx => {
             const eventId = +ctx.match[1]

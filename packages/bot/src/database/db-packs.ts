@@ -52,7 +52,12 @@ export interface PackEventSummary {
     id: number
     title: string
 }
-export interface PacksQuery {
+export interface PacksListQuery {
+    interval: DateInterval
+}
+
+export interface SinglePackQuery {
+    packId: number
     interval: DateInterval
 }
 
@@ -80,6 +85,12 @@ const packsColumnsDef = [
     fieldTimestamptzNullable('deleted_at'),
 ]
 
+
+const ORDER_BY_CB_EVENTS_IN_PACK = `cb.is_anytime ASC, cbet.first_entrance ASC, cb.rating DESC, cb.title ASC`
+
+function getOrderByEventsInPack(eventPrefix = 'cb', eventEntranceTimesPrefix = 'cbet') {
+    return `${eventPrefix}.is_anytime ASC, ${eventEntranceTimesPrefix}.first_entrance ASC, ${eventPrefix}.rating DESC, ${eventPrefix}.title ASC`;
+}
 
 export class PacksRepository {
     readonly columns: ColumnSet
@@ -127,7 +138,23 @@ export class PacksRepository {
         }
     }
 
-    public async listPacks(query: PacksQuery): Promise<ScenePack[]> {
+    public async getEventIdsByPackId(query: SinglePackQuery): Promise<number[]> {
+        const {from, where, params} = this.prepareQueryBody(query)
+        const rawRows = await this.db.any(`
+            select pe.id, p.hide_if_less_then
+            ${from}
+            WHERE ${where} AND p.id = $(packId)
+            ORDER BY ${getOrderByEventsInPack('pe', 'pe')}
+        `, {...params, packId: query.packId })
+
+        if (rawRows.length > 0 && rawRows.length < +rawRows[0].hide_if_less_then) {
+            return []
+        }
+        return rawRows.map(raw => +raw.id)
+    }
+
+    public async listPacks(query: PacksListQuery): Promise<ScenePack[]> {
+        const {from, where, params} = this.prepareQueryBody(query)
         return await this.db.map(`
             SELECT
                 p.id,
@@ -135,25 +162,12 @@ export class PacksRepository {
                 p.description,
                 array_agg(pe.id) event_ids,
                 array_agg(pe.title) event_titles
-            from cb_events_packs p
-            join (
-                SELECT ${SELECT_ALL_EVENTS_FIELDS}
-                FROM (
-                    SELECT cbet.event_id, MIN(LOWER(cbet.entrance)) AS first_entrance
-                    FROM cb_events_entrance_times cbet
-                    JOIN cb_events_packs p on cbet.event_id = any (p.event_ids)
-                    WHERE ${rangeHalfOpenIntersect('$(interval)::tstzrange', 'cbet.entrance')}
-                    GROUP by cbet.event_id
-                ) cbet
-                JOIN cb_events cb ON cb.id = cbet.event_id
-                WHERE cb.deleted_at IS NULL
-                ORDER BY cb.is_anytime ASC, cbet.first_entrance ASC, cb.rating DESC, cb.title ASC
-            ) pe on (pe.id = any(p.event_ids))
-            WHERE p.deleted_at IS NULL
+            ${from}
+            WHERE ${where}
             GROUP BY p.id
             HAVING COUNT(pe.id) >= p.hide_if_less_then
             ORDER BY p.weight ASC, p.title ASC
-            `, { interval: mapToPgInterval(query.interval) },
+            `, params,
             r => {
                 return {
                     id: +r.id,
@@ -165,6 +179,26 @@ export class PacksRepository {
                         })
                 }
             })
+    }
+
+    private prepareQueryBody(query: { interval: DateInterval }): { from: string; where: string, params: { interval: string } } {
+        const from = `from cb_events_packs p
+            join (
+                SELECT ${SELECT_ALL_EVENTS_FIELDS}, cbet.first_entrance
+                FROM (
+                    SELECT cbet.event_id, MIN(LOWER(cbet.entrance)) AS first_entrance
+                    FROM cb_events_entrance_times cbet
+                    JOIN cb_events_packs p on cbet.event_id = any (p.event_ids)
+                    WHERE ${rangeHalfOpenIntersect('$(interval)::tstzrange', 'cbet.entrance')}
+                    GROUP by cbet.event_id
+                ) cbet
+                JOIN cb_events cb ON cb.id = cbet.event_id
+                WHERE cb.deleted_at IS NULL
+                ORDER BY ${getOrderByEventsInPack('cb', 'cbet')}
+            ) pe on (pe.id = any(p.event_ids))`
+        const where = `p.deleted_at IS NULL`
+        const params = { interval: mapToPgInterval(query.interval) }
+        return {from, where, params}
     }
 
     public async getEvent(eventId: number): Promise<Event> {

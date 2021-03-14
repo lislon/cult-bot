@@ -223,7 +223,7 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     }
 }
 
-function postStageActionsFn(bot: Composer<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot
         .action(/^mail_survey_(.+)/, async ctx => {
             await ctx.answerCbQuery()
