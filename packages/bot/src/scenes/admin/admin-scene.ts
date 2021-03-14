@@ -439,7 +439,7 @@ scene
             const backupRows: any = {}
             for (const key of keys) {
                 const data = await getRedis().get(key)
-                backupRows[key] = JSON.parse(data)
+                backupRows[key] = data
             }
             const buffer = Buffer.from(JSON.stringify(backupRows, undefined, 2))
             ctx.replyWithDocument({
@@ -460,7 +460,7 @@ scene
                     const response = await got(fileLink).json<any>()
 
                     for (const [key, value] of Object.entries(response)) {
-                        await getRedis().set(key, JSON.stringify(value))
+                        await getRedis().set(key, value as string)
                     }
                     ctx.replyWithHTML(`Обновили сессии для ${Object.entries(response).length} элементов.`)
                 } else {
