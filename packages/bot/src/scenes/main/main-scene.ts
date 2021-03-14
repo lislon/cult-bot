@@ -18,6 +18,9 @@ import { cardFormat } from '../shared/card-format'
 import { User } from 'typegram/manage'
 import { analyticRecordEventView, analyticRecordReferral } from '../../lib/middleware/analytics-middleware'
 import { parseAndPredictTimetable } from '../../lib/timetable/timetable-utils'
+import { bot } from '../../bot'
+import { KeyboardButton } from 'typegram'
+import CommonButton = KeyboardButton.CommonButton
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('main_scene')
 
@@ -34,11 +37,16 @@ const content = (ctx: ContextMessageUpdate) => {
         ['feedback', 'favorites'],
     ]
 
-    const mainButtons = menu.map(row =>
+
+    const mainButtons: KeyboardButton[][] = menu.map(row =>
         row.map(btnName => {
             return Markup.button.text(i18Btn(ctx, btnName))
         })
     );
+    if (botConfig.FEATURE_GEO) {
+        const text = i18Btn(ctx, 'near_me')
+        mainButtons.push([Markup.button.locationRequest(text)])
+    }
 
     const state = ctx.scene.state as MainSceneEnterState
     return {
@@ -211,7 +219,7 @@ async function showDirectMessage(ctx: ContextMessageUpdate, extId: string) {
     }
 }
 
-function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>) {
+function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }) => {
         ctx.logger.debug([
             `/start`,

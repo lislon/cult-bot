@@ -1,0 +1,1 @@
+ALTER TABLE cb_events ADD COLUMN IF NOT EXISTS latlng point;

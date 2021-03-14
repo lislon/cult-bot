@@ -20,7 +20,8 @@
     "db:down-test": "cross-env DATABASE_URL=postgres://cult-test:cult-test@localhost:5434/cult-test db-migrate down",
     "db:new": "cross-env TZ=Europe/Moscow db-migrate create",
     "cron:refresh-events": "cross-env TZ=Europe/Moscow node dist/cron/run-refresh",
-    "cron:reset-mailing-counters": "cross-env TZ=Europe/Moscow node dist/cron/reset-mailing-counters"
+    "cron:reset-mailing-counters": "cross-env TZ=Europe/Moscow node dist/cron/reset-mailing-counters",
+    "cron:update-latlng": "cross-env TZ=Europe/Moscow node dist/cron/update-latlng"
   },
   "dependencies": {
     "@culthub/google-docs": "^1.0.0",

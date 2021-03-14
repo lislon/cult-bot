@@ -68,6 +68,8 @@ export class BotConfig {
     public readonly DEFAULT_PACK_HIDE_WHEN_LESS_THEN_EVENTS = 2;
 
     public FEATURE_CARD_TAG_TOGGLE: boolean
+    public FEATURE_GEO: boolean
+
 
     /**
      * Chat used to receive user feedback and send reply to it.
@@ -139,6 +141,7 @@ export class BotConfig {
         number('SLIDER_MAX_IDS_CACHED', 10)
         this.LOG_PAGE_VIEWS_IN_DB = !!envVars.LOG_PAGE_VIEWS_IN_DB || true
         this.FEATURE_CARD_TAG_TOGGLE = !!envVars.FEATURE_CARD_TAG_TOGGLE || false
+        this.FEATURE_GEO = !!envVars.FEATURE_GEO || false
 
         this.SLIDER_INSTA_VIEW = !!envVars.SLIDER_INSTA_VIEW || false
         this.YANDEX_AFISHA_URL = envVars.YANDEX_AFISHA_URL

@@ -18,6 +18,7 @@ import { botErrorHandler } from './util/error-handler'
 import { likesScene } from './scenes/likes/likes-scene'
 import { favoritesScene } from './scenes/favorites/favorites-scene'
 import { botConfig } from './util/bot-config'
+import { locationScene } from './scenes/location/location-scene'
 
 logger.info(`starting bot...`);
 
@@ -52,6 +53,7 @@ myRegisterScene(bot, stage, [
     feedbackScene,
     likesScene,
     favoritesScene,
+    locationScene,
     tailScene
 ])
 
