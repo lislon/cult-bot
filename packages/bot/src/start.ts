@@ -1,6 +1,5 @@
 import { Telegraf } from 'telegraf'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
-import rp from 'request-promise'
 import express, { Request, Response } from 'express'
 import { botConfig } from './util/bot-config'
 import { logger } from './util/logger'
