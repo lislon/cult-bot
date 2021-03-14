@@ -6,6 +6,9 @@ import { parseISO } from 'date-fns'
 import { parsePrice } from '../lib/price-parser'
 import { botConfig } from '../util/bot-config'
 import { EventTimetable, MomentOrInterval } from '@culthub/timetable'
+import debugNamespace from 'debug'
+
+const debug = debugNamespace('parse-excel')
 
 export const EXCEL_COLUMNS_EVENTS = {
     ext_id: '№',
@@ -226,6 +229,8 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
         'likes': 0,
         'dislikes': 0
     }
+
+    debug(`Preparing ${row.ext_id}`)
 
     const result: ExcelRowResult = {
         valid: true,
