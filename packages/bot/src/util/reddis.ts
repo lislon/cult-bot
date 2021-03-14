@@ -1,7 +1,7 @@
 import RedisSession from 'telegraf-session-redis'
 import { botConfig } from './bot-config'
 import { Context } from 'telegraf'
-import { RedisClient } from 'redis'
+import { Callback, RedisClient } from 'redis'
 import { promisify } from 'util'
 import redisMock from 'redis-mock'
 
@@ -61,6 +61,8 @@ interface MySimpleRedis {
     get: (key: string) => Promise<string>,
     set: (key: string, value: string) => Promise<void>
     end: (flush?: boolean) => void
+    keys: (pattern: string) => Promise<string[]>
+    flushdb: () => Promise<void>
 }
 
 export function getRedisSession(): MyRedisSession {
@@ -76,8 +78,11 @@ export function getRedis(): MySimpleRedis {
         mySimpleRedis = {
             get: promisify(r.client.get.bind(r.client)),
             set: promisify(r.client.set.bind(r.client)),
-            end: promisify(r.client.end.bind(r.client))
+            end: promisify(r.client.end.bind(r.client)),
+            keys: promisify(r.client.keys.bind(r.client)),
+            flushdb: promisify(r.client.flushdb.bind(r.client)),
         }
+
     }
     return mySimpleRedis;
 }

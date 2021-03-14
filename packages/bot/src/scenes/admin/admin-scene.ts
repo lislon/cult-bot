@@ -1,6 +1,6 @@
 import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate, EventCategory, ExtIdAndId, ExtIdAndMaybeId } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, isAdmin, sleep } from '../../util/scene-helper'
+import { i18nSceneHelper, isAdmin, isDev, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
 import {
     chunkanize,
@@ -11,7 +11,7 @@ import {
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
 import { db, IExtensions, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
-import { isValid, parse, parseISO } from 'date-fns'
+import { format, isValid, parse, parseISO } from 'date-fns'
 import { ExtraReplyMessage, InlineKeyboardButton, Message, User } from 'telegraf/typings/telegram-types'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
@@ -42,8 +42,16 @@ import { formatUserName2 } from '../../util/misc-utils'
 import { rawBot } from '../../raw-bot'
 import { PacksSyncDiff, PackToSave } from '../../database/db-packs'
 import { ExcelPacksSyncResult, fetchAndParsePacks, savePacksValidationErrors } from '../../dbsync/parserSpredsheetPacks'
-import Timeout = NodeJS.Timeout
 import { authToExcel } from '@culthub/google-docs'
+import { getRedis } from '../../util/reddis'
+import Timeout = NodeJS.Timeout
+import DocumentMessage = Message.DocumentMessage
+import got from 'got'
+
+function isDocumentMessage(msg: Message): msg is DocumentMessage {
+    return 'document' in msg
+}
+
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 
@@ -56,6 +64,7 @@ export interface AdminSceneQueryState {
 
 export interface AdminSceneState extends AdminSceneQueryState {
     overrideDate?: string
+    reddisBackupIsDone: boolean
 }
 
 const {actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)
@@ -374,6 +383,7 @@ class GlobalSync {
     }
 }
 
+let sessionSafeDestroyCounter = 3;
 const GLOBAL_SYNC_STATE = new GlobalSync()
 
 async function replySyncNoTransaction(ctx: ContextMessageUpdate) {
@@ -403,6 +413,64 @@ scene
     .action(actionName('sync'), async ctx => {
         await ctx.answerCbQuery()
         await synchronizeDbByUser(ctx)
+    })
+    .command('redis_reset', async ctx => {
+        async function countKeys() {
+            return (await getRedis().keys('*')).length
+        }
+
+        if (isDev(ctx)) {
+            if (sessionSafeDestroyCounter-- === 0) {
+                sessionSafeDestroyCounter = 3;
+                const keysBefore = await countKeys()
+                await getRedis().flushdb()
+                ctx.reply(`Done. ${keysBefore} -> ${await countKeys()} keys`)
+            } else {
+                ctx.reply(`type ${ctx.message.text} again (${sessionSafeDestroyCounter})`)
+            }
+        }
+    })
+    .command('redis_backup', async ctx => {
+        if (isDev(ctx)) {
+            const keys = await getRedis().keys('*')
+            await ctx.reply(`Готовим... ${keys.length} сессий`)
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const backupRows: any = {}
+            for (const key of keys) {
+                const data = await getRedis().get(key)
+                backupRows[key] = JSON.parse(data)
+            }
+            const buffer = Buffer.from(JSON.stringify(backupRows, undefined, 2))
+            ctx.replyWithDocument({
+                source: buffer,
+                filename: `sessions-${botConfig.HEROKU_APP_NAME}-${format(new Date(), 'yyyy-MM-dd--HH-mm-ss')}.json`
+            })
+            ctx.session.adminScene.reddisBackupIsDone = true
+        }
+    })
+    .on('message', async (ctx, next) => {
+        const msg = ctx.message
+        if (isDocumentMessage(msg) && isDev(ctx)) {
+            if (msg.document.file_name.startsWith('session') && msg.document.file_name.endsWith('.json')) {
+
+                if (ctx.session.adminScene.reddisBackupIsDone) {
+                    const fileLink = await ctx.telegram.getFileLink(msg.document.file_id)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const response = await got(fileLink).json<any>()
+
+                    for (const [key, value] of Object.entries(response)) {
+                        await getRedis().set(key, JSON.stringify(value))
+                    }
+                    ctx.replyWithHTML(`Обновили сессии для ${Object.entries(response).length} элементов.`)
+                } else {
+                    ctx.replyWithHTML('Опасно, вначале скачать бекап.')
+                }
+            } else {
+                ctx.replyWithHTML('Ожидался файл session-*.json')
+            }
+        }
+        return await next()
     })
     .action(actionName('version'), async ctx => {
         await ctx.answerCbQuery()
@@ -449,6 +517,7 @@ async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
     }
     if (ctx.session.adminScene === undefined) {
         ctx.session.adminScene = {
+            reddisBackupIsDone: undefined,
             cat: undefined,
             reviewer: undefined,
             overrideDate: undefined

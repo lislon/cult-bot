@@ -24,9 +24,9 @@
   },
   "dependencies": {
     "@culthub/google-docs": "^1.0.0",
-    "@culthub/universal-db-sync": "^1.0.0",
     "@culthub/pg-utils": "^1.0.0",
     "@culthub/timetable": "^1.0.0",
+    "@culthub/universal-db-sync": "^1.0.0",
     "@types/debug": "^4.1.5",
     "anymatch": "^3.1.1",
     "bottleneck": "^2.19.5",
@@ -39,6 +39,7 @@
     "emoji-regex": "^9.2.0",
     "express": "^4.17.1",
     "googleapis": "^67.1.0",
+    "got": "^11.8.2",
     "image-type": "^4.1.0",
     "lodash": "^4.17.20",
     "md5": "^2.3.0",
@@ -52,8 +53,6 @@
     "react-dom": "^17.0.1",
     "redis-cli": "^2.0.0",
     "redis-mock": "^0.56.3",
-    "request": "^2.88.2",
-    "request-promise": "^4.2.6",
     "slugify": "^1.4.6",
     "source-map-support": "^0.5.19",
     "telegraf": "4.1.0",
@@ -81,14 +80,13 @@
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@types/redis-mock": "^0.17.0",
-    "@types/request-promise": "^4.1.46",
     "@types/universal-analytics": "^0.4.4",
     "@types/uuid": "^8.3.0",
     "concurrently": "^6.0.0",
     "copyfiles": "^2.4.1",
     "esm": "^3.2.25",
-    "typegram": "3.1.10",
-    "nodemon": "^2.0.4"
+    "nodemon": "^2.0.4",
+    "typegram": "3.1.10"
   },
   "engines": {
     "yarn": "1.x"

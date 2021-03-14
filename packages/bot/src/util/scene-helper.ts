@@ -94,7 +94,7 @@ export function sleep(ms: number) {
 }
 
 export function isDev(ctx: ContextMessageUpdate) {
-    return devUsernames.includes(`@${ctx.from.username}`)
+    return devUsernames.includes(ctx.from.username)
 }
 
 export function isAdmin(ctx: ContextMessageUpdate) {

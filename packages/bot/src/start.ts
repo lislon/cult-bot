@@ -12,6 +12,7 @@ import ReactDOMServer from 'react-dom/server'
 import { rawBot } from './raw-bot'
 import { initBot } from './bot'
 import { getRedis } from './util/reddis'
+import got from 'got'
 
 const app = express()
 
@@ -53,7 +54,7 @@ class BotStart {
 
     public static async startDevMode(bot: Telegraf<ContextMessageUpdate>) {
         logger.info( 'Starting a bot in development mode');
-        await rp(`https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook`)
+        await got.get(`https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook`)
         await bot.launch()
         logger.info('Started')
     }

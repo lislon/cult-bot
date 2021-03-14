@@ -71,8 +71,4 @@ Feature: Packs scene
       """
       Then now is 2020-03-01 12:00
       Then I click inline [PACK1]
-      Then Bot edits text '*PACK1 desc*'
-      Then I click inline [Посмотреть события]
-      Then Bot edits text '*<b>A</b>*'
-      Then I click inline [◀️]
       Then Bot edits text '*Узнайте больше о тематических*'
