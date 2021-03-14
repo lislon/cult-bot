@@ -128,7 +128,7 @@ class CustomWorld {
         this.now = now
         const setDate = async (ctx: ContextMessageUpdate, next: any) => {
             ctx.session.adminScene = {
-                overrideDate: this.now.toISOString()
+                overrideDate: this.now.toISOString(),
             }
             return await next()
         }

@@ -44,9 +44,9 @@ import { PacksSyncDiff, PackToSave } from '../../database/db-packs'
 import { ExcelPacksSyncResult, fetchAndParsePacks, savePacksValidationErrors } from '../../dbsync/parserSpredsheetPacks'
 import { authToExcel } from '@culthub/google-docs'
 import { getRedis } from '../../util/reddis'
+import got from 'got'
 import Timeout = NodeJS.Timeout
 import DocumentMessage = Message.DocumentMessage
-import got from 'got'
 
 function isDocumentMessage(msg: Message): msg is DocumentMessage {
     return 'document' in msg
@@ -64,7 +64,7 @@ export interface AdminSceneQueryState {
 
 export interface AdminSceneState extends AdminSceneQueryState {
     overrideDate?: string
-    reddisBackupIsDone: boolean
+    reddisBackupIsDone?: boolean
 }
 
 const {actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)
