@@ -4,6 +4,7 @@ import { EventToSave } from '../../../src/interfaces/db-interfaces'
 import { PackToSave } from '../../../src/database/db-packs'
 import { UserSaveData } from '../../../src/database/db-users'
 import { MomentIntervals } from '@culthub/timetable'
+import { EventPackForSavePrepared } from '../../../src/dbsync/packsSyncLogic'
 
 export async function cleanDb() {
     return await db.none('TRUNCATE cb_events_entrance_times, cb_events, cb_events_packs RESTART identity')
@@ -25,13 +26,8 @@ export interface MockEvent {
     dateDeleted?: Date
 }
 
-export interface MockPackForSave {
-    title: string
-    extId: string
-    description: string
-    author: string
+export interface MockPackForSave extends Omit<EventPackForSavePrepared, 'events'> {
     eventTitles: string[]
-    weight: number
 }
 
 
@@ -94,6 +90,7 @@ export function getMockPack({
                                 description = 'desc',
                                 author = 'author',
                                 weight = 0,
+                                hideIfLessThen = 0,
                                 eventIds = [1],
                             }: Partial<PackToSave['primaryData']> = {}
 ): PackToSave {
@@ -105,6 +102,7 @@ export function getMockPack({
             author,
             weight,
             eventIds,
+            hideIfLessThen,
         }
     }
 }
@@ -159,7 +157,7 @@ export async function syncPacksDb4Test(mockPacks: MockPackForSave[]): Promise<nu
     return await db.task(async (dbTask) => {
         const tilesAndIds = await dbTask.many(`
             SELECT title, id
-            FROM cb_events
+            FROM cb_events 
             WHERE title IN ($(titles:csv)) AND deleted_at IS NULL`, {
             titles: mockPacks.flatMap(p => p.eventTitles)
         })

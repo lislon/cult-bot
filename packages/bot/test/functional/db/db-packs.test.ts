@@ -19,7 +19,7 @@ describe('Packs', () => {
         await db.repoPacks.syncDatabase([getMockPack({extId: 'A'})])
     })
 
-    test('packs will be filtered by date', async () => {
+    test('packs will be filtered by date when only 1 active will left', async () => {
         const [aId, bId, cId] = await syncEventsDb4Test([
             getMockEvent({extId: 'A', eventTime}),
             getMockEvent({extId: 'B', eventTime}),
@@ -27,20 +27,32 @@ describe('Packs', () => {
         ])
 
         await db.repoPacks.syncDatabase([
-            getMockPack({extId: 'A pack', eventIds: [aId, bId]}),
-            getMockPack({extId: 'B back', eventIds: [aId, cId]}),
+            getMockPack({extId: 'A pack', eventIds: [aId, bId], hideIfLessThen: 2}),
+            getMockPack({extId: 'B back', eventIds: [aId, cId], hideIfLessThen: 2}),
         ])
         const list = await db.repoPacks.listPacks({interval: yearRange})
         expectedPacksTitle(['A pack'], list)
     })
 
-    test('packs with single event will not be shown', async () => {
+    test('packs with single event will be shown if hide_if_less_then =1', async () => {
         const [aId, bId] = await syncEventsDb4Test([
             getMockEvent({extId: 'A', eventTime}),
         ])
 
         await db.repoPacks.syncDatabase([
-            getMockPack({extId: 'A pack', eventIds: [aId]})
+            getMockPack({extId: 'A pack', eventIds: [aId], hideIfLessThen: 1})
+        ])
+        const list = await db.repoPacks.listPacks({interval: yearRange})
+        expectedPacksTitle(['A pack'], list)
+    })
+
+    test('packs with 5 events will not be shown if hide_if_less_then = 6', async () => {
+        const [aId, bId] = await syncEventsDb4Test([
+            getMockEvent({extId: 'A', eventTime}),
+        ])
+
+        await db.repoPacks.syncDatabase([
+            getMockPack({extId: 'A pack', eventIds: [aId], hideIfLessThen: 6})
         ])
         const list = await db.repoPacks.listPacks({interval: yearRange})
         expectedPacksTitle([], list)

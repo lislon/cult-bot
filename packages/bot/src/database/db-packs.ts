@@ -25,6 +25,7 @@ export interface PackToSave extends BaseSyncItemToSave {
         author: string
         eventIds: number[]
         weight: number
+        hideIfLessThen: number
     }
     dateDeleted?: Date | null
 }
@@ -37,6 +38,7 @@ export interface PackDb extends BaseSyncItemDbRow {
     author: string
     event_ids: number[]
     weight: number
+    hide_if_less_then: number
 }
 
 export interface ScenePack {
@@ -73,6 +75,7 @@ const packsColumnsDef = [
     fieldStr('author'),
     fieldInt8Array('event_ids'),
     fieldInt('weight'),
+    fieldInt('hide_if_less_then'),
     fieldTimestamptzNullable('updated_at'),
     fieldTimestamptzNullable('deleted_at'),
 ]
@@ -100,8 +103,7 @@ export class PacksRepository {
     public async syncDatabase(newPacks: PackToSave[]): Promise<PacksSyncDiff> {
         return await this.db.tx('sync-pack', async (dbTx: ITask<IExtensions>) => {
             const syncDiff = await this.prepareDiffForSync(newPacks, dbTx)
-            await this.syncDiff(syncDiff, dbTx)
-            return syncDiff
+            return await this.syncDiff(syncDiff, dbTx)
         })
     }
 
@@ -120,7 +122,8 @@ export class PacksRepository {
             event_ids: pack.primaryData.eventIds,
             ext_id: pack.primaryData.extId,
             updated_at: updatedAt,
-            deleted_at: pack.dateDeleted
+            deleted_at: pack.dateDeleted,
+            hide_if_less_then: pack.primaryData.hideIfLessThen
         }
     }
 
@@ -148,7 +151,7 @@ export class PacksRepository {
             ) pe on (pe.id = any(p.event_ids))
             WHERE p.deleted_at IS NULL
             GROUP BY p.id
-            HAVING COUNT(pe.id) >= 2
+            HAVING COUNT(pe.id) >= p.hide_if_less_then
             ORDER BY p.weight ASC, p.title ASC
             `, { interval: mapToPgInterval(query.interval) },
             r => {
@@ -173,16 +176,6 @@ export class PacksRepository {
             {
                 eventId
             }, mapEvent)
-    }
-
-    public async fetchAllIdsExtIds(): Promise<ExtIdAndId[]> {
-        return await this.db.map(`
-            SELECT cb.id, cb.ext_id
-            FROM cb_events cb
-            WHERE cb.deleted_at IS NULL
-            `, undefined, ({ id, ext_id}) => {
-                return {id: +id, extId: ext_id}
-            })
     }
 }
 

@@ -59,6 +59,7 @@ export class BotConfig {
 
     public YANDEX_AFISHA_URL?: string
     public readonly GOOGLE_AUTH_FILE = path.resolve(__dirname, '../../secrets/culthubbot-google-account.json')
+    public readonly DEFAULT_PACK_HIDE_WHEN_LESS_THEN_EVENTS = 2;
 
     public FEATURE_CARD_TAG_TOGGLE: boolean
 

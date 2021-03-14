@@ -13,7 +13,8 @@ const EXCEL_COLUMNS_PACKS = {
 const VERTICAL_ORDER = {
     title: 'Название',
     id: 'ID',
-    isPublish: 'Опубликована:',
+    isPublish: 'Опубликована',
+    liveness: 'Живучесть',
     author: 'Куратор',
     description: 'Описание',
     weight: 'Вес',
@@ -33,6 +34,7 @@ export interface EventPackExcel {
     author: string
     events: EventInPackExcel[]
     isPublish?: boolean
+    liveness?: string
     weight: number
     sheetId: number
     rowNumber: number
@@ -82,6 +84,9 @@ export async function savePacksValidationErrors(excel: Sheets, allValidatedEvent
         }
         if (errors.isPublish) {
             markRow('isPublish', errors.isPublish)
+        }
+        if (errors.liveness) {
+            markRow('liveness', errors.liveness)
         }
         if (errors.extId) {
             markRow('id', errors.extId)
@@ -136,6 +141,8 @@ export async function fetchAndParsePacks(excel: Sheets): Promise<ExcelPacksSyncR
             currentPack.weight = +rowValue
         } else if (rowLabel === 'Описание') {
             currentPack.description = rowValue
+        } else if (rowLabel === 'Живучесть') {
+            currentPack.liveness = rowValue
         } else if (rowLabel === 'ID') {
             currentPack.extId = '' + rowValue
         } else if (rowValue !== undefined && (rowLabel === 'События' || rowLabel === '') && currentPack !== undefined) {

@@ -1,0 +1,1 @@
+ALTER TABLE cb_events_packs DROP COLUMN IF EXISTS hide_if_less_then;

@@ -2,6 +2,7 @@ import { EventInPackExcel, EventPackExcel, ExcelPacksSyncResult } from './parser
 import { countBy, Dictionary } from 'lodash'
 import { ExtIdAndId, ExtIdAndMaybeId } from '../interfaces/app-interfaces'
 import { PacksSyncDiff } from '../database/db-packs'
+import { botConfig } from '../util/bot-config'
 
 
 export interface EventPackForSavePrepared {
@@ -11,6 +12,7 @@ export interface EventPackForSavePrepared {
     author: string
     events: ExtIdAndMaybeId[]
     weight: number
+    hideIfLessThen: number
 }
 
 export interface EventPackValidated {
@@ -18,11 +20,12 @@ export interface EventPackValidated {
     pack: EventPackForSavePrepared
     raw: EventPackExcel
     errors: {
-        title: string
-        weight: string
-        isPublish: string
-        description: string
-        extId: string
+        title?: string
+        liveness?: string
+        weight?: string
+        isPublish?: string
+        description?: string
+        extId?: string
         badEvents: BadEvent[]
     }
     isValid: boolean
@@ -33,13 +36,23 @@ interface BadEvent {
     error: string
 }
 
+function parseLiveness(showUntil?: string): number|undefined {
+    if (showUntil === undefined || showUntil.trim() === '') {
+        return botConfig.DEFAULT_PACK_HIDE_WHEN_LESS_THEN_EVENTS;
+    }
+    if (showUntil.toLowerCase().includes('послед')) {
+        return 0;
+    }
+
+    const digits = showUntil.replace(/[\D]/g, '')
+    if (digits === '') {
+        return undefined;
+    }
+    return +digits;
+}
+
 function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>, packExtIds: Dictionary<number>): EventPackValidated {
     const errors: EventPackValidated['errors'] = {
-        isPublish: undefined,
-        title: undefined,
-        weight: undefined,
-        description: undefined,
-        extId: undefined,
         badEvents: []
     }
 
@@ -63,6 +76,10 @@ function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>, 
     if (p.weight === undefined || isNaN(p.weight)) {
         errors.weight = 'Пустое поле weight'
     }
+    if (parseLiveness(p.liveness) === undefined) {
+        errors.liveness = 'Неверно заполненное поле Живучесть'
+    }
+
     if (packExtIds[p.extId] > 1) {
         errors.extId = `Есть подборка с таким же ID=${p.extId}`
     }
@@ -77,9 +94,10 @@ function processPack(p: EventPackExcel, idByExtId: Dictionary<ExtIdAndMaybeId>, 
             author: p.author,
             description: p.description,
             weight: p.weight,
+            hideIfLessThen: parseLiveness(p.liveness)
         },
         errors,
-        isValid: [errors.title, errors.description, errors.weight, errors.extId, errors.isPublish].filter(e => e !== undefined).length === 0 && errors.badEvents.length == 0
+        isValid: Object.values(errors).filter(e => typeof e === 'string').length === 0 && errors.badEvents.length == 0
     }
 }
 

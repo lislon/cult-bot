@@ -93,7 +93,8 @@ Given(/^there is packs:$/, async function (table: DataTable) {
             author: row.author || 'Test',
             description: row.desc || 'pack desc',
             eventTitles: row.events.split(/[\s,]+/),
-            weight: row.weight || 0
+            weight: row.weight || 0,
+            hideIfLessThen: row.hideIfLessThen || botConfig.DEFAULT_PACK_HIDE_WHEN_LESS_THEN_EVENTS
         } as MockPackForSave
     })
 
