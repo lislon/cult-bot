@@ -304,4 +304,9 @@ describe('integration', () => {
             ], {start: date('2020-01-01 01:00'), daysAhead: 3})
     })
 
+    test('date range in past', () => {
+        assert2('03 января 2020 - 10 января 2020: в любое время', [
+        ], { start: date('2020-03-15'), daysAhead: 30 })
+    })
+
 })
