@@ -22,7 +22,7 @@ export class AppConfig {
     public readonly GOOGLE_AUTH_FILE = path.resolve(__dirname, '../secrets/culthubbot-google-account.json')
     public readonly SECONDS_PER_PAGE = 17
     public JSON_SNAPSHOT_DIR: string | undefined
-    public LIMIT_EVENTS_PER_PARSE: number
+    public LIMIT_EVENTS_PER_PARSE?: number
 
     constructor() {
         config()
@@ -43,7 +43,7 @@ export class AppConfig {
         this.PORT = +envVars.PORT
         this.NODE_ENV = envVars.NODE_ENV === undefined ? 'development' : envVars.NODE_ENV as Envs
         this.DATABASE_SSL = envVars.DATABASE_SSL || 'yes'
-        this.LIMIT_EVENTS_PER_PARSE = envVars.LIMIT_EVENTS_PER_PARSE || 100
+        this.LIMIT_EVENTS_PER_PARSE = envVars.LIMIT_EVENTS_PER_PARSE || undefined
         this.JSON_SNAPSHOT_DIR = envVars.JSON_SNAPSHOT_DIR || undefined
 
     }

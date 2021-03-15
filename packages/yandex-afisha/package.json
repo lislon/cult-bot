@@ -8,19 +8,16 @@
   "esm": true,
   "mode": "auto",
   "scripts": {
-    "start": "dotenv ts-node src/server.ts --cache-directory dist/ts-node-dev-cache --transpile-only",
-    "dev": "ts-node-dev -r source-map-support/register --respawn --ignore-watch node_modules src/server.ts --cache-directory dist/ts-node-dev-cache --transpile-only",
+    "start": "/bin/true",
+    "build": "tsc --build && eslint .",
+    "test": "jest --passWithNoTests",
     "db:up": "cross-env TZ=Europe/Moscow db-migrate up --table=p_migrations",
     "db:down": "cross-env TZ=Europe/Moscow db-migrate down --table=p_migrations",
     "db:new": "cross-env TZ=Europe/Moscow db-migrate create --table=p_migrations",
     "dev:cron:parse-base": "dotenv ts-node -r source-map-support/register src/cron/parse-base.ts --transpile-only",
     "dev:cron:parse-diff": "dotenv ts-node -r source-map-support/register src/cron/parse-diff.ts --transpile-only",
     "cron:parse-base": "cross-env TZ=Europe/Moscow node dist/cron/parse-base.js",
-    "cron:parse-diff": "cross-env TZ=Europe/Moscow node dist/cron/parse-diff.js",
-    "convert": "dotenv ts-node t/convert.ts",
-    "build": "tsc --build && eslint .",
-    "test": "jest --passWithNoTests",
-    "dev-no-restart": "tsc && nodemon --inspect"
+    "cron:parse-diff": "cross-env TZ=Europe/Moscow node dist/cron/parse-diff.js"
   },
   "dependencies": {
     "@culthub/google-docs": "^1.0.0",

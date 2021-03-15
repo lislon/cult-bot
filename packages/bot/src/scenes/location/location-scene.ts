@@ -9,6 +9,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot
         .on('location', async (ctx) => {
             await ctx.replyWithHTML(JSON.stringify(ctx.message.location, undefined, 2))
+            await ctx.telegram.sendLocation(ctx.chat.id, 59.9311, 30.3609)
         })
 }
 
