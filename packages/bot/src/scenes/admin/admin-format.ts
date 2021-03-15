@@ -201,7 +201,7 @@ function formatPacksSyncStatus(ctx: ContextMessageUpdate, packsDiff: PacksSyncDi
 
 function formatPackErrors(ctx: ContextMessageUpdate, packErrors: EventPackValidated[]) : string {
     return packErrors.map(p => i18Msg(ctx, 'sync_packs_error', {
-        title: p.pack.title.replace(emojiRegex(), '').trim(),
+        title: p.pack.title?.replace(emojiRegex(), '').trim() || p.pack.extId || `Подборка без имени`,
         errors: Object.values([
             ...Object.values(p.errors).filter(e => typeof e === 'string'),
             ...p.errors.badEvents.map(e => e.error)])
