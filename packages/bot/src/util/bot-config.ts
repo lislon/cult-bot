@@ -1,7 +1,7 @@
 import { config } from 'dotenv'
 import Bottleneck from 'bottleneck'
 import { ThrottlerOptions } from 'telegraf-throttler'
-import path from "path"
+import path from 'path'
 
 type Envs = 'development' | 'production' | 'test'
 
@@ -65,7 +65,7 @@ export class BotConfig {
     /**
      * Default threshold number of events. When packs contains number of events below threshold it will be hidden.
      */
-    public readonly DEFAULT_PACK_HIDE_WHEN_LESS_THEN_EVENTS = 2;
+    public readonly DEFAULT_PACK_HIDE_WHEN_LESS_THEN_EVENTS = 2
 
     public FEATURE_CARD_TAG_TOGGLE: boolean
     public FEATURE_GEO: boolean
@@ -87,7 +87,27 @@ export class BotConfig {
 
     public setFromKeyValue(envVars: any) {
 
-        const number = (key: unknown, defaultValue: number|undefined): void => {
+        const boolean = (key: unknown, defaultValue: boolean | undefined): void => {
+            // @ts-expect-error: Later
+            if (envVars[key] === undefined) {
+                // @ts-expect-error: Later
+                this[key] = defaultValue
+                // @ts-expect-error: Later
+            } else if (envVars[key] === '') {
+                // @ts-expect-error: Later
+                this[key] = undefined
+                // @ts-expect-error: Later
+            } else if (typeof envVars[key] === 'string' && (envVars[key].toLowerCase() === 'yes' || envVars[key].toLowerCase() === 'true')) {
+                // @ts-expect-error: Later
+                this[key] = true
+            } else {
+                // @ts-expect-error: Later
+                this[key] = false
+            }
+
+        }
+
+        const number = (key: unknown, defaultValue: number | undefined): void => {
             // @ts-expect-error: Later
             if (envVars[key] === undefined) {
                 // @ts-expect-error: Later
@@ -116,11 +136,11 @@ export class BotConfig {
         this.HEROKU_SLUG_COMMIT = envVars.HEROKU_SLUG_COMMIT
         this.HEROKU_RELEASE_CREATED_AT = envVars.HEROKU_RELEASE_CREATED_AT
 
-        this.PORT = +envVars.PORT
         this.TELEGRAM_TOKEN = envVars.TELEGRAM_TOKEN
-        this.WEBHOOK_PORT = +envVars.WEBHOOK_PORT
+        number('PORT', 0)
+        number('WEBHOOK_PORT', 0)
         this.REDIS_URL = envVars.REDIS_URL
-        this.REDIS_TTL = envVars.REDIS_TTL === undefined ? 3600 * 24 * 30 : +envVars.REDIS_TTL
+        number('REDIS_TTL', 3600 * 24 * 30)
 
         this.NODE_ENV = envVars.NODE_ENV === undefined ? 'development' : envVars.NODE_ENV as Envs
         this.DEBUG = envVars.DEBUG
@@ -132,20 +152,19 @@ export class BotConfig {
 
         this.HOLIDAYS = envVars.HOLIDAYS || ''
 
-        number('SUPPORT_FEEDBACK_CHAT_ID',  undefined)
-        number('MAILINGS_PER_WEEK_MAX',  2)
-        number('MAILINGS_PER_SECOND',  4)
-        number('SLIDER_STATE_TTL_SECONDS',  3600 * 8)
+        number('SUPPORT_FEEDBACK_CHAT_ID', undefined)
+        number('MAILINGS_PER_WEEK_MAX', 2)
+        number('MAILINGS_PER_SECOND', 4)
+        number('SLIDER_STATE_TTL_SECONDS', 3600 * 8)
         number('PACKS_CACHE_TTL_SECONDS', 5 * 60)
         number('SLIDER_MAX_STATES_SAVED', 5)
         number('SLIDER_MAX_IDS_CACHED', 10)
-        this.LOG_PAGE_VIEWS_IN_DB = !!envVars.LOG_PAGE_VIEWS_IN_DB || true
-        this.FEATURE_CARD_TAG_TOGGLE = !!envVars.FEATURE_CARD_TAG_TOGGLE || false
-        this.FEATURE_GEO = !!envVars.FEATURE_GEO || false
 
-        this.SLIDER_INSTA_VIEW = !!envVars.SLIDER_INSTA_VIEW || false
+        boolean('LOG_PAGE_VIEWS_IN_DB', true)
+        boolean('FEATURE_CARD_TAG_TOGGLE', false)
+        boolean('FEATURE_GEO', false)
+        boolean('SLIDER_INSTA_VIEW', false)
         this.YANDEX_AFISHA_URL = envVars.YANDEX_AFISHA_URL
-
 
         number('THROTTLE_IN_HIGH_WATER', 3)             // Trigger strategy if throttler is not ready for a new job
         number('THROTTLE_IN_MAX_CONCURRENT', 1)         // Only 1 job at a time
