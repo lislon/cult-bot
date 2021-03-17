@@ -3,6 +3,7 @@ import { IExtensions } from './db'
 import md5 from 'md5'
 import { logger } from '../util/logger'
 import { keyBy } from 'lodash'
+import { BaseSyncItemDbRow } from '@culthub/universal-db-sync'
 
 export interface BaseSyncItemDeleted {
     id: number
@@ -20,12 +21,6 @@ export type BaseSyncItemToRecover = {
     old: {
         title: string
     }
-}
-
-export type BaseSyncItemDbRow = {
-    ext_id: string
-    updated_at: Date,
-    deleted_at: Date | null
 }
 
 export interface UniversalSyncDiff<E extends BaseSyncItemToSave, DE extends BaseSyncItemDeleted, RE extends E & BaseSyncItemToRecover> {

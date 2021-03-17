@@ -150,7 +150,6 @@ export async function syncEventsDb4Test(events: EventToSave[]): Promise<number[]
         return syncDiff.notChanged.map(e => +e.primaryData.id)
     }
     return syncDiff.inserted.map(e => e.primaryData.id)
-
 }
 
 export async function syncPacksDb4Test(mockPacks: MockPackForSave[]): Promise<number[]> {

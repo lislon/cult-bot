@@ -1,20 +1,15 @@
-import { BaseSyncItemDeleted, BaseSyncItemToSave, UniversalDbSync, UniversalSyncDiff } from '@culthub/universal-db-sync'
+import {
+    PrimaryDataExtId,
+    PrimaryDataId,
+    UniversalDbSync,
+    UniversalSyncDiff,
+    UniversalSyncSavedDiff
+} from '@culthub/universal-db-sync'
 import { fieldStr, fieldTimestamptzNullable } from '@culthub/pg-utils'
 import { ColumnSet, IColumnConfig, IDatabase, IMain, ITask } from 'pg-promise'
-
-export interface ParsedEventDeleted extends BaseSyncItemDeleted {
-    category: string
-    title: string
-}
-
-export interface ParsedEventToRecover extends ParsedEventToSave {
-    old: {
-        title: string
-    }
-}
+import { BaseSyncItemDbRow } from '@culthub/universal-db-sync/src/universal-db-sync'
 
 export interface ParsedEvent {
-    id: number
     extId: string
     title: string
     category: string
@@ -25,30 +20,33 @@ export interface ParsedEvent {
     tags: string[]
     url: string
     parseUrl: string
-    deletedAt: Date | null
-    updatedAt: Date | null
+    deletedAt?: Date
+    updatedAt?: Date
 }
 
-export interface ParsedEventToSave extends BaseSyncItemToSave {
-    primaryData: Omit<ParsedEvent, 'id'>
+export interface ParsedEventWithId extends ParsedEvent {
+    id: number
+}
+
+export interface ParsedEventToSave extends PrimaryDataExtId {
+    primaryData: ParsedEvent
     rawDates: string[]
 }
 
-export interface DbParsedEvent {
+export interface DbParsedEvent extends BaseSyncItemDbRow {
     ext_id: string
     category: string
     title: string
     timetable: string
     place: string
+    price: string
     description: string
     tags: string[]
     url: string
     parse_url: string
     updated_at: Date
-    deleted_at: Date | null
+    deleted_at?: Date
 }
-
-export type EventsSyncDiff = UniversalSyncDiff<ParsedEventToSave, ParsedEventDeleted, ParsedEventToRecover>
 
 const MD5_IGNORE: (keyof DbParsedEvent)[] = ['parse_url']
 
@@ -58,6 +56,7 @@ export const parsedEventColumnsDef: IColumnConfig<DbParsedEvent>[] = [
     fieldStr('category'),
     fieldStr('timetable'),
     fieldStr('place'),
+    fieldStr('price'),
     fieldStr('description'),
     fieldStr('tags'),
     fieldStr('url'),
@@ -65,6 +64,8 @@ export const parsedEventColumnsDef: IColumnConfig<DbParsedEvent>[] = [
     fieldTimestamptzNullable('updated_at'),
     fieldTimestamptzNullable('deleted_at'),
 ]
+
+export type DeletedColumns = 'category' | 'title'
 
 export interface ExtIdDates {
     extId: number
@@ -74,18 +75,18 @@ export interface ExtIdDates {
 
 export class ParsedEventRepository {
     readonly dbColParsedEvents: ColumnSet
-    readonly syncCommon: UniversalDbSync<ParsedEventToSave, ParsedEventDeleted, ParsedEventToRecover, DbParsedEvent>
+    readonly syncCommon: UniversalDbSync<ParsedEventToSave, DbParsedEvent, DeletedColumns>
 
     constructor(private db: IDatabase<unknown>, private pgp: IMain) {
         this.dbColParsedEvents = new pgp.helpers.ColumnSet(parsedEventColumnsDef, {table: 'p_events'})
 
-        this.syncCommon = new UniversalDbSync({
+        this.syncCommon = new UniversalDbSync<ParsedEventToSave, DbParsedEvent, DeletedColumns>({
             table: 'p_events',
             columnsDef: parsedEventColumnsDef,
             ignoreColumns: MD5_IGNORE,
             mapToDbRow: ParsedEventRepository.mapToDb,
             deletedAuxColumns: ['category', 'title'],
-            recoveredAuxColumns: ['title']
+            recoveredAuxColumns: ['category', 'title']
         }, pgp)
     }
 
@@ -105,11 +106,21 @@ export class ParsedEventRepository {
         })
     }
 
-    public async prepareDiffForSync(newEvents: ParsedEventToSave[], db: ITask<unknown>): Promise<EventsSyncDiff> {
+    public async loadEventsByIds(ids: number[]): Promise<(ParsedEvent & { id: number })[]> {
+        if (ids.length === 0) return []
+        return await this.db.map(`
+            SELECT 
+                pe.id, pe.ext_id, pe.title, pe.category, pe.timetable, pe.place, pe.price, pe.description, pe.tags, pe.url, pe.parse_url
+            FROM p_events pe
+            WHERE pe.id IN ($(ids:csv)) 
+        `, { ids }, ParsedEventRepository.mapFromDb)
+    }
+
+    public async prepareDiffForSync(newEvents: ParsedEventToSave[], db: ITask<unknown>): Promise<UniversalSyncDiff<ParsedEventToSave, DeletedColumns>> {
         return this.syncCommon.prepareDiffForSync(newEvents, db)
     }
 
-    public async syncDiff(syncDiff: EventsSyncDiff, db: ITask<unknown>): Promise<EventsSyncDiff> {
+    public async syncDiff(syncDiff: UniversalSyncDiff<ParsedEventToSave, DeletedColumns>, db: ITask<unknown>): Promise<UniversalSyncSavedDiff<ParsedEventToSave & PrimaryDataId, DeletedColumns>> {
         return await this.syncCommon.syncDiff(syncDiff, db)
     }
 
@@ -123,9 +134,28 @@ export class ParsedEventRepository {
             description: event.primaryData.description,
             tags: event.primaryData.tags,
             url: event.primaryData.url,
+            price: event.primaryData.price,
             parse_url: event.primaryData.parseUrl,
             deleted_at: event.primaryData.deletedAt,
             updated_at: updatedAt,
+        }
+    }
+
+    private static mapFromDb(row: DbParsedEvent & { id: number }): ParsedEvent & { id: number } {
+        return {
+            id: +row.id,
+            title: row.title,
+            category: row.category,
+            extId: row.ext_id,
+            timetable: row.timetable,
+            price: row.price,
+            place: row.place,
+            description: row.description,
+            tags: row.tags,
+            url: row.url,
+            deletedAt: row.deleted_at,
+            updatedAt: row.updated_at,
+            parseUrl: row.parse_url
         }
     }
 }

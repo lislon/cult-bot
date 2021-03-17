@@ -21,7 +21,7 @@ function expectSyncResult(syncResults: EventsSyncDiff, expected: ExpectedSyncRes
         created: syncResults.inserted.map(e => e.primaryData.title),
         notChanged: syncResults.notChanged.map(e => e.primaryData.title),
         updated: syncResults.updated.map(e => e.primaryData.title),
-        deleted: syncResults.deleted.map(e => e.title),
+        deleted: syncResults.deleted.map(e => e.old.title),
         recovered: syncResults.recovered.map(e => e.primaryData.title),
     }
     expect(actual).toStrictEqual(expected)
@@ -190,9 +190,5 @@ describe('db sync test', () => {
             getMockEvent({extId: 'A', title: 'A', eventTime, tag_level_1: ['#lisa']}),
         ])
         expect(0).toEqual(syncDiff.updated.length)
-    })
-
-    test('deleted items will revive', async () => {
-
     })
 })

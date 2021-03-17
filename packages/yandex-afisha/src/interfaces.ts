@@ -1,3 +1,5 @@
+export type DeletedColumns = 'category'|'title'
+
 export interface PlaceWithMeta extends Place {
     parseDate: Date
 }

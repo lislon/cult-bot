@@ -9,7 +9,7 @@ export interface UserSaveData {
     language_code?: string
     ua_uuid?: string
     active_at?: Date
-    blocked_at?: Date | null
+    blocked_at?: Date
     events_liked?: number[]
     events_disliked?: number[]
     events_favorite?: number[]

@@ -103,7 +103,7 @@ export function formatExplainTime(ctx: ContextMessageUpdate, i18Msg: I18MsgFunct
     }
 }
 
-export function filterPastIntervals(intervals: string[], now: Date | undefined): string[] {
+export function filterPastIntervals(intervals: string[], now?: Date): string[] {
     if (now === undefined) {
         return intervals
     }

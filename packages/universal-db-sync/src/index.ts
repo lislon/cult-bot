@@ -1,9 +1,12 @@
 export {
     UniversalSyncDiff,
-    BaseSyncItemToSave,
+    PrimaryDataId,
+    PrimaryDataExtId,
+    PrimaryDataTitle,
+    WithId,
     BaseSyncItemDbRow,
-    BaseSyncItemDeleted,
-    BaseSyncItemToRecover,
+    Recovered,
+    UniversalSyncSavedDiff,
     SyncConfig,
     UniversalDbSync
 } from './universal-db-sync'

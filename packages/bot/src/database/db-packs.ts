@@ -1,24 +1,15 @@
-import { Event, ExtIdAndId, DateInterval } from '../interfaces/app-interfaces'
-import {
-    mapToPgInterval,
-    rangeHalfOpenIntersect
-} from './db-utils'
+import { DateInterval, Event } from '../interfaces/app-interfaces'
+import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise'
 import { db, IExtensions } from './db'
 import { zip } from 'lodash'
 import { mapEvent, SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
-import {
-    BaseSyncItemDbRow,
-    BaseSyncItemDeleted,
-    BaseSyncItemToSave, SyncConfig,
-    UniversalDbSync,
-    UniversalSyncDiff
-} from '@culthub/universal-db-sync'
+import { SyncConfig, UniversalDbSync, UniversalSyncDiff, WithId } from '@culthub/universal-db-sync'
 import { fieldInt, fieldInt8Array, fieldStr, fieldTimestamptzNullable } from '@culthub/pg-utils'
+import { BaseSyncItemDbRow } from '@culthub/universal-db-sync'
 
-export interface PackToSave extends BaseSyncItemToSave {
+export interface PackToSave {
     primaryData: {
-        id?: number
         extId: string
         title: string
         description: string
@@ -27,7 +18,7 @@ export interface PackToSave extends BaseSyncItemToSave {
         weight: number
         hideIfLessThen: number
     }
-    dateDeleted?: Date | null
+    dateDeleted?: Date
 }
 
 export interface PackDb extends BaseSyncItemDbRow {
@@ -67,11 +58,10 @@ export interface PackRecovered extends PackToSave {
     }
 }
 
-export interface PackDeleted extends BaseSyncItemDeleted {
-    title: string
-}
+type PackRecoveredColumns = 'title'
 
-export type PacksSyncDiff = UniversalSyncDiff<PackToSave, PackDeleted, PackRecovered>
+export type PacksSyncDiff = UniversalSyncDiff<PackToSave, PackRecoveredColumns>
+export type PacksSyncDiffSaved = UniversalSyncDiff<WithId<PackToSave>, PackRecoveredColumns>
 
 const packsColumnsDef = [
     fieldStr('title'),
@@ -85,9 +75,6 @@ const packsColumnsDef = [
     fieldTimestamptzNullable('deleted_at'),
 ]
 
-
-const ORDER_BY_CB_EVENTS_IN_PACK = `cb.is_anytime ASC, cbet.first_entrance ASC, cb.rating DESC, cb.title ASC`
-
 function getOrderByEventsInPack(eventPrefix = 'cb', eventEntranceTimesPrefix = 'cbet') {
     return `${eventPrefix}.is_anytime ASC, ${eventEntranceTimesPrefix}.first_entrance ASC, ${eventPrefix}.rating DESC, ${eventPrefix}.title ASC`;
 }
@@ -95,12 +82,12 @@ function getOrderByEventsInPack(eventPrefix = 'cb', eventEntranceTimesPrefix = '
 export class PacksRepository {
     readonly columns: ColumnSet
 
-    readonly syncCommon: UniversalDbSync<PackToSave, PackDeleted, PackRecovered, PackDb>
+    readonly syncCommon: UniversalDbSync<PackToSave, PackDb, PackRecoveredColumns>
 
     constructor(private db: IDatabase<any>, private pgp: IMain) {
         this.columns = new pgp.helpers.ColumnSet(packsColumnsDef, {table: 'cb_events_packs'})
 
-        const cfg: SyncConfig<PackToSave, PackDb> = {
+        const cfg: SyncConfig<PackToSave, PackDb, PackRecoveredColumns> = {
             table: 'cb_events_packs',
             columnsDef: packsColumnsDef,
             ignoreColumns: [],
@@ -111,7 +98,7 @@ export class PacksRepository {
         this.syncCommon = new UniversalDbSync(cfg, pgp)
     }
 
-    public async syncDatabase(newPacks: PackToSave[]): Promise<PacksSyncDiff> {
+    public async syncDatabase(newPacks: PackToSave[]): Promise<PacksSyncDiffSaved> {
         return await this.db.tx('sync-pack', async (dbTx: ITask<IExtensions>) => {
             const syncDiff = await this.prepareDiffForSync(newPacks, dbTx)
             return await this.syncDiff(syncDiff, dbTx)
@@ -123,7 +110,7 @@ export class PacksRepository {
         return this.syncCommon.prepareDiffForSync(newEvents, db)
     }
 
-    public async syncDiff(syncDiff: PacksSyncDiff, db: ITask<IExtensions>): Promise<PacksSyncDiff> {
+    public async syncDiff(syncDiff: PacksSyncDiff, db: ITask<IExtensions>): Promise<PacksSyncDiffSaved> {
         return await this.syncCommon.syncDiff(syncDiff, db)
     }
 

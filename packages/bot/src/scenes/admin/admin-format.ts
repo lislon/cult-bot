@@ -96,7 +96,7 @@ function formatEventsSyncStatus(ctx: ContextMessageUpdate, eventsDiff: EventsSyn
             const inserted = eventsDiff.inserted.filter(e => e.primaryData.category === cat)
             const recovered = eventsDiff.recovered.filter(e => e.primaryData.category === cat)
             const updated = eventsDiff.updated.filter(e => e.primaryData.category === cat)
-            const deleted = eventsDiff.deleted.filter(e => e.category === cat)
+            const deleted = eventsDiff.deleted.filter(e => e.old.category === cat)
             return {cat, inserted, recovered, updated, deleted}
         })
         .filter(({inserted, recovered, updated, deleted}) => {
@@ -141,8 +141,8 @@ function formatEventsSyncStatus(ctx: ContextMessageUpdate, eventsDiff: EventsSyn
             }
             if (deleted.length > 0) {
                 rows = [...rows, ...deleted.map(i => i18Msg(ctx, 'sync_stats_event_cat_item_deleted', {
-                    ext_id: i.extId,
-                    title: i.title
+                    ext_id: i.primaryData.extId,
+                    title: i.old.title
                 }))]
             }
             return rows.join('\n') + (rows.length > 0 ? '\n' : '')
@@ -191,8 +191,8 @@ function formatPacksSyncStatus(ctx: ContextMessageUpdate, packsDiff: PacksSyncDi
     }
     if (deleted.length > 0) {
         rows = [...rows, ...deleted.map(i => i18Msg(ctx, 'sync_stats_pack_deleted', {
-            ext_id: i.extId,
-            title: i.title.replace(emojiRegex(), '').trim()
+            ext_id: i.primaryData.extId,
+            title: i.old.title.replace(emojiRegex(), '').trim()
         }))]
     }
 
@@ -215,7 +215,7 @@ export async function formatMessageForSyncReport(eventsErrors: SpreadSheetValida
                                                  packsErrors: EventPackValidated[],
                                                  eventsDiff: EventsSyncDiff,
                                                  packsDiff: PacksSyncDiff,
-                                                 ctx: ContextMessageUpdate) {
+                                                 ctx: ContextMessageUpdate): Promise<string> {
     const formatEventErrors = (errors: SpreadSheetValidationError[]) => {
         return errors
                 .filter(e => e.extIds.length > 0)

@@ -50,3 +50,10 @@ Add cron jobs:
 ```
 parse:orig
 ```
+
+### Download cache
+
+```
+$app = "cult-hub-yandex-afisha-dev"
+heroku ps:copy FILENAME --app $app
+```

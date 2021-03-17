@@ -1,7 +1,9 @@
 import { sheets_v4 } from 'googleapis'
 import { ExcelUpdater } from '@culthub/google-docs'
-import { EventsSyncDiff, ParsedEvent } from '../database/parsed-event'
+import { ParsedEvent, ParsedEventToSave } from '../database/parsed-event'
 import { ruFormat } from './ruFormat'
+import { Recovered, UniversalSyncDiff } from '@culthub/universal-db-sync'
+import { DeletedColumns } from '../interfaces'
 
 const ALL_EVENTS_COLUMNS = {
     category: 'Тип',
@@ -22,11 +24,13 @@ function makeRowWithSingleCell(cellStr: string, headerRow: string[]) {
     return [cellStr, ...(new Array(headerRow.length - 1).fill(''))]
 }
 
-function isNothingChanged(diff: EventsSyncDiff): boolean {
+function isNothingChanged(diff: UniversalSyncDiff<ParsedEventToSave, DeletedColumns>): boolean {
     return diff.deleted.length === 0 && diff.updated.length === 0 && diff.inserted.length === 0
 }
 
-export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: EventsSyncDiff, dates: Date[]): Promise<void> {
+
+
+export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: UniversalSyncDiff<ParsedEventToSave, DeletedColumns>, dates: Date[]): Promise<void> {
     const spreadsheetId = process.env.GOOGLE_DOCS_ID
     if (spreadsheetId === undefined || dates.length === 0) {
         return
@@ -58,10 +62,10 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: EventsSyncD
         ...eventToRow(eToUpdate.primaryData)
     }))]
 
-    rows = [...rows, ...diff.deleted.map(eToDelete => ({
+    rows = [...rows, ...diff.deleted.map((eToDelete: Recovered<ParsedEventToSave, DeletedColumns>) => ({
         changeType: SYMBOL_DELETED,
-        category: eToDelete.category,
-        title: eToDelete.title,
+        category: eToDelete.old.category,
+        title: eToDelete.old.title,
         url: '',
         timetable: '',
         price: '',

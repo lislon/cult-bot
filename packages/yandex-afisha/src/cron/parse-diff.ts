@@ -1,4 +1,4 @@
-import { EventsSyncDiff, ParsedEventToSave } from '../database/parsed-event'
+import { ParsedEventToSave } from '../database/parsed-event'
 import { ITask } from 'pg-promise'
 import { saveDiffToExcel } from '../lib/export-to-excel'
 import { authToExcel } from '@culthub/google-docs'
@@ -30,7 +30,7 @@ const debug = debugNamespace('yandex-parser');
             return await db.repoSync.prepareDiffForSync(newEvents, t)
         })
 
-        const realDiff: EventsSyncDiff = filterOnlyRealChange(diff);
+        const realDiff = await filterOnlyRealChange(diff);
 
         // console.log("inserted:")
         // console.log(realDiff.inserted.map(e => e.primaryData))

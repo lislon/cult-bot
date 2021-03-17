@@ -3,25 +3,18 @@ import { encodeTagsLevel1 } from '../util/tag-level1-encoder'
 import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise'
 import { db, IExtensions } from './db'
 import { MomentIntervals } from '@culthub/timetable'
-import { BaseSyncItemDeleted, SyncConfig, UniversalDbSync, UniversalSyncDiff } from '@culthub/universal-db-sync'
+import { Recovered, SyncConfig, UniversalDbSync, UniversalSyncDiff, WithId } from '@culthub/universal-db-sync'
 import { fieldInt, fieldStr, fieldTextArray, fieldTimestamptzNullable } from '@culthub/pg-utils'
 
 function generateRandomOrder() {
     return Math.ceil(Math.random() * 1000000)
 }
 
-export interface DeletedEvent extends BaseSyncItemDeleted {
-    category: string
-    title: string
-}
+export type EventToRecover = Recovered<EventToSave, EventDeletedColumns>
+export type EventDeletedColumns = 'title'|'category'
 
-export interface EventToRecover extends EventToSave {
-    old: {
-        title: string
-    }
-}
-
-export type EventsSyncDiff = UniversalSyncDiff<EventToSave, DeletedEvent, EventToRecover>
+export type EventsSyncDiff = UniversalSyncDiff<EventToSave, EventDeletedColumns>
+export type EventsSyncDiffSaved = UniversalSyncDiff<WithId<EventToSave>, EventDeletedColumns>
 
 export interface EventForRefresh {
     id: number
@@ -47,7 +40,7 @@ function getMd5Columns(): (keyof DbEvent)[] {
     return md5Columns as (keyof DbEvent)[]
 }
 
-export function buildPostgresMd5EventsExpression(prefix: string = undefined) {
+export function buildPostgresMd5EventsExpression(prefix: string = undefined): string {
     return `json_build_array(${(getMd5Columns().map(c => prefix ? prefix + '.' + c : c)).join(',')})`
 }
 
@@ -83,28 +76,27 @@ export const eventColumnsDef = [
 export class EventsSyncRepository {
     readonly dbColIntervals: ColumnSet
     readonly dbColEvents: ColumnSet
-    readonly syncCommon: UniversalDbSync<EventToSave, DeletedEvent, EventToRecover, DbEvent>
+    readonly syncCommon: UniversalDbSync<EventToSave, DbEvent, EventDeletedColumns>
 
-    constructor(private db: IDatabase<any>, private pgp: IMain) {
+    constructor(private db: IDatabase<unknown>, private pgp: IMain) {
         this.dbColIntervals = new pgp.helpers.ColumnSet(['event_id', 'entrance'], {table: 'cb_events_entrance_times'})
         this.dbColEvents = new pgp.helpers.ColumnSet(eventColumnsDef, {table: 'cb_events'})
 
-        const cfg: SyncConfig<EventToSave, DbEvent> = {
+        const cfg: SyncConfig<EventToSave, DbEvent, EventDeletedColumns> = {
             table: 'cb_events',
             columnsDef: eventColumnsDef,
             ignoreColumns: MD5_IGNORE,
             mapToDbRow: EventsSyncRepository.mapToDb,
             deletedAuxColumns: ['category', 'title'],
-            recoveredAuxColumns: ['title']
+            recoveredAuxColumns: ['category', 'title']
         }
         this.syncCommon = new UniversalDbSync(cfg, pgp)
     }
 
-    public async syncDatabase(newEvents: EventToSave[]): Promise<EventsSyncDiff> {
+    public async syncDatabase(newEvents: EventToSave[]): Promise<EventsSyncDiffSaved> {
         return await this.db.tx('sync-events', async (dbTx: ITask<IExtensions>) => {
             const syncDiff = await this.prepareDiffForSync(newEvents, dbTx)
-            await this.syncDiff(syncDiff, dbTx)
-            return syncDiff
+            return await this.syncDiff(syncDiff, dbTx)
         })
     }
 
@@ -113,7 +105,7 @@ export class EventsSyncRepository {
         return this.syncCommon.prepareDiffForSync(newEvents, db)
     }
 
-    public async syncDiff(syncDiff: EventsSyncDiff, db: ITask<IExtensions>): Promise<void> {
+    public async syncDiff(syncDiff: EventsSyncDiff, db: ITask<IExtensions>): Promise<EventsSyncDiffSaved> {
         const syncDiffWithIds = await this.syncCommon.syncDiff(syncDiff, db)
         const eventsIntervalToSync: EventIntervalForSave[] =
             [...syncDiffWithIds.updated, ...syncDiffWithIds.recovered, ...syncDiffWithIds.inserted]
@@ -122,6 +114,7 @@ export class EventsSyncRepository {
                 })
 
         await this.syncEventIntervals(eventsIntervalToSync, db)
+        return syncDiffWithIds;
     }
 
     public async shuffle(): Promise<void> {
@@ -151,7 +144,7 @@ export class EventsSyncRepository {
         })
     }
 
-    public async syncEventIntervals(eventsWithIntervals: EventIntervalForSave[], dbTx: ITask<IExtensions>) {
+    public async syncEventIntervals(eventsWithIntervals: EventIntervalForSave[], dbTx: ITask<IExtensions>): Promise<void> {
         if (eventsWithIntervals.length > 0) {
             await dbTx.txIf({reusable: true}, async (dbTx: ITask<IExtensions>) => {
                 await dbTx.none(`DELETE FROM cb_events_entrance_times WHERE event_id IN($1:csv)`, [eventsWithIntervals.map(e => e.eventId)])

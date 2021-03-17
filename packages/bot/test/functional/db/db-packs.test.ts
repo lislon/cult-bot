@@ -1,4 +1,4 @@
-import { cleanDb, expectedIds, expectedPacksTitle, expectedTitlesStrict, getMockEvent, getMockPack, syncEventsDb4Test } from './db-test-utils'
+import { cleanDb, expectedIds, expectedPacksTitle, getMockEvent, getMockPack, syncEventsDb4Test } from './db-test-utils'
 import { db, dbCfg } from '../../../src/database/db'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { mkInterval } from '../../util/timetable-util'

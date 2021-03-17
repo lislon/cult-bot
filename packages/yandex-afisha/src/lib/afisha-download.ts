@@ -7,6 +7,7 @@ import debugNamespace from 'debug'
 import { appConfig } from '../app-config'
 import { datesToTimetable } from './dates-to-timetable'
 import fs from 'fs'
+import { logger } from '../logger'
 
 const debug = debugNamespace('yandex-parser')
 
@@ -16,8 +17,31 @@ export interface ParseAfishaOptions {
 }
 
 export async function afishaDownload(dates: Date[], options: ParseAfishaOptions = { }): Promise<ParsedEventToSave[]> {
+    const now = new Date()
+
     if (options.snapshotDirectory !== undefined) {
         fs.mkdirSync(options.snapshotDirectory, {recursive: true})
+    }
+    if (fs.existsSync(getCacheFilePath())) {
+        const string = fs.readFileSync(getCacheFilePath(), { encoding: 'utf-8' })
+        return convertRawDataToFinalResult(JSON.parse(string))
+    }
+
+    function getCacheFilePath() {
+        const dateRange = `${format(dates[0], 'dd.MM')}-${format(dates[dates.length - 1], 'dd.MM')}`
+        const parseDate = `${format(now, 'yyyy-MM-dd')}`
+        const filename = `parse-at-${parseDate}-range-from-${dateRange}-to-${parseDate}.json`
+        return `${options.snapshotDirectory}/${filename}`
+    }
+
+    function convertRawDataToFinalResult(allData: unknown[]) {
+        const resultsById: Map<string, ParsedEventToSave> = new Map<string, ParsedEventToSave>()
+        const events = allData.map((x: PlaceWithMeta) => mapEvent(x, ``)) as ParsedEventToSave[]
+        for (const event of events) {
+            resultsById.set(event.primaryData.extId, event)
+        }
+
+        return Array.from(resultsById.values())
     }
 
     return new Promise((resolve => {
@@ -44,7 +68,7 @@ export async function afishaDownload(dates: Date[], options: ParseAfishaOptions 
                     const {offset, limit, total } = json.paging
 
                     if (offset + limit < total) {
-                        debug(`parsed ${formatISO(res.options.date)} ${offset} / ${total}`)
+                        debug(`parsed ${formatISO(res.options.date)} ${offset} / ${total} (limit = ${options.limitEvents ?? 'not-defined'})`)
                         if (options.limitEvents !== undefined && allData.length < options.limitEvents) {
                             debug(`queue offset ${offset + limit}`)
                             c.queue({
@@ -72,20 +96,12 @@ export async function afishaDownload(dates: Date[], options: ParseAfishaOptions 
 
         c.on('drain', () => {
 
-            const resultsById: Map<string, ParsedEventToSave> = new Map<string, ParsedEventToSave>()
-            const events = allData.map((x: PlaceWithMeta) => mapEvent(x, ``)) as ParsedEventToSave[]
-            for (const event of events) {
-                resultsById.set(event.primaryData.extId, event)
-            }
-
             if (options.snapshotDirectory !== undefined) {
-                const dateRange = `${format(dates[0], 'dd.MM')}-${format(dates[dates.length - 1], 'dd.MM')}`
-                const parseDate = `${format(new Date(), 'yyyy-MM-dd')}`
-                const filename = `parse-at-${parseDate}-range-from-${dateRange}-to-${parseDate}.json`
-                fs.writeFileSync(`${options.snapshotDirectory}/${filename}`, JSON.stringify(allData, undefined, 4))
+                fs.writeFileSync(getCacheFilePath(), JSON.stringify(allData, undefined, 4))
+                logger.info(`Saved RAW data to ${getCacheFilePath()}`)
             }
 
-            resolve(Array.from(resultsById.values()))
+            resolve(convertRawDataToFinalResult(allData))
         })
     }))
 }
@@ -117,9 +133,7 @@ export function mapEvent(e: PlaceWithMeta, parsedUrl: string): ParsedEventToSave
             price: getPrice(e),
             timetable: timetable,
             parseUrl: parsedUrl,
-            url: `https://afisha.yandex.ru${e.event.url}`,
-            updatedAt: null,
-            deletedAt: null,
+            url: `https://afisha.yandex.ru${e.event.url}`
         },
         rawDates: e.scheduleInfo?.dates
     }

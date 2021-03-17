@@ -1,6 +1,6 @@
 import { Event } from './app-interfaces'
 import { EventTimetable, MomentIntervals } from '@culthub/timetable'
-import { BaseSyncItemToSave } from '@culthub/universal-db-sync'
+import { PrimaryDataExtId } from '@culthub/universal-db-sync'
 
 export interface DbEvent {
     category: string
@@ -23,26 +23,21 @@ export interface DbEvent {
     order_rnd: number
     ext_id: string
     updated_at: Date,
-    deleted_at: Date | null
+    deleted_at?: Date
     likes_fake: number
     dislikes_fake: number
 }
 
-export interface EventToSave extends BaseSyncItemToSave {
+export interface EventToSave extends PrimaryDataExtId {
     primaryData: Event
     timetable: EventTimetable
     timeIntervals: MomentIntervals
     is_anytime: boolean
     order_rnd?: number
-    dateDeleted?: Date | null
+    dateDeleted?: Date
     popularity: number
     fakeLikes: number
     fakeDislikes: number
 }
 
 export type TagCategory = 'tag_level_1' | 'tag_level_2' | 'tag_level_3'
-
-export interface Tag {
-    category: TagCategory
-    name: string
-}

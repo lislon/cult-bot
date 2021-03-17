@@ -221,7 +221,7 @@ export async function synchronizeDbByUser(ctx: ContextMessageUpdate): Promise<vo
                 `inserted={${listExtIds(eventsDiff.inserted)}}`,
                 `recovered={${listExtIds(eventsDiff.recovered)}}`,
                 `updated={${listExtIds(eventsDiff.updated)}}`,
-                `deleted={${eventsDiff.deleted.map(d => d.extId).join(',')}}`
+                `deleted={${eventsDiff.deleted.map(d => d.primaryData.extId).join(',')}}`
             ].join(' '))
 
             const msg = i18Msg(ctx, `sync_stats_message`, {
