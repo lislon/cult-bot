@@ -206,7 +206,7 @@ function formatPackErrors(ctx: ContextMessageUpdate, packErrors: EventPackValida
             ...Object.values(p.errors).filter(e => typeof e === 'string'),
             ...p.errors.badEvents.map(e => e.error)])
             .map(e => ` - ${e}\n`)
-            .join()
+            .join('')
     })).join('\n')
 }
 

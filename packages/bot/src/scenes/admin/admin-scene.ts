@@ -136,7 +136,7 @@ function shouldUserConfirmSync(eventsDiff: EventsSyncDiff, packsDiff: PacksSyncD
         + eventsDiff.recovered
             .filter((i: EventToRecover) => i.old.title !== i.primaryData.title).length
         + packsDiff.deleted.length
-        + packsErrors.length
+        + packsDiff.deleted.length
     return countDangers > 0
 }
 
