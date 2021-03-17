@@ -94,12 +94,17 @@ const timetableLang = P.createLanguage({
     TimeOrTimeRange: (r) => r['hh:mm-hh:mm'].or(r['hh:mm']),
     TimesOrTimeRanges: (r) => P.sepBy1(r.TimeOrTimeRange, P.seq(r._, r[','], r._)),
     DateRange: (r) => P.alt(
-        P.seqObj<FromToPair>(r.From, r._, ['from', r.Date], r._, r.ToDate, r._, ['to', r.Date]),
-        P.seqObj<FromToPair>(['from', r.Date], r._, r['-'], r._, ['to', r.Date]))
-        .map(({from, to}) => {
-            return [from, to];
-        }).desc('Интервал дат'),
-    DateOrDateRange: (r) => r.Date.or(r.DateRange),
+        P.alt(
+            P.seqObj<FromToPair>(r.From, r._, ['from', r.Date], r._, r.ToDate, r._, ['to', r.Date]),
+            P.seqObj<FromToPair>(['from', r.Date], r._, r['-'], r._, ['to', r.Date]))
+            .map(({from, to}) => {
+                return [from, to];
+            }),
+        P.seq(r.DayOfMonth, r._, r['-'], r._, r.DayOfMonth, r.__, r.Month, r._, r.Year)
+            .map(([dayOfMonthFrom, , , , dayOfMonthFromTo, , month, , year]) => {
+                return [`${year}-${month}-${dayOfMonthFrom}`, `${year}-${month}-${dayOfMonthFromTo}`]
+            }),
+    ).desc('Интервал дат'),
     WeekDayRange: (r) => P.seq(r.WeekDaySingle, r._, r['-'], r._, r.WeekDaySingle)
         .chain(([from, , , , to]) => {
             if (+to - +from + 1 <= 0) {

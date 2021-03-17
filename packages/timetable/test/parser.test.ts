@@ -184,6 +184,16 @@ describe('parser', () => {
             }]
         )
     })
+
+    test('day-day range in single month', () => {
+        const actual = doParseTimetable('17-26 января: 00:00', DATE_2020_JAN_1)
+        expect(actual.dateRangesTimetable).toStrictEqual([{
+                dateRange: ['2020-01-17', '2020-01-26'],
+                times: ['00:00'],
+                weekTimes: undefined,
+            }]
+        )
+    })
 })
 
 function doParseTimetable(input: string, now: Date): EventTimetable {
