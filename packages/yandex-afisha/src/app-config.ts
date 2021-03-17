@@ -23,6 +23,8 @@ export class AppConfig {
     public readonly SECONDS_PER_PAGE = 17
     public JSON_SNAPSHOT_DIR: string | undefined
     public LIMIT_EVENTS_PER_PARSE?: number
+    public MAILGUN_API_KEY: string
+
 
     constructor() {
         config()
@@ -45,6 +47,8 @@ export class AppConfig {
         this.DATABASE_SSL = envVars.DATABASE_SSL || 'yes'
         this.LIMIT_EVENTS_PER_PARSE = envVars.LIMIT_EVENTS_PER_PARSE || undefined
         this.JSON_SNAPSHOT_DIR = envVars.JSON_SNAPSHOT_DIR || undefined
+        this.MAILGUN_API_KEY = envVars.MAILGUN_API_KEY || undefined
+
 
     }
 }

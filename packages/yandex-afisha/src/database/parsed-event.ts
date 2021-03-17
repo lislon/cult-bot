@@ -24,11 +24,7 @@ export interface ParsedEvent {
     updatedAt?: Date
 }
 
-export interface ParsedEventWithId extends ParsedEvent {
-    id: number
-}
-
-export interface ParsedEventToSave extends PrimaryDataExtId {
+ export interface ParsedEventToSave extends PrimaryDataExtId {
     primaryData: ParsedEvent
     rawDates: string[]
 }

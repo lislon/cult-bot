@@ -13,6 +13,7 @@ heroku buildpacks:add heroku/nodejs -a $app
 heroku buildpacks:add "https://github.com/blockhq/heroku-buildpack-yarn-workspaces#master" -a $app
 heroku addons:create heroku-redis:hobby-dev -a $app
 heroku addons:create scheduler -a $app
+heroku addons:create mailgun:starter --region=eu -a $app
 ```
 
 Only for build env:
@@ -51,9 +52,9 @@ Add cron jobs:
 parse:orig
 ```
 
-### Download cache
+### Run remote
 
 ```
 $app = "cult-hub-yandex-afisha-dev"
-heroku ps:copy FILENAME --app $app
+heroku run DEBUG=\* yarn cron:parse-diff --app=$app
 ```
