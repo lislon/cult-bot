@@ -28,6 +28,7 @@
     "@culthub/pg-utils": "^1.0.0",
     "@culthub/timetable": "^1.0.0",
     "@culthub/universal-db-sync": "^1.0.0",
+    "@scout_apm/scout-apm": "^0.2.2",
     "@types/debug": "^4.1.5",
     "anymatch": "^3.1.1",
     "bottleneck": "^2.19.5",
