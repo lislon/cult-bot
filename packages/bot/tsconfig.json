@@ -7,10 +7,11 @@
       "./node_modules/@types",
       "./src/types"
     ],
+    "outDir": "dist/",
     "declarationDir": "typings/",
     "tsBuildInfoFile": "typings/tsconfig.tsbuildinfo",
     "strictNullChecks": false
   },
   "include": ["src/**/*", "src/locales/*.json"],
-  "exclude": ["**/node_modules", "**/.*/"]
+  "exclude": ["**/node_modules", "**/.*/", "dist/"]
 }

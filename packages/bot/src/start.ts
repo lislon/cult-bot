@@ -1,4 +1,3 @@
-import scout from '@scout_apm/scout-apm'
 import { Telegraf } from 'telegraf'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
 import express, { Request, Response } from 'express'
@@ -72,13 +71,6 @@ class BotStart {
             process.exit(1)
         }
 
-        await scout.install({
-            allowShutdown: true, // allow shutting down spawned scout-agent processes from this program
-            monitor: true, // enable monitoring
-            name: process.env.SCOUT_KEY,
-            key: process.env.HEROKU_APP_NAME,
-        });
-
         const hookUrl = `https://${botConfig.HEROKU_APP_NAME}.herokuapp.com:${botConfig.WEBHOOK_PORT}/${BotStart.PATH}`
         const success = await bot.telegram.setWebhook(
             hookUrl
@@ -117,7 +109,6 @@ if (botConfig.BOT_DISABLED === false) {
     logger.info('Bot is disabled by BOT_DISABLED')
 }
 
-app.use(scout.expressMiddleware());
 app.use(BotStart.expressMiddleware(rawBot))
 
 

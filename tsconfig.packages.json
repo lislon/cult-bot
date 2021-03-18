@@ -13,7 +13,6 @@
     "composite": true,
     "declarationMap": true,
     "declaration": true,
-    "outDir": "dist",
     "baseUrl": ".",
     "resolveJsonModule": true,
     "strictNullChecks": true,
