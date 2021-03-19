@@ -1,3 +1,6 @@
+import { ParsedEvent, ParsedEventToSave } from './database/parsed-event'
+import { Deleted, WithId } from '@culthub/universal-db-sync'
+
 export type DeletedColumns = 'category'|'title'
 
 export interface PlaceWithMeta extends Place {
@@ -52,4 +55,13 @@ export interface Place {
         permanent: boolean
         "dates": string[]
     }
+}
+
+export type ParsedEventField = keyof ParsedEvent
+
+export interface DiffReport {
+    inserted: ParsedEventToSave[]
+    updated: (WithId<ParsedEventToSave> & { diffFields: ParsedEventField[] })[]
+    deleted: Deleted<DeletedColumns>[]
+    notChangedCount: number
 }

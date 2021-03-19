@@ -1,10 +1,10 @@
 import { date } from './test-utils'
-import { TimetableConfig, TimetableFormatter } from '../src'
+import { FormatterConfig, TimetableFormatter } from '../src'
 import { parseTimetable } from '../src'
 
 const NOW = date('2020-01-01 15:00')
 
-function expectWillBeFormatted(expected: string, text: string = expected, now: Date = NOW, config: TimetableConfig = {}): void {
+function expectWillBeFormatted(expected: string, text: string = expected, now: Date = NOW, config: FormatterConfig = {}): void {
     const timetable = parseTimetable(text, now)
     if (timetable.status === false) {
         throw new Error('failed to parse: ' + text + '\n' + timetable.errors.join('\n'))
@@ -114,5 +114,26 @@ describe('timetable formatter', () => {
         const input = '12 ноября 2019 - 29 ноября 2021: сб-вс: 10:00-18:00'
         const expected = 'до 29 ноября 2021: сб-вс: 10:00-18:00'
         expectWillBeFormatted(expected, input, NOW, {hidePast: true});
+    })
+
+    describe('hide times', () => {
+
+        test('concrete_dates_range_short_same_months', () => {
+            const input = `25 января 2020 - 28 января 2020: 10:00`;
+            const expected = `25-28 января`;
+            expectWillBeFormatted(expected, input, NOW, { hideTimes: true });
+        })
+
+        test('remove first part of range if flag', () => {
+            const input = '12 ноября 2019 - 29 ноября 2021: сб-вс: 10:00-18:00'
+            const expected = 'до 29 ноября 2021: сб-вс'
+            expectWillBeFormatted(expected, input, NOW, {hidePast: true, hideTimes: true})
+        })
+
+        test('week_regular + comment', () => {
+            const input = `сб: 10:00 (Давай давай)`;
+            const expected = `сб (Давай давай)`;
+            expectWillBeFormatted(expected, input, NOW, { hideTimes: true })
+        })
     })
 })

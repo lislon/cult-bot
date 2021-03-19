@@ -23,6 +23,7 @@ export async function afishaDownload(dates: Date[], options: ParseAfishaOptions 
         fs.mkdirSync(options.snapshotDirectory, {recursive: true})
     }
     if (fs.existsSync(getCacheFilePath())) {
+        debug(`Do not download. Use cached file ${getCacheFilePath()}`)
         const string = fs.readFileSync(getCacheFilePath(), { encoding: 'utf-8' })
         return convertRawDataToFinalResult(JSON.parse(string))
     }
@@ -63,20 +64,26 @@ export async function afishaDownload(dates: Date[], options: ParseAfishaOptions 
 
                     const json = JSON.parse(res.body.toString())
 
-                    allData = [...allData, ...json.data]
+                    if (json.data === undefined) {
+                        return;
+                    }
+                    try {
+                        allData = [...allData, ...json.data]
+                    } catch (e) {
+                        console.log(e)
+                        return;
+                    }
 
                     const {offset, limit, total } = json.paging
 
                     if (offset + limit < total) {
                         debug(`parsed ${formatISO(res.options.date)} ${offset} / ${total} (limit = ${options.limitEvents ?? 'not-defined'})`)
-                        if (options.limitEvents !== undefined && allData.length < options.limitEvents) {
+                        if (options.limitEvents === undefined || allData.length < options.limitEvents) {
                             debug(`queue offset ${offset + limit}`)
                             c.queue({
                                 url: url(offset + limit, formatISO(res.options.date, { representation: 'date' })),
                                 date: res.options.date
                             })
-                        } else {
-                            debug(`basta options.limitEvents = ${options.limitEvents}`)
                         }
                     }
                 }

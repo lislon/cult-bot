@@ -49,6 +49,7 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
             spreadsheetId,
             requestBody: {requests: this.requests}
         })
+        this.requests = []
     }
 
     editCellDate(sheetId: number, column: K, rowNo: number, value: Date): void {

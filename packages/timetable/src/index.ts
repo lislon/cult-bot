@@ -1,5 +1,5 @@
 export {
-    FormattedTimetable, TimetableConfig, TimetableFormatter,
+    FormattedTimetable, FormatterConfig, TimetableFormatter,
     hasAnyEventsInFuture
 } from './formatter'
 

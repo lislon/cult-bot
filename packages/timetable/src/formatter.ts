@@ -50,8 +50,9 @@ export interface FormattedTimetable {
     anytime?: string
 }
 
-export interface TimetableConfig {
+export interface FormatterConfig {
     hidePast?: boolean
+    hideTimes?: boolean
 }
 
 export class TimetableFormatter {
@@ -59,7 +60,7 @@ export class TimetableFormatter {
     private FIXED_MONDAY = new Date(2021, 1, 7)
     private DAYS_DIFF_TO_PRINT_YEAR = 180
 
-    constructor(private now: Date, private config: TimetableConfig = {}) {
+    constructor(private now: Date, private config: FormatterConfig = {}) {
 
     }
 
@@ -116,18 +117,30 @@ export class TimetableFormatter {
         const strWeekTimes = weekTimes?.join('\n')
         const strDatesExact = datesExact
             ?.map(({date, times, comment}) =>
-                `${date}: ${times}${this.maybeAppendComment(comment)}`
+                `${this.joinDateAndTime(date, times)}${this.maybeAppendComment(comment)}`
             )
             .join('\n')
         const strDateRangesTimetable =
             dateRangesTimetable
                 ?.map(({dateRange, times, weekTimes}) => {
-                    return `${dateRange}: ${times ?? (weekTimes ? weekTimes.join(', ') : '')}`
+                    if (times !== undefined) {
+                        return this.joinDateAndTime(dateRange, times)
+                    } else {
+                        return `${dateRange}: ${(weekTimes ? weekTimes.join(', ') : '')}`
+                    }
                 })
                 .join('\n')
         return [strWeekTimes, strDatesExact, strDateRangesTimetable]
             .filter(s => s !== undefined && s !== '')
             .join('\n')
+    }
+
+    private joinDateAndTime(prefix: string, times?: string): string {
+        if (this.config.hideTimes) {
+            return `${prefix}`
+        } else {
+            return `${prefix}: ${times ?? ''}`
+        }
     }
 
     structureFormatTimetable(timetable: EventTimetable): FormattedTimetable {
@@ -155,7 +168,7 @@ export class TimetableFormatter {
 
     private formatWeekTimes(weekTimes?: WeekTime[]): FormattedTimetable['weekTimes'] {
         return weekTimes?.map(({weekdays, times, comment}) => {
-            return `${this.formatWeekdays(weekdays)}: ${this.formatTimes(times)}${this.maybeAppendComment(comment)}`
+            return this.joinDateAndTime(this.formatWeekdays(weekdays), this.formatTimes(times)) + this.maybeAppendComment(comment);
         })
     }
 

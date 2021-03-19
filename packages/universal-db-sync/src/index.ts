@@ -6,6 +6,7 @@ export {
     WithId,
     BaseSyncItemDbRow,
     Recovered,
+    Deleted,
     UniversalSyncSavedDiff,
     SyncConfig,
     UniversalDbSync
