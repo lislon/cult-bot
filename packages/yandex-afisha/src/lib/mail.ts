@@ -9,7 +9,7 @@ export function mailgun(): void {
 
     mg.messages.create('sandbox-123.mailgun.org', {
         from: "Excited User <mailgun@sandbox-123.mailgun.org>",
-        to: ["test@example.com"],
+        to: ["lislon@mail.ru"],
         subject: "Hello",
         text: "Testing some Mailgun awesomness!",
         html: "<h1>Testing some Mailgun awesomness!</h1>"

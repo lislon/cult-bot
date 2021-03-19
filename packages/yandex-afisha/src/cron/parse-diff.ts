@@ -5,18 +5,20 @@ import { authToExcel } from '@culthub/google-docs'
 import { appConfig } from '../app-config'
 import { filterOnlyBotSpecificEvents } from '../lib/filter-logic'
 import { db } from '../database/db'
-import { getNextWeekendDates } from '../lib/cron-common'
 import debugNamespace from 'debug'
 import { afishaDownload } from '../lib/afisha-download'
 import { logger } from '../logger'
 import { format } from 'date-fns'
 import { prepareDiffReport } from '../lib/diff-logic'
+import { CliCronArgs, parseCronArgs, parseDates } from './parse-common'
 
 const debug = debugNamespace('yandex-parser');
 
+const argv: CliCronArgs = parseCronArgs();
+
 (async function () {
     try {
-        const dates = getNextWeekendDates(new Date())
+        const dates = parseDates(argv)
         logger.info(`parse-diff: ${dates.map(d => format(d, 'MMMM dd')).join(', ')}...`)
 
         const allEvents = await afishaDownload(dates, { limitEvents: appConfig.LIMIT_EVENTS_PER_PARSE, snapshotDirectory: appConfig.JSON_SNAPSHOT_DIR })

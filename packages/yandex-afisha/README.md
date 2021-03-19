@@ -57,4 +57,6 @@ parse:orig
 ```
 $app = "cult-hub-yandex-afisha-dev"
 heroku run DEBUG=\* yarn cron:parse-diff --app=$app
+heroku run DEBUG=\* yarn cron:parse-diff -n 2021-05-01 --app=$app
+heroku run DEBUG=\* yarn cron:parse-diff -d 2021-05-01 2021-05-02 --app=$app
 ```
