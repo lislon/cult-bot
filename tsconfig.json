@@ -1,6 +1,9 @@
 {
   "references": [
     {
+      "path": "./packages/interfaces"
+    },
+    {
       "path": "./packages/pg-utils"
     },
     {

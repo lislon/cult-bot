@@ -1,5 +1,7 @@
 import { config } from 'dotenv'
 import path from "path"
+import btoa from 'btoa'
+import got from 'got'
 
 type Envs = 'development' | 'production' | 'test'
 
@@ -25,6 +27,12 @@ export class AppConfig {
     public LIMIT_EVENTS_PER_PARSE?: number
     public MAILGUN_API_KEY: string
 
+    public OKTA_OAUTH2_CLIENT_ID: string
+    public OKTA_OAUTH2_CLIENT_SECRET: string
+    public OKTA_OAUTH2_ISSUER: string
+    public CULTHUB_BOT_API_URL: string
+    public GOOGLE_DOCS_ID: string
+
 
     constructor() {
         config()
@@ -48,6 +56,11 @@ export class AppConfig {
         this.LIMIT_EVENTS_PER_PARSE = envVars.LIMIT_EVENTS_PER_PARSE || undefined
         this.JSON_SNAPSHOT_DIR = envVars.JSON_SNAPSHOT_DIR || undefined
         this.MAILGUN_API_KEY = envVars.MAILGUN_API_KEY || undefined
+        this.OKTA_OAUTH2_CLIENT_ID = envVars.OKTA_OAUTH2_CLIENT_ID || ''
+        this.OKTA_OAUTH2_CLIENT_SECRET = envVars.OKTA_OAUTH2_CLIENT_SECRET || ''
+        this.OKTA_OAUTH2_ISSUER = envVars.OKTA_OAUTH2_ISSUER || ''
+        this.CULTHUB_BOT_API_URL = envVars.CULTHUB_BOT_API_URL || ''
+        this.GOOGLE_DOCS_ID = envVars.GOOGLE_DOCS_ID || ''
 
 
     }

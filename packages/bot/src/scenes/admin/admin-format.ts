@@ -1,6 +1,6 @@
 import { i18nSceneHelper, i18SharedMsg } from '../../util/scene-helper'
 import { Markup, Scenes } from 'telegraf'
-import { allCategories, ContextMessageUpdate } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { StatByCat, StatByReviewer } from '../../database/db-admin'
 import { getNextWeekendRange, ruFormat } from '../shared/shared-logic'
 import { db } from '../../database/db'
@@ -14,6 +14,7 @@ import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
 import { PackRecovered, PacksSyncDiff, PackToSave } from '../../database/db-packs'
 import emojiRegex from 'emoji-regex'
 import * as tt from 'telegraf/src/telegram-types'
+import { ALL_CATEGORIES } from '@culthub/interfaces'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 
@@ -91,7 +92,7 @@ export async function formatMainAdminMenu(ctx: ContextMessageUpdate): Promise<{ 
 }
 
 function formatEventsSyncStatus(ctx: ContextMessageUpdate, eventsDiff: EventsSyncDiff): string[] {
-    const categoryRows = allCategories
+    const categoryRows = ALL_CATEGORIES
         .map(cat => {
             const inserted = eventsDiff.inserted.filter(e => e.primaryData.category === cat)
             const recovered = eventsDiff.recovered.filter(e => e.primaryData.category === cat)

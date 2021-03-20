@@ -1,5 +1,6 @@
 import { db } from '../../../src/database/db'
-import { Event, EventCategory, TagLevel2 } from '../../../src/interfaces/app-interfaces'
+import { Event, TagLevel2 } from '../../../src/interfaces/app-interfaces'
+import { EventCategory } from '@culthub/interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
 import { PackToSave } from '../../../src/database/db-packs'
 import { UserSaveData } from '../../../src/database/db-users'

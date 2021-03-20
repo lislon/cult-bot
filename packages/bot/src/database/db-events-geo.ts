@@ -1,4 +1,5 @@
-import { Event, EventCategory, DateInterval } from '../interfaces/app-interfaces'
+import { Event, DateInterval } from '../interfaces/app-interfaces'
+import { EventCategory } from '@culthub/interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { ColumnSet, IColumnConfig, IDatabase, IMain, ITask } from 'pg-promise'
 import { IExtensions } from './db'

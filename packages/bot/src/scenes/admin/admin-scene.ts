@@ -1,5 +1,6 @@
 import { Composer, Markup, Scenes } from 'telegraf'
-import { ContextMessageUpdate, EventCategory, ExtIdAndId, ExtIdAndMaybeId } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, ExtIdAndId, ExtIdAndMaybeId } from '../../interfaces/app-interfaces'
+import { EventCategory } from '@culthub/interfaces'
 import { i18nSceneHelper, isAdmin, isDev, sleep } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
 import {

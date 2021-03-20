@@ -1,5 +1,6 @@
 import { Composer, Markup, Scenes } from 'telegraf'
-import { ContextMessageUpdate, EventCategory, DateInterval } from '../../interfaces/app-interfaces'
+import { ContextMessageUpdate, DateInterval } from '../../interfaces/app-interfaces'
+import { EventCategory } from '@culthub/interfaces'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import * as events from 'events'
 import { backToMainButtonTitle, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'

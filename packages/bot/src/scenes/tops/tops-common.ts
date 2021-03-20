@@ -1,4 +1,5 @@
-import { CAT_NAMES, ContextMessageUpdate, EventCategory, DateInterval } from '../../interfaces/app-interfaces'
+import { CAT_NAMES, ContextMessageUpdate, DateInterval } from '../../interfaces/app-interfaces'
+import { EventCategory } from '@culthub/interfaces'
 import { getNextWeekendRange } from '../shared/shared-logic'
 import { db, LimitOffset } from '../../database/db'
 import { encodeTagsLevel1 } from '../../util/tag-level1-encoder'

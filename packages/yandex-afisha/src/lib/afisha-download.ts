@@ -8,6 +8,7 @@ import { appConfig } from '../app-config'
 import { datesToTimetable } from './dates-to-timetable'
 import fs from 'fs'
 import { logger } from '../logger'
+import { EventCategory } from '@culthub/interfaces'
 
 const debug = debugNamespace('yandex-parser')
 
@@ -125,7 +126,7 @@ export function mapEvent(e: PlaceWithMeta, parsedUrl: string): ParsedEventToSave
         if (e.event.tickets[0]?.price) {
             return `${e.event.tickets[0]?.price.min / 100}-${e.event.tickets[0]?.price.max / 100} ${e.event.tickets[0]?.price.currency}`
         } else {
-            return `???`
+            return ``
         }
     }
 
@@ -135,8 +136,8 @@ export function mapEvent(e: PlaceWithMeta, parsedUrl: string): ParsedEventToSave
             title: e.event.title,
             category: e.event.type.name,
             description: e.event.argument || '',
-            place: e.scheduleInfo?.placePreview || '???',
-            tags: e.event.tags.map(t => `#${t.name}`),
+            place: e.scheduleInfo?.placePreview || '',
+            tags: e.event.tags.map(t => `#${t.name}`).sort(),
             price: getPrice(e),
             timetable: timetable,
             parseUrl: parsedUrl,
@@ -144,4 +145,21 @@ export function mapEvent(e: PlaceWithMeta, parsedUrl: string): ParsedEventToSave
         },
         rawDates: e.scheduleInfo?.dates
     }
+}
+
+export function toBotCategory(yandexCategory: string): EventCategory {
+    switch (yandexCategory) {
+        case 'Выставка':
+            return 'exhibitions'
+        case 'Кино':
+            return 'movies'
+        case 'Концерт':
+            return 'concerts'
+        case 'Театр':
+            return 'theaters'
+        case 'другое':
+            return 'walks'
+
+    }
+    return 'events'
 }

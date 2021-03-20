@@ -2,8 +2,10 @@ import { ParsedEvent, ParsedEventToSave } from '../database/parsed-event'
 import { db } from '../database/db'
 import { EventTimetable, parseTimetable, predictIntervals } from '@culthub/timetable'
 import { UniversalSyncDiff, WithId } from '@culthub/universal-db-sync'
-import { DeletedColumns, DiffReport, ParsedEventField } from '../interfaces'
+import { DeletedColumns, DiffReport, ParsedEventField, WithBotExtId } from '../interfaces'
 import { isEqual, sortBy } from 'lodash'
+import { FindMatchingEventResponse } from '@culthub/interfaces'
+import { Deleted } from '@culthub/universal-db-sync/src/universal-db-sync'
 
 function parseTimetableOrThrow(input: string, now: Date): EventTimetable {
     const val = parseTimetable(input, now)
@@ -21,7 +23,7 @@ function getFieldsWithDiffs(updatedEvent: WithId<ParsedEventToSave>, existingEve
     const newIntervals = predictIntervals(now, parseTimetableOrThrow(existingEvent.timetable, existingEvent.updatedAt || now), 90)
 
     const compareByFields = Object.keys(updatedEvent.primaryData)
-        .filter(key => key !== 'timetable' && key !== 'updatedAt') as unknown as ParsedEventField[]
+        .filter(key => key !== 'timetable' && key !== 'updatedAt' && key !== 'tags') as unknown as ParsedEventField[]
 
     const differentFields: ParsedEventField[] = []
     for (const compareByField of compareByFields) {
@@ -35,20 +37,31 @@ function getFieldsWithDiffs(updatedEvent: WithId<ParsedEventToSave>, existingEve
     if (!isTimetableSame) {
         differentFields.push('timetable')
     }
+
+    if (!isEqual(updatedEvent.primaryData.tags.sort(), existingEvent.tags.sort())) {
+        differentFields.push('tags')
+    }
+
     return differentFields
 }
 
-export async function prepareDiffReport(diff: UniversalSyncDiff<ParsedEventToSave, DeletedColumns>): Promise<DiffReport> {
+export async function prepareDiffReport(diff: UniversalSyncDiff<ParsedEventToSave, DeletedColumns>, botExtIds: FindMatchingEventResponse): Promise<DiffReport> {
     const existingEvents = await db.repoSync.loadEventsByIds(diff.updated.map(e => e.primaryData.id))
 
+    function encrichWithBotEventIds<E extends { primaryData: { extId: string } }>(e: E): E & WithBotExtId {
+        return {...e, botExtId: botExtIds.events.find(ee => ee.id === e.primaryData.extId)?.extIds?.join(',') };
+    }
+
+
     return {
-        inserted: sortBy(diff.inserted, [e => e.primaryData.category, e => e.primaryData.title]),
-        deleted: sortBy(diff.deleted, [e => e.old.category, e => e.old.title]),
+        inserted: sortBy(diff.inserted, [e => e.primaryData.category, e => e.primaryData.title]).map(encrichWithBotEventIds),
+        deleted: sortBy(diff.deleted, [e => e.old.category, e => e.old.title]).map(encrichWithBotEventIds),
         updated: sortBy(diff.updated, [e => e.primaryData.category, e => e.primaryData.title])
             .map(d => {
                 return {...d, diffFields: getFieldsWithDiffs(d, existingEvents)}
             })
-            .filter(({diffFields}) => diffFields.length > 0),
+            .filter(({diffFields}) => diffFields.length > 0)
+            .map(encrichWithBotEventIds),
         notChangedCount: diff.notChanged.length
     }
 }

@@ -8,12 +8,13 @@ import { BotReply } from '../lib/TelegramMockServer'
 import emojiRegex from 'emoji-regex'
 import { getMockEvent, MockPackForSave, syncEventsDb4Test, syncPacksDb4Test } from '../../functional/db/db-test-utils'
 import { parseAndPredictTimetable } from '../../../src/lib/timetable/timetable-utils'
-import { allCategories, ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
+import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
 import { botConfig } from '../../../src/util/bot-config'
 import { clone } from 'lodash'
 import { InlineKeyboardMarkup } from 'telegraf/typings/telegram-types'
 import { first } from 'lodash/fp'
+import { ALL_CATEGORIES } from '@culthub/interfaces'
 
 function clean(str: string) {
     return str
@@ -68,8 +69,8 @@ Given(/^there is events:$/, async function (table: DataTable) {
         if (row.tag_level_1 !== undefined) {
             row.tag_level_1 = row.tag_level_1.split(/[\s,]+/)
         }
-        if (row.category !== undefined && !allCategories.includes(row.category)) {
-            expect(row.category).toEqual(`to be one of ${allCategories.join(',')}`)
+        if (row.category !== undefined && !ALL_CATEGORIES.includes(row.category)) {
+            expect(row.category).toEqual(`to be one of ${ALL_CATEGORIES.join(',')}`)
         }
 
         const timetableResult = parseAndPredictTimetable(row.timetable, this.now, botConfig)

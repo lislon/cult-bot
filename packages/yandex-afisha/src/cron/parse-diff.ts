@@ -6,11 +6,12 @@ import { appConfig } from '../app-config'
 import { filterOnlyBotSpecificEvents } from '../lib/filter-logic'
 import { db } from '../database/db'
 import debugNamespace from 'debug'
-import { afishaDownload } from '../lib/afisha-download'
+import { afishaDownload, toBotCategory } from '../lib/afisha-download'
 import { logger } from '../logger'
 import { format } from 'date-fns'
 import { prepareDiffReport } from '../lib/diff-logic'
 import { CliCronArgs, parseCronArgs, parseDates } from './parse-common'
+import { apiFindMatching } from '../api-client/bot-api-client'
 
 const debug = debugNamespace('yandex-parser');
 
@@ -21,7 +22,10 @@ const argv: CliCronArgs = parseCronArgs();
         const dates = parseDates(argv)
         logger.info(`parse-diff: ${dates.map(d => format(d, 'MMMM dd')).join(', ')}...`)
 
-        const allEvents = await afishaDownload(dates, { limitEvents: appConfig.LIMIT_EVENTS_PER_PARSE, snapshotDirectory: appConfig.JSON_SNAPSHOT_DIR })
+        const allEvents = await afishaDownload(dates, {
+            limitEvents: appConfig.LIMIT_EVENTS_PER_PARSE,
+            snapshotDirectory: appConfig.JSON_SNAPSHOT_DIR
+        })
 
         const newEvents: ParsedEventToSave[] = filterOnlyBotSpecificEvents(allEvents)
         debug(`Diffing ${newEvents.length} interesting events excel (${allEvents.length} total)`)
@@ -32,12 +36,27 @@ const argv: CliCronArgs = parseCronArgs();
             return await db.repoSync.prepareDiffForSync(newEvents, t)
         })
 
-        const diffReport = await prepareDiffReport(diff);
+
+        const botExtIds = await apiFindMatching({
+            events: [
+                ...[...diff.updated, ...diff.notChanged, ...diff.inserted, ...diff.recovered].map(e => ({
+                    id: e.primaryData.extId,
+                    category: toBotCategory(e.primaryData.category),
+                    title: e.primaryData.title
+                })),
+                ...[...diff.deleted].map(e => ({
+                    id: e.primaryData.extId,
+                    category: toBotCategory(e.old.category),
+                    title: e.old.title
+                }))
+            ]
+        })
+        const diffReport = await prepareDiffReport(diff, botExtIds)
 
         const excel = await authToExcel(appConfig.GOOGLE_AUTH_FILE)
         await saveDiffToExcel(excel, diffReport, dates)
         await db.$pool.end()
-        logger.info(`Diff report ready. Changedids=${diff.updated.map(u => u.primaryData.id).join(',')} Total=${[...diff.recovered, ...diff.updated, ...diff.inserted].length} changed`)
+        logger.info(`Diff report ready https://docs.google.com/spreadsheets/d/${appConfig.GOOGLE_DOCS_ID}/edit#gid=2134978656 . Changed_ids=${diff.updated.map(u => u.primaryData.id).join(',')} Total=${[...diff.recovered, ...diff.updated, ...diff.inserted].length} changed`)
     } catch (e) {
         logger.error(e)
         process.exit(1)

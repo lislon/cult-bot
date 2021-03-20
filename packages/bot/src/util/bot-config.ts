@@ -70,6 +70,12 @@ export class BotConfig {
     public FEATURE_CARD_TAG_TOGGLE: boolean
     public FEATURE_GEO: boolean
 
+    /**
+     * Values which should be taken from okta.com plugin. These allow to verify client API calls.
+     */
+    public OKTA_OAUTH2_CLIENT_ID: string
+    public OKTA_OAUTH2_ISSUER: string
+    public OKTA_OAUTH2_ENABLED: boolean
 
     /**
      * Chat used to receive user feedback and send reply to it.
@@ -135,6 +141,12 @@ export class BotConfig {
         this.HEROKU_RELEASE_VERSION = envVars.HEROKU_RELEASE_VERSION
         this.HEROKU_SLUG_COMMIT = envVars.HEROKU_SLUG_COMMIT
         this.HEROKU_RELEASE_CREATED_AT = envVars.HEROKU_RELEASE_CREATED_AT
+
+
+        this.OKTA_OAUTH2_CLIENT_ID = envVars.OKTA_OAUTH2_CLIENT_ID
+        this.OKTA_OAUTH2_ISSUER = envVars.OKTA_OAUTH2_ISSUER
+        boolean('OKTA_OAUTH2_ENABLED', true)
+
 
         this.TELEGRAM_TOKEN = envVars.TELEGRAM_TOKEN
         number('PORT', 0)

@@ -17,7 +17,7 @@ const initOptions: IInitOptions<IExtensions> = {
     },
 
     query(e) {
-        console.log(e.query)
+        // debug.tra(e.query)
     }
 }
 

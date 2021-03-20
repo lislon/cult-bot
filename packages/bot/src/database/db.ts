@@ -16,6 +16,7 @@ import { PacksRepository } from './db-packs'
 import { EventsCommonRepository } from './db-events-common'
 import { LikesRepository } from './db-likes'
 import { EventsGeoRepository } from './db-events-geo'
+import { EventsMatchingRepository } from './db-event-matching'
 
 export interface IExtensions {
     repoSync: EventsSyncRepository,
@@ -29,6 +30,7 @@ export interface IExtensions {
     repoPacks: PacksRepository
     repoEventsCommon: EventsCommonRepository
     repoEventsGeo: EventsGeoRepository,
+    repoEventsMatching: EventsMatchingRepository,
     repoLikes: LikesRepository
 }
 
@@ -49,6 +51,7 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoEventsCommon = new EventsCommonRepository(dbEx, pgp)
         dbEx.repoLikes = new LikesRepository(dbEx, pgp)
         dbEx.repoEventsGeo = new EventsGeoRepository(dbEx, pgp)
+        dbEx.repoEventsMatching = new EventsMatchingRepository(dbEx, pgp)
     },
 
     query(e) {

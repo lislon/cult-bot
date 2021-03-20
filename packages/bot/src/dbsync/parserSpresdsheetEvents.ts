@@ -1,4 +1,4 @@
-import { EventCategory } from '../interfaces/app-interfaces'
+import { EventCategory } from '@culthub/interfaces'
 import {
     CAT_TO_SHEET_NAME,
     EXCEL_COLUMNS_EVENTS,

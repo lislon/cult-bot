@@ -59,9 +59,13 @@ export interface Place {
 
 export type ParsedEventField = keyof ParsedEvent
 
+export type WithBotExtId = {
+    botExtId?: string
+}
+
 export interface DiffReport {
-    inserted: ParsedEventToSave[]
-    updated: (WithId<ParsedEventToSave> & { diffFields: ParsedEventField[] })[]
-    deleted: Deleted<DeletedColumns>[]
+    inserted: (ParsedEventToSave & WithBotExtId)[]
+    updated: (WithId<ParsedEventToSave> & { diffFields: ParsedEventField[] } & WithBotExtId)[]
+    deleted: (Deleted<DeletedColumns> & WithBotExtId)[]
     notChangedCount: number
 }

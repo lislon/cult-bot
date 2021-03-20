@@ -1,4 +1,4 @@
-import { EventCategory } from '../interfaces/app-interfaces'
+import { EventCategory } from '@culthub/interfaces'
 
 export function cleanTagLevel1(text: string): string {
     // tag[cat] -> tag

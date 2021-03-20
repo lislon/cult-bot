@@ -1,4 +1,3 @@
-/// <reference path="./../../../src/types/telegraf.d.ts"/>
 import { setWorldConstructor } from '@cucumber/cucumber'
 import middlewares, { myRegisterScene } from '../../../src/middleware-utils'
 import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'

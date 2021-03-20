@@ -1,0 +1,63 @@
+openapi: 3.0.1
+info:
+  title: Cult Hub Bot
+  description: This is primary bot database
+  contact:
+    email: lislon@mail.ru
+  license:
+    name: unlicensed
+  version: 0.0.1
+externalDocs:
+  description: Find more
+  url: https://www.notion.so/CultBot-d8a8aa93c40941949976f5d96fc934c6
+servers:
+  - url: http://localhost:3000/api/v1
+paths:
+  /find-matching:
+    get:
+      summary: Find events by its name
+      description: Multiple status values can be provided with comma separated strings
+      operationId: findPetsByStatus
+      parameters:
+        - name: title
+          in: query
+          description: Title of event (Case insensitive)
+          required: true
+          allowEmptyValue: false
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Category of event
+          required: true
+          allowEmptyValue: false
+          schema:
+            $ref: '#/components/schemas/EventCategory'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        400:
+          description: Invalid status value
+          content: { }
+      security:
+        - petstore_auth:
+            - read
+components:
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://dev-6822146.okta.com/oauth2/default/v1/token
+          scopes:
+            read: Can read anything
+  schemas:
+    EventCategory:
+      type: string
+      enum: [ 'theaters', 'exhibitions', 'movies', 'events', 'walks', 'concerts' ]

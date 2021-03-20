@@ -45,11 +45,13 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
     }
 
     async update(spreadsheetId: string): Promise<void> {
-        await this.excel.spreadsheets.batchUpdate({
-            spreadsheetId,
-            requestBody: {requests: this.requests}
-        })
-        this.requests = []
+        if (this.requests.length > 0) {
+            await this.excel.spreadsheets.batchUpdate({
+                spreadsheetId,
+                requestBody: {requests: this.requests}
+            })
+            this.requests = []
+        }
     }
 
     editCellDate(sheetId: number, column: K, rowNo: number, value: Date): void {

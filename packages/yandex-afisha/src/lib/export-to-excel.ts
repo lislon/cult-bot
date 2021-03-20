@@ -3,7 +3,8 @@ import { ExcelUpdater } from '@culthub/google-docs'
 import { ParsedEvent, ParsedEventToSave } from '../database/parsed-event'
 import { ruFormat } from './ruFormat'
 import { Recovered } from '@culthub/universal-db-sync'
-import { DeletedColumns, DiffReport } from '../interfaces'
+import { DeletedColumns, DiffReport, WithBotExtId } from '../interfaces'
+import { appConfig } from '../app-config'
 
 const DIFF_CONTENT_EXCEL_COLUMNS = {
     category: 'Тип',
@@ -13,6 +14,7 @@ const DIFF_CONTENT_EXCEL_COLUMNS = {
     description: 'Описание',
     tags: 'Теги',
     price: 'Цена',
+    botExtId: 'BotID',
     url: 'Ссылка'
 }
 
@@ -34,8 +36,8 @@ function isNothingChanged(diff: DiffReport): boolean {
 }
 
 
-function isDiffColumn(diffField: keyof ParsedEvent): diffField is keyof typeof DIFF_CONTENT_EXCEL_COLUMNS {
-    return diffField !== 'extId' && diffField != 'description' && diffField != 'parseUrl' && diffField != 'deletedAt' && diffField != 'updatedAt'
+function isDiffColumn(diffField: keyof ParsedEvent | 'botExtId'): diffField is keyof typeof DIFF_CONTENT_EXCEL_COLUMNS {
+    return diffField !== 'extId' && diffField != 'description' && diffField != 'parseUrl' && diffField != 'deletedAt' && diffField != 'updatedAt' && diffField !== 'botExtId'
 }
 
 function removeZeroZeroFromTimetable<T>(rows: (T & { timetable: string})[]): T[] {
@@ -43,7 +45,7 @@ function removeZeroZeroFromTimetable<T>(rows: (T & { timetable: string})[]): T[]
 }
 
 export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport, dates: Date[]): Promise<void> {
-    const spreadsheetId = process.env.GOOGLE_DOCS_ID
+    const spreadsheetId = appConfig.GOOGLE_DOCS_ID
     if (spreadsheetId === undefined || dates.length === 0) {
         return
     }
@@ -77,9 +79,11 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport,
         const updatedRowsStartsAt = 2
         Object.keys(DIFF_CONTENT_EXCEL_COLUMNS).forEach((column: keyof typeof DIFF_CONTENT_EXCEL_COLUMNS) => {
             if (sheetId !== undefined) {
-                excelUpdater.clearColumnFormat(sheetId, column, 1, diff.updated.length + diff.deleted.length + diff.inserted.length + updatedRowsStartsAt)
+                excelUpdater.clearColumnFormat(sheetId, column, 1, 1000)
+                excelUpdater.clearValues(sheetId, 'changeType', 'url', 1, 1000)
             }
         })
+        await excelUpdater.update(spreadsheetId)
 
         diff.updated.forEach((eToUpdate, index) => {
             eToUpdate.diffFields.forEach(diffField => {
@@ -90,7 +94,7 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport,
         })
     }
 
-    rows = [...rows, ...diff.deleted.map((eToDelete: Recovered<ParsedEventToSave, DeletedColumns>) => ({
+    rows = [...rows, ...diff.deleted.map((eToDelete: (Recovered<ParsedEventToSave, DeletedColumns> & WithBotExtId)) => ({
         changeType: SYMBOL_DELETED,
         category: eToDelete.old.category,
         title: eToDelete.old.title,
@@ -100,7 +104,8 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport,
         description: '',
         date_parsed: '',
         place: '',
-        tags: ''
+        tags: '',
+        botExtId: eToDelete.botExtId || ''
     }))]
 
     rows = [...rows, ...diff.inserted.map(eToSave => ({
@@ -133,7 +138,7 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport,
     }
 }
 
-function eventToRow(e: Omit<ParsedEvent, 'id'>): { [key in keyof typeof DIFF_CONTENT_EXCEL_COLUMNS]: string } {
+function eventToRow(e: Omit<ParsedEvent, 'id'> & WithBotExtId): { [key in keyof typeof DIFF_CONTENT_EXCEL_COLUMNS]: string } {
     const row = {
         category: e.category,
         title: e.title,
@@ -143,13 +148,14 @@ function eventToRow(e: Omit<ParsedEvent, 'id'>): { [key in keyof typeof DIFF_CON
         tags: e.tags.join(' '),
         price: e.price,
         url: e.url,
-        date_parsed: e.updatedAt ? ruFormat(e.updatedAt, 'yyyy-MM-dd') : '?'
+        date_parsed: e.updatedAt ? ruFormat(e.updatedAt, 'yyyy-MM-dd') : '?',
+        botExtId: e.botExtId || ''
     }
     return row
 }
 
 export async function saveCurrentToExcel(excel: sheets_v4.Sheets, events: Omit<ParsedEvent, 'id'>[], dates: Date[]): Promise<void> {
-    const spreadsheetId = process.env.GOOGLE_DOCS_ID
+    const spreadsheetId = appConfig.GOOGLE_DOCS_ID
     if (spreadsheetId === undefined) {
         return
     }
@@ -171,6 +177,7 @@ export async function saveCurrentToExcel(excel: sheets_v4.Sheets, events: Omit<P
 
     // meta = await excel.spreadsheets.get({spreadsheetId, ranges: [ `${title}!A1:AA`]})
 
+    events = removeZeroZeroFromTimetable(events)
 
     const data: string[][] = events.map(e => {
         const row = eventToRow(e)

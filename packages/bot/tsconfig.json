@@ -2,16 +2,18 @@
   "extends": "../../tsconfig.packages.json",
   "compilerOptions": {
     "rootDir": "src",
+    "baseUrl": "./",
     "typeRoots": [
       "../../node_modules/@types",
+      "../../@types-global",
       "./node_modules/@types",
-      "./src/types"
+      "./src/@types"
     ],
     "outDir": "dist/",
     "declarationDir": "typings/",
     "tsBuildInfoFile": "typings/tsconfig.tsbuildinfo",
     "strictNullChecks": false
   },
-  "include": ["src/**/*", "src/locales/*.json"],
+  "include": ["src/**/*", "src/**/*.json"],
   "exclude": ["**/node_modules", "**/.*/", "dist/"]
 }

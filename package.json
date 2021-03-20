@@ -2,6 +2,7 @@
   "name": "culthub",
   "private": true,
   "workspaces": [
+    "packages/interfaces",
     "packages/pg-utils",
     "packages/timetable",
     "packages/universal-db-sync",

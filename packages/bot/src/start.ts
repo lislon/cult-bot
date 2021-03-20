@@ -12,6 +12,9 @@ import { rawBot } from './raw-bot'
 import { initBot } from './bot'
 import { getRedis } from './util/reddis'
 import got from 'got'
+import { oAuth2 } from './api-server/middleware/oauth2'
+import { apiRouter } from './api-server/controller/api'
+import { swaggerMiddleware } from './api-server/middleware/swagger-middleware'
 
 const app = express()
 
@@ -110,7 +113,10 @@ if (botConfig.BOT_DISABLED === false) {
 }
 
 app.use(BotStart.expressMiddleware(rawBot))
-
+if (botConfig.NODE_ENV === 'development') {
+    app.use(swaggerMiddleware)
+}
+app.use('/api/v1', oAuth2, apiRouter)
 
 app.get('/event/:id', async (request: Request<{ id: number }>, response: Response) => {
     const [event] = await db.repoEventsCommon.getFirstEvent()
@@ -120,14 +126,6 @@ app.get('/event/:id', async (request: Request<{ id: number }>, response: Respons
     } else {
         return response.status(404).send()
     }
-})
-
-app.use('/api', (request: Request, response: Response) => {
-    response.send('hi')
-})
-
-app.use('/me', (request: Request, response: Response) => {
-    response.send(JSON.stringify(request.headers))
 })
 
 app.use(function (err: any, req: any, res: any, next: any) {

@@ -14,9 +14,7 @@ import { PagingState } from '../scenes/shared/paging-pager'
 import { TopsSceneState } from '../scenes/tops/tops-common'
 import { Logger } from 'winston'
 import { Context, Scenes } from 'telegraf'
-
-export type EventCategory = 'theaters' | 'exhibitions' | 'movies' | 'events' | 'walks' | 'concerts'
-export const allCategories: EventCategory[] = ['theaters', 'exhibitions', 'movies', 'events', 'walks', 'concerts']
+import { EventCategory } from '@culthub/interfaces'
 
 export type TagLevel2 = '#компанией'
     | '#сдетьми0+'

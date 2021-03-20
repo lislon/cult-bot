@@ -4,6 +4,7 @@
   },
   "compilerOptions": {
     "module": "CommonJS",
+    "allowSyntheticDefaultImports": true,
     "incremental": true,
     "esModuleInterop": true,
     "target": "ES2020",

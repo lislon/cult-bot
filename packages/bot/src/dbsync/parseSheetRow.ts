@@ -1,4 +1,5 @@
-import { CHEAP_PRICE_THRESHOLD, Event, EventCategory, TagLevel2 } from '../interfaces/app-interfaces'
+import { CHEAP_PRICE_THRESHOLD, Event, TagLevel2 } from '../interfaces/app-interfaces'
+import { EventCategory } from '@culthub/interfaces'
 import { fieldIsQuestionMarkOrEmpty } from '../util/misc-utils'
 import { parseAndPredictTimetable } from '../lib/timetable/timetable-utils'
 import { i18n } from '../util/i18n'
