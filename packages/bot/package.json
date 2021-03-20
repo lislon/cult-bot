@@ -95,7 +95,7 @@
     "esm": "^3.2.25",
     "njwt": "^1.0.0",
     "nodemon": "^2.0.4",
-    "typegram": "3.1.10"
+    "typegram": "3.2.2"
   },
   "engines": {
     "yarn": "1.x"
