@@ -1,13 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Router } from 'express'
-import swaggerUi from 'swagger-ui-express'
+import swaggerUi, { SwaggerOptions } from 'swagger-ui-express'
 import YAML from 'yamljs'
 import path from 'path'
 
 const swaggerDocument = YAML.load(path.resolve(__dirname, './openapi.yaml'))
 
-const options = {
+const options: SwaggerOptions = {
     explorer: true,
+    loglevel: "debug",
+    strict: true,
+    validator: true,
     oauth: {
         clientId: process.env.OAUTH_CLIENT_ID,
         clientSecret: process.env.OAUTH_CLIENT_SECRET,
