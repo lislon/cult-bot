@@ -46,7 +46,7 @@ async function prepareSessionIfNeeded(ctx: ContextMessageUpdate) {
         ctx.session.user = {
             lastDbUpdated: 0,
             clicks: 0,
-            version: botConfig.HEROKU_RELEASE_VERSION,
+            version: botConfig.HEROKU_RELEASE_VERSION || '',
             id: 0,
             uaUuid: undefined,
             showTags: false,
@@ -55,14 +55,14 @@ async function prepareSessionIfNeeded(ctx: ContextMessageUpdate) {
     }
     migrateOldSession(ctx)
 
-    if (ctx.session.user.id === 0) {
+    if (ctx.session.user.id === 0 && ctx.from) {
         const userDb = await db.repoUser.findUserByTid(ctx.from.id)
         if (userDb) {
             ctx.session.user = {
                 ...ctx.session.user,
                 id: userDb.id,
                 uaUuid: userDb.ua_uuid,
-                clicks: userDb.clicks,
+                clicks: userDb.clicks || 0,
                 eventsFavorite: userDb.events_favorite.map(e => +e),
             }
         }

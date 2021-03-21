@@ -78,7 +78,7 @@ export const eventColumnsDef = [
     fieldInt('dislikes_fake'),
 ]
 
-type TagUpdate = { id: number, tagLevel2: TagLevel2[] }
+export type TagUpdate = { id: number, tagLevel2: TagLevel2[] }
 
 export class EventsSyncRepository {
     readonly dbColIntervals: ColumnSet

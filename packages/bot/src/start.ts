@@ -22,7 +22,7 @@ async function notifyAdminsAboutRestart() {
     const redisVersionKey = 'HEROKU_SLUG_COMMIT'
     try {
         const version = await getRedis().get(redisVersionKey)
-        if (version !== botConfig.HEROKU_SLUG_COMMIT) {
+        if (version !== botConfig.HEROKU_SLUG_COMMIT && botConfig.HEROKU_SLUG_COMMIT !== undefined) {
             await getRedis().set(redisVersionKey, botConfig.HEROKU_SLUG_COMMIT)
             const admins = await db.repoUser.findUsersByUsernamesOrIds(adminUsernames, adminIds)
 
@@ -37,7 +37,7 @@ async function notifyAdminsAboutRestart() {
                         disable_notification: true
                     })
                 } catch (e) {
-                    logger.warn(`failed to send to admin.id = ${admin.id}`)
+                    logger.warn(`failed to send to admin.id = ${admin.tid}`)
                     logger.warn(e)
                 }
             }

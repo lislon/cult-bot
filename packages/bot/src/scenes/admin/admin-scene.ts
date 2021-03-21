@@ -377,7 +377,7 @@ class GlobalSync {
                 })
                 await sleep(200)
             } catch (e) {
-                logger.warn(`failed to send to admin.id = ${admin.id}`)
+                logger.warn(`failed to send to admin.tid = ${admin.tid}`)
                 logger.warn(e)
             }
         }

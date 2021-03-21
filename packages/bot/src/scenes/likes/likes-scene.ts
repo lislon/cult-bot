@@ -8,7 +8,7 @@ import { updateLikeDislikeInlineButtons } from './likes-common'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('likes_scene')
 
-const {i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
+const { i18Msg } = i18nSceneHelper(scene)
 
 function logLikes(plusLikes: number, ctx: ContextMessageUpdate, eventId: number, plusDislikes: number) {
     if (plusLikes > 0) {

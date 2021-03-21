@@ -38,7 +38,7 @@ export const moneyTags: TagLevel2[] = ['#доступноподеньгам', '#
 export const chidrensTags: TagLevel2[] = ['#сдетьми0+', '#сдетьми6+', '#сдетьми12+', '#сдетьми16+']
 export type EventFormat = 'online' | 'outdoor' | undefined
 
-interface MySession extends Scenes.SceneSession<Scenes.SceneSessionData> {
+export interface MySession extends Scenes.SceneSession<Scenes.SceneSessionData> {
     topsScene?: TopsSceneState
     packsScene?: PacksSceneState
     search?: SearchSceneState
@@ -46,7 +46,7 @@ interface MySession extends Scenes.SceneSession<Scenes.SceneSessionData> {
     adminScene?: AdminSceneState
     feedbackScene?: FeedbackSceneState
     analytics?: AnalyticsState,
-    user?: UserState
+    user: UserState
     help?: HelpSceneState,
     paging?: PagingState<unknown>
     slider?: AllSlidersState

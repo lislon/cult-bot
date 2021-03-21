@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import { Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 import { ReversableTranslit } from '../lib/translit/reversable-translit'
@@ -34,12 +35,15 @@ export function i18nSceneHelper(scene: Pick<Scenes.BaseScene<ContextMessageUpdat
         },
         pushEnterScene,
 
-        i18Btn: (ctx: ContextMessageUpdate, id: string, tplData: any = undefined) =>
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        i18Btn: (ctx: ContextMessageUpdate, id: string, tplData?: object) =>
             ctx.i18n.t(`scenes.${scene.id}.keyboard.${id}`, tplData),
-        i18SharedBtn: (ctx: ContextMessageUpdate, id: string, tplData: any = undefined) =>
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        i18SharedBtn: (ctx: ContextMessageUpdate, id: string, tplData?: object) =>
             ctx.i18n.t(`shared.keyboard.${id}`, tplData),
         // scenes.<scene id>.<id>
-        i18Msg: (ctx: ContextMessageUpdate, id: string, tplData: any = undefined, byDefault: string | null = undefined) => {
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        i18Msg: (ctx: ContextMessageUpdate, id: string, tplData?: object, byDefault?: string): string => {
             const resourceKey = `scenes.${scene.id}.${id}`
             if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
                 try {
@@ -51,18 +55,21 @@ export function i18nSceneHelper(scene: Pick<Scenes.BaseScene<ContextMessageUpdat
                 return byDefault
             }
         },
-        i18SharedMsg: (ctx: ContextMessageUpdate, id: string, tplData: any = undefined) =>
-            ctx.i18n.t(`shared.${id}`, tplData),
+        i18SharedMsg: (ctx: ContextMessageUpdate, id: string, tplData: unknown = undefined) =>
+            // eslint-disable-next-line @typescript-eslint/ban-types
+            ctx.i18n.t(`shared.${id}`, tplData as object),
 
         sceneHelper: (ctx: ContextMessageUpdate) => {
             return {
                 // scenes.<scene id>.keyboard.<id>
-                i18Btn: (id: string, tplData: any = undefined) =>
+
+                i18Btn: (id: string, tplData?: object) =>
                     ctx.i18n.t(`scenes.${scene.id}.keyboard.${id}`, tplData),
-                i18SharedBtn: (id: string, tplData: any = undefined) =>
+
+                i18SharedBtn: (id: string, tplData?: object) =>
                     ctx.i18n.t(`shared.keyboard.${id}`, tplData),
                 // scenes.<scene id>.<id>
-                i18Msg: (id: string, tplData: any = undefined, byDefault: string | null = undefined) => {
+                i18Msg: (id: string, tplData: any = undefined, byDefault?: string) => {
                     const resourceKey = `scenes.${scene.id}.${id}`
                     if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
                         return ctx.i18n.t(resourceKey, tplData)
@@ -89,18 +96,18 @@ export function i18nSceneHelper(scene: Pick<Scenes.BaseScene<ContextMessageUpdat
     }
 }
 
-export function sleep(ms: number) {
+export function sleep(ms: number): Promise<unknown> {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export function isDev(ctx: ContextMessageUpdate) {
-    return devUsernames.includes(ctx.from.username)
+export function isDev(ctx: ContextMessageUpdate): boolean {
+    return devUsernames.includes(ctx.from?.username || '')
 }
 
 export function isAdmin(ctx: ContextMessageUpdate) {
-    return adminUsernames.includes(ctx.from.username) || adminIds.includes(ctx.from.id)
+    return adminUsernames.includes(ctx.from?.username || '') || adminIds.includes(ctx.from?.id || 0)
 }
-export async function ifAdmin(ctx: ContextMessageUpdate, callback: () => Promise<any>) {
+export async function ifAdmin(ctx: ContextMessageUpdate, callback: () => Promise<any>): Promise<any> {
     if (isAdmin(ctx)) {
         return await callback()
     } else {

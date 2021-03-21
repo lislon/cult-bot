@@ -7,6 +7,7 @@ import { EventForRefresh } from '../database/db-sync-repository'
 import { isEqual } from 'date-fns'
 import { botConfig } from '../util/bot-config'
 import { autoAppendLastChanceTags, LAST_CHANCE_PREDICT_CONFIG } from '../core/last-chance'
+import { notEmpty } from '../util/misc-utils'
 
 async function updateIntervals(allEvents: EventForRefresh[], now: Date, lastEventDateByIds: { [p: string]: EventForRefresh }, dbTx: ITask<IExtensions> & IExtensions) {
     const eventsToUpdate = allEvents
@@ -50,7 +51,7 @@ async function updateLastChance(allEvents: EventForRefresh[], now: Date, dbTx: I
             }
         }
         return undefined
-    }).filter(e => e !== undefined)
+    }).filter(notEmpty)
 
     await dbTx.repoSync.updateTagsLevel2(updateTags, dbTx)
 }

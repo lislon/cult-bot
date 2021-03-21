@@ -1,6 +1,12 @@
 import { User } from 'telegraf/typings/telegram-types'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 
+export function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
+    if (value === null || value === undefined) return false;
+    const testDummy: TValue = value;
+    return true;
+}
+
 export function fieldIsQuestionMarkOrEmpty(str: string) {
     const trim = str.trim()
     return trim === '???' || trim === ''

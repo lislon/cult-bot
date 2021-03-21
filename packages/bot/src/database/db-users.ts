@@ -19,8 +19,8 @@ export interface UserSaveData {
 
 
 export interface UserIds {
-    id?: number
-    tid?: number
+    id: number
+    tid: number
 }
 
 export interface UserForRead extends UserIds{
@@ -32,7 +32,7 @@ export interface UserForRead extends UserIds{
     blocked_at?: Date|null
     events_liked?: number[]
     events_disliked?: number[]
-    events_favorite?: number[]
+    events_favorite: number[]
     clicks?: number
 }
 
@@ -71,16 +71,16 @@ export class UserRepository {
                         id: +row.id,
                         tid: +row.tid,
                         ua_uuid: row.ua_uuid,
-                        clicks: +row.clicks,
-                        events_favorite: row.events_favorite
+                        clicks: +(row.clicks || 0),
+                        events_favorite: row.events_favorite || []
                     }
                 }
                 return row
             })
     }
 
-    public async findUsersByUsernamesOrIds(usernames: string[], tids: number[] = []): Promise<UserIds[] | null> {
-        return this.db.map<UserIds>(`
+    public async findUsersByUsernamesOrIds(usernames: string[], tids: number[] = []): Promise<({tid: number, ua_uuid: number})[]> {
+        return this.db.map(`
         SELECT tid, ua_uuid
         FROM cb_users
         WHERE
@@ -98,13 +98,13 @@ export class UserRepository {
 
 
     public async insertUser(user: UserSaveData): Promise<number> {
-        const rawData: UserDb = {
+        const rawData: Omit<UserDb, 'id'> = {
             first_name: user.first_name || '',
             last_name: user.last_name || '',
             username: user.username || '',
             language_code: user.language_code || '',
             tid: user.tid,
-            ua_uuid: user.ua_uuid,
+            ua_uuid: user.ua_uuid || '',
             clicks: 0,
             events_liked: [],
             events_favorite: [],

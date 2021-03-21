@@ -1,5 +1,5 @@
 import telegrafThrottler, { ThrottlerOptions } from 'telegraf-throttler'
-import { ContextMessageUpdate } from './interfaces/app-interfaces'
+import { ContextMessageUpdate, MySession } from './interfaces/app-interfaces'
 import { parseISO } from 'date-fns'
 import { userMiddleware } from './lib/middleware/user-middleware'
 import { analyticsMiddleware } from './lib/middleware/analytics-middleware'
@@ -54,7 +54,7 @@ function sessionTmp() {
         if (ctx.session === undefined) {
             ctx.session = {
                 __scenes: undefined
-            }
+            } as MySession
         }
         await next()
     }
