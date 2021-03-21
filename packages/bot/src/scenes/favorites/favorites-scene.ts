@@ -41,7 +41,7 @@ export interface FavoriteEvent extends Event {
 }
 
 function nearestDate(now: Date, event: FavoriteEvent) {
-    return first(event.parsedTimetable.timeIntervals.map(rightDate).filter(rightDate => isAfter(rightDate, now)))
+    return first(event.parsedTimetable.predictedIntervals.map(rightDate).filter(rightDate => isAfter(rightDate, now)))
 }
 
 async function formatListOfFavorites(ctx: ContextMessageUpdate, events: FavoriteEvent[]) {
@@ -55,7 +55,7 @@ async function formatListOfFavorites(ctx: ContextMessageUpdate, events: Favorite
         }
 
         if (event.isFuture) {
-            const date = event.parsedTimetable.timetable.anytime ? i18Msg(ctx, 'date_anytime') : ruFormat(nearestDate(ctx.now(), event), 'dd MMMM')
+            const date = event.parsedTimetable.parsedTimetable.anytime ? i18Msg(ctx, 'date_anytime') : ruFormat(nearestDate(ctx.now(), event), 'dd MMMM')
 
             return i18Msg(ctx, 'event_item', {
                 icon: i18SharedMsg(ctx, 'category_icons.' + event.category),
@@ -65,7 +65,7 @@ async function formatListOfFavorites(ctx: ContextMessageUpdate, events: Favorite
             })
         } else {
 
-            const date = event.parsedTimetable.timeIntervals.length === 0 ? `больше ${botConfig.SCHEDULE_WEEKS_AHEAD} недель назад` : ruFormat(rightDate(last(event.parsedTimetable.timeIntervals)), 'dd MMMM')
+            const date = event.parsedTimetable.predictedIntervals.length === 0 ? `больше ${botConfig.SCHEDULE_WEEKS_AHEAD} недель назад` : ruFormat(rightDate(last(event.parsedTimetable.predictedIntervals)), 'dd MMMM')
 
             return i18Msg(ctx, 'event_item_past', {
                 icon: i18SharedMsg(ctx, 'category_icons.' + event.category),

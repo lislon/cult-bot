@@ -134,6 +134,17 @@ describe('Filtering', () => {
         }))
     }, 1000000)
 
+    test('can search by last chance', async () => {
+        const [A] = await syncEventsDb4Test([
+            getMockEvent({title: 'A', eventTime, tag_level_2: ['#_последнийшанс']})
+        ])
+        expectedIds([A], await db.repoCustomEvents.findEventIdsCustomFilter({
+            priorities: ['#_последнийшанс'],
+            weekendRange
+        }))
+
+    }, 1000000)
+
 })
 
 describe('Логика с детьми', () => {

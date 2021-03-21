@@ -1,4 +1,4 @@
-import { Event, DateInterval } from '../interfaces/app-interfaces'
+import { Event, DateInterval, TagLevel2 } from '../interfaces/app-interfaces'
 import { EventCategory } from '@culthub/interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { ColumnSet, IColumnConfig, IDatabase, IMain, ITask } from 'pg-promise'
@@ -30,7 +30,7 @@ export function mapEvent(row: DbEvent & { id: string, likes: number, dislikes: n
         description: row.description,
         url: row.url,
         tag_level_1: row.tag_level_1,
-        tag_level_2: row.tag_level_2,
+        tag_level_2: row.tag_level_2 as TagLevel2[],
         tag_level_3: row.tag_level_3,
         rating: +row.rating,
         reviewer: row.reviewer,

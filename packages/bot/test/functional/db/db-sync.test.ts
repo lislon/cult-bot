@@ -1,12 +1,12 @@
 import { db, dbCfg } from '../../../src/database/db'
-import { cleanDb, expectedTitlesStrict, getMockEvent } from './db-test-utils'
+import { cleanDb, expectedTitlesStrict, getMockEvent, syncEventsDb4Test } from './db-test-utils'
 import { date, mkInterval } from '../../util/timetable-util'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { EventsSyncDiff } from '../../../src/database/db-sync-repository'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
-afterAll(db.$pool.end);
+afterAll(db.$pool.end)
 
 type ExpectedSyncResults = {
     created: string[]
@@ -191,4 +191,34 @@ describe('db sync test', () => {
         ])
         expect(0).toEqual(syncDiff.updated.length)
     })
+
+    test('refresh query will work', async () => {
+        await cleanDb()
+        const [a] = await syncEventsDb4Test([
+            getMockEvent({extId: 'A', title: 'A', eventTime, tag_level_2: ['#доступноподеньгам', '#бесплатно']}),
+        ])
+        const eventsForRefresh = await db.repoSync.getEventsForRefresh()
+        expect(eventsForRefresh).toStrictEqual([{
+            id: a,
+            category: 'theaters',
+            timetable: 'пн-вт: 15:00-18:00',
+            tagLevel2: ['#доступноподеньгам', '#бесплатно'],
+            lastDate: eventTime[1]
+        }])
+    })
+
+    test('update tags will work', async () => {
+        await cleanDb()
+        const [a] = await syncEventsDb4Test([
+            getMockEvent({extId: 'A', title: 'A', eventTime, tag_level_2: ['#доступноподеньгам', '#бесплатно']}),
+        ])
+        await db.task(async (dbTx) => await db.repoSync.updateTagsLevel2([{
+            id: a,
+            tagLevel2: ['#_недешево', '#комфорт']
+        }], dbTx))
+
+        const [eventA] = await db.repoEventsCommon.getEventsByIds([a])
+        expect(eventA.tag_level_2).toStrictEqual(['#_недешево', '#комфорт'])
+    })
 })
+

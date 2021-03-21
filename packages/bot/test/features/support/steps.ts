@@ -1,6 +1,5 @@
 import { AfterAll, Before, BeforeAll, DataTable, Given, Then, When } from '@cucumber/cucumber'
 import { db, dbCfg } from '../../../src/database/db'
-
 import expect from 'expect'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { AnyTypeOfKeyboard, MarkupHelper } from '../lib/MarkupHelper'
@@ -16,6 +15,7 @@ import { InlineKeyboardMarkup } from 'telegraf/typings/telegram-types'
 import { first } from 'lodash/fp'
 import { ALL_CATEGORIES } from '@culthub/interfaces'
 import { cleanFromEmojis } from '../../../src/util/string-utils'
+import { enrichEventWithAutotags } from '../../../src/core/event-post-sync-enrich'
 
 function assertEqualsWithEmojyRespect(expected: string, actual: string) {
     if (expected.match(emojiRegex())) {
@@ -61,6 +61,9 @@ Given(/^there is events:$/, async function (table: DataTable) {
         if (row.tag_level_1 !== undefined) {
             row.tag_level_1 = row.tag_level_1.split(/[\s,]+/)
         }
+        row.tag_level_2 = row.tag_level_2 !== undefined ? row.tag_level_2.split(/[\s,]+/) : []
+        row.price = row.price === undefined ? '' : row.price
+
         if (row.category !== undefined && !ALL_CATEGORIES.includes(row.category)) {
             expect(row.category).toEqual(`to be one of ${ALL_CATEGORIES.join(',')}`)
         }
@@ -71,7 +74,14 @@ Given(/^there is events:$/, async function (table: DataTable) {
             expect(row.timetable).toEqual(timetableResult.errors.join('\n'))
         }
 
-        return getMockEvent({...row, eventTime: timetableResult.timeIntervals})
+        // @ts-ignore
+        row = enrichEventWithAutotags(row as unknown as Event, {
+            predictedIntervals: timetableResult.predictedIntervals,
+            parsedTimetable: timetableResult.parsedTimetable,
+            now: this.now
+        })
+
+        return getMockEvent({...row, eventTime: timetableResult.predictedIntervals})
     })
 
     await syncEventsDb4Test(mockEvents)

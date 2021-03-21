@@ -1,7 +1,6 @@
 import pg_promise, { IDatabase, IInitOptions, IMain } from 'pg-promise'
 import * as pg from 'pg-promise/typescript/pg-subset'
 import { IConnectionParameters } from 'pg-promise/typescript/pg-subset'
-import { CustomFilterRepository } from './custom-filter-repository'
 import { TopEventsRepository } from './db-top-events'
 import { AdminRepository } from './db-admin'
 import { SearchRepository } from './search'
@@ -17,10 +16,14 @@ import { EventsCommonRepository } from './db-events-common'
 import { LikesRepository } from './db-likes'
 import { EventsGeoRepository } from './db-events-geo'
 import { EventsMatchingRepository } from './db-event-matching'
+import d from 'debug'
+import { DbCustomizeRepository } from './db-customize-repository'
+
+const debug = d('bot:sql')
 
 export interface IExtensions {
     repoSync: EventsSyncRepository,
-    repoCustomEvents: CustomFilterRepository
+    repoCustomEvents: DbCustomizeRepository
     repoTopEvents: TopEventsRepository
     repoAdmin: AdminRepository
     repoSearch: SearchRepository
@@ -40,7 +43,7 @@ const initOptions: IInitOptions<IExtensions> = {
 
     extend(dbEx: BotDb) {
         dbEx.repoSync = new EventsSyncRepository(dbEx, pgp)
-        dbEx.repoCustomEvents = new CustomFilterRepository(dbEx, pgp)
+        dbEx.repoCustomEvents = new DbCustomizeRepository(dbEx, pgp)
         dbEx.repoTopEvents = new TopEventsRepository(dbEx, pgp)
         dbEx.repoAdmin = new AdminRepository(dbEx, pgp)
         dbEx.repoSearch = new SearchRepository(dbEx, pgp)
@@ -55,7 +58,7 @@ const initOptions: IInitOptions<IExtensions> = {
     },
 
     query(e) {
-        // console.log(e.query)
+        debug('%s', e.query)
     }
 
 }

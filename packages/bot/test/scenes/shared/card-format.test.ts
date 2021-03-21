@@ -23,7 +23,7 @@ const defaultEvent: Event = {
     duration: '2 часа',
     address: '',
     tag_level_1: ['#level1'],
-    tag_level_2: ['#level2', '#_служебный_тег'],
+    tag_level_2: ['#комфорт', '#_недешево'],
     tag_level_3: ['#level3'],
     rating: 15,
     geotag: '',

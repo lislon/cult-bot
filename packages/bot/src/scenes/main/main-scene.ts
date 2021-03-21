@@ -206,7 +206,7 @@ async function showDirectMessage(ctx: ContextMessageUpdate, extId: string) {
         const startUsingBot = Markup.button.callback(i18Btn(ctx, 'back_as_new'), 'back_as_new')
         await ctx.replyWithHTML(cardFormat({
             ...event,
-            isFuture: isEventInFuture(parsedTimetable.timeIntervals, ctx.now())
+            isFuture: isEventInFuture(parsedTimetable.predictedIntervals, ctx.now())
         }, { now: ctx.now() }), extraInlineMenu([likesRow, [startUsingBot]]))
         analyticRecordEventView(ctx, event)
         ctx.ua.pv({

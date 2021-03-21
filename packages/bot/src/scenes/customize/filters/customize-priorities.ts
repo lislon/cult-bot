@@ -6,20 +6,25 @@ import { Scenes } from 'telegraf'
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('customize_scene')
 const {revertActionName} = i18nSceneHelper(scene)
 
-export async function customizepriorities(ctx: ContextMessageUpdate) {
+export async function customizePriorities(ctx: ContextMessageUpdate) {
     const state = ctx.session.customize
     const menu = new DropdownMenu(ctx, state.priorities, state.openedMenus, 'priorities_section')
+
+    function tagLevel2Btn(btn: TagLevel2) {
+        return [menu.button(btn)]
+    }
 
     const buttons = [
         ...(menu.dropDownButtons('menu_childrens', [chidrensTags])),
         ...(menu.dropDownButtons('menu_cost', [['#бесплатно', '#доступноподеньгам', '#_недешево']])),
-        [menu.button('#комфорт')],
-        [menu.button('#премьера')],
-        [menu.button('#навоздухе')],
-        [menu.button('#компанией')],
-        [menu.button('#новыеформы')],
-        [menu.button('#успетьзачас')],
-        [menu.button('#культурныйбазис')],
+        tagLevel2Btn('#комфорт'),
+        tagLevel2Btn('#премьера'),
+        tagLevel2Btn('#навоздухе'),
+        tagLevel2Btn('#компанией'),
+        tagLevel2Btn('#новыеформы'),
+        tagLevel2Btn('#успетьзачас'),
+        tagLevel2Btn('#_последнийшанс'),
+        tagLevel2Btn('#культурныйбазис'),
     ]
     return buttons
 }

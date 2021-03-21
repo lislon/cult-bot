@@ -94,7 +94,12 @@ export interface EventWithPast extends Event {
 }
 
 export function filterTagLevel2(row: Event | AdminEvent) {
-    return row.tag_level_2.filter(t => !t.startsWith('#_'))
+    let tags = row.tag_level_2;
+    if (tags.includes('#_последнийшанс') && !tags.includes('#последнийшанс')) {
+        tags = [...tags, '#последнийшанс']
+    }
+    tags = tags.filter(t => !t.startsWith('#_'))
+    return tags
 }
 
 function isCardWithPossiblePast(row: Event | EventWithPast): row is EventWithPast {

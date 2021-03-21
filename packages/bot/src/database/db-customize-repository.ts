@@ -4,18 +4,18 @@ import { IDatabase, IMain } from 'pg-promise'
 import { LimitOffset } from './db'
 
 
-export interface CustomFilter extends Partial<LimitOffset> {
+export interface CustomizeFilter extends Partial<LimitOffset> {
     weekendRange: DateInterval
     timeIntervals?: DateInterval[]
     format?: EventFormat
     rubrics?: string[]
     priorities?: TagLevel2[]
 }
-export class CustomFilterRepository {
+export class DbCustomizeRepository {
     constructor(private db: IDatabase<any>, private pgp: IMain) {
     }
 
-    public async findEventIdsCustomFilter(customFilter: CustomFilter): Promise<number[]> {
+    public async findEventIdsCustomFilter(customFilter: CustomizeFilter): Promise<number[]> {
         const {queryBody, queryParams} = doQueryCore(customFilter)
 
         const sql = `
@@ -36,7 +36,7 @@ export class CustomFilterRepository {
     }
 
 
-    public async countEventsCustomFilter(customFilter: CustomFilter): Promise<number> {
+    public async countEventsCustomFilter(customFilter: CustomizeFilter): Promise<number> {
         const {queryBody, queryParams} = doQueryCore(customFilter)
 
         const sql = `SELECT COUNT(cb.id) AS count ${queryBody}`
@@ -67,9 +67,7 @@ function priceTagsAlternativesLogic(priorities: TagLevel2[]): TagLevel2[] {
     return priorities.filter(c => moneyTags.includes(c))
 }
 
-
-
-function doQueryCore(customFilter: CustomFilter) {
+function doQueryCore(customFilter: CustomizeFilter) {
     const queryBody = `
         FROM cb_events cb
         WHERE cb.deleted_at IS NULL AND EXISTS
@@ -102,7 +100,6 @@ function doQueryCore(customFilter: CustomFilter) {
 
     const priorities = customFilter.priorities || []
     const prioritiesFilteredFromHardTags = priorities
-        .filter(t => !t.startsWith('#_'))
         .filter(c => !chidrensTags.includes(c))
         .filter(c => !moneyTags.includes(c))
 

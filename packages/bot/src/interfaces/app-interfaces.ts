@@ -28,7 +28,10 @@ export type TagLevel2 = '#компанией'
     | '#успетьзачас'
     | '#навоздухе'
     | '#премьера'
+    | '#культурныйбазис'
     | '#_недешево'
+    | '#последнийшанс'  // for permanent marker in db
+    | '#_последнийшанс'
 
 
 export const moneyTags: TagLevel2[] = ['#доступноподеньгам', '#бесплатно', '#_недешево']
@@ -83,7 +86,7 @@ export interface Event {
     description: string
     url: string
     tag_level_1: string[]
-    tag_level_2: string[]
+    tag_level_2: TagLevel2[]
     tag_level_3: string[]
     rating: number
     reviewer: string

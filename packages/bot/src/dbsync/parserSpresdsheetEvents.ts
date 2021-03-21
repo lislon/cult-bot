@@ -17,8 +17,8 @@ import { botConfig } from '../util/bot-config'
 import { logger } from '../util/logger'
 import { countBy, last } from 'lodash'
 import { ExcelUpdater } from '@culthub/google-docs'
-import Sheets = sheets_v4.Sheets
 import { rightDate } from '@culthub/timetable'
+import Sheets = sheets_v4.Sheets
 
 export interface SpreadSheetValidationError {
     sheetTitle: string,
@@ -56,13 +56,13 @@ const OLD_DATE = parseISO('1999-01-01T00:00:00Z')
 const FUTURE_DATE = parseISO('3000-01-01 00:00:00')
 
 function getDueDate(mapped: ExcelRowResult) {
-    const lastEventDate = last(mapped.timeIntervals)
+    const lastEventDate = last(mapped.predictedIntervals)
     if (lastEventDate === undefined) {
         return OLD_DATE
-    } else if (mapped.timetable?.anytime) {
+    } else if (mapped.parsedTimetable?.anytime) {
         return FUTURE_DATE
     } else {
-        return rightDate(last(mapped.timeIntervals))
+        return rightDate(last(mapped.predictedIntervals))
     }
 }
 
@@ -75,7 +75,7 @@ export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, sp
         excel.spreadsheets.values.batchGet({spreadsheetId, ranges})
     ])
 
-    const sheetsParsedRows = sheetsData.data.valueRanges.map((sheet, sheetNo: number) => {
+    return sheetsData.data.valueRanges.map((sheet, sheetNo: number) => {
         const sheetId = sheetsMetaData.data.sheets[sheetNo].properties.sheetId
 
         // Print columns A and E, which correspond to indices 0 and 4.
@@ -105,7 +105,6 @@ export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, sp
             sheetTitle: sheetsMetaData.data.sheets[sheetNo].properties.title
         } as ExcelSheetResult
     })
-    return sheetsParsedRows
 }
 
 export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel: Sheets, statusCb?: (sheetTitle: string) => Promise<void>): Promise<ExcelParseResult> {
@@ -176,8 +175,8 @@ export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel:
                 if (mapped.valid) {
                     rawEvents.push({
                         primaryData: mapped.data,
-                        timetable: mapped.timetable,
-                        timeIntervals: mapped.timeIntervals,
+                        timetable: mapped.parsedTimetable,
+                        timeIntervals: mapped.predictedIntervals,
                         is_anytime: mapped.data.timetable.includes('в любое время'),
                         popularity: mapped.popularity,
                         fakeLikes: mapped.fakeLikes || 0,

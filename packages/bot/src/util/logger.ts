@@ -34,7 +34,13 @@ function getFormat() {
         )
     } else {
         return combine(
-            format.json(),
+            format.errors({stack: true}),
+            format.colorize(),
+            format.splat(),
+            format.simple(),
+            printf(({level, message, stack}) => {
+                return `[${level}] ${message}${stack ? '- ' + stack : ''}`;
+            })
         )
     }
 }

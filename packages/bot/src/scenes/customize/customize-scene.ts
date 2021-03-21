@@ -13,7 +13,7 @@ import { resetSessionIfProblem } from './customize-utils'
 import { SceneRegister } from '../../middleware-utils'
 import { isEmpty } from 'lodash'
 import { prepareRepositoryQuery, prepareSessionStateIfNeeded, StageType } from './customize-common'
-import { customizepriorities, prioritiesOptionLogic } from './filters/customize-priorities'
+import { customizePriorities, prioritiesOptionLogic } from './filters/customize-priorities'
 import { customizeRubrics, rubricsOptionLogic } from './filters/customize-rubrics'
 import { formatExplainTime, getKeyboardTime, timeOptionLogic } from './filters/customize-time'
 import { formatExplainFormat, formatOptionLogic, getKeyboardFormat } from './filters/customize-format'
@@ -148,7 +148,7 @@ async function updateDialog(ctx: ContextMessageUpdate, subStage: StageType, opti
         root: async () => await getRootKeyboard(ctx),
         format: async () => [...await getKeyboardFormat(ctx), await btnRow()],
         rubrics: async () => [...await customizeRubrics(ctx), await btnRow()],
-        priorities: async () => [...await customizepriorities(ctx), await btnRow()],
+        priorities: async () => [...await customizePriorities(ctx), await btnRow()],
         time: async () => [...await getKeyboardTime(ctx), await btnRow()],
     }
 

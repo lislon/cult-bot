@@ -27,8 +27,8 @@ export async function loadEventsAsFavorite(eventIds: number[], now: Date): Promi
         return {
             ...e,
             parsedTimetable,
-            firstDate: parsedTimetable.timeIntervals.length > 0 ? leftDate(first(parsedTimetable.timeIntervals)) : new Date(0),
-            isFuture: isEventInFuture(parsedTimetable.timeIntervals, now)
+            firstDate: parsedTimetable.predictedIntervals.length > 0 ? leftDate(first(parsedTimetable.predictedIntervals)) : new Date(0),
+            isFuture: isEventInFuture(parsedTimetable.predictedIntervals, now)
         } as FavoriteEvent
     })
 
@@ -55,11 +55,11 @@ export function sortFavorites(events: FavoriteEvent[]) {
     return [...events].sort((left, right) => {
             if (left.isFuture === true && right.isFuture === true) {
 
-                if (left.parsedTimetable.timetable.anytime === false && right.parsedTimetable.timetable.anytime === false) {
+                if (left.parsedTimetable.parsedTimetable.anytime === false && right.parsedTimetable.parsedTimetable.anytime === false) {
                     return compareAsc(left.firstDate, right.firstDate)
-                } else if (left.parsedTimetable.timetable.anytime === true) {
+                } else if (left.parsedTimetable.parsedTimetable.anytime === true) {
                     return 1
-                } else if (right.parsedTimetable.timetable.anytime === true) {
+                } else if (right.parsedTimetable.parsedTimetable.anytime === true) {
                     return -1
                 } else {
                     return 0

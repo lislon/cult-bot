@@ -5,19 +5,23 @@ import { db, IExtensions } from './db'
 import { MomentIntervals } from '@culthub/timetable'
 import { Recovered, SyncConfig, UniversalDbSync, UniversalSyncDiff, WithId } from '@culthub/universal-db-sync'
 import { fieldInt, fieldStr, fieldTextArray, fieldTimestamptzNullable } from '@culthub/pg-utils'
+import { TagLevel2 } from '../interfaces/app-interfaces'
+import { EventCategory } from '@culthub/interfaces'
 
 function generateRandomOrder() {
     return Math.ceil(Math.random() * 1000000)
 }
 
 export type EventToRecover = Recovered<EventToSave, EventDeletedColumns>
-export type EventDeletedColumns = 'title'|'category'
+export type EventDeletedColumns = 'title' | 'category'
 
 export type EventsSyncDiff = UniversalSyncDiff<EventToSave, EventDeletedColumns>
 export type EventsSyncDiffSaved = UniversalSyncDiff<WithId<EventToSave>, EventDeletedColumns>
 
 export interface EventForRefresh {
     id: number
+    category: EventCategory
+    tagLevel2: TagLevel2[]
     timetable: string
     lastDate: Date
 }
@@ -31,6 +35,7 @@ export interface EventIntervalForSave {
     eventId: number
     timeIntervals: MomentIntervals
 }
+
 const MD5_IGNORE: (keyof DbEvent)[] = ['order_rnd']
 
 function getMd5Columns(): (keyof DbEvent)[] {
@@ -73,14 +78,22 @@ export const eventColumnsDef = [
     fieldInt('dislikes_fake'),
 ]
 
+type TagUpdate = { id: number, tagLevel2: TagLevel2[] }
+
 export class EventsSyncRepository {
     readonly dbColIntervals: ColumnSet
     readonly dbColEvents: ColumnSet
+    readonly dbColUpdateTagLevel2: ColumnSet
     readonly syncCommon: UniversalDbSync<EventToSave, DbEvent, EventDeletedColumns>
 
     constructor(private db: IDatabase<unknown>, private pgp: IMain) {
         this.dbColIntervals = new pgp.helpers.ColumnSet(['event_id', 'entrance'], {table: 'cb_events_entrance_times'})
         this.dbColEvents = new pgp.helpers.ColumnSet(eventColumnsDef, {table: 'cb_events'})
+        this.dbColUpdateTagLevel2 = new pgp.helpers.ColumnSet(
+            eventColumnsDef.filter(s => s.name === 'tag_level_2'),
+            {table: 'cb_events'}).merge(['?id'])
+
+
 
         const cfg: SyncConfig<EventToSave, DbEvent, EventDeletedColumns> = {
             table: 'cb_events',
@@ -114,7 +127,7 @@ export class EventsSyncRepository {
                 })
 
         await this.syncEventIntervals(eventsIntervalToSync, db)
-        return syncDiffWithIds;
+        return syncDiffWithIds
     }
 
     public async shuffle(): Promise<void> {
@@ -125,23 +138,34 @@ export class EventsSyncRepository {
         `)
     }
 
-    public async getLastEventDates(): Promise<EventForRefresh[]> {
+    public async getEventsForRefresh(): Promise<EventForRefresh[]> {
         return await db.map(`
             select
                 cb.id,
+                cb.tag_level_2,
+                cb.category,
                 cb.timetable,
                 (SELECT MAX(upper(entrance))
                  FROM cb_events_entrance_times cbet
                  WHERE cbet.event_id  = cb.id) AS lastdate
             from cb_events cb
             WHERE cb.deleted_at IS NULL
-            `, undefined, ({id, timetable, lastdate}) => {
+            `, undefined, (row) => {
             return {
-                id: +id,
-                timetable,
-                lastDate: lastdate
+                id: +row.id,
+                category: row.category as EventCategory,
+                timetable: row.timetable,
+                tagLevel2: row.tag_level_2,
+                lastDate: row.lastdate
             }
         })
+    }
+
+    public async updateTagsLevel2(tags: TagUpdate[], dbTx: ITask<IExtensions>): Promise<void> {
+        if (tags.length > 0) {
+            const s = this.pgp.helpers.update(tags.map(t => ({ id: t.id, tag_level_2: t.tagLevel2 })), this.dbColUpdateTagLevel2) + ' WHERE v.id = t.id'
+            await dbTx.none(s)
+        }
     }
 
     public async syncEventIntervals(eventsWithIntervals: EventIntervalForSave[], dbTx: ITask<IExtensions>): Promise<void> {

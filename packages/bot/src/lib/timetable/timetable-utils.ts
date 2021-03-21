@@ -16,28 +16,28 @@ export function getOnlyBotTimetable(timetable: string): string {
 
 export interface ParseAndPredictTimetableResult {
     errors: string[]
-    timeIntervals: MomentIntervals
-    timetable?: EventTimetable
+    predictedIntervals: MomentIntervals
+    parsedTimetable?: EventTimetable
 }
 
-type PredictTimetableConfig = { SCHEDULE_WEEKS_AGO: number, SCHEDULE_WEEKS_AHEAD: number }
+type PredictTimetableConfig = { SCHEDULE_DAYS_AGO: number, SCHEDULE_DAYS_AHEAD: number }
 
 export function parseAndPredictTimetable(rawTimetable: string, now: Date, config: PredictTimetableConfig): ParseAndPredictTimetableResult {
     const result: ParseAndPredictTimetableResult = {
         errors: [],
-        timetable: undefined,
-        timeIntervals: []
+        parsedTimetable: undefined,
+        predictedIntervals: []
     }
 
     const timetable = parseTimetable(getOnlyBotTimetable(rawTimetable), now);
     if (timetable.status === true) {
 
         // TODO: Timzezone
-        const dateFrom = subWeeks(config.SCHEDULE_WEEKS_AGO)(startOfISOWeek(now))
+        const dateFrom = subWeeks(config.SCHEDULE_DAYS_AGO)(startOfISOWeek(now))
 
-        result.timeIntervals = predictIntervals(dateFrom, timetable.value, (config.SCHEDULE_WEEKS_AGO + config.SCHEDULE_WEEKS_AHEAD) * 7)
-        result.timetable = timetable.value
-        const errors = validateIntervals(result.timeIntervals)
+        result.predictedIntervals = predictIntervals(dateFrom, timetable.value, (config.SCHEDULE_DAYS_AGO + config.SCHEDULE_DAYS_AHEAD) * 7)
+        result.parsedTimetable = timetable.value
+        const errors = validateIntervals(result.predictedIntervals)
         if (errors.length > 0) {
             result.errors = errors
         }

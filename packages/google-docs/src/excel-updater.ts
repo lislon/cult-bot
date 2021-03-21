@@ -11,7 +11,6 @@ import {
 } from './googlesheets'
 import Schema$Request = sheets_v4.Schema$Request
 import Schema$BatchUpdateSpreadsheetResponse = sheets_v4.Schema$BatchUpdateSpreadsheetResponse
-import retryTimes = jest.retryTimes
 
 type StringKeysOf<TObj> = { [K in keyof TObj]: K extends string ? K : never }[keyof TObj]
 

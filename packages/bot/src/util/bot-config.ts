@@ -60,6 +60,13 @@ export class BotConfig {
     public SCHEDULE_WEEKS_AGO: number
     public SCHEDULE_WEEKS_AHEAD: number
 
+    get SCHEDULE_DAYS_AGO(): number {
+        return this.SCHEDULE_WEEKS_AGO * 7
+    }
+    get SCHEDULE_DAYS_AHEAD(): number {
+        return this.SCHEDULE_WEEKS_AHEAD * 7
+    }
+
     public YANDEX_AFISHA_URL?: string
     public readonly GOOGLE_AUTH_FILE = path.resolve(__dirname, '../../secrets/culthubbot-google-account.json')
     /**

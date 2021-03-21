@@ -1,7 +1,5 @@
 import { config } from 'dotenv'
-import path from "path"
-import btoa from 'btoa'
-import got from 'got'
+import path from 'path'
 
 type Envs = 'development' | 'production' | 'test'
 
