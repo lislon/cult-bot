@@ -11,7 +11,7 @@ import debugNamespace from 'debug'
 import { logger } from '../../util/logger'
 import { hasAnyEventsInFuture } from '@culthub/timetable'
 
-const debug = debugNamespace('card-format')
+const debug = debugNamespace('bot:card-format')
 
 export function addHtmlNiceUrls(text: string) {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
@@ -44,15 +44,12 @@ export function formatCardTimetable(event: Event, now: Date) {
     function cutYear(humanTimetable: string) {
         return humanTimetable.replace(/^\d+ [а-яА-Я]+(\s+\d+)?\s*-\s*/g, 'до ')
     }
-    debug('start parsing timetable')
     const structured = parseTimetable(rawTimetable, now);
-    debug('start formatting timetable')
     let formatted: string;
     if (structured.status === true) {
         formatted =  new TimetableFormatter(now, {
             hidePast: !!hasAnyEventsInFuture(structured.value, now)
         }).formatTimetable(structured.value)
-        debug('done formatting timetable')
 
         // be save
         if (formatted === '') {
@@ -106,6 +103,7 @@ function isCardWithPossiblePast(row: Event | EventWithPast): row is EventWithPas
 
 export function cardFormat(row: Event | AdminEvent | EventWithPast, options: CardOptions) {
     let text = ``
+    debug('formatting card')
     const rowWithOldVersion = row as AdminEvent
     if (rowWithOldVersion.snapshotStatus !== undefined) {
         if (rowWithOldVersion.snapshotStatus === 'inserted') {
@@ -179,5 +177,6 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
         text += `<i>${row.extId}, ${row.reviewer}, оценка ${row.rating}</i>\n`
     }
 
+    debug('card formatted')
     return text
 }

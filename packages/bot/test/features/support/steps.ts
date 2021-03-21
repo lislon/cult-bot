@@ -15,22 +15,14 @@ import { clone } from 'lodash'
 import { InlineKeyboardMarkup } from 'telegraf/typings/telegram-types'
 import { first } from 'lodash/fp'
 import { ALL_CATEGORIES } from '@culthub/interfaces'
-
-function clean(str: string) {
-    return str
-        .replace(emojiRegex(), '')
-        .replace(/[🏛]/g, '')
-        .replace(/\[\s+/g, '[')
-        .replace(/\s]+/g, ']')
-        .replace(/(?<=<[^/>]+>)\s+/g, '')
-}
+import { cleanFromEmojis } from '../../../src/util/string-utils'
 
 function assertEqualsWithEmojyRespect(expected: string, actual: string) {
     if (expected.match(emojiRegex())) {
         expect(actual).toEqual(expected)
     } else {
-        const a = clean(actual)
-        const e = clean(expected)
+        const a = cleanFromEmojis(actual)
+        const e = cleanFromEmojis(expected)
         expect(a).toEqual(e)
     }
 }

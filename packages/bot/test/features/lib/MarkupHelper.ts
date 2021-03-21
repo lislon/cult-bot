@@ -34,7 +34,7 @@ export class MarkupHelper {
 
     static replaceI18nBtns(str: string) {
         return str.replace(/\[~([^.]+)\.([^\]]+)\]/g, (match, sceneName, btnName) => {
-                const id = `scenes.${sceneName}.keyboard.${btnName}`
+                const id = `${sceneName === 'shared' ? '' : 'scenes.'}${sceneName}.keyboard.${btnName}`
                 const str = i18n.t('ru', id)
                 if (str === undefined) {
                     throw new Error(`Cant resolve btn [${match}] (Tried to find by ${id})`)

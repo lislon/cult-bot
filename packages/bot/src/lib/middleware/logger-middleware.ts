@@ -2,6 +2,8 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import chalk from 'chalk'
 import { logger } from '../../util/logger'
 import { Update } from 'telegraf/typings/telegram-types'
+import d from 'debug'
+const debug = d('bot:msg')
 
 const DEFAULT_COLORS = {
     id: chalk.blue,
@@ -184,6 +186,7 @@ export function loggerMiddleware() {
         } else {
             logger.info(format(ctx.update))
         }
+        debug(format(ctx.update))
         return Promise.resolve(next())
     }
 }

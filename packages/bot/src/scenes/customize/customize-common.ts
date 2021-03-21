@@ -36,7 +36,7 @@ export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
     ctx.session.customize = {
         openedMenus: SessionEnforcer.array(openedMenus),
-        priorities: SessionEnforcer.array(priorities || cennosti).filter(s => s !== '#ЗОЖ') as TagLevel2[],
+        priorities: SessionEnforcer.array(priorities || cennosti) as TagLevel2[],
         rubrics: SessionEnforcer.array(rubrics || oblasti),
         time: SessionEnforcer.array(time),
         format: SessionEnforcer.array(format),

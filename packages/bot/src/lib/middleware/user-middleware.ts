@@ -2,7 +2,7 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { db } from '../../database/db'
 import { countInteractions } from './analytics-middleware'
 import { botConfig } from '../../util/bot-config'
-import { isBlockedError } from '../../util/error-handler';
+import { isBlockedError } from '../../util/error-handler'
 
 const UPDATE_EVERY_N_SECONDS = 1 * 30
 
