@@ -10,7 +10,7 @@ import fs from 'fs'
 import { logger } from '../logger'
 import { EventCategory } from '@culthub/interfaces'
 
-const debug = debugNamespace('yandex-parser')
+const debug = debugNamespace('yandex-parser:download')
 
 export interface ParseAfishaOptions {
     limitEvents?: number
@@ -80,9 +80,10 @@ export async function afishaDownload(dates: Date[], options: ParseAfishaOptions 
                     if (offset + limit < total) {
                         debug(`parsed ${formatISO(res.options.date)} ${offset} / ${total} (limit = ${options.limitEvents ?? 'not-defined'})`)
                         if (options.limitEvents === undefined || allData.length < options.limitEvents) {
-                            debug(`queue offset ${offset + limit}`)
+                            const nextUrl = url(offset + limit, formatISO(res.options.date, { representation: 'date' }))
+                            debug(`queue next URL ${nextUrl}`)
                             c.queue({
-                                url: url(offset + limit, formatISO(res.options.date, { representation: 'date' })),
+                                url: nextUrl,
                                 date: res.options.date
                             })
                         }

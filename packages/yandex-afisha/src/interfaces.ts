@@ -65,7 +65,7 @@ export type WithBotExtId = {
 
 export interface DiffReport {
     inserted: (ParsedEventToSave & WithBotExtId)[]
-    updated: (WithId<ParsedEventToSave> & { diffFields: ParsedEventField[] } & WithBotExtId)[]
+    updated: (WithId<ParsedEventToSave> & { diffFields: ParsedEventField[]; old: ParsedEvent } & WithBotExtId)[]
     deleted: (Deleted<DeletedColumns> & WithBotExtId)[]
     notChangedCount: number
 }

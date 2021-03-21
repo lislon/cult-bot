@@ -1,6 +1,17 @@
 import { sheets_v4 } from 'googleapis'
-import { CellColor, mkAnnotateCell, mkClearFormat, mkClearValue, mkColorCell, mkEditCellDate, mkEditCellValue } from './googlesheets'
+import {
+    CellColor,
+    mkAnnotateCell,
+    mkClearFormat,
+    mkClearSheet,
+    mkClearValue,
+    mkColorCell,
+    mkEditCellDate,
+    mkEditCellValue
+} from './googlesheets'
 import Schema$Request = sheets_v4.Schema$Request
+import Schema$BatchUpdateSpreadsheetResponse = sheets_v4.Schema$BatchUpdateSpreadsheetResponse
+import retryTimes = jest.retryTimes
 
 type StringKeysOf<TObj> = { [K in keyof TObj]: K extends string ? K : never }[keyof TObj]
 
@@ -27,6 +38,10 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
         }))
     }
 
+    clearSheet(sheetId: number): void {
+        this.requests.push(mkClearSheet(sheetId))
+    }
+
     clearValues(sheetId: number, fromColumn: K, toColumn: K, startRow: number, numOfRows: number): void {
         this.requests.push(mkClearValue(sheetId, {
             startColumnIndex: this.getColumnIndex(fromColumn) - 1,
@@ -44,14 +59,16 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
         this.requests.push(mkAnnotateCell(sheetId, note, this.getColumnIndex(column), rowNo))
     }
 
-    async update(spreadsheetId: string): Promise<void> {
+    async update(spreadsheetId: string): Promise<Schema$BatchUpdateSpreadsheetResponse> {
         if (this.requests.length > 0) {
-            await this.excel.spreadsheets.batchUpdate({
+            const result =  await this.excel.spreadsheets.batchUpdate({
                 spreadsheetId,
                 requestBody: {requests: this.requests}
             })
             this.requests = []
+            return result.data
         }
+        return {}
     }
 
     editCellDate(sheetId: number, column: K, rowNo: number, value: Date): void {

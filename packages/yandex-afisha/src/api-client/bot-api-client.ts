@@ -4,17 +4,17 @@ import got from 'got'
 import { FindMatchingEventRequest, FindMatchingEventResponse } from '@culthub/interfaces'
 import debugNamespace from 'debug'
 
-const debug = debugNamespace('api')
+const debug = debugNamespace('yandex-parser:api')
 
 export async function apiFindMatching(req: FindMatchingEventRequest): Promise<FindMatchingEventResponse> {
-    debug(`Sending request with ${req.events.length} events...`)
+    debug(`Sending API request with ${req.events.length} events...`)
     const json: FindMatchingEventResponse = await got.post(`${appConfig.CULTHUB_BOT_API_URL}/find-matching`, {
         json: req,
         headers: {
             authorization: await receiveAuthToken()
         },
         timeout: {
-            connect: 40
+            connect: 40 * 1000
         }
     }).json()
 

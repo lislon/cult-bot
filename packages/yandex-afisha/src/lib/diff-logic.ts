@@ -5,7 +5,6 @@ import { UniversalSyncDiff, WithId } from '@culthub/universal-db-sync'
 import { DeletedColumns, DiffReport, ParsedEventField, WithBotExtId } from '../interfaces'
 import { isEqual, sortBy } from 'lodash'
 import { FindMatchingEventResponse } from '@culthub/interfaces'
-import { Deleted } from '@culthub/universal-db-sync/src/universal-db-sync'
 
 function parseTimetableOrThrow(input: string, now: Date): EventTimetable {
     const val = parseTimetable(input, now)
@@ -15,15 +14,13 @@ function parseTimetableOrThrow(input: string, now: Date): EventTimetable {
     throw new Error(`Failed to parse ${input}: ${val.errors.join(', ')}`)
 }
 
-function getFieldsWithDiffs(updatedEvent: WithId<ParsedEventToSave>, existingEvents: (ParsedEvent & { id: number })[]): ParsedEventField[] {
-    const existingEvent = existingEvents.find(e => e.id === updatedEvent.primaryData.id)
-    if (existingEvent === undefined) throw new Error(`wtf, not existing event id=${updatedEvent.primaryData.id}`)
+function getFieldsWithDiffs(updatedEvent: WithId<ParsedEventToSave>, existingEvent: (ParsedEvent & { id: number })): ParsedEventField[] {
     const now = new Date()
     const oldIntervals = predictIntervals(now, parseTimetableOrThrow(existingEvent.timetable, existingEvent.updatedAt || now), 90)
     const newIntervals = predictIntervals(now, parseTimetableOrThrow(existingEvent.timetable, existingEvent.updatedAt || now), 90)
 
     const compareByFields = Object.keys(updatedEvent.primaryData)
-        .filter(key => key !== 'timetable' && key !== 'updatedAt' && key !== 'tags') as unknown as ParsedEventField[]
+        .filter(key => key !== 'timetable' && key !== 'updatedAt' && key !== 'tags' && key !== 'place') as unknown as ParsedEventField[]
 
     const differentFields: ParsedEventField[] = []
     for (const compareByField of compareByFields) {
@@ -58,7 +55,13 @@ export async function prepareDiffReport(diff: UniversalSyncDiff<ParsedEventToSav
         deleted: sortBy(diff.deleted, [e => e.old.category, e => e.old.title]).map(encrichWithBotEventIds),
         updated: sortBy(diff.updated, [e => e.primaryData.category, e => e.primaryData.title])
             .map(d => {
-                return {...d, diffFields: getFieldsWithDiffs(d, existingEvents)}
+                const oldEvent = existingEvents.find(e => e.id === d.primaryData.id)
+                if (oldEvent === undefined) throw new Error(`Old event with = ${d.primaryData.id} not found`)
+                return {
+                    ...d,
+                    diffFields: getFieldsWithDiffs(d, oldEvent),
+                    old: oldEvent
+                }
             })
             .filter(({diffFields}) => diffFields.length > 0)
             .map(encrichWithBotEventIds),

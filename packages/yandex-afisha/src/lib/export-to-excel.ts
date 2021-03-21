@@ -5,6 +5,9 @@ import { ruFormat } from './ruFormat'
 import { Recovered } from '@culthub/universal-db-sync'
 import { DeletedColumns, DiffReport, WithBotExtId } from '../interfaces'
 import { appConfig } from '../app-config'
+import debugNamespace from 'debug'
+
+const debug = debugNamespace('yandex-parser:excel');
 
 const DIFF_CONTENT_EXCEL_COLUMNS = {
     category: 'Тип',
@@ -58,15 +61,28 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport,
     const excelUpdater = new ExcelUpdater(excel, CHANGED_EVENTS_COLUMNS)
 
     const existing = meta.data.sheets?.filter(s => s.properties?.title === sheetTitle)
-    let sheetId: number | undefined = undefined
+    let sheetId: number | undefined = existing?.length === 1 && existing[0].properties?.sheetId ? existing[0].properties?.sheetId : undefined
 
-    if (existing === undefined || existing.length === 0) {
+    if (sheetId === undefined) {
+        debug(`Sheet '${sheetTitle}' not exists. creating a new one...`)
         excelUpdater.addSheet(sheetTitle)
-    } else if (existing.length === 1 && existing[0].properties?.sheetId) {
-        sheetId = existing[0].properties?.sheetId
-        await excelUpdater.clearValues(existing[0].properties.sheetId, 'changeType', 'title', 1, 1000)
+        const response = await excelUpdater.update(spreadsheetId)
+        sheetId = response.replies ? +(response.replies[0].addSheet?.properties?.sheetId || 0) : 0
+    } else {
+        debug(`Sheet '${sheetTitle}' exists. Clear all values from 1-1000 and column format`)
+        excelUpdater.clearSheet(sheetId)
+        await excelUpdater.update(spreadsheetId)
+        debug(`Sheet '${sheetTitle}' exists. and it's ID = ${sheetId}`)
+
+        // await excelUpdater.clearValues(sheetId, 'changeType', 'title', 1, 1000)
+        //
+        //
+        // Object.keys(DIFF_CONTENT_EXCEL_COLUMNS).forEach((column: keyof typeof DIFF_CONTENT_EXCEL_COLUMNS) => {
+        //     if (sheetId !== undefined) {
+        //         excelUpdater.clearColumnFormat(sheetId, column, 1, 1000)
+        //     }
+        // })
     }
-    await excelUpdater.update(spreadsheetId)
 
     let rows: { [key in keyof typeof CHANGED_EVENTS_COLUMNS]: string }[] = []
 
@@ -77,18 +93,13 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport,
 
     if (sheetId !== undefined) {
         const updatedRowsStartsAt = 2
-        Object.keys(DIFF_CONTENT_EXCEL_COLUMNS).forEach((column: keyof typeof DIFF_CONTENT_EXCEL_COLUMNS) => {
-            if (sheetId !== undefined) {
-                excelUpdater.clearColumnFormat(sheetId, column, 1, 1000)
-                excelUpdater.clearValues(sheetId, 'changeType', 'url', 1, 1000)
-            }
-        })
-        await excelUpdater.update(spreadsheetId)
-
+        debug(`Colorize diffs`)
         diff.updated.forEach((eToUpdate, index) => {
             eToUpdate.diffFields.forEach(diffField => {
                 if (sheetId !== undefined && isDiffColumn(diffField)) {
                     excelUpdater.colorCell(sheetId, diffField, updatedRowsStartsAt + index, 'orange')
+                    const oldElement = eToUpdate.old[diffField]
+                    excelUpdater.annotateCell(sheetId, diffField, updatedRowsStartsAt + index, 'Было: \n' + (Array.isArray(oldElement) ? oldElement.join(' ') : oldElement))
                 }
             })
         })

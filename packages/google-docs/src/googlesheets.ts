@@ -19,7 +19,7 @@ export async function authToExcel(authJsonPath: string): Promise<Sheets> {
     const auth = new GoogleAuth({
         keyFile: authJsonPath,
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
+    })
     return google.sheets({version: 'v4', auth})
 }
 
@@ -76,6 +76,18 @@ export function mkClearFormat(sheetId: number, {startRowIndex, endRowIndex, star
         }
     }
 }
+
+export function mkClearSheet(sheetId: number): Schema$Request {
+    return {
+        'updateCells': {
+            'range': {
+                'sheetId': sheetId
+            },
+            'fields': 'userEnteredValue, userEnteredFormat, note'
+        }
+    }
+}
+
 
 export function mkClearValue(sheetId: number, {startRowIndex, endRowIndex, startColumnIndex, endColumnIndex}: Range): Schema$Request {
     return {
