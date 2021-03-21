@@ -1,0 +1,1 @@
+ALTER TABLE p_events ADD UNIQUE(ext_id);

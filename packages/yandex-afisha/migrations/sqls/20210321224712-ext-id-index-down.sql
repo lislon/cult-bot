@@ -1,0 +1,1 @@
+ALTER TABLE p_events DROP CONSTRAINT p_events_ext_id_key;

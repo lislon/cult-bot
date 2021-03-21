@@ -6,49 +6,15 @@ import { appConfig } from '../app-config'
 import { filterOnlyBotSpecificEvents } from '../lib/filter-logic'
 import { db } from '../database/db'
 import debugNamespace from 'debug'
-import { afishaDownload, toBotCategory } from '../lib/afisha-download'
+import { afishaDownload } from '../lib/afisha-download'
 import { logger } from '../logger'
 import { format } from 'date-fns'
 import { prepareDiffReport } from '../lib/diff-logic'
-import { CliCronArgs, parseCronArgs, parseDates } from './parse-common'
-import { apiFindMatching } from '../api-client/bot-api-client'
-import { UniversalSyncDiff } from '@culthub/universal-db-sync'
-import { DeletedColumns } from '../interfaces'
-import { RequestError } from 'got'
-import { FindMatchingEventResponse } from '@culthub/interfaces'
+import { CliCronArgs, parseCronArgs, parseDates, tryFindMatchingIds } from './parse-common'
 
 const debug = debugNamespace('yandex-parser:cron');
 
 const argv: CliCronArgs = parseCronArgs();
-
-async function tryFindMatchingIds(diff: UniversalSyncDiff<ParsedEventToSave, DeletedColumns>): Promise<FindMatchingEventResponse> {
-    try {
-        const botExtIds = await apiFindMatching({
-            events: [
-                ...[...diff.updated, ...diff.notChanged, ...diff.inserted, ...diff.recovered].map(e => ({
-                    id: e.primaryData.extId,
-                    category: toBotCategory(e.primaryData.category),
-                    title: e.primaryData.title
-                })),
-                ...[...diff.deleted].map(e => ({
-                    id: e.primaryData.extId,
-                    category: toBotCategory(e.old.category),
-                    title: e.old.title
-                }))
-            ]
-        })
-        return botExtIds
-    } catch (e) {
-        if (e instanceof RequestError && e.code === 'ECONNREFUSED') {
-            logger.warn('Skipping binding BotIds:' + e)
-        } else {
-            logger.error(e)
-        }
-        return {
-            events: []
-        }
-    }
-}
 
 (async function () {
     try {

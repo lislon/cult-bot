@@ -2,9 +2,10 @@ import { ParsedEvent, ParsedEventToSave } from '../database/parsed-event'
 import { db } from '../database/db'
 import { EventTimetable, parseTimetable, predictIntervals } from '@culthub/timetable'
 import { UniversalSyncDiff, WithId } from '@culthub/universal-db-sync'
-import { DeletedColumns, DiffReport, ParsedEventField, WithBotExtId } from '../interfaces'
+import { DeletedColumns, DiffReport, ParsedEventField } from '../interfaces'
 import { isEqual, sortBy } from 'lodash'
 import { FindMatchingEventResponse } from '@culthub/interfaces'
+import { encrichWithBotEventIds } from './cron-common'
 
 function parseTimetableOrThrow(input: string, now: Date): EventTimetable {
     const val = parseTimetable(input, now)
@@ -45,14 +46,14 @@ function getFieldsWithDiffs(updatedEvent: WithId<ParsedEventToSave>, existingEve
 export async function prepareDiffReport(diff: UniversalSyncDiff<ParsedEventToSave, DeletedColumns>, botExtIds: FindMatchingEventResponse): Promise<DiffReport> {
     const existingEvents = await db.repoSync.loadEventsByIds(diff.updated.map(e => e.primaryData.id))
 
-    function encrichWithBotEventIds<E extends { primaryData: { extId: string } }>(e: E): E & WithBotExtId {
-        return {...e, botExtId: botExtIds.events.find(ee => ee.id === e.primaryData.extId)?.extIds?.join(',') };
-    }
+
 
 
     return {
-        inserted: sortBy(diff.inserted, [e => e.primaryData.category, e => e.primaryData.title]).map(encrichWithBotEventIds),
-        deleted: sortBy(diff.deleted, [e => e.old.category, e => e.old.title]).map(encrichWithBotEventIds),
+        inserted: sortBy(diff.inserted, [e => e.primaryData.category, e => e.primaryData.title])
+            .map(e => encrichWithBotEventIds(e, botExtIds)),
+        deleted: sortBy(diff.deleted, [e => e.old.category, e => e.old.title])
+            .map(e => encrichWithBotEventIds(e, botExtIds)),
         updated: sortBy(diff.updated, [e => e.primaryData.category, e => e.primaryData.title])
             .map(d => {
                 const oldEvent = existingEvents.find(e => e.id === d.primaryData.id)
@@ -64,7 +65,7 @@ export async function prepareDiffReport(diff: UniversalSyncDiff<ParsedEventToSav
                 }
             })
             .filter(({diffFields}) => diffFields.length > 0)
-            .map(encrichWithBotEventIds),
+            .map(e => encrichWithBotEventIds(e, botExtIds)),
         notChangedCount: diff.notChanged.length
     }
 }

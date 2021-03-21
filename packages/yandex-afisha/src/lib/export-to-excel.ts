@@ -9,7 +9,7 @@ import debugNamespace from 'debug'
 
 const debug = debugNamespace('yandex-parser:excel');
 
-const DIFF_CONTENT_EXCEL_COLUMNS = {
+const CONTENT_EXCEL_COLUMNS = {
     category: 'Тип',
     title: 'Заголовок',
     timetable: 'Расписание',
@@ -23,7 +23,7 @@ const DIFF_CONTENT_EXCEL_COLUMNS = {
 
 const CHANGED_EVENTS_COLUMNS = {
     changeType: 'Изм',
-    ...DIFF_CONTENT_EXCEL_COLUMNS
+    ...CONTENT_EXCEL_COLUMNS
 }
 
 const SYMBOL_DELETED = '✖️ '
@@ -39,7 +39,7 @@ function isNothingChanged(diff: DiffReport): boolean {
 }
 
 
-function isDiffColumn(diffField: keyof ParsedEvent | 'botExtId'): diffField is keyof typeof DIFF_CONTENT_EXCEL_COLUMNS {
+function isDiffColumn(diffField: keyof ParsedEvent | 'botExtId'): diffField is keyof typeof CONTENT_EXCEL_COLUMNS {
     return diffField !== 'extId' && diffField != 'description' && diffField != 'parseUrl' && diffField != 'deletedAt' && diffField != 'updatedAt' && diffField !== 'botExtId'
 }
 
@@ -149,7 +149,7 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport,
     }
 }
 
-function eventToRow(e: Omit<ParsedEvent, 'id'> & WithBotExtId): { [key in keyof typeof DIFF_CONTENT_EXCEL_COLUMNS]: string } {
+function eventToRow(e: Omit<ParsedEvent, 'id'> & WithBotExtId): { [key in keyof typeof CONTENT_EXCEL_COLUMNS]: string } {
     const row = {
         category: e.category,
         title: e.title,
@@ -165,7 +165,7 @@ function eventToRow(e: Omit<ParsedEvent, 'id'> & WithBotExtId): { [key in keyof 
     return row
 }
 
-export async function saveCurrentToExcel(excel: sheets_v4.Sheets, events: Omit<ParsedEvent, 'id'>[], dates: Date[]): Promise<void> {
+export async function saveCurrentToExcel(excel: sheets_v4.Sheets, events: (Omit<ParsedEvent, 'id'>  & WithBotExtId)[], dates: Date[]): Promise<void> {
     const spreadsheetId = appConfig.GOOGLE_DOCS_ID
     if (spreadsheetId === undefined) {
         return
@@ -175,7 +175,7 @@ export async function saveCurrentToExcel(excel: sheets_v4.Sheets, events: Omit<P
     const meta = await excel.spreadsheets.get({spreadsheetId /*, ranges: [ `${title}!A1:AA`]*/})
 
 
-    const excelUpdater = new ExcelUpdater(excel, DIFF_CONTENT_EXCEL_COLUMNS)
+    const excelUpdater = new ExcelUpdater(excel, CONTENT_EXCEL_COLUMNS)
 
     const existing = meta.data.sheets?.filter(s => s.properties?.title === sheetTitle)
 
@@ -193,7 +193,7 @@ export async function saveCurrentToExcel(excel: sheets_v4.Sheets, events: Omit<P
     const data: string[][] = events.map(e => {
         const row = eventToRow(e)
         const result = []
-        const strings = Object.keys(DIFF_CONTENT_EXCEL_COLUMNS) as (keyof typeof DIFF_CONTENT_EXCEL_COLUMNS)[]
+        const strings = Object.keys(CONTENT_EXCEL_COLUMNS) as (keyof typeof CONTENT_EXCEL_COLUMNS)[]
         for (const rowElement of strings) {
             result.push(row[rowElement])
         }
@@ -201,7 +201,7 @@ export async function saveCurrentToExcel(excel: sheets_v4.Sheets, events: Omit<P
     })
 
 
-    const headerRow = Object.values(DIFF_CONTENT_EXCEL_COLUMNS)
+    const headerRow = Object.values(CONTENT_EXCEL_COLUMNS)
 
     await excelUpdater.updateOnlyValues(spreadsheetId, sheetTitle, [
         makeRowWithSingleCell('Дата парсинга: ' + ruFormat(new Date(), 'dd MMMM HH:mm'), headerRow),

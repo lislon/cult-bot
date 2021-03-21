@@ -3,6 +3,8 @@ import * as pg from 'pg-promise/typescript/pg-subset'
 import { IConnectionParameters } from 'pg-promise/typescript/pg-subset'
 import { appConfig } from '../app-config'
 import { ParsedEventRepository } from './parsed-event'
+import d from 'debug'
+const debug = d('yandex-afisha:sql')
 
 export interface IExtensions {
      repoSync: ParsedEventRepository,
@@ -17,7 +19,7 @@ const initOptions: IInitOptions<IExtensions> = {
     },
 
     query(e) {
-        // debug.tra(e.query)
+        debug('%s', e.query)
     }
 }
 

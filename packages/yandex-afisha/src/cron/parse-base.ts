@@ -8,7 +8,8 @@ import { db } from '../database/db'
 import { afishaDownload } from '../lib/afisha-download'
 import { logger } from '../logger'
 import { format } from 'date-fns'
-import { CliCronArgs, parseCronArgs, parseDates } from './parse-common'
+import { CliCronArgs, parseCronArgs, parseDates, tryFindMatchingIds } from './parse-common'
+import { encrichWithBotEventIds } from '../lib/cron-common'
 
 const argv: CliCronArgs = parseCronArgs();
 
@@ -29,7 +30,11 @@ const argv: CliCronArgs = parseCronArgs();
         })
 
         logger.debug(`Updating excel...`)
-        const parsedEventToRecovers = ([...diff.recovered, ...diff.updated, ...diff.inserted, ...diff.notChanged])
+        const matchingExtIds = await tryFindMatchingIds(diff)
+        const parsedEventToRecovers = [...diff.recovered, ...diff.updated, ...diff.inserted, ...diff.notChanged].map(
+            e => encrichWithBotEventIds(e, matchingExtIds)
+        )
+
         const excel = await authToExcel(appConfig.GOOGLE_AUTH_FILE)
         await saveCurrentToExcel(excel, parsedEventToRecovers.map(e => e.primaryData), dates)
         await db.$pool.end()
