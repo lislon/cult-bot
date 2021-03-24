@@ -64,6 +64,10 @@ export function formatCardTimetable(event: Event, now: Date) {
     return formatCinemaUrls(formatted)
 }
 
+export function tryParseDuration(text: string) {
+
+}
+
 export function formatEventDuration(text: string) {
     const m = text.match(/(\d+)\s*мин[^ ]*/)
     if (m && +m[1] >= 60) {
