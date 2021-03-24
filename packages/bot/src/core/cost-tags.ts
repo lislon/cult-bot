@@ -9,8 +9,11 @@ export function autoAppendCostTags(existingTags: TagLevel2[], data: Event, error
     const tagFreeIncl = existingTags.includes(tagFree)
     const tagCheapIncl = existingTags.includes(tagCheap)
 
-    if (tagFreeIncl && tagCheapIncl) {
-        errorCallback?.([`Теги ${tagFree} и ${tagCheap} не могут быть вместе`])
+    if (tagFreeIncl) {
+        warningCallback?.([`Тег ${tagFree} ставиться автоматически. Уберите, плиз его из карточки`])
+    }
+    if (tagCheapIncl) {
+        warningCallback?.([`Тег ${tagCheap} ставиться автоматически. Уберите, плиз его из карточки`])
     }
 
     const priceParsed = parsePrice(data.price)
@@ -18,14 +21,10 @@ export function autoAppendCostTags(existingTags: TagLevel2[], data: Event, error
     if (priceParsed.type === 'free') {
         if (!tagFreeIncl) {
             existingTags.push(tagFree)
-            warningCallback?.([`Бот добавил тег ${tagFree}, тут тоже хорошо бы поправить`])
         }
     } else if (priceParsed.type === 'paid') {
         if (priceParsed.min <= CHEAP_PRICE_THRESHOLD && !tagCheapIncl) {
             existingTags.push(tagCheap)
-            warningCallback?.([`Бот добавил тег ${tagCheap}, тут тоже хорошо бы поправить`])
-        } else if (priceParsed.min > CHEAP_PRICE_THRESHOLD && (tagCheapIncl || tagFreeIncl)) {
-            warningCallback?.([`Дороговатое событие для тегов ${tagCheap} или ${tagFree}`])
         }
     }
     if (!existingTags.includes(tagFree) && !existingTags.includes(tagCheap)) {
