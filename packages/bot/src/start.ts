@@ -91,13 +91,17 @@ class BotStart {
 
         logger.info('Webhook status: ' + JSON.stringify(webhookStatus))
 
-        const closeAllConnections = () => {
-            bot.stop('SIGINT')
+        const closeAllConnections = (reason: string) => {
+            try {
+                bot.stop(reason)
+            } catch (e) {
+                logger.warn(e)
+            }
             pgp.end()
             getRedis().end();
         }
-        process.once('SIGINT', closeAllConnections)
-        process.once('SIGTERM', closeAllConnections)
+        process.once('SIGINT', () => closeAllConnections('SIGTERM'))
+        process.once('SIGTERM', () => closeAllConnections('SIGTERM'))
 
         await notifyAdminsAboutRestart()
     }
