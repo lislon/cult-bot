@@ -16,6 +16,7 @@ import { first } from 'lodash/fp'
 import { ALL_CATEGORIES } from '@culthub/interfaces'
 import { cleanFromEmojis } from '../../../src/util/string-utils'
 import { enrichEventWithAutotags } from '../../../src/core/event-post-sync-enrich'
+import { parseDurationSimple } from '../../../src/lib/duration-parser'
 
 function assertEqualsWithEmojyRespect(expected: string, actual: string) {
     if (expected.match(emojiRegex())) {
@@ -78,6 +79,7 @@ Given(/^there is events:$/, async function (table: DataTable) {
         row = enrichEventWithAutotags(row as unknown as Event, {
             predictedIntervals: timetableResult.predictedIntervals,
             parsedTimetable: timetableResult.parsedTimetable,
+            parsedDuration: parseDurationSimple(row.duration || ''),
             now: this.now
         })
 

@@ -8,6 +8,7 @@ import { botConfig } from '../util/bot-config'
 import { EventTimetable, MomentOrInterval } from '@culthub/timetable'
 import debugNamespace from 'debug'
 import { enrichEventWithAutotags, ErrorCallback } from '../core/event-post-sync-enrich'
+import { EventDuration, parseDuration } from '../lib/duration-parser'
 
 const debug = debugNamespace('parse-excel')
 
@@ -66,6 +67,7 @@ export interface ExcelRowResult {
     publish: boolean,
     errors?: {
         timetable?: string[],
+        duration?: string[],
         emptyRows?: ExcelColumnNameEvents[],
         extId?: string[],
         tagLevel1?: string[]
@@ -77,6 +79,7 @@ export interface ExcelRowResult {
     }
     parsedTimetable?: EventTimetable,
     predictedIntervals: MomentOrInterval[]
+    parsedDuration: EventDuration
     rowNumber: number
     data: Event
     dueDate: Date
@@ -208,6 +211,7 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
         },
         dueDate: notNull(row.due_date) ? parseISO(notNull(row.due_date)) : undefined,
         predictedIntervals: [],
+        parsedDuration: 'unknown',
         rowNumber,
         data,
         popularity: row.popularity === '' ? undefined : +row.popularity as Popularity,
@@ -218,10 +222,22 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
 
     result.predictedIntervals = predictTimetableResult.predictedIntervals
     result.parsedTimetable = predictTimetableResult.parsedTimetable
+
     if (predictTimetableResult.errors.length > 0) {
         result.valid = false
         result.errors.timetable = predictTimetableResult.errors
     }
+    const x = parseDuration(data.duration)
+    if (x.status === true) {
+        result.parsedDuration = x.value
+    } else {
+        result.parsedDuration = 'unknown'
+        if (data.duration !== '') {
+            result.valid = false
+            result.errors.duration = [...x.expected, 'Подробнее: https://www.notion.so/1a7d4f74064e4f9da5ce8e9d18c785ba']
+        }
+    }
+
 
     result.publish = preparePublish(data, result)
 
@@ -241,6 +257,7 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
             warningCallback: (warnings) => result.warnings.tagLevel2 = [...result.warnings.tagLevel2, ...warnings],
             parsedTimetable: result.parsedTimetable,
             predictedIntervals: result.predictedIntervals,
+            parsedDuration: result.parsedDuration,
             now
         }
     )

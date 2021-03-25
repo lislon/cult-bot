@@ -144,6 +144,13 @@ export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel:
                     excelUpdater.annotateCell(sheetId, 'timetable', rowNo, '')
                 }
 
+                if (mapped.errors.duration && !mapped.data.duration.includes('???')) {
+                    excelUpdater.annotateCell(sheetId, 'duration', rowNo, mapped.errors.duration.join('\n'))
+                    excelUpdater.colorCell(sheetId, 'duration', rowNo, 'red')
+                } else {
+                    excelUpdater.annotateCell(sheetId, 'duration', rowNo, '')
+                }
+
                 for (const mappedElement of mapped.errors.emptyRows) {
                     excelUpdater.colorCell(sheetId, mappedElement, rowNo, 'red')
                 }
