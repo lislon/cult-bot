@@ -122,14 +122,16 @@ if (botConfig.BOT_DISABLED === false) {
     logger.info('Bot is disabled by BOT_DISABLED')
 }
 
-// must parse body before morganBody as body will be logged
-app.use(bodyParser.json());
+if (process.env.AGRESSIVE_LOG === 'yes') {
+    // must parse body before morganBody as body will be logged
+    app.use(bodyParser.json());
 
-// hook morganBody to express app
-morganBody(app, {
-    logRequestBody: true,
-    logResponseBody: true
-});
+    // hook morganBody to express app
+    morganBody(app, {
+        logRequestBody: true,
+        logResponseBody: true
+    });
+}
 
 app.use(BotStart.expressMiddleware(rawBot))
 if (botConfig.NODE_ENV === 'development') {
