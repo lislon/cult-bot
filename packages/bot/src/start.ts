@@ -15,6 +15,8 @@ import got from 'got'
 import { oAuth2 } from './api-server/middleware/oauth2'
 import { apiRouter } from './api-server/controller/api'
 import { swaggerMiddleware } from './api-server/middleware/swagger-middleware'
+import morganBody from 'morgan-body'
+import bodyParser from 'body-parser'
 
 const app = express()
 
@@ -115,6 +117,15 @@ if (botConfig.BOT_DISABLED === false) {
 } else {
     logger.info('Bot is disabled by BOT_DISABLED')
 }
+
+// must parse body before morganBody as body will be logged
+app.use(bodyParser.json());
+
+// hook morganBody to express app
+morganBody(app, {
+    logRequestBody: true,
+    logResponseBody: true
+});
 
 app.use(BotStart.expressMiddleware(rawBot))
 if (botConfig.NODE_ENV === 'development') {

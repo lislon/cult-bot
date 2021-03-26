@@ -24,8 +24,8 @@
     "cron:update-latlng": "cross-env TZ=Europe/Moscow node dist/cron/update-latlng"
   },
   "dependencies": {
-    "@culthub/interfaces": "^1.0.0",
     "@culthub/google-docs": "^1.0.0",
+    "@culthub/interfaces": "^1.0.0",
     "@culthub/pg-utils": "^1.0.0",
     "@culthub/timetable": "^1.0.0",
     "@culthub/universal-db-sync": "^1.0.0",
@@ -46,6 +46,7 @@
     "image-type": "^4.1.0",
     "lodash": "^4.17.20",
     "md5": "^2.3.0",
+    "morgan-body": "^2.6.5",
     "node-fetch": "^2.6.1",
     "parsimmon": "^1.16.0",
     "pg": "^8.4.2",
