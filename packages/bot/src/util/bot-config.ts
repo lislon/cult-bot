@@ -59,6 +59,8 @@ export class BotConfig {
 
     public SCHEDULE_WEEKS_AGO: number
     public SCHEDULE_WEEKS_AHEAD: number
+    public DROP_PENDING_UPDATES: boolean
+
 
     get SCHEDULE_DAYS_AGO(): number {
         return this.SCHEDULE_WEEKS_AGO * 7
@@ -201,6 +203,8 @@ export class BotConfig {
 
         number('SCHEDULE_WEEKS_AGO', 2)
         number('SCHEDULE_WEEKS_AHEAD', 5)
+
+        boolean('DROP_PENDING_UPDATES', false)
     }
 
     get throttlerOptions(): ThrottlerOptions {

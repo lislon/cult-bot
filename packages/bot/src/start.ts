@@ -78,7 +78,9 @@ class BotStart {
 
         const hookUrl = `https://${botConfig.HEROKU_APP_NAME}.herokuapp.com:${botConfig.WEBHOOK_PORT}/${BotStart.PATH}`
         const success = await bot.telegram.setWebhook(
-            hookUrl
+            hookUrl, {
+                drop_pending_updates: botConfig.DROP_PENDING_UPDATES
+            }
         )
         if (success) {
             logger.info(`hook ${hookUrl} is set. (To delete: https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook ) Starting app at ${botConfig.PORT}`)
@@ -97,7 +99,9 @@ class BotStart {
             try {
                 bot.stop(reason)
             } catch (e) {
-                logger.warn(e)
+                if (e.message !== 'Bot is not running!') {
+                    logger.warn(e)
+                }
             }
             pgp.end()
             getRedis().end();
