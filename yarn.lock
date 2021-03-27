@@ -7736,10 +7736,10 @@ telegraf-session-redis@^5.1.0:
     debug "^4.1.1"
     redis "^2.6.0-1"
 
-telegraf-throttler@^0.5.1:
-  version "0.5.1"
-  resolved "https://registry.yarnpkg.com/telegraf-throttler/-/telegraf-throttler-0.5.1.tgz#3b5e5458d0f393d8b20f68796e14426c44fd0086"
-  integrity sha512-Xy8gmXGuyV0yMsZ6KewS8Kw9ZU6sFku5f2R9lotWP1OpCgXyJJwVeRdWaCi8jSkQ9iT0uXpQ/42wEokESHQ/lA==
+telegraf-throttler@^0.6.0:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/telegraf-throttler/-/telegraf-throttler-0.6.0.tgz#63eba02913dbffecc5dd2e26a72317041cabb54d"
+  integrity sha512-RgoS1lJFdEgIL2WBf9k5nDA9lVTXNjIVRalTwIv81yg7fj0ZmYAvqAtsQRHHUqKS2f+fXuWuZWG0Yv8NFvHQRw==
   dependencies:
     bottleneck "^2.19.5"
 
@@ -8106,12 +8106,12 @@ typedarray-to-buffer@^3.1.5:
   dependencies:
     is-typedarray "^1.0.0"
 
-typegram@3.2.3:
+typegram@3.2.3, typegram@^3.1.4:
   version "3.2.3"
   resolved "https://registry.yarnpkg.com/typegram/-/typegram-3.2.3.tgz#d724eae341c72356e7f009469a3835f0b14b3de7"
   integrity sha512-zlkY7vNTLcwQhLUyYXAUzRelzH752LBFl8m4u04d5g5P7lM9bGegeIRwzd3mVCHJH6R3s48pKeFTVSdVlN+omg==
 
-typegram@^3.0.2, typegram@^3.1.4:
+typegram@^3.0.2:
   version "3.1.10"
   resolved "https://registry.yarnpkg.com/typegram/-/typegram-3.1.10.tgz#a0dcea705ef6386f8476dcd511a43d763d122b55"
   integrity sha512-VfsuVP4uqk9yllRpaGp9yFpzvLKXghFCOSc3TVi+fy1IL2Bi4z2gJ9rMgVSSug4pWQP8Ui7Isvl14yYV8VEWaQ==

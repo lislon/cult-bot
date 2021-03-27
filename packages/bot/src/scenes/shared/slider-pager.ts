@@ -139,12 +139,32 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             const prevButton = Markup.button.callback(i18nSharedBtnName('slider_keyboard.prev'), this.btnActionPrev)
             const position = Markup.button.callback(getPositionText(state.selectedIdx + 1, state.total), this.btnActionPosition)
             const nextButton = Markup.button.callback(i18nSharedBtnName('slider_keyboard.next'), this.btnActionNext)
+            const tagButton = Markup.button.callback(i18SharedBtn('show_tags'), this.btnTagToggle)
 
-            const buttons: InlineKeyboardButton.CallbackButton[][] = [
-                ...(botConfig.FEATURE_CARD_TAG_TOGGLE ? [[Markup.button.callback(i18SharedBtn('show_tags'), this.btnTagToggle)]] : []),
-                [backButton, ...cardButtons],
-                [prevButton, position, nextButton]
-            ]
+            let buttons: InlineKeyboardButton.CallbackButton[][] = []
+            if (botConfig.CARD_TAG_TOGGLE_STYLE === 'A') {
+                buttons = [
+                    [tagButton],
+                    [backButton, ...cardButtons],
+                    [prevButton, position, nextButton]
+                ]
+            } else if (botConfig.CARD_TAG_TOGGLE_STYLE === 'B') {
+                buttons = [
+                    [backButton, ...cardButtons],
+                    [prevButton, tagButton, position, nextButton]
+                ]
+            } else if (botConfig.CARD_TAG_TOGGLE_STYLE === 'C') {
+                buttons = [
+                    [backButton, tagButton, ...cardButtons],
+                    [prevButton, position, nextButton]
+                ]
+            } else {
+                buttons = [
+                    [backButton, ...cardButtons],
+                    [prevButton, position, nextButton]
+                ]
+            }
+
 
             const text = cardFormat(event, {
                 showTags: ctx.session.user.showTags,

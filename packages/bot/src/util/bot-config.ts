@@ -5,6 +5,8 @@ import path from 'path'
 
 type Envs = 'development' | 'production' | 'test'
 
+type TagStyle = 'none' | 'A' | 'B' | 'C'
+
 export class BotConfig {
     public DATABASE_URL: string
     public DATABASE_MAX_POOL: number
@@ -76,7 +78,7 @@ export class BotConfig {
      */
     public readonly DEFAULT_PACK_HIDE_WHEN_LESS_THEN_EVENTS = 2
 
-    public FEATURE_CARD_TAG_TOGGLE: boolean
+    public CARD_TAG_TOGGLE_STYLE: TagStyle
     public FEATURE_GEO: boolean
 
     /**
@@ -182,7 +184,6 @@ export class BotConfig {
         number('SLIDER_MAX_IDS_CACHED', 10)
 
         boolean('LOG_PAGE_VIEWS_IN_DB', true)
-        boolean('FEATURE_CARD_TAG_TOGGLE', false)
         boolean('FEATURE_GEO', false)
         boolean('SLIDER_INSTA_VIEW', false)
         this.YANDEX_AFISHA_URL = envVars.YANDEX_AFISHA_URL
@@ -205,6 +206,7 @@ export class BotConfig {
         number('SCHEDULE_WEEKS_AHEAD', 5)
 
         boolean('DROP_PENDING_UPDATES', false)
+        this.CARD_TAG_TOGGLE_STYLE = (envVars.CARD_TAG_TOGGLE_STYLE + '' || 'none') as TagStyle
     }
 
     get throttlerOptions(): ThrottlerOptions {
