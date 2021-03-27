@@ -46,6 +46,7 @@ import { ExcelPacksSyncResult, fetchAndParsePacks, savePacksValidationErrors } f
 import { authToExcel } from '@culthub/google-docs'
 import { getRedis } from '../../util/reddis'
 import got from 'got'
+import debugNamespace from 'debug'
 import Timeout = NodeJS.Timeout
 import DocumentMessage = Message.DocumentMessage
 
@@ -613,6 +614,16 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
         })
         .command(['log', 'level'], async (ctx) => {
             await ctx.replyWithHTML(i18Msg(ctx, 'select_log_level'))
+        })
+        .command('debug', async (ctx) => {
+            const newNamespace = ctx.message.text.replace('/debug', '').trim()
+            if (newNamespace === '') {
+                const oldNamespace = debugNamespace.disable()
+                await ctx.replyWithHTML(`Debug disabled. to enable:\n/debug ${oldNamespace}`)
+            } else {
+                debugNamespace.enable(newNamespace)
+                await ctx.replyWithHTML(`Debug enabled: DEBUG='${newNamespace}'`)
+            }
         })
         .command('snapshot', async (ctx) => {
             await db.repoSnapshot.takeSnapshot(getHumanReadableUsername(getUserFromCtx(ctx)), new Date())

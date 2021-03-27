@@ -73,7 +73,7 @@
     "admin_scene": {
       "welcome": "👨🏻‍🎤 Админка \n\nCобытия на <b>${start} — ${end}</b>",
       "update_report": "🐝 Бот был обновлен. Версия ${version} (#Коммит_${commit})",
-      "select_log_level": "Use:\n/level_silly (SQL)\n/level_debug (messages)\n/level_error (default)",
+      "select_log_level": "Use:\n/level_silly (SQL)\n/level_debug (messages)\n/level_error (default)\n/debug telegraf:*,-reddis:*",
       "log_level_selected": "\uD83D\uDCC3 log level: ${level}",
       "snapshot_taken": "Снапшот базы сохранен. Теперь можно сравнивать изменения базы относительно него",
       "sync_status_step_auth": "Синхронизация...\n\nАвторизуемся в <a href=\"${url}\">эксельчике</a>... (1/3)",

@@ -122,7 +122,7 @@ if (botConfig.BOT_DISABLED === false) {
     logger.info('Bot is disabled by BOT_DISABLED')
 }
 
-if (process.env.AGRESSIVE_LOG === 'yes') {
+if (botConfig.AGRESSIVE_LOG) {
     // must parse body before morganBody as body will be logged
     app.use(bodyParser.json());
 

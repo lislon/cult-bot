@@ -97,6 +97,8 @@ export class BotConfig {
      */
     public PACKS_CACHE_TTL_SECONDS: number
 
+    public AGRESSIVE_LOG: boolean
+
     constructor() {
         config()
         this.setFromKeyValue(process.env)
@@ -206,6 +208,8 @@ export class BotConfig {
         number('SCHEDULE_WEEKS_AHEAD', 5)
 
         boolean('DROP_PENDING_UPDATES', false)
+        boolean('AGRESSIVE_LOG', false)
+
         this.CARD_TAG_TOGGLE_STYLE = (envVars.CARD_TAG_TOGGLE_STYLE + '' || 'none') as TagStyle
     }
 

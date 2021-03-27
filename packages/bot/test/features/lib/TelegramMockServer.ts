@@ -72,6 +72,8 @@ const makeDefaultEvent = (content: Pick<Update.MessageUpdate, 'message'> | Pick<
     }
 }
 
+type EditMessageReplyType = true | (Update.Edited & Message.LocationMessage) | (Update.Edited & Message.TextMessage) | (Update.Edited & Message.AnimationMessage) | (Update.Edited & Message.AudioMessage) | (Update.Edited & Message.DocumentMessage) | (Update.Edited & Message.PhotoMessage) | (Update.Edited & Message.VideoMessage) | (Update.Edited & Message.ChannelChatCreatedMessage) | (Update.Edited & Message.ConnectedWebsiteMessage) | (Update.Edited & Message.ContactMessage) | (Update.Edited & Message.DeleteChatPhotoMessage) | (Update.Edited & Message.DiceMessage) | (Update.Edited & Message.GameMessage) | (Update.Edited & Message.GroupChatCreatedMessage) | (Update.Edited & Message.InvoiceMessage) | (Update.Edited & Message.LeftChatMemberMessage) | (Update.Edited & Message.MigrateFromChatIdMessage) | (Update.Edited & Message.MigrateToChatIdMessage) | (Update.Edited & Message.NewChatMembersMessage) | (Update.Edited & Message.NewChatPhotoMessage) | (Update.Edited & Message.NewChatTitleMessage) | (Update.Edited & Message.PassportDataMessage) | (Update.Edited & Message.ProximityAlertTriggeredMessage) | (Update.Edited & Message.PinnedMessageMessage) | (Update.Edited & Message.PollMessage) | (Update.Edited & Message.StickerMessage) | (Update.Edited & Message.SuccessfulPaymentMessage) | (Update.Edited & Message.SupergroupChatCreated) | (Update.Edited & Message.VenueMessage) | (Update.Edited & Message.VideoNoteMessage) | (Update.Edited & Message.VoiceMessage)
+
 export class TelegramMockServer {
     // private currentScene = ''
     private replies: BotReply[] = []
@@ -253,7 +255,7 @@ export class TelegramMockServer {
             await touchApiMock()
             return Promise.resolve(true)
         }
-        ctx.editMessageReplyMarkup = async (markup?: InlineKeyboardMarkup): Promise<(Update.Edited & Message) | true> => {
+        ctx.editMessageReplyMarkup = async (markup: (InlineKeyboardMarkup | undefined)): Promise<EditMessageReplyType> => {
             await touchApiMock()
             const lastReply = this.findLastReply()
 
