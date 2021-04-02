@@ -22,13 +22,14 @@ function toUnits(num: number|string, unit: Unit) {
 }
 
 const durationLang = P.createLanguage({
-    DayLabel: (r) => P.regexp(/(дня|дней|день)/i).desc('Дней').result<Unit>('day'),
-    HourLabel: () => P.regexp(/(ч|часов|часа)/i).desc('Часов').result<Unit>('hour'),
-    MinuteLabel: () => P.regexp(/(мин|минут|минуты)/i).desc('Минут').result<Unit>('minute'),
+    DayLabel: (r) => P.regexp(/(д|дня|дней|день)(?![а-яА-я\w])/i).desc('Дней').result<Unit>('day'),
+    HourLabel: () => P.regexp(/(ч|часов|часа)(?![а-яА-я\w])/i).desc('Часов').result<Unit>('hour'),
+    MinuteLabel: () => P.regexp(/(м|мин|минут|минуты)(?![а-яА-я\w])/i).desc('Минут').result<Unit>('minute'),
     DaysN: (r) => P.seq(r.Number, r._, r.DayLabel).map(([n, , unit]) => toUnits(n, unit)),
     HoursN: (r) => P.seq(r.Number, r._, r.HourLabel).map(([n, , unit]) => toUnits(n, unit)),
     MinutesN: (r) => P.seq(r.Number, r._, r.MinuteLabel).map(([n, , unit]) => toUnits(n, unit)),
     DurationRaw: (r) => P.alt(
+        P.seq(r.DaysN, r._, r.HoursN, r._, r.MinutesN).map(([d, ,h, , m]) => d + h + m),
         P.seq(r.DaysN, r._, r.HoursN).map(([d, ,h]) => d + h),
         P.seq(r.HoursN, r._, r.MinutesN).map(([h, ,m]) => h + m),
         r.DaysN,
@@ -66,13 +67,15 @@ const durationLang = P.createLanguage({
         r.MoreThenDurationSingle,
         r.DurationSingle
     ),
-    PartWithTitle: (r) => P.seq(r.PartName, r.AnyDuration, r._, r.MaybeComment)
-        .map(([title, duration, , comment]) => ({title, ...duration, comment})),
+    PartWithTitle: (r) => P.seq(r.PartName, r._, r.AnyDuration, r._, r.MaybeComment)
+        .map(([title, , duration, , comment]) => ({title, ...duration, comment})),
     PartWithoutTitle: (r) => P.seq(r.AnyDuration, r._, r.MaybeComment)
         .map(([duration, , comment]) => ({...duration, comment})),
     Parts: (r) => P.alt(
-        P.seq(r.PartWithTitle, r.Divider).atLeast(2).map(p => p),
-        r.PartWithoutTitle.map(part => [part])),
+        P.seq(r.PartWithTitle, r.Divider, r.PartWithTitle, r.Divider, r.PartWithTitle).map(([part1, ,part2, , part3]) => ([part1, part2, part3])),
+        P.seq(r.PartWithTitle, r.Divider, r.PartWithTitle).map(([part1, ,part2]) => ([part1, part2])),
+        r.PartWithoutTitle.map(part => [part])
+    ),
     Divider: (r) => P.seq(r._, P.alt(r[';'], r.NewLine), r._),
     NewLine: () => P.regex(/[\n\r]+/).desc('новая строка'),
     Number: () => P.regex(/\d+/).desc('число'),
@@ -80,14 +83,14 @@ const durationLang = P.createLanguage({
     ['(']: () => P.string('(').desc('('),
     [')']: () => P.string(')').desc(')'),
     MoreThen: () => P.regex(/(более|от)/i).desc('Более/от'),
+    PartName: () => P.regex(/\s*([^:\n;]+):/, 1).desc('Название части:'),
+    // PartName: () => P.regex(/(x):/, 1).desc('Название части:'),
     LessThen: () => P.regex(/до/i).desc('до'),
-    // To: () => stringIgnoreCase('до').desc('фраза "до"'),
-    // ToDate: () => P.alt(stringIgnoreCase('до'), stringIgnoreCase('по')),
-    PartName: () => P.regex(/\s*([a-zа-яА-ЯёЁ0-9]+)\s*/, 1).desc('Название части').fallback(undefined),
     MaybeComment: () => P.regex(/\s*[(]([^)]+)[)]/, 1).desc('Комментарий в скобках').fallback(undefined),
     ['-']: () => P.oneOf('-—‑–－﹘').desc('диапазон через дефис'),
+    [':']: () => P.string(':'),
     _: () => P.regex(/[^\S\r\n]*/).desc('пробелы'),
-    __: () => P.regex(/[^\S\r\n]+/).desc('пробелы'),
+    __: () => P.regex(/[^\S\r\n]+/).desc('обязательные пробелы'),
 })
 
 

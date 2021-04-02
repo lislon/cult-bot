@@ -1,7 +1,5 @@
 import { Context, MiddlewareFn, Telegraf, Telegram, TelegramError } from 'telegraf'
 import {
-    ExtraEditMessageText,
-    ExtraReplyMessage,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     KeyboardButton,
@@ -16,6 +14,7 @@ import ServiceMessage = Message.ServiceMessage
 import TextMessage = Message.TextMessage
 import CallbackButton = InlineKeyboardButton.CallbackButton
 import CommonButton = KeyboardButton.CommonButton
+import { ExtraEditMessageText, ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 
 const CHAT_ID = 1234
 const FROM_ID = 7777
