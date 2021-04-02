@@ -1,6 +1,6 @@
 import { Telegraf } from 'telegraf'
 import { ContextMessageUpdate } from './interfaces/app-interfaces'
-import express, { Request, Response } from 'express'
+import express, { Request, Response, json, Application } from 'express'
 import { botConfig } from './util/bot-config'
 import { logger } from './util/logger'
 import { db, pgp } from './database/db'
@@ -17,6 +17,9 @@ import { apiRouter } from './api-server/controller/api'
 import { swaggerMiddleware } from './api-server/middleware/swagger-middleware'
 import morganBody from 'morgan-body'
 import bodyParser from 'body-parser'
+import https, { Server } from 'https'
+import * as fs from 'fs'
+import { ServerOptions } from 'https'
 
 const app = express()
 
@@ -67,19 +70,18 @@ class BotStart {
         logger.info('Starting a bot in production mode');
         // If webhook not working, check fucking motherfucking UFW that probably blocks a port...
 
-        if (!botConfig.HEROKU_APP_NAME) {
-            logger.error('process.env.HEROKU_APP_NAME must be defined to run in PROD')
-            process.exit(1)
-        }
         if (!botConfig.WEBHOOK_PORT) {
             logger.error('process.env.WEBHOOK_PORT must be defined to run in PROD')
             process.exit(1)
         }
 
-        const hookUrl = `https://${botConfig.HEROKU_APP_NAME}.herokuapp.com:${botConfig.WEBHOOK_PORT}/${BotStart.PATH}`
+        const hookUrl = `https://${botConfig.WEBHOOK_HOST}:${botConfig.WEBHOOK_PORT}/${BotStart.PATH}`
         const success = await bot.telegram.setWebhook(
             hookUrl, {
-                drop_pending_updates: botConfig.DROP_PENDING_UPDATES
+                drop_pending_updates: botConfig.DROP_PENDING_UPDATES,
+                certificate: botConfig.LISTEN_DIRECT_ON_HTTPS ? {
+                    source: botConfig.DIRECT_HTTPS_CERT_PATH
+                } : undefined,
             }
         )
         if (success) {
@@ -124,9 +126,10 @@ if (botConfig.BOT_DISABLED === false) {
 
 if (botConfig.AGRESSIVE_LOG) {
     // must parse body before morganBody as body will be logged
-    app.use(bodyParser.json());
+    app.use(bodyParser.json({
+        type: 'application/json'
+    }));
 
-    // hook morganBody to express app
     morganBody(app, {
         logRequestBody: true,
         logResponseBody: true
@@ -154,7 +157,26 @@ app.use(function (err: any, req: any, res: any, next: any) {
     next(err)
 })
 
-app.listen(botConfig.PORT, () => {
+function createHttpOrHttps() {
+    let server: Server | Application
+
+    if (botConfig.LISTEN_DIRECT_ON_HTTPS) {
+        logger.warn(`Listening https on port ${botConfig.PORT} using custom certificate ${botConfig.DIRECT_HTTPS_KEY_PATH}`)
+        const serverOptions: ServerOptions = {
+            key: fs.readFileSync(botConfig.DIRECT_HTTPS_KEY_PATH),
+            cert: fs.readFileSync(botConfig.DIRECT_HTTPS_CERT_PATH),
+            passphrase: botConfig.DIRECT_HTTPS_KEY_PASS
+        }
+        server = https.createServer(serverOptions, app)
+    } else {
+        server = app
+    }
+    return server
+}
+
+const server = createHttpOrHttps()
+
+server.listen(botConfig.PORT, () => {
     if (botConfig.NODE_ENV === 'production') {
         if (botConfig.BOT_DISABLED === false) {
             BotStart.startProdMode(rawBot).then(async () => {

@@ -1976,10 +1976,28 @@ btoa@^1.1.2, btoa@^1.2.1:
   resolved "https://registry.yarnpkg.com/btoa/-/btoa-1.2.1.tgz#01a9909f8b2c93f6bf680ba26131eb30f7fa3d73"
   integrity sha512-SB4/MIGlsiVkMcHmT+pSmIPoNDoHg+7cMzmt3Uxt628MTz2487DKSqK/fuhFBrkuqrYv5UCEnACpF4dTFNKc/g==
 
+buffer-alloc-unsafe@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/buffer-alloc-unsafe/-/buffer-alloc-unsafe-1.1.0.tgz#bd7dc26ae2972d0eda253be061dba992349c19f0"
+  integrity sha512-TEM2iMIEQdJ2yjPJoSIsldnleVaAk1oW3DBVUykyOLsEsFmEc9kn+SFFPz+gl54KQNxlDnAwCXosOS9Okx2xAg==
+
+buffer-alloc@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/buffer-alloc/-/buffer-alloc-1.2.0.tgz#890dd90d923a873e08e10e5fd51a57e5b7cce0ec"
+  integrity sha512-CFsHQgjtW1UChdXgbyJGtnm+O/uLQeZdtbDo8mfUgYXCHSM1wgrVxXm6bSyrUuErEb+4sYVGCzASBRot7zyrow==
+  dependencies:
+    buffer-alloc-unsafe "^1.1.0"
+    buffer-fill "^1.0.0"
+
 buffer-equal-constant-time@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/buffer-equal-constant-time/-/buffer-equal-constant-time-1.0.1.tgz#f8e71132f7ffe6e01a5c9697a4c6f3e48d5cc819"
   integrity sha1-+OcRMvf/5uAaXJaXpMbz5I1cyBk=
+
+buffer-fill@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/buffer-fill/-/buffer-fill-1.0.0.tgz#f8f78b76789888ef39f205cd637f68e702122b2c"
+  integrity sha1-+PeLdniYiO858gXNY39o5wISKyw=
 
 buffer-from@1.x, buffer-from@^1.0.0:
   version "1.1.1"
@@ -7084,6 +7102,13 @@ safe-buffer@^5.0.1, safe-buffer@^5.1.2, safe-buffer@~5.2.0:
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.2.1.tgz#1eaf9fa9bdb1fdd4ec75f58f9cdb4e6b7827eec6"
   integrity sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==
 
+safe-compare@^1.1.4:
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/safe-compare/-/safe-compare-1.1.4.tgz#5e0128538a82820e2e9250cd78e45da6786ba593"
+  integrity sha512-b9wZ986HHCo/HbKrRpBJb2kqXMK9CEWIE1egeEvZsYn69ay3kdfl9nG3RyOcR+jInTDf7a86WQ1d4VJX7goSSQ==
+  dependencies:
+    buffer-alloc "^1.2.0"
+
 safe-regex@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/safe-regex/-/safe-regex-1.1.0.tgz#40a3669f3b077d1e943d44629e157dd48023bf2e"
@@ -7736,17 +7761,17 @@ telegraf-session-redis@^5.1.0:
     debug "^4.1.1"
     redis "^2.6.0-1"
 
-telegraf-throttler@^0.6.0:
+telegraf-throttler@0.6.0:
   version "0.6.0"
   resolved "https://registry.yarnpkg.com/telegraf-throttler/-/telegraf-throttler-0.6.0.tgz#63eba02913dbffecc5dd2e26a72317041cabb54d"
   integrity sha512-RgoS1lJFdEgIL2WBf9k5nDA9lVTXNjIVRalTwIv81yg7fj0ZmYAvqAtsQRHHUqKS2f+fXuWuZWG0Yv8NFvHQRw==
   dependencies:
     bottleneck "^2.19.5"
 
-telegraf@4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/telegraf/-/telegraf-4.1.0.tgz#b20d4aa6acdf6aab3fc054805e87633573f95928"
-  integrity sha512-Kradl4x8QjIWXbpaJYcG2Ts+2HR/C6576iskjowuJK11kvjn+TUxiJg+csPE4qQkfTHFmuCoqBBRwo2SaQsVQg==
+telegraf@4.3.0:
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/telegraf/-/telegraf-4.3.0.tgz#c9683192bdb81e7c7fbb04cf1ce750fb34de7149"
+  integrity sha512-MuDUtSMipzMzQp8fXbQx76jp4ZD70KREdnpH1idUzN9Zlgm6EzatBQFU4Ps0ipxtEmnBBdghBMumQwrjRe3eqg==
   dependencies:
     abort-controller "^3.0.0"
     debug "^4.3.1"
@@ -7754,8 +7779,9 @@ telegraf@4.1.0:
     module-alias "^2.2.2"
     node-fetch "^2.6.1"
     p-timeout "^4.1.0"
+    safe-compare "^1.1.4"
     sandwich-stream "^2.0.2"
-    typegram "^3.1.4"
+    typegram "^3.2.0"
 
 term-size@^2.1.0:
   version "2.2.1"
@@ -8106,15 +8132,15 @@ typedarray-to-buffer@^3.1.5:
   dependencies:
     is-typedarray "^1.0.0"
 
-typegram@3.2.3, typegram@^3.1.4:
-  version "3.2.3"
-  resolved "https://registry.yarnpkg.com/typegram/-/typegram-3.2.3.tgz#d724eae341c72356e7f009469a3835f0b14b3de7"
-  integrity sha512-zlkY7vNTLcwQhLUyYXAUzRelzH752LBFl8m4u04d5g5P7lM9bGegeIRwzd3mVCHJH6R3s48pKeFTVSdVlN+omg==
-
 typegram@^3.0.2:
   version "3.1.10"
   resolved "https://registry.yarnpkg.com/typegram/-/typegram-3.1.10.tgz#a0dcea705ef6386f8476dcd511a43d763d122b55"
   integrity sha512-VfsuVP4uqk9yllRpaGp9yFpzvLKXghFCOSc3TVi+fy1IL2Bi4z2gJ9rMgVSSug4pWQP8Ui7Isvl14yYV8VEWaQ==
+
+typegram@^3.2.0, typegram@^3.2.3:
+  version "3.2.3"
+  resolved "https://registry.yarnpkg.com/typegram/-/typegram-3.2.3.tgz#d724eae341c72356e7f009469a3835f0b14b3de7"
+  integrity sha512-zlkY7vNTLcwQhLUyYXAUzRelzH752LBFl8m4u04d5g5P7lM9bGegeIRwzd3mVCHJH6R3s48pKeFTVSdVlN+omg==
 
 typescript@^4.0.5, typescript@^4.1.5:
   version "4.2.3"

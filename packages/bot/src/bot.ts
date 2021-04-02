@@ -37,7 +37,6 @@ bot
     .use(middlewares.telegrafThrottler(botConfig.throttlerOptions))
     .use(middlewares.session())
     .use(middlewares.sessionTmp())
-    // .use(middlewares.logMiddleware('session'))
     .use(middlewares.userMiddleware)
     .use(middlewares.dateTime)
     .use(middlewares.analyticsMiddleware)
