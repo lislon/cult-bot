@@ -8,7 +8,7 @@ import { db, LimitOffset } from '../../database/db'
 
 import { AdminEvent } from '../../database/db-admin'
 import { Scenes } from 'telegraf'
-import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton } from 'typegram'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)

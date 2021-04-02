@@ -4,7 +4,7 @@ import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 import { ReversableTranslit } from '../lib/translit/reversable-translit'
 import { i18n } from './i18n'
 import { adminIds, adminUsernames, devUsernames } from './admins-list'
-import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton } from 'typegram'
 
 export function i18SharedBtn(id: string, tplData: any = undefined) {
     return i18n.t(`ru`, `shared.keyboard.${id}`, tplData)

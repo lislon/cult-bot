@@ -10,11 +10,12 @@ import { Markup } from 'telegraf'
 import slugify from 'slugify'
 import { i18SharedBtn, i18SharedMsg } from '../../util/scene-helper'
 import { chunkString } from '../../util/chunk-split'
-import { ExtraReplyMessage, InlineKeyboardButton, InlineKeyboardMarkup, Message } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton, InlineKeyboardMarkup, Message } from 'typegram'
 import { SLOT_DATE_FORMAT } from '../customize/customize-common'
 import { isAfterOrEquals } from '../../util/moment-msk'
 import { first, last } from 'lodash'
 import { MomentIntervals, rightDate } from '@culthub/timetable'
+import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 
 type Range = '2weekends_only'
 

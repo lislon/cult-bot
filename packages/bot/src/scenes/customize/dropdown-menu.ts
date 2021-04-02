@@ -1,5 +1,5 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton } from 'typegram'
 import { checkboxi18nBtnId } from '../shared/shared-logic'
 import { Markup, Scenes } from 'telegraf'
 import { i18nSceneHelper } from '../../util/scene-helper'

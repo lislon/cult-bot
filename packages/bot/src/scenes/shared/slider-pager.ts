@@ -13,7 +13,7 @@ import { analyticRecordEventView } from '../../lib/middleware/analytics-middlewa
 import { i18nSceneHelper, i18SharedBtn } from '../../util/scene-helper'
 import { EventsPagerSliderBase, PagerSliderState, PagingCommonConfig } from './events-common'
 import { botConfig } from '../../util/bot-config'
-import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton } from 'typegram'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18SharedMsg} = i18nSceneHelper(scene)

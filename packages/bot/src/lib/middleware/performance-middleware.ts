@@ -1,9 +1,10 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { performance } from 'perf_hooks'
-import * as tt from 'telegraf/typings/telegram-types'
-import { ExtraEditMessageText, InlineKeyboardButton, InlineKeyboardMarkup } from 'telegraf/typings/telegram-types'
+import * as tt from 'typegram'
+import { InlineKeyboardButton, InlineKeyboardMarkup } from 'typegram'
 import d from 'debug'
 import { cleanFromEmojis } from '../../util/string-utils'
+import { ExtraEditMessageText, ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 const debug = d('bot:msg')
 
 export class PerformanceContext {
@@ -52,7 +53,7 @@ export function performanceMiddleware(prefix: string) {
             editMessageText: ctx.editMessageText,
             editMessageReplyMarkup: ctx.editMessageReplyMarkup
         }
-        ctx.reply = (text: string, extra?: tt.ExtraReplyMessage) => {
+        ctx.reply = (text: string, extra?: ExtraReplyMessage) => {
             recordFirstResponse(ctx)
             if (debug.enabled) {
                 debug(`replying with '%s'`, formatShortMsg(text))

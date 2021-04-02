@@ -27,7 +27,7 @@ import { escapeHTML } from '../../util/string-utils'
 import { SliderPager } from '../shared/slider-pager'
 import { FavoritesPagerConfig } from './favorites-pager-config'
 import { loadEventsAsFavorite, removeFavoriteButton, sortFavorites } from './favorites-common'
-import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton } from 'typegram'
 import { botConfig } from '../../util/bot-config'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')

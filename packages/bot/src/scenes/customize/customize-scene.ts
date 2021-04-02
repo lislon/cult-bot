@@ -20,7 +20,7 @@ import { formatExplainFormat, formatOptionLogic, getKeyboardFormat } from './fil
 import { SliderPager } from '../shared/slider-pager'
 import { CustomizePagerConfig } from './customize-pager-config'
 import { db } from '../../database/db'
-import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton } from 'typegram'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('customize_scene')
 

@@ -1,5 +1,5 @@
 import { parseTelegramMessageToHtml } from '../../../src/lib/message-parser/message-parser'
-import { Message } from 'telegraf/typings/telegram-types'
+import { Message } from 'typegram'
 
 describe('parse complex', () => {
     test('parse bold', () => {

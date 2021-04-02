@@ -1,5 +1,5 @@
 import { ContextMessageUpdate, I18MsgFunction } from '../../../interfaces/app-interfaces'
-import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton } from 'typegram'
 import { DropdownMenu } from '../dropdown-menu'
 
 export function formatOptionLogic(ctx: ContextMessageUpdate, selected: string) {

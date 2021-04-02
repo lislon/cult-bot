@@ -3,7 +3,7 @@ import { CardOptions } from './card-format'
 
 import { LimitOffsetLast } from '../../database/db'
 import { botConfig } from '../../util/bot-config'
-import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton } from 'typegram'
 
 export interface PagerSliderState<Q> {
     selectedIdx: number

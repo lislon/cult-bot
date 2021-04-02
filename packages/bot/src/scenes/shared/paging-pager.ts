@@ -8,7 +8,7 @@ import { EventsPagerSliderBase, PagerSliderState, PagingCommonConfig } from './e
 import { getLikesRow, LIKES_EVENT_ACTION_PREFIXES } from '../likes/likes-common'
 import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
-import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton } from 'typegram'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg} = i18nSceneHelper(scene)

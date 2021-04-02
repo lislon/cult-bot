@@ -7,7 +7,7 @@ import {
     KeyboardButton,
     Message,
     Update
-} from 'telegraf/typings/telegram-types'
+} from 'typegram'
 import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { MarkupHelper } from './MarkupHelper'
 import { Chat, User } from 'typegram/manage'

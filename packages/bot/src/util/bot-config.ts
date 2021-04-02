@@ -21,7 +21,7 @@ export class BotConfig {
     public HEROKU_SLUG_COMMIT: string | undefined
     public HEROKU_RELEASE_CREATED_AT: string | undefined
     public HOLIDAYS: string
-    public LISTEN_DIRECT_ON_HTTPS = false
+    public LISTEN_DIRECT_ON_HTTPS: boolean
     public DIRECT_HTTPS_CERT_PATH = 'packages/bot/secrets/ssl4debug/key.pem'
     public DIRECT_HTTPS_KEY_PATH = 'packages/bot/secrets/ssl4debug/cert.pem'
     public DIRECT_HTTPS_KEY_PASS= 'lisalisa'
@@ -214,6 +214,8 @@ export class BotConfig {
 
         boolean('DROP_PENDING_UPDATES', false)
         boolean('AGRESSIVE_LOG', false)
+        boolean('LISTEN_DIRECT_ON_HTTPS', false)
+
 
         this.CARD_TAG_TOGGLE_STYLE = (envVars.CARD_TAG_TOGGLE_STYLE + '' || 'none') as TagStyle
         this.WEBHOOK_HOST = envVars.WEBHOOK_HOST || `${this.HEROKU_APP_NAME}.herokuapp.com`

@@ -13,7 +13,7 @@ import {
 } from '../shared/shared-logic'
 import { db, IExtensions, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
 import { format, isValid, parse, parseISO } from 'date-fns'
-import { ExtraReplyMessage, InlineKeyboardButton, Message, User } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton, Message, User } from 'typegram'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
 import { logger, loggerTransport } from '../../util/logger'
@@ -49,6 +49,7 @@ import got from 'got'
 import debugNamespace from 'debug'
 import Timeout = NodeJS.Timeout
 import DocumentMessage = Message.DocumentMessage
+import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 
 function isDocumentMessage(msg: Message): msg is DocumentMessage {
     return 'document' in msg

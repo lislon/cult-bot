@@ -1,7 +1,7 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import chalk from 'chalk'
 import { logger } from '../../util/logger'
-import { Update } from 'telegraf/typings/telegram-types'
+import { Update } from 'typegram'
 import d from 'debug'
 const debug = d('bot:msg')
 

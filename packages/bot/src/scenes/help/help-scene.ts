@@ -2,8 +2,7 @@ import { Scenes, Telegraf } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import middlewares, { SceneRegister } from '../../middleware-utils'
-import { InputFileByReadableStream } from 'telegraf/typings/telegram-types'
-import { createReadStream } from 'fs'
+import { createReadStream, ReadStream } from 'fs'
 import path from 'path'
 import { getRedisSession } from '../../util/reddis'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
@@ -15,13 +14,13 @@ const {i18Msg} = i18nSceneHelper(scene)
 
 let cached_help_file_id = ''
 
-function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>) {
+function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>): void {
     bot
         .use(middlewares.logMiddleware('postStageActionsFn scene: ' + scene.id))
         .help(async (ctx: ContextMessageUpdate) => {
             ctx.ua.pv({dp: '/help', dt: 'Помощь'})
 
-            let photo: string | InputFileByReadableStream
+            let photo: string | { source: ReadStream }
             if (cached_help_file_id === '') {
                 photo = {source: createReadStream(path.resolve(__dirname, './assets/help.png'))}
             } else {
@@ -47,7 +46,7 @@ function postStageActionsFn(bot: Telegraf<ContextMessageUpdate>) {
         })
 }
 
-function preSceneGlobalActionsFn(bot: Telegraf<ContextMessageUpdate>) {
+function preSceneGlobalActionsFn(bot: Telegraf<ContextMessageUpdate>): void {
     bot
         .hears(/.+/, async (ctx, next) => {
             try {

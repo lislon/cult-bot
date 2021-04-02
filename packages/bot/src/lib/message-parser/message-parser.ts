@@ -1,4 +1,4 @@
-import { Message, MessageEntity } from 'telegraf/typings/telegram-types'
+import { Message, MessageEntity } from 'typegram'
 
 export function parseTelegramMessageToHtml({text, entities}: Pick<Message.TextMessage, 'text' | 'entities'>) {
     function surroundWithTags(e: MessageEntity) {

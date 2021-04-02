@@ -4,6 +4,7 @@ import Mailgun from 'mailgun.js'
 import { appConfig } from '../app-config'
 
 export function mailgun(): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mailgun = new Mailgun(formData as any)
     const mg = mailgun.client({username: 'api', key: appConfig.MAILGUN_API_KEY, url: 'https://api.eu.mailgun.net'})
 

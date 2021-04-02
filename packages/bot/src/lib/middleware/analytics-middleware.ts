@@ -7,7 +7,7 @@ import { db } from '../../database/db'
 import { logger } from '../../util/logger'
 import { getResponsePerformance } from './performance-middleware'
 import { Scenes } from 'telegraf'
-import { Update } from 'telegraf/typings/telegram-types'
+import { Update } from 'typegram'
 
 export interface AnalyticsState {
     markupClicks: number

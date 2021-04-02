@@ -6,7 +6,7 @@ import { botConfig } from '../../util/bot-config'
 import { db } from '../../database/db'
 import { backToMainButtonTitle, replyWithBackToMainMarkup, SessionEnforcer } from '../shared/shared-logic'
 import { menuMiddleware } from './survey'
-import * as tt from 'telegraf/typings/telegram-types'
+import * as tt from 'typegram'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
 import { formatUserName } from '../../util/misc-utils'
 

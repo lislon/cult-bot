@@ -6,7 +6,7 @@ import { ITask } from 'pg-promise'
 import { IExtensions } from '../../database/db'
 import { getInlineKeyboardFromCallbackQuery, updateKeyboardButtons } from '../shared/shared-logic'
 import { getFavoriteBtnText } from '../favorites/favorites-common'
-import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton } from 'typegram'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('likes_scene')
 

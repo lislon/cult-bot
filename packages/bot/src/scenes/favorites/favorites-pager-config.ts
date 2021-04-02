@@ -7,7 +7,7 @@ import { LimitOffset } from '../../database/db'
 import { favoriteCardButtonsRow, getSortedFavoriteEventsIds, loadEventsAsFavorite } from './favorites-common'
 import { CardOptions } from '../shared/card-format'
 import { isEventInFavorites } from '../likes/likes-common'
-import { InlineKeyboardButton } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton } from 'typegram'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 const {backButton, i18Msg, actionName} = i18nSceneHelper(scene)

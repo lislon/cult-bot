@@ -1,4 +1,4 @@
-import { User } from 'telegraf/typings/telegram-types'
+import { User } from 'typegram'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 
 export function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {

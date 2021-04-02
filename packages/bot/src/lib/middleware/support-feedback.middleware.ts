@@ -17,7 +17,7 @@ import {
 } from '../../scenes/shared/shared-logic'
 import { ScenePack } from '../../database/db-packs'
 import { formatUserName } from '../../util/misc-utils'
-import { InlineKeyboardButton, Message } from 'telegraf/typings/telegram-types'
+import { InlineKeyboardButton, Message } from 'typegram'
 import Telegram from 'telegraf/typings/telegram'
 import { ReplyMessage } from 'typegram'
 import emojiRegex from 'emoji-regex'
