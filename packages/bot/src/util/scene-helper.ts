@@ -6,11 +6,11 @@ import { i18n } from './i18n'
 import { adminIds, adminUsernames, devUsernames } from './admins-list'
 import { InlineKeyboardButton } from 'typegram'
 
-export function i18SharedBtn(id: string, tplData: any = undefined) {
+export function i18SharedBtn(id: string, tplData: any = undefined): string {
     return i18n.t(`ru`, `shared.keyboard.${id}`, tplData)
 }
 
-export function i18SharedMsg(id: string, tplData: any = undefined) {
+export function i18SharedMsg(id: string, tplData: any = undefined): string {
     return i18n.t(`ru`, `shared.${id}`, tplData)
 }
 
@@ -104,10 +104,10 @@ export function isDev(ctx: ContextMessageUpdate): boolean {
     return devUsernames.includes(ctx.from?.username || '')
 }
 
-export function isAdmin(ctx: ContextMessageUpdate) {
+export function isAdmin(ctx: ContextMessageUpdate): boolean {
     return adminUsernames.includes(ctx.from?.username || '') || adminIds.includes(ctx.from?.id || 0)
 }
-export async function ifAdmin(ctx: ContextMessageUpdate, callback: () => Promise<any>): Promise<any> {
+export async function ifAdmin<T>(ctx: ContextMessageUpdate, callback: () => Promise<T>): Promise<T> {
     if (isAdmin(ctx)) {
         return await callback()
     } else {
