@@ -1,5 +1,5 @@
 import { escapeHTML } from '../../util/string-utils'
-import { Event } from '../../interfaces/app-interfaces'
+import { Event, TagLevel2 } from '../../interfaces/app-interfaces'
 import { getOnlyHumanTimetable, hasHumanTimetable } from '../../dbsync/parseSheetRow'
 import { cleanTagLevel1 } from '../../util/tag-level1-encoder'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
@@ -99,7 +99,7 @@ export interface EventWithPast extends Event {
     isFuture: boolean
 }
 
-export function filterTagLevel2(row: Event | AdminEvent) {
+export function filterTagLevel2(row: Event | AdminEvent): TagLevel2[] {
     let tags = row.tag_level_2;
     if (tags.includes('#_последнийшанс') && !tags.includes('#последнийшанс')) {
         tags = [...tags, '#последнийшанс']
@@ -112,7 +112,7 @@ function isCardWithPossiblePast(row: Event | EventWithPast): row is EventWithPas
     return (row as EventWithPast).isFuture !== undefined
 }
 
-export function cardFormat(row: Event | AdminEvent | EventWithPast, options: CardOptions) {
+export function cardFormat(row: Event | AdminEvent | EventWithPast, options: CardOptions): string {
     let text = ``
     debug('formatting card')
     const rowWithOldVersion = row as AdminEvent

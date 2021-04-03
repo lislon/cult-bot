@@ -217,7 +217,7 @@ export class BotConfig {
         boolean('LISTEN_DIRECT_ON_HTTPS', false)
 
 
-        this.CARD_TAG_TOGGLE_STYLE = (envVars.CARD_TAG_TOGGLE_STYLE + '' || 'none') as TagStyle
+        this.CARD_TAG_TOGGLE_STYLE = (envVars.CARD_TAG_TOGGLE_STYLE ? envVars.CARD_TAG_TOGGLE_STYLE : 'none') as TagStyle
         this.WEBHOOK_HOST = envVars.WEBHOOK_HOST || `${this.HEROKU_APP_NAME}.herokuapp.com`
     }
 

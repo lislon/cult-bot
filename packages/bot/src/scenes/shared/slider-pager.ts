@@ -167,7 +167,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
 
 
             const text = cardFormat(event, {
-                showTags: ctx.session.user.showTags,
+                showTags: botConfig.CARD_TAG_TOGGLE_STYLE !== 'none' ? ctx.session.user.showTags : true,
                 now: ctx.now(),
                 ...this.config.cardFormatOptions?.(ctx, event)
             })
