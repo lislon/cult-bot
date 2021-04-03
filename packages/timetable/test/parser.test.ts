@@ -194,6 +194,15 @@ describe('parser', () => {
             }]
         )
     })
+
+    test('english letter c', () => {
+        const actual = doParseTimetable('cб: 12:00', DATE_2020_JAN_1)
+        expect(actual.weekTimes).toStrictEqual([{
+                times: ['12:00'],
+                weekdays: [6]
+            }]
+        )
+    })
 })
 
 function doParseTimetable(input: string, now: Date): EventTimetable {

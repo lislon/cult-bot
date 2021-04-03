@@ -46,7 +46,7 @@ const timetableLang = P.createLanguage({
                 return P.fail(`${s} is not a valid month`);
             }
         }),
-    WeekDaySingle: () => P.regexp(/[а-я]+/)
+    WeekDaySingle: () => P.regexp(/[а-яА-ЯcC]+/)
         .desc('День недели')
         .chain(s => {
             const weekdaysFlavors = [
