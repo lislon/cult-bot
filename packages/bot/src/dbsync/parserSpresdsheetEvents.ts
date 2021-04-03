@@ -119,7 +119,7 @@ export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel:
     const excelUpdater = new ExcelUpdater(excel, EXCEL_COLUMNS_EVENTS)
 
     const columnToClearFormat: ExcelColumnNameEvents[] = [
-        'ext_id', 'publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3', 'due_date'
+        'ext_id', 'publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3', 'due_date', 'duration'
     ]
 
     sheetsParsedRows.forEach(({rows, sheetId, totalNumberOfRows, sheetTitle}) => {
