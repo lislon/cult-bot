@@ -260,12 +260,11 @@ export function parseTimetable(input: string, now: Date): TimetableParseResult {
             return {status: false, errors: dateValidation}
         }
 
-        const result: Required<EventTimetable> = {
+        const result: Omit<Required<EventTimetable>, 'anytimeComment'> & { anytimeComment?: string } = {
             dateRangesTimetable: [],
             datesExact: [],
             weekTimes: [],
             anytime: false,
-            anytimeComment: ''
         }
         for (const p of parseRes.value) {
             if (p.dateRange !== undefined) {
@@ -285,7 +284,9 @@ export function parseTimetable(input: string, now: Date): TimetableParseResult {
                 result.datesExact.push(p.exactDate)
             } else if (p.anytime) {
                 result.anytime = true;
-                result.anytimeComment = p.anytimeComment || ''
+                if (p.anytimeComment) {
+                    result.anytimeComment = p.anytimeComment
+                }
             }
         }
         return {status: parseRes.status, value: result}
