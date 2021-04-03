@@ -26,7 +26,9 @@ describe('timetable formatter', () => {
     test('anytime', () => {
         expectWillBeFormatted('В любое время');
     })
-
+    test('anytime with comment', () => {
+        expectWillBeFormatted('В любое время (по записи)');
+    })
     test('time_multiply_with_range', () => {
         expectWillBeFormatted(`сб: 10:00-12:00,14:00`);
     })

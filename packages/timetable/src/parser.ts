@@ -19,6 +19,7 @@ export type RawParseResultV = {
     }
     exactDate?: DateExact
     anytime?: true
+    anytimeComment?: string
 }
 
 interface RawParseResult {
@@ -151,7 +152,7 @@ const timetableLang = P.createLanguage({
             r.DateRangeTimes,
             r.WeekDatesTimetable),
     Everything: (r) => P.alt(
-        r.AnyTime.result([{anytime: true}]),
+        P.seq(r.AnyTime, r.MaybeComment).map(([, anytimeComment]) => ([{ anytime: true, anytimeComment: (anytimeComment ? anytimeComment.comment : undefined) }])),
         P.sepBy1(r.DateRangeTimetablesOrExactDatesOrWeekDateTimetable, r.Divider)),
     Divider: (r) => P.seq(r._, P.alt(r[';'], r.NewLine), r._),
     NewLine: () => P.regex(/[\n\r]+/).desc('новая строка'),
@@ -263,7 +264,8 @@ export function parseTimetable(input: string, now: Date): TimetableParseResult {
             dateRangesTimetable: [],
             datesExact: [],
             weekTimes: [],
-            anytime: false
+            anytime: false,
+            anytimeComment: ''
         }
         for (const p of parseRes.value) {
             if (p.dateRange !== undefined) {
@@ -283,6 +285,7 @@ export function parseTimetable(input: string, now: Date): TimetableParseResult {
                 result.datesExact.push(p.exactDate)
             } else if (p.anytime) {
                 result.anytime = true;
+                result.anytimeComment = p.anytimeComment || ''
             }
         }
         return {status: parseRes.status, value: result}

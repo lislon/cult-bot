@@ -38,6 +38,7 @@ export interface EventTimetable {
     dateRangesTimetable?: DateRangeTimetable[]
     datesExact?: DateExact[]
     anytime?: boolean
+    anytimeComment?: string
 }
 
 export type MomentOrInterval = Date | Date[];

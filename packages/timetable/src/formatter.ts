@@ -156,7 +156,7 @@ export class TimetableFormatter {
     structureFormatTimetable(timetable: EventTimetable): FormattedTimetable {
         const {anytime, datesExact, dateRangesTimetable, weekTimes} = timetable
         if (anytime) {
-            return {anytime: 'В любое время'}
+            return {anytime: `В любое время` + (timetable.anytimeComment ? ` (${timetable.anytimeComment})` : '')}
         }
         const r = {
             weekTimes: this.formatWeekTimes(this.filterWorkdaysWeekTimes(weekTimes)),
