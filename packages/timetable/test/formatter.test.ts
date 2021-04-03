@@ -2,6 +2,14 @@ import { date } from './test-utils'
 import { FormatterConfig, TimetableFormatter } from '../src'
 import { parseTimetable } from '../src'
 
+
+// январь 2020
+// пн	вт	ср	чт	пт	сб	вс
+//           1	2	3	4	5
+// 6	7	8	9	10	11	12
+// 13	14	15	16	17	18	19
+// 20	21	22	23	24	25	26
+// 27	28	29	30	31
 const NOW = date('2020-01-01 15:00')
 
 function expectWillBeFormatted(expected: string, text: string = expected, now: Date = NOW, config: FormatterConfig = {}): void {
@@ -116,7 +124,7 @@ describe('timetable formatter', () => {
         expectWillBeFormatted(expected, input, NOW, {hidePast: true});
     })
 
-    describe('hide times', () => {
+    describe('hide past', () => {
 
         test('concrete_dates_range_short_same_months', () => {
             const input = `25 января 2020 - 28 января 2020: 10:00`;
@@ -130,10 +138,72 @@ describe('timetable formatter', () => {
             expectWillBeFormatted(expected, input, NOW, {hidePast: true, hideTimes: true})
         })
 
+        test('do not hide past if nothing will be displayed', () => {
+            const input = '12 ноября 2019 - 29 ноября 2019: сб-вс: 10:00-18:00'
+            const expected = 'до 29 ноября: сб-вс'
+            expectWillBeFormatted(expected, input, NOW, {hidePast: true, hideTimes: true})
+        })
+
         test('week_regular + comment', () => {
             const input = `сб: 10:00 (Давай давай)`;
             const expected = `сб (Давай давай)`;
             expectWillBeFormatted(expected, input, NOW, { hideTimes: true })
         })
     })
+
+    describe('hide regular', () => {
+
+        const config: FormatterConfig = { hideNonHolidays: true }
+
+        test('intervals not affected', () => {
+            const input = `25-28 января: 10:00`;
+            expectWillBeFormatted(input, input, NOW, config);
+        })
+
+        test('week_regular are hidden', () => {
+            const input = `пн-сб: 10:00`;
+            const expected = `сб: 10:00`;
+            expectWillBeFormatted(expected, input, NOW, config);
+        })
+
+        test('week_range are hidden', () => {
+            const input = '12-29 ноября: пн-вс: 10:00-18:00'
+            const expected = `12-29 ноября: сб-вс: 10:00-18:00`;
+            expectWillBeFormatted(expected, input, NOW, config);
+        })
+
+        test('exact_days are hidden', () => {
+            const input = `03 января: 10:00\n04 января: 10:00`;
+            const expected = '04 января: 10:00'
+            expectWillBeFormatted(expected, input, NOW, config);
+        })
+
+        test('when all days are hidden, show as is', () => {
+            const input = '12-29 ноября: пн-вт: 10:00-18:00'
+            const expected = `12-29 ноября: пн-вт: 10:00-18:00`;
+            expectWillBeFormatted(expected, input, NOW, config);
+        })
+    })
+
+    describe('hide regular + holidays', () => {
+
+        const config: FormatterConfig = { hideNonHolidays: true, holidays: [date('2020-01-01'), date('2020-01-02')] }
+        test('intervals not affected', () => {
+            const input = `01-28 января: 10:00`;
+            expectWillBeFormatted(input, input, NOW, config);
+        })
+
+        test('week_regular are hidden', () => {
+            const input = `пн-вс: 10:00`;
+            const expected = `ср-чт: 10:00`;
+            expectWillBeFormatted(expected, input, NOW, config);
+        })
+
+        test('exact_days are hidden', () => {
+            const input = `02 января: 10:00\n03 января: 10:00`;
+            const expected = '02 января: 10:00'
+            expectWillBeFormatted(expected, input, NOW, config);
+        })
+    })
+
 })

@@ -240,13 +240,13 @@ export async function chunkanize(msg: string, callback: (text: string, extra?: E
     return last
 }
 
-export function getConfiguredHolidaysIfAny(now: Date) {
+export function getConfiguredHolidaysIfAny(now: Date): Date[] {
     return botConfig.HOLIDAYS === '' ? [] : botConfig.HOLIDAYS
         .split(/\s*,\s*/)
         .map(str => parse(str.trim(), SLOT_DATE_FORMAT, new Date()))
         .filter(holidayDate => isAfterOrEquals(holidayDate, startOfDay(now)))
 }
 
-export function isEventInFuture(timeIntervals: MomentIntervals, date: Date) {
+export function isEventInFuture(timeIntervals: MomentIntervals, date: Date): boolean {
     return timeIntervals.length > 0 && isAfter(rightDate(last(timeIntervals)), date)
 }

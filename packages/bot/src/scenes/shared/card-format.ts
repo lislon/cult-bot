@@ -25,7 +25,12 @@ export function formatUrl(text: string) {
     return niceUrls
 }
 
-export function formatCardTimetable(event: Event, now: Date) {
+export interface FormatCardTimetableOptions {
+    now: Date
+    hideNonHolidays?: boolean
+}
+
+export function formatCardTimetable(event: Event, options: FormatCardTimetableOptions) {
     const rawTimetable = event.timetable
     if (hasHumanTimetable(rawTimetable)) {
         return getOnlyHumanTimetable(rawTimetable);
@@ -44,11 +49,12 @@ export function formatCardTimetable(event: Event, now: Date) {
     function cutYear(humanTimetable: string) {
         return humanTimetable.replace(/^\d+ [а-яА-Я]+(\s+\d+)?\s*-\s*/g, 'до ')
     }
-    const structured = parseTimetable(rawTimetable, now);
+    const structured = parseTimetable(rawTimetable, options.now);
     let formatted: string;
     if (structured.status === true) {
-        formatted =  new TimetableFormatter(now, {
-            hidePast: !!hasAnyEventsInFuture(structured.value, now)
+        formatted =  new TimetableFormatter(options.now, {
+            hidePast: !!hasAnyEventsInFuture(structured.value, options.now),
+            hideNonHolidays: options.hideNonHolidays
         }).formatTimetable(structured.value)
 
         // be save
@@ -64,7 +70,7 @@ export function formatCardTimetable(event: Event, now: Date) {
     return formatCinemaUrls(formatted)
 }
 
-export function formatEventDuration(text: string) {
+export function formatEventDuration(text: string): string {
     const m = text.match(/(\d+)\s*мин[^ ]*/)
     if (m && +m[1] >= 60) {
         const rawMinutes = +m[1]
@@ -76,7 +82,7 @@ export function formatEventDuration(text: string) {
     return text
 }
 
-export function getCardHeaderCat(row: Event) {
+export function getCardHeaderCat(row: Event): string {
     const icon = i18n.t(`ru`, `shared.category_icons.${row.category}`)
     const title = i18n.t(`ru`, `shared.category_single_title.${row.category}`)
     return `${icon} <b>${title.toUpperCase()}</b>`
@@ -158,9 +164,9 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
         text += `📍 ${addHtmlNiceUrls(escapeHTML(row.address))}${map}\n`
     }
     if (isFuture) {
-        text += `${formatCardTimetable(row, options.now)}\n`
+        text += `${formatCardTimetable(row, { now: options.now })}\n`
     } else {
-        text += `<s>${formatCardTimetable(row, options.now)}</s>\n`
+        text += `<s>${formatCardTimetable(row, { now: options.now })}</s>\n`
     }
     if (!fieldIsQuestionMarkOrEmpty(row.duration)) {
         text += `🕐 ${escapeHTML(formatEventDuration(row.duration))}\n`

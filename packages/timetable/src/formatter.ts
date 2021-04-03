@@ -1,6 +1,6 @@
 import { DayTime, rightDate } from './intervals'
 import { ruFormat } from './ruFormat'
-import { addDays, differenceInDays, format, formatISO, getMonth, isAfter, parseISO } from 'date-fns'
+import { addDays, differenceInDays, format, formatISO, getISODay, getMonth, isAfter, isEqual, parseISO } from 'date-fns'
 import {
     DateExact,
     DateOrDateRange,
@@ -53,6 +53,8 @@ export interface FormattedTimetable {
 export interface FormatterConfig {
     hidePast?: boolean
     hideTimes?: boolean
+    hideNonHolidays?: boolean
+    holidays?: Date[]
 }
 
 export class TimetableFormatter {
@@ -109,8 +111,16 @@ export class TimetableFormatter {
         return result.join(',')
     }
 
+    private isEmptyDays(timetable: FormattedTimetable): boolean {
+        return !timetable.anytime
+            && !timetable.dateRangesTimetable?.find(({ weekTimes, times }) => (weekTimes && weekTimes.length > 0) || times)
+            && !(timetable.datesExact && timetable.datesExact.length > 0)
+            && !(timetable.weekTimes && timetable.weekTimes.length > 0)
+    }
+
     formatTimetable(timetable: EventTimetable): string {
         const {anytime, datesExact, dateRangesTimetable, weekTimes} = this.structureFormatTimetable(timetable)
+
         if (anytime) {
             return anytime
         }
@@ -148,18 +158,63 @@ export class TimetableFormatter {
         if (anytime) {
             return {anytime: 'В любое время'}
         }
-        return {
-            weekTimes: this.formatWeekTimes(weekTimes),
-            datesExact: this.formatDatesExact(datesExact),
+        const r = {
+            weekTimes: this.formatWeekTimes(this.filterWorkdaysWeekTimes(weekTimes)),
+            datesExact: this.formatDatesExact(this.filterWorkdaysDatesExact(datesExact)),
             dateRangesTimetable: this.formatDateRangesTimetable(dateRangesTimetable)
         }
+        if (this.isEmptyDays(r)) {
+            if (this.config.hidePast) {
+                return new TimetableFormatter(this.now, {
+                    ...this.config,
+                    hidePast: false
+                }).structureFormatTimetable(timetable)
+            }
+            if (this.config.hideNonHolidays) {
+                return new TimetableFormatter(this.now, {
+                    ...this.config,
+                    hideNonHolidays: false
+                }).structureFormatTimetable(timetable)
+            }
+        }
+        return r
+    }
+    private filterWorkdaysWeekTimes(weekTimes?: WeekTime[]): WeekTime[]|undefined {
+        if (this.config.hideNonHolidays) {
+            const filterWeekDay = (weekday: number) => {
+                if (this.config.holidays !== undefined) {
+                    return this.config.holidays.map(d => getISODay(d)).includes(weekday)
+                } else {
+                    return weekday >= 6 && weekday <= 7
+                }
+            }
+            return weekTimes?.map(weekTime => ({
+                ...weekTime,
+                weekdays: weekTime.weekdays.filter(filterWeekDay),
+            })).filter(({ weekdays }) => weekdays.length > 0)
+        }
+        return weekTimes;
+    }
+
+    private filterWorkdaysDatesExact(datesExact?: DateExact[]): DateExact[] | undefined {
+        if (this.config.hideNonHolidays) {
+            return datesExact?.filter(({ date }) => {
+                const parsedDate = parseISO(date)
+                if (this.config.holidays !== undefined) {
+                    return !!this.config.holidays.find(holiday => isEqual(holiday, parsedDate))
+                } else {
+                    return getISODay(parsedDate) >= 6
+                }
+            })
+        }
+        return datesExact;
     }
 
     private formatDateRangesTimetable(dateRangesTimetable?: DateRangeTimetable[]): FormattedTimetable['dateRangesTimetable'] {
         return dateRangesTimetable?.map(({dateRange, weekTimes, times}) => {
                 return {
                     dateRange: this.formatDateOrDateRange(dateRange),
-                    weekTimes: this.formatWeekTimes(weekTimes),
+                    weekTimes: this.formatWeekTimes(this.filterWorkdaysWeekTimes(weekTimes)),
                     times: times ? this.formatTimes(times) : undefined
                 }
             }

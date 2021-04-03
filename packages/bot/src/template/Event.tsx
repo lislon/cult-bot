@@ -37,7 +37,7 @@ export function Event(event: Event) {
                     <a href={event.geotag}>(Я.Карта)</a>
                 </address>
                 <p className='timetable'>
-                    {formatCardTimetable(event, new Date())}
+                    {formatCardTimetable(event, { now: new Date() })}
                 </p>
                 <p className='timetable'>
                     🕐 {formatEventDuration(event.duration)}
