@@ -129,10 +129,18 @@ function validateTagLevel1(event: Event, errorCallback: ErrorCallback) {
     }
 }
 
-function validateTag(tags: string[], errorCallback: ErrorCallback) {
-    const badTag = tags.find(t => t.match(/^#[^_\s#?@$%^&*()!\\№:;',-]+$/) === null)
-    if (badTag !== undefined) {
-        errorCallback([`Плохой тег ${badTag}`])
+function validateNonEmptyTags(tags: string[], errorCallback: ErrorCallback) {
+    if (tags.length === 0) {
+        errorCallback(['В боте получиться пустой тег'])
+    }
+}
+
+function validateTagSymbols(tags: string[], errorCallback: ErrorCallback) {
+    if (tags.join('') !== '') {
+        const badTag = tags.find(t => t.match(/^#[^_\s#?@$%^&*()!\\№:;',-]+$/) === null)
+        if (badTag !== undefined) {
+            errorCallback([`Плохой тег ${badTag}`])
+        }
     }
 }
 
@@ -169,7 +177,7 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
     const notNull = (s: string) => s === undefined ? '' : s.trim()
     const notNullOrUnknown = (s: string) => s === undefined ? '' : s
     const forceDigit = (n: string, def = 0) => n === undefined ? def : +n
-    const splitTags = (s: string) => s.split(/\s+|(?<=[^\s])(?=#)/)
+    const splitTags = (s: string) => s.split(/\s+|(?<=[^\s])(?=#)/).filter(s => s !== '')
 
     const data: Event = {
         'extId': row.ext_id,
@@ -247,9 +255,9 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
 
     validateExtId(data, (errors) => result.errors.extId = errors)
 
-    validateTag(data.tag_level_1, (errors) => result.errors.tagLevel1 = [...result.errors.tagLevel1, ...errors])
-    validateTag(data.tag_level_2, (errors) => result.errors.tagLevel2 = [...result.errors.tagLevel2, ...errors])
-    validateTag(data.tag_level_3, (errors) => result.errors.tagLevel3 = [...result.errors.tagLevel3, ...errors])
+    validateTagSymbols(data.tag_level_1, (errors) => result.errors.tagLevel1 = [...result.errors.tagLevel1, ...errors])
+    validateTagSymbols(data.tag_level_2, (errors) => result.errors.tagLevel2 = [...result.errors.tagLevel2, ...errors])
+    validateTagSymbols(data.tag_level_3, (errors) => result.errors.tagLevel3 = [...result.errors.tagLevel3, ...errors])
     validateTagLevel1(data, (errors) => result.errors.tagLevel1 = [...result.errors.tagLevel1, ...errors])
 
     result.data = enrichEventWithAutotags(result.data, {
@@ -261,6 +269,10 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
             now
         }
     )
+
+    validateNonEmptyTags(data.tag_level_1, (errors) => result.errors.tagLevel1 = [...result.errors.tagLevel1, ...errors])
+    validateNonEmptyTags(data.tag_level_2, (errors) => result.errors.tagLevel2 = [...result.errors.tagLevel2, ...errors])
+    validateNonEmptyTags(data.tag_level_3, (errors) => result.errors.tagLevel3 = [...result.errors.tagLevel3, ...errors])
 
     result.valid = result.valid && result.errors.emptyRows.length == 0
     result.valid = result.valid && result.errors.tagLevel1.length == 0

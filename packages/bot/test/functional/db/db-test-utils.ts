@@ -31,7 +31,6 @@ export interface MockPackForSave extends Omit<EventPackForSavePrepared, 'events'
     eventTitles: string[]
 }
 
-
 export function getMockEvent({
                                  extId = '',
                                  eventTime = [],
