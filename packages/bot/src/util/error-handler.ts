@@ -39,6 +39,17 @@ export async function botErrorHandler(error: any, ctx: ContextMessageUpdate): Pr
             }
         }
     } catch (e) {
-        logger.error(e)
+        if (e.message.includes('query is too old and response timeout expired')) {
+            logger.debug(e.message)
+            // ignore
+        } else if (isTooManyRequests(e.message)) {
+            logger.warn(`${formatUserName(ctx)}: ` + e.message)
+            // ignore
+        } else if (isBlockedError(e)) {
+            logger.warn(`${formatUserName(ctx)}: blocked bot`)
+            // ignore
+        } else {
+            logger.error(e)
+        }
     }
 }

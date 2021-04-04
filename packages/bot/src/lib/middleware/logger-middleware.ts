@@ -34,7 +34,7 @@ const MESSAGE_TYPES = [
     'voice',
 ]
 
-function getMessageType(msg: any) {
+function getMessageType(msg: any): string {
     return MESSAGE_TYPES.find((type) => msg[type] !== undefined)
 }
 
@@ -72,13 +72,13 @@ function format(update: Update, options: any = {}) {
             ? DEFAULT_COLORS
             : DISABLED_COLORS
 
-    function formatMessageID({message_id, id}: { message_id: number, id: number }) {
-        if (message_id != undefined) {
-            return colors.id(message_id)
+    function formatMessageID(msg?: { message_id: number, id: number }) {
+        if (msg?.message_id != undefined) {
+            return colors.id(msg.message_id)
         }
 
-        if (id != undefined) {
-            return colors.id(`(inline) ${id}`)
+        if (msg?.id != undefined) {
+            return colors.id(`(inline) ${msg.id}`)
         }
 
         return undefined
