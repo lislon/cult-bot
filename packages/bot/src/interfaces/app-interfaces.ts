@@ -70,8 +70,7 @@ export interface ContextMessageUpdate extends Context {
     isNowOverridden(): boolean
 }
 
-export interface Event {
-    id?: number
+export interface EventNoId {
     extId: string
     category: EventCategory
     publish: string
@@ -92,6 +91,10 @@ export interface Event {
     reviewer: string
     likes: number
     dislikes: number
+}
+
+export interface Event extends EventNoId{
+    id: number
 }
 
 export type DateInterval = {

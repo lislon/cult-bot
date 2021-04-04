@@ -208,4 +208,15 @@ describe('timetable formatter', () => {
         })
     })
 
+    describe('hide future dates for theatres', () => {
+        test('only first future date is shown', () => {
+            const input = `02 января: 10:00\n03 января: 10:00\n\n04 января: 10:00\n`;
+            const expected = '03 января: 10:00'
+            expectWillBeFormatted(expected, input, date('2020-01-02 15:00'), {
+                hidePast: true,
+                hideFutureExactDates: true
+            });
+        })
+    })
+
 })

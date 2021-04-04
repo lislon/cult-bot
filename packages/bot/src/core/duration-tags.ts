@@ -1,8 +1,8 @@
-import { Event, TagLevel2 } from '../interfaces/app-interfaces'
+import { EventNoId, TagLevel2 } from '../interfaces/app-interfaces'
 import { EventDuration } from '../lib/duration-parser'
 import { max } from 'lodash'
 
-export function autoAppendDurationTags(existingTags: TagLevel2[], data: Event, duration: EventDuration, errorCallback?: (errors: string[]) => void, warningCallback?: (errors: string[]) => void): TagLevel2[] {
+export function autoAppendDurationTags(existingTags: TagLevel2[], data: EventNoId, duration: EventDuration, errorCallback?: (errors: string[]) => void, warningCallback?: (errors: string[]) => void): TagLevel2[] {
     if (existingTags.includes('#успетьзачас')) {
         warningCallback?.([`Тег '#успетьзачас' ставится автоматически. Уберите, плиз его из карточки`])
     }

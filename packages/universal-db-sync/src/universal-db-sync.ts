@@ -14,6 +14,12 @@ export interface PrimaryDataId {
     }
 }
 
+export interface PrimaryDataMaybeId {
+    primaryData: {
+        id?: number
+    }
+}
+
 //
 // export interface BaseSyncItemDeleted {
 //     id: number
@@ -39,6 +45,7 @@ export interface BaseSyncItemDbRow {
     deleted_at?: Date
 }
 export type WithId<E> = E & PrimaryDataId
+export type WithMaybeId<E> = E & PrimaryDataMaybeId
 
 export type Recovered<E extends PrimaryDataExtId, RECOVERED_COLUMNS extends string> =
     WithId<E>

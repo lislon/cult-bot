@@ -51,9 +51,13 @@ export function favoriteCardButtonsRow(ctx: ContextMessageUpdate, event: Event) 
     ]
 }
 
-export function sortFavorites(events: FavoriteEvent[]) {
+export function sortFavorites(events: FavoriteEvent[]): FavoriteEvent[] {
     return [...events].sort((left, right) => {
             if (left.isFuture === true && right.isFuture === true) {
+
+                if (left.parsedTimetable.parsedTimetable === undefined || right.parsedTimetable.parsedTimetable === undefined) {
+                    throw new Error('Timetable is not parsed for events: ' + events.map(e => e.id))
+                }
 
                 if (left.parsedTimetable.parsedTimetable.anytime === false && right.parsedTimetable.parsedTimetable.anytime === false) {
                     return compareAsc(left.firstDate, right.firstDate)
@@ -74,6 +78,6 @@ export function sortFavorites(events: FavoriteEvent[]) {
     )
 }
 
-export async function getSortedFavoriteEventsIds(ctx: ContextMessageUpdate) {
+export async function getSortedFavoriteEventsIds(ctx: ContextMessageUpdate): Promise<number[]> {
     return sortFavorites(await loadEventsAsFavorite(ctx.session.user.eventsFavorite, ctx.now())).map(e => e.id)
 }

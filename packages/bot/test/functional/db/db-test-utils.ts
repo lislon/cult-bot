@@ -1,5 +1,5 @@
 import { db } from '../../../src/database/db'
-import { Event, TagLevel2 } from '../../../src/interfaces/app-interfaces'
+import { Event, EventNoId, TagLevel2 } from '../../../src/interfaces/app-interfaces'
 import { EventCategory } from '@culthub/interfaces'
 import { EventToSave } from '../../../src/interfaces/db-interfaces'
 import { PackToSave } from '../../../src/database/db-packs'
@@ -47,7 +47,7 @@ export function getMockEvent({
                                  dateDeleted = undefined
                              }: Partial<MockEvent> = {}
 ): EventToSave {
-    const event: Event = {
+    const event: EventNoId = {
         extId: extId,
         category: category,
         publish: '',

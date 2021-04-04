@@ -1,4 +1,4 @@
-import { Event } from './app-interfaces'
+import { EventNoId } from './app-interfaces'
 import { EventTimetable, MomentIntervals } from '@culthub/timetable'
 import { PrimaryDataExtId } from '@culthub/universal-db-sync'
 
@@ -29,7 +29,7 @@ export interface DbEvent {
 }
 
 export interface EventToSave extends PrimaryDataExtId {
-    primaryData: Event
+    primaryData: EventNoId
     timetable: EventTimetable
     timeIntervals: MomentIntervals
     is_anytime: boolean

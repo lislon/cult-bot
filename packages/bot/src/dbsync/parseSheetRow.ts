@@ -1,4 +1,4 @@
-import { Event, TagLevel2 } from '../interfaces/app-interfaces'
+import { Event, EventNoId, TagLevel2 } from '../interfaces/app-interfaces'
 import { EventCategory } from '@culthub/interfaces'
 import { fieldIsQuestionMarkOrEmpty } from '../util/misc-utils'
 import { parseAndPredictTimetable } from '../lib/timetable/timetable-utils'
@@ -81,14 +81,14 @@ export interface ExcelRowResult {
     predictedIntervals: MomentOrInterval[]
     parsedDuration: EventDuration
     rowNumber: number
-    data: Event
+    data: EventNoId
     dueDate: Date
     popularity?: Popularity
     fakeLikes?: number
     fakeDislikes?: number
 }
 
-function preparePublish(data: Event, result: ExcelRowResult) {
+function preparePublish(data: EventNoId, result: ExcelRowResult) {
     if (fieldIsQuestionMarkOrEmpty(data.timetable)) {
         return false
     }
@@ -109,7 +109,7 @@ export function getOnlyHumanTimetable(timetable: string): string {
     return timetable.replace(/{(?:бот|bot):([^}]+)}/, '').trim()
 }
 
-function validateTagLevel1(event: Event, errorCallback: ErrorCallback) {
+function validateTagLevel1(event: EventNoId, errorCallback: ErrorCallback) {
     if (event.category === 'exhibitions') {
 
         const requiredTags = i18n.resourceKeys('ru')
@@ -145,11 +145,11 @@ function validateTagSymbols(tags: string[], errorCallback: ErrorCallback) {
 }
 
 
-function isAddressValid(data: Event) {
+function isAddressValid(data: EventNoId) {
     return !(data.address.toLowerCase() === 'онлайн' && data.address.toLowerCase() !== data.address)
 }
 
-function validateExtId(data: Event, errorCallback: ErrorCallback): void {
+function validateExtId(data: EventNoId, errorCallback: ErrorCallback): void {
     const extId = data.extId
     if (extId?.match(/^[А-Я]/)) {
         return errorCallback([`Замечена русская буква '${extId.substring(0, 1)}' в ID-шнике. Допускаются только английские`])
@@ -179,7 +179,7 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
     const forceDigit = (n: string, def = 0) => n === undefined ? def : +n
     const splitTags = (s: string) => s.split(/\s+|(?<=[^\s])(?=#)/).filter(s => s !== '')
 
-    const data: Event = {
+    const data: EventNoId = {
         'extId': row.ext_id,
         'category': category,
         'publish': row.publish,

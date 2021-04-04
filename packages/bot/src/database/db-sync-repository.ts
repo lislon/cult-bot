@@ -3,7 +3,7 @@ import { encodeTagsLevel1 } from '../util/tag-level1-encoder'
 import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise'
 import { db, IExtensions } from './db'
 import { MomentIntervals } from '@culthub/timetable'
-import { Recovered, SyncConfig, UniversalDbSync, UniversalSyncDiff, WithId } from '@culthub/universal-db-sync'
+import { Recovered, SyncConfig, UniversalDbSync, UniversalSyncDiff, WithId, WithMaybeId } from '@culthub/universal-db-sync'
 import { fieldInt, fieldStr, fieldTextArray, fieldTimestamptzNullable } from '@culthub/pg-utils'
 import { TagLevel2 } from '../interfaces/app-interfaces'
 import { EventCategory } from '@culthub/interfaces'
@@ -15,7 +15,7 @@ function generateRandomOrder() {
 export type EventToRecover = Recovered<EventToSave, EventDeletedColumns>
 export type EventDeletedColumns = 'title' | 'category'
 
-export type EventsSyncDiff = UniversalSyncDiff<EventToSave, EventDeletedColumns>
+export type EventsSyncDiff = UniversalSyncDiff<WithMaybeId<EventToSave>, EventDeletedColumns>
 export type EventsSyncDiffSaved = UniversalSyncDiff<WithId<EventToSave>, EventDeletedColumns>
 
 export interface EventForRefresh {

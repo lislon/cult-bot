@@ -1,7 +1,7 @@
-import { CHEAP_PRICE_THRESHOLD, Event, TagLevel2 } from '../interfaces/app-interfaces'
+import { CHEAP_PRICE_THRESHOLD, Event, EventNoId, TagLevel2 } from '../interfaces/app-interfaces'
 import { parsePrice } from '../lib/price-parser'
 
-export function autoAppendCostTags(existingTags: TagLevel2[], data: Event, errorCallback?: (errors: string[]) => void, warningCallback?: (errors: string[]) => void): TagLevel2[] {
+export function autoAppendCostTags(existingTags: TagLevel2[], data: EventNoId, errorCallback?: (errors: string[]) => void, warningCallback?: (errors: string[]) => void): TagLevel2[] {
     const tagFree: TagLevel2 = '#бесплатно'
     const tagCheap: TagLevel2 = '#доступноподеньгам'
     const tagNotCheap: TagLevel2 = '#_недешево'

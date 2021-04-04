@@ -4,6 +4,7 @@ export {
     PrimaryDataExtId,
     PrimaryDataTitle,
     WithId,
+    WithMaybeId,
     BaseSyncItemDbRow,
     Recovered,
     Deleted,

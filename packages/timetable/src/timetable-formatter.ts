@@ -54,6 +54,7 @@ export interface FormatterConfig {
     hidePast?: boolean
     hideTimes?: boolean
     hideNonHolidays?: boolean
+    hideFutureExactDates?: boolean
     holidays?: Date[]
 }
 
@@ -165,7 +166,15 @@ export class TimetableFormatter {
         const r = {
             anytime: '',
             weekTimes: this.formatWeekTimes(this.filterWorkdaysWeekTimes(weekTimes)),
-            datesExact: this.formatDatesExact(this.filterWorkdaysDatesExact(datesExact)),
+            datesExact: this.formatDatesExact(
+                this.filterFuturesDatesExact(
+                    this.filterWorkdaysDatesExact(
+                        this.filterPastDatesExact(
+                            datesExact
+                        )
+                    )
+                )
+            ),
             dateRangesTimetable: this.formatDateRangesTimetable(dateRangesTimetable)
         }
         if (TimetableFormatter.isEmptyDays(r)) {
@@ -215,6 +224,26 @@ export class TimetableFormatter {
         return datesExact;
     }
 
+    private filterFuturesDatesExact(datesExact: DateExact[]): DateExact[] {
+        if (this.config.hideFutureExactDates) {
+            if (datesExact.length >= 2) {
+                return datesExact.slice(0, 1);
+            }
+        }
+        return datesExact;
+    }
+
+    private filterPastDatesExact(datesExact: DateExact[]): DateExact[] {
+        if (this.config.hidePast) {
+            const isoDate = formatISO(this.now, {representation: 'date'})
+            const isoTime = format(this.now, 'HH:mm')
+            return datesExact.filter((dateTimes) =>
+                hasDateTimeInFuture(dateTimes, isoDate, isoTime)
+            )
+        }
+        return datesExact;
+    }
+
     private formatDateRangesTimetable(dateRangesTimetable: DateRangeTimetable[]): FormattedTimetable['dateRangesTimetable'] {
         return dateRangesTimetable.map(({dateRange, weekTimes, times}) => {
                 return {
@@ -237,12 +266,8 @@ export class TimetableFormatter {
     }
 
     private formatDatesExact(datesExact: DateExact[]): FormattedTimetable['datesExact'] {
-        const isoDate = formatISO(this.now, {representation: 'date'})
-        const isoTime = format(this.now, 'HH:mm')
+
         return datesExact
-            .filter((dateTimes) =>
-                this.config.hidePast === undefined || !this.config.hidePast || hasDateTimeInFuture(dateTimes, isoDate, isoTime)
-            )
             .map(({date, times, comment}) => {
                 return {
                     date: this.formatDateOrDateRange(date),

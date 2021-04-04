@@ -119,7 +119,9 @@ export function extraInlineMenu(rows: InlineKeyboardButton[][]): ExtraReplyMessa
 }
 
 export async function updateKeyboardButtons(replyMarkup: InlineKeyboardMarkup,
-                                            callbackDataToken: RegExp, updateFunc: (text: InlineKeyboardButton.CallbackButton) => (InlineKeyboardButton.CallbackButton | InlineKeyboardButton.CallbackButton[])): Promise<undefined | InlineKeyboardMarkup> {
+                                            callbackDataToken: RegExp,
+                                            updateFunc: (text: InlineKeyboardButton.CallbackButton) => (InlineKeyboardButton.CallbackButton | InlineKeyboardButton.CallbackButton[])
+): Promise<undefined | InlineKeyboardMarkup> {
     if (replyMarkup !== undefined) {
         const newKeyboard: InlineKeyboardButton.CallbackButton[][] = []
         for (const row of replyMarkup.inline_keyboard) {

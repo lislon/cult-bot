@@ -1,5 +1,5 @@
 import { EventTimetable, MomentOrInterval } from '@culthub/timetable'
-import { Event } from '../interfaces/app-interfaces'
+import { EventNoId } from '../interfaces/app-interfaces'
 import { autoAppendCostTags } from './cost-tags'
 import { autoAppendLastChanceTags } from './last-chance'
 import { autoAppendDurationTags } from './duration-tags'
@@ -16,7 +16,7 @@ export interface AutoAppendTagsOptions {
     now: Date
 }
 
-export function enrichEventWithAutotags(event: Event, options: AutoAppendTagsOptions): Event {
+export function enrichEventWithAutotags(event: EventNoId, options: AutoAppendTagsOptions): EventNoId {
     let tagLevel2 = event.tag_level_2
     tagLevel2 = autoAppendCostTags(tagLevel2, event, options.errorCallback, options.warningCallback)
     tagLevel2 = autoAppendDurationTags(tagLevel2, event, options.parsedDuration, options.errorCallback, options.warningCallback)

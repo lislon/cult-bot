@@ -13,6 +13,7 @@ async function readCard(card: string) {
 }
 
 const defaultEvent: Event = {
+    id: 1,
     extId: '',
     title: 'A',
     category: 'theaters',

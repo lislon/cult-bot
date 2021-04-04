@@ -54,6 +54,7 @@ export function formatCardTimetable(event: Event, options: FormatCardTimetableOp
     if (structured.status === true) {
         formatted =  new TimetableFormatter(options.now, {
             hidePast: !!hasAnyEventsInFuture(structured.value, options.now),
+            hideFutureExactDates: event.category === 'theaters',
             hideNonHolidays: options.hideNonHolidays
         }).formatTimetable(structured.value)
 
