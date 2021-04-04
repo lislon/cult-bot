@@ -1,7 +1,7 @@
 export {
     FormattedTimetable, FormatterConfig, TimetableFormatter,
     hasAnyEventsInFuture
-} from './formatter'
+} from './timetable-formatter'
 
 export {
     mapInterval,
@@ -15,7 +15,7 @@ export {
 export {
     TimetableParseResult, parseTimetable,
     cleanTimetableText
-} from './parser'
+} from './timetable-parser'
 export {
     MomentIntervals, MomentOrInterval, EventTimetable, DateRange, DateExact, WeekTime, DateInterval, DateOrDateRange
 } from './interfaces'

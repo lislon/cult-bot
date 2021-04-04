@@ -67,9 +67,13 @@ export function datesToTimetable(dates: Date[]): string {
             dateRangesTimetable: [
                 {
                     dateRange: [format(dates[0], 'yyyy-MM-dd'), format(dates[dates.length - 1], 'yyyy-MM-dd')],
+                    weekTimes: [],
                     times: [format(dates[0], 'HH:mm')]
                 }
-            ]
+            ],
+            weekTimes: [],
+            datesExact: [],
+            anytime: false
         })
     } else if (!hasDifferentTimeOnSomeDay && Math.max(...weekdaysFreq) >= MIN_TIMES_ON_SAME_WEEKDAY_FOR_WEEK_TIMETABLE) {
         const weekTimes = getWeekTimes(weekdaysTimes)
@@ -78,12 +82,19 @@ export function datesToTimetable(dates: Date[]): string {
             dateRangesTimetable: [
                 {
                     dateRange: [format(dates[0], 'yyyy-MM-dd'), format(dates[dates.length - 1], 'yyyy-MM-dd')],
-                    weekTimes
+                    weekTimes,
+                    times: []
                 }
-            ]
+            ],
+            weekTimes: [],
+            datesExact: [],
+            anytime: false
         })
     }
     return formatter.formatTimetable({
-        datesExact: getDatesExact(dates)
+        datesExact: getDatesExact(dates),
+        anytime: false,
+        weekTimes: [],
+        dateRangesTimetable: []
     })
 }

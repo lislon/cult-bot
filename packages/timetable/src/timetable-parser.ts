@@ -260,25 +260,26 @@ export function parseTimetable(input: string, now: Date): TimetableParseResult {
             return {status: false, errors: dateValidation}
         }
 
-        const result: Omit<Required<EventTimetable>, 'anytimeComment'> & { anytimeComment?: string } = {
+        const result: EventTimetable = {
             dateRangesTimetable: [],
             datesExact: [],
             weekTimes: [],
-            anytime: false,
+            anytime: false
         }
         for (const p of parseRes.value) {
             if (p.dateRange !== undefined) {
                 result.dateRangesTimetable.push({
                     dateRange: p.dateRange,
-                    weekTimes: p.weekTimes,
-                    times: p.times
+                    weekTimes: p.weekTimes || [],
+                    times: p.times || []
                 })
             } else if (p.weekTimes !== undefined) {
                 result.weekTimes = [...result.weekTimes, ...p.weekTimes]
             } else if (p.dateRangesTimetable !== undefined) {
                 result.dateRangesTimetable.push({
-                    dateRange: p.dateRangesTimetable.dateRange,
-                    weekTimes: p.dateRangesTimetable.weekTimes,
+                    dateRange: p.dateRangesTimetable.dateRange || [],
+                    weekTimes: p.dateRangesTimetable.weekTimes || [],
+                    times: []
                 })
             } else if (p.exactDate) {
                 result.datesExact.push(p.exactDate)

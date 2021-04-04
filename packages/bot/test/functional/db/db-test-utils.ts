@@ -73,7 +73,10 @@ export function getMockEvent({
     return {
         primaryData: event,
         timetable: {
-            // anytime: anytime
+            anytime: anytime,
+            dateRangesTimetable: [],
+            datesExact: [],
+            weekTimes: []
         },
         timeIntervals: eventTime,
         is_anytime: anytime,

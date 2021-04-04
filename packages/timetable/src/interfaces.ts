@@ -29,15 +29,15 @@ export interface WeekTime {
 
 export interface DateRangeTimetable {
     dateRange: DateRange
-    weekTimes?: WeekTime[]    // по-недельно
-    times?: DayTime[]         // ежедневно часы
+    weekTimes: WeekTime[]    // по-недельно
+    times: DayTime[]         // ежедневно часы
 }
 
 export interface EventTimetable {
-    weekTimes?: WeekTime[]
-    dateRangesTimetable?: DateRangeTimetable[]
-    datesExact?: DateExact[]
-    anytime?: boolean
+    weekTimes: WeekTime[]
+    dateRangesTimetable: DateRangeTimetable[]
+    datesExact: DateExact[]
+    anytime: boolean
     anytimeComment?: string
 }
 

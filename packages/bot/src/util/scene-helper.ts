@@ -5,6 +5,16 @@ import { ReversableTranslit } from '../lib/translit/reversable-translit'
 import { i18n } from './i18n'
 import { adminIds, adminUsernames, devUsernames } from './admins-list'
 import { InlineKeyboardButton } from 'typegram'
+import { I18n } from "telegraf-i18n"
+
+
+
+export interface CtxI18n {
+    // i18n: Pick<I18n, 't'>
+    i18n: {
+        t: (resourceKey?: string, templateData?: object) => string;
+    }
+}
 
 export function i18SharedBtn(id: string, tplData: any = undefined): string {
     return i18n.t(`ru`, `shared.keyboard.${id}`, tplData)
@@ -36,14 +46,14 @@ export function i18nSceneHelper(scene: Pick<Scenes.BaseScene<ContextMessageUpdat
         pushEnterScene,
 
         // eslint-disable-next-line @typescript-eslint/ban-types
-        i18Btn: (ctx: ContextMessageUpdate, id: string, tplData?: object) =>
+        i18Btn: (ctx: CtxI18n, id: string, tplData?: object) =>
             ctx.i18n.t(`scenes.${scene.id}.keyboard.${id}`, tplData),
         // eslint-disable-next-line @typescript-eslint/ban-types
-        i18SharedBtn: (ctx: ContextMessageUpdate, id: string, tplData?: object) =>
+        i18SharedBtn: (ctx: CtxI18n, id: string, tplData?: object) =>
             ctx.i18n.t(`shared.keyboard.${id}`, tplData),
         // scenes.<scene id>.<id>
         // eslint-disable-next-line @typescript-eslint/ban-types
-        i18Msg: (ctx: ContextMessageUpdate, id: string, tplData?: object, byDefault?: string): string => {
+        i18Msg: (ctx: CtxI18n, id: string, tplData?: object, byDefault?: string): string => {
             const resourceKey = `scenes.${scene.id}.${id}`
             if (byDefault === undefined || i18n.resourceKeys('ru').includes(resourceKey)) {
                 try {
@@ -55,11 +65,11 @@ export function i18nSceneHelper(scene: Pick<Scenes.BaseScene<ContextMessageUpdat
                 return byDefault
             }
         },
-        i18SharedMsg: (ctx: ContextMessageUpdate, id: string, tplData: unknown = undefined) =>
+        i18SharedMsg: (ctx: CtxI18n, id: string, tplData: unknown = undefined) =>
             // eslint-disable-next-line @typescript-eslint/ban-types
             ctx.i18n.t(`shared.${id}`, tplData as object),
 
-        sceneHelper: (ctx: ContextMessageUpdate) => {
+        sceneHelper: (ctx: CtxI18n) => {
             return {
                 // scenes.<scene id>.keyboard.<id>
 

@@ -10,10 +10,10 @@ export function autoAppendCostTags(existingTags: TagLevel2[], data: Event, error
     const tagCheapIncl = existingTags.includes(tagCheap)
 
     if (tagFreeIncl) {
-        warningCallback?.([`Тег ${tagFree} ставиться автоматически. Уберите, плиз его из карточки`])
+        warningCallback?.([`Тег ${tagFree} ставится автоматически. Уберите, плиз его из карточки`])
     }
     if (tagCheapIncl) {
-        warningCallback?.([`Тег ${tagCheap} ставиться автоматически. Уберите, плиз его из карточки`])
+        warningCallback?.([`Тег ${tagCheap} ставится автоматически. Уберите, плиз его из карточки`])
     }
 
     const priceParsed = parsePrice(data.price)

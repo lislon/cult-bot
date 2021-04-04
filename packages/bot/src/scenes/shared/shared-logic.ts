@@ -1,6 +1,6 @@
 import { ContextCallbackQueryUpdate, ContextMessageUpdate, DateInterval } from '../../interfaces/app-interfaces'
 import { addDays, max, parseISO, startOfDay, startOfISOWeek } from 'date-fns/fp'
-import { format, formatDistanceToNow, isAfter, Locale, parse } from 'date-fns'
+import { format, formatDistanceToNow, isAfter, isBefore, Locale, parse } from 'date-fns'
 import flow from 'lodash/fp/flow'
 import { ru } from 'date-fns/locale'
 import { i18n } from '../../util/i18n'
@@ -14,7 +14,7 @@ import { InlineKeyboardButton, InlineKeyboardMarkup, Message } from 'typegram'
 import { SLOT_DATE_FORMAT } from '../customize/customize-common'
 import { isAfterOrEquals } from '../../util/moment-msk'
 import { first, last } from 'lodash'
-import { MomentIntervals, rightDate } from '@culthub/timetable'
+import { leftDate, MomentIntervals, rightDate } from '@culthub/timetable'
 import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 
 type Range = '2weekends_only'
@@ -247,6 +247,10 @@ export function getConfiguredHolidaysIfAny(now: Date): Date[] {
         .filter(holidayDate => isAfterOrEquals(holidayDate, startOfDay(now)))
 }
 
-export function isEventInFuture(timeIntervals: MomentIntervals, date: Date): boolean {
+export function isEventEndsInFuture(timeIntervals: MomentIntervals, date: Date): boolean {
     return timeIntervals.length > 0 && isAfter(rightDate(last(timeIntervals)), date)
+}
+
+export function isEventStarsInPast(timeIntervals: MomentIntervals, date: Date): boolean {
+    return timeIntervals.length > 0 && isBefore(leftDate(first(timeIntervals)), date)
 }

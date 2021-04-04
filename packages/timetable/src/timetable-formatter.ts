@@ -12,15 +12,15 @@ import {
 } from './interfaces'
 
 export function hasAnyEventsInFuture(timetable: EventTimetable, now: Date): boolean {
-    if (timetable.anytime || timetable.weekTimes?.length) {
+    if (timetable.anytime || timetable.weekTimes.length) {
         return true
     }
     const isoDate = formatISO(now, {representation: 'date'})
     const isoTime = format(now, 'HH:mm')
-    if (timetable.datesExact?.find(d => hasDateTimeInFuture(d, isoDate, isoTime))) {
+    if (timetable.datesExact.find(d => hasDateTimeInFuture(d, isoDate, isoTime))) {
         return true
     }
-    return !!timetable.dateRangesTimetable?.find(({dateRange}) => rightDate(dateRange) > isoDate || (rightDate(dateRange) === isoDate))
+    return !!timetable.dateRangesTimetable.find(({dateRange}) => rightDate(dateRange) > isoDate || (rightDate(dateRange) === isoDate))
 
 }
 
@@ -36,18 +36,18 @@ function hasDateTimeInFuture(dateTimes: { date: SingleDate, times: DayTime[] }, 
 
 
 export interface FormattedTimetable {
-    weekTimes?: string[]
-    dateRangesTimetable?: {
+    weekTimes: string[]
+    dateRangesTimetable: {
         dateRange: string
-        weekTimes?: string[]
+        weekTimes: string[]
         times?: string
     }[]
-    datesExact?: {
+    datesExact: {
         date: string
         times?: string
         comment?: string
     }[]
-    anytime?: string
+    anytime: string
 }
 
 export interface FormatterConfig {
@@ -111,11 +111,11 @@ export class TimetableFormatter {
         return result.join(',')
     }
 
-    private isEmptyDays(timetable: FormattedTimetable): boolean {
+    private static isEmptyDays(timetable: FormattedTimetable): boolean {
         return !timetable.anytime
-            && !timetable.dateRangesTimetable?.find(({ weekTimes, times }) => (weekTimes && weekTimes.length > 0) || times)
-            && !(timetable.datesExact && timetable.datesExact.length > 0)
-            && !(timetable.weekTimes && timetable.weekTimes.length > 0)
+            && !timetable.dateRangesTimetable.find(({ weekTimes, times }) => (weekTimes.length > 0) || times)
+            && (timetable.datesExact.length === 0)
+            && (timetable.weekTimes.length === 0)
     }
 
     formatTimetable(timetable: EventTimetable): string {
@@ -124,24 +124,23 @@ export class TimetableFormatter {
         if (anytime) {
             return anytime
         }
-        const strWeekTimes = weekTimes?.join('\n')
+        const strWeekTimes = weekTimes.join('\n')
         const strDatesExact = datesExact
-            ?.map(({date, times, comment}) =>
-                `${this.joinDateAndTime(date, times)}${this.maybeAppendComment(comment)}`
+            .map(({date, times, comment}) =>
+                `${this.joinDateAndTime(date, times)}${TimetableFormatter.maybeAppendComment(comment)}`
             )
             .join('\n')
         const strDateRangesTimetable =
-            dateRangesTimetable
-                ?.map(({dateRange, times, weekTimes}) => {
+            dateRangesTimetable.map(({dateRange, times, weekTimes}) => {
                     if (times !== undefined) {
                         return this.joinDateAndTime(dateRange, times)
                     } else {
-                        return `${dateRange}: ${(weekTimes ? weekTimes.join(', ') : '')}`
+                        return `${dateRange}: ${weekTimes.join(', ')}`
                     }
                 })
                 .join('\n')
         return [strWeekTimes, strDatesExact, strDateRangesTimetable]
-            .filter(s => s !== undefined && s !== '')
+            .filter(s => s !== '')
             .join('\n')
     }
 
@@ -156,14 +155,20 @@ export class TimetableFormatter {
     structureFormatTimetable(timetable: EventTimetable): FormattedTimetable {
         const {anytime, datesExact, dateRangesTimetable, weekTimes} = timetable
         if (anytime) {
-            return {anytime: `В любое время` + (timetable.anytimeComment ? ` (${timetable.anytimeComment})` : '')}
+            return {
+                anytime: `В любое время` + (timetable.anytimeComment ? ` (${timetable.anytimeComment})` : ''),
+                weekTimes: [],
+                datesExact: [],
+                dateRangesTimetable: []
+            }
         }
         const r = {
+            anytime: '',
             weekTimes: this.formatWeekTimes(this.filterWorkdaysWeekTimes(weekTimes)),
             datesExact: this.formatDatesExact(this.filterWorkdaysDatesExact(datesExact)),
             dateRangesTimetable: this.formatDateRangesTimetable(dateRangesTimetable)
         }
-        if (this.isEmptyDays(r)) {
+        if (TimetableFormatter.isEmptyDays(r)) {
             if (this.config.hidePast) {
                 return new TimetableFormatter(this.now, {
                     ...this.config,
@@ -179,7 +184,7 @@ export class TimetableFormatter {
         }
         return r
     }
-    private filterWorkdaysWeekTimes(weekTimes?: WeekTime[]): WeekTime[]|undefined {
+    private filterWorkdaysWeekTimes(weekTimes: WeekTime[]): WeekTime[] {
         if (this.config.hideNonHolidays) {
             const filterWeekDay = (weekday: number) => {
                 if (this.config.holidays !== undefined) {
@@ -188,7 +193,7 @@ export class TimetableFormatter {
                     return weekday >= 6 && weekday <= 7
                 }
             }
-            return weekTimes?.map(weekTime => ({
+            return weekTimes.map(weekTime => ({
                 ...weekTime,
                 weekdays: weekTime.weekdays.filter(filterWeekDay),
             })).filter(({ weekdays }) => weekdays.length > 0)
@@ -196,9 +201,9 @@ export class TimetableFormatter {
         return weekTimes;
     }
 
-    private filterWorkdaysDatesExact(datesExact?: DateExact[]): DateExact[] | undefined {
+    private filterWorkdaysDatesExact(datesExact: DateExact[]): DateExact[] {
         if (this.config.hideNonHolidays) {
-            return datesExact?.filter(({ date }) => {
+            return datesExact.filter(({ date }) => {
                 const parsedDate = parseISO(date)
                 if (this.config.holidays !== undefined) {
                     return !!this.config.holidays.find(holiday => isEqual(holiday, parsedDate))
@@ -210,32 +215,32 @@ export class TimetableFormatter {
         return datesExact;
     }
 
-    private formatDateRangesTimetable(dateRangesTimetable?: DateRangeTimetable[]): FormattedTimetable['dateRangesTimetable'] {
-        return dateRangesTimetable?.map(({dateRange, weekTimes, times}) => {
+    private formatDateRangesTimetable(dateRangesTimetable: DateRangeTimetable[]): FormattedTimetable['dateRangesTimetable'] {
+        return dateRangesTimetable.map(({dateRange, weekTimes, times}) => {
                 return {
                     dateRange: this.formatDateOrDateRange(dateRange),
                     weekTimes: this.formatWeekTimes(this.filterWorkdaysWeekTimes(weekTimes)),
-                    times: times ? this.formatTimes(times) : undefined
+                    times: times.length > 0 ? this.formatTimes(times) : undefined
                 }
             }
         )
     }
 
-    private formatWeekTimes(weekTimes?: WeekTime[]): FormattedTimetable['weekTimes'] {
-        return weekTimes?.map(({weekdays, times, comment}) => {
-            return this.joinDateAndTime(this.formatWeekdays(weekdays), this.formatTimes(times)) + this.maybeAppendComment(comment);
+    private formatWeekTimes(weekTimes: WeekTime[]): FormattedTimetable['weekTimes'] {
+        return weekTimes.map(({weekdays, times, comment}) => {
+            return this.joinDateAndTime(this.formatWeekdays(weekdays), this.formatTimes(times)) + TimetableFormatter.maybeAppendComment(comment);
         })
     }
 
-    private maybeAppendComment(comment?: string): string {
+    private static maybeAppendComment(comment?: string): string {
         return comment ? ` (${comment})` : ''
     }
 
-    private formatDatesExact(datesExact?: DateExact[]): FormattedTimetable['datesExact'] {
+    private formatDatesExact(datesExact: DateExact[]): FormattedTimetable['datesExact'] {
         const isoDate = formatISO(this.now, {representation: 'date'})
         const isoTime = format(this.now, 'HH:mm')
         return datesExact
-            ?.filter((dateTimes) =>
+            .filter((dateTimes) =>
                 this.config.hidePast === undefined || !this.config.hidePast || hasDateTimeInFuture(dateTimes, isoDate, isoTime)
             )
             .map(({date, times, comment}) => {

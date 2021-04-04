@@ -13,22 +13,16 @@ import {
     getInlineKeyboardFromCallbackQuery,
     getMsgId,
     replyWithBackToMainMarkup,
-    ruFormat,
     updateKeyboardButtons,
     warnAdminIfDateIsOverriden
 } from '../shared/shared-logic'
-import { rightDate } from '@culthub/timetable'
 import { ParseAndPredictTimetableResult } from '../../lib/timetable/timetable-utils'
-import { first, last } from 'lodash'
-import { isAfter } from 'date-fns'
-import { addHtmlNiceUrls, cardFormat, formatUrl } from '../shared/card-format'
-import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
-import { escapeHTML } from '../../util/string-utils'
+import { cardFormat } from '../shared/card-format'
 import { SliderPager } from '../shared/slider-pager'
 import { FavoritesPagerConfig } from './favorites-pager-config'
 import { loadEventsAsFavorite, removeFavoriteButton, sortFavorites } from './favorites-common'
 import { InlineKeyboardButton } from 'typegram'
-import { botConfig } from '../../util/bot-config'
+import { formatListOfFavorites } from './favorites-format'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 
@@ -38,43 +32,6 @@ export interface FavoriteEvent extends Event {
     parsedTimetable: ParseAndPredictTimetableResult
     firstDate: Date
     isFuture: boolean
-}
-
-function nearestDate(now: Date, event: FavoriteEvent) {
-    return first(event.parsedTimetable.predictedIntervals.map(rightDate).filter(rightDate => isAfter(rightDate, now)))
-}
-
-async function formatListOfFavorites(ctx: ContextMessageUpdate, events: FavoriteEvent[]) {
-    return events.map(event => {
-        const details = []
-        if (!fieldIsQuestionMarkOrEmpty(event.place)) {
-            details.push(`🌐 ${addHtmlNiceUrls(escapeHTML(event.place))}`)
-        }
-        if (!fieldIsQuestionMarkOrEmpty(event.url)) {
-            details.push(`${formatUrl(escapeHTML(event.url))}`)
-        }
-
-        if (event.isFuture) {
-            const date = event.parsedTimetable.parsedTimetable.anytime ? i18Msg(ctx, 'date_anytime') : ruFormat(nearestDate(ctx.now(), event), 'dd MMMM')
-
-            return i18Msg(ctx, 'event_item', {
-                icon: i18SharedMsg(ctx, 'category_icons.' + event.category),
-                title: event.title,
-                place: details.length > 0 ? `\n${details.join(', ')}\n` : '',
-                date
-            })
-        } else {
-
-            const date = event.parsedTimetable.predictedIntervals.length === 0 ? `больше ${botConfig.SCHEDULE_WEEKS_AHEAD} недель назад` : ruFormat(rightDate(last(event.parsedTimetable.predictedIntervals)), 'dd MMMM')
-
-            return i18Msg(ctx, 'event_item_past', {
-                icon: i18SharedMsg(ctx, 'category_icons.' + event.category),
-                title: event.title,
-                place: '',
-                date
-            })
-        }
-    }).join('\n')
 }
 
 async function getMainMenu(ctx: ContextMessageUpdate) {
@@ -93,7 +50,7 @@ async function getMainMenu(ctx: ContextMessageUpdate) {
 
         msg = i18Msg(ctx, 'main', {
             eventsPlural: generatePlural(ctx, 'event', events.length),
-            list: await formatListOfFavorites(ctx, events)
+            list: await formatListOfFavorites(ctx, events, ctx.now())
         })
     } else {
         msg = i18Msg(ctx, 'empty_list')

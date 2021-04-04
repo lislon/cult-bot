@@ -8,7 +8,7 @@ import { db } from '../../database/db'
 import { parseAndPredictTimetable } from '../../lib/timetable/timetable-utils'
 import { FavoriteEvent } from './favorites-scene'
 import { getLikeDislikeButtonText, isEventInFavorites } from '../likes/likes-common'
-import { isEventInFuture } from '../shared/shared-logic'
+import { isEventEndsInFuture } from '../shared/shared-logic'
 import { botConfig } from '../../util/bot-config'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
@@ -28,7 +28,7 @@ export async function loadEventsAsFavorite(eventIds: number[], now: Date): Promi
             ...e,
             parsedTimetable,
             firstDate: parsedTimetable.predictedIntervals.length > 0 ? leftDate(first(parsedTimetable.predictedIntervals)) : new Date(0),
-            isFuture: isEventInFuture(parsedTimetable.predictedIntervals, now)
+            isFuture: isEventEndsInFuture(parsedTimetable.predictedIntervals, now)
         } as FavoriteEvent
     })
 
