@@ -46,7 +46,7 @@ describe('format favorites cards', () => {
     })
 
     test('Anytime', async () => {
-        await assertFavoriteTimeFormat('В любое время (по записи)', 'в любое время (по записи)')
+        await assertFavoriteTimeFormat('в любое время (по записи)', 'в любое время (по записи)')
     })
 
     describe('exhibitions', () => {

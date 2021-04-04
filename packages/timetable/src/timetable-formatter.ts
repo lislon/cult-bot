@@ -156,7 +156,7 @@ export class TimetableFormatter {
         const {anytime, datesExact, dateRangesTimetable, weekTimes} = timetable
         if (anytime) {
             return {
-                anytime: `В любое время` + (timetable.anytimeComment ? ` (${timetable.anytimeComment})` : ''),
+                anytime: `в любое время` + (timetable.anytimeComment ? ` (${timetable.anytimeComment})` : ''),
                 weekTimes: [],
                 datesExact: [],
                 dateRangesTimetable: []

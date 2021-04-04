@@ -24,10 +24,10 @@ function expectWillBeFormatted(expected: string, text: string = expected, now: D
 describe('timetable formatter', () => {
 
     test('anytime', () => {
-        expectWillBeFormatted('В любое время');
+        expectWillBeFormatted('в любое время');
     })
     test('anytime with comment', () => {
-        expectWillBeFormatted('В любое время (по записи)');
+        expectWillBeFormatted('в любое время (по записи)');
     })
     test('time_multiply_with_range', () => {
         expectWillBeFormatted(`сб: 10:00-12:00,14:00`);
