@@ -125,8 +125,10 @@ heroku pg:backups:restore -a cult-hub-bot-<env>
 
 #### Option B: With restoration with rollback (Harder, data will be saved)
 ```
-heroku releases:rollback -a cult-hub-bot-<env>
+heroku scale web=0 -a cult-hub-bot-<env>
+heroku ps -a cult-hub-bot-<env>
 heroku run -a cult-hub-bot-<env> -- yarn db:down
+heroku releases:rollback -a cult-hub-bot-<env>
 ```
 
 heroku container:run web bash

@@ -56,10 +56,10 @@ async function updateLastChance(allEvents: EventForRefresh[], now: Date, dbTx: I
     await dbTx.repoSync.updateTagsLevel2(updateTags, dbTx)
 }
 
-async function refreshDates() {
+async function refreshAll() {
     const now = new Date()
     try {
-        await db.tx(async (dbTx: ITask<IExtensions> & IExtensions) => {
+        await db.tx('refreshAll', async (dbTx: ITask<IExtensions> & IExtensions) => {
             const allEvents: EventForRefresh[] = await dbTx.repoSync.getEventsForRefresh()
             const lastEventDateByIds: { [key: string]: EventForRefresh } = keyBy(allEvents, 'id')
 
@@ -75,7 +75,7 @@ async function refreshDates() {
 
 (async function run() {
     logger.debug(`RefreshDates: start refreshing...`)
-    await refreshDates()
+    await refreshAll()
     pgp.end()
 })()
 

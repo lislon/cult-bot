@@ -131,7 +131,7 @@ export class EventsSyncRepository {
     }
 
     public async shuffle(): Promise<void> {
-        await db.none(`
+        await this.db.none(`
             UPDATE cb_events
             SET order_rnd = CEIL(random() * 1000000)
             WHERE deleted_at IS NULL
@@ -139,7 +139,7 @@ export class EventsSyncRepository {
     }
 
     public async getEventsForRefresh(): Promise<EventForRefresh[]> {
-        return await db.map(`
+        return await this.db.map(`
             select
                 cb.id,
                 cb.tag_level_2,
