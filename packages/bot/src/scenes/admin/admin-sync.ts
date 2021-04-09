@@ -67,6 +67,10 @@ async function asyncSync(ctx: ContextMessageUpdate, message: Message.TextMessage
         const packsSyncResult: ExcelPacksSyncResult = await fetchAndParsePacks(excel)
         await statusUpdate(ctx, message, 'sync_status_saving')
 
+        // await statusUpdate(ctx, message, 'sync_status_places_downloading')
+        // const locationsSyncResult: ExcelPlaceRow[] = await parseSheetsPlacesSpreadsheet(excel)
+        // await statusUpdate(ctx, message, 'sync_status_saving')
+
         const {eventsDiff, askUserToConfirm, packsDiff, allValidatesPacks, packsErrors} = await db.tx('sync', async (dbTx) => {
 
             const eventsDiff = await dbTx.repoSync.prepareDiffForSync(eventsSyncResult.rawEvents, dbTx)

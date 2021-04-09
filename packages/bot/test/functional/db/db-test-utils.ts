@@ -6,6 +6,7 @@ import { PackToSave } from '../../../src/database/db-packs'
 import { UserSaveData } from '../../../src/database/db-users'
 import { MomentIntervals } from '@culthub/timetable'
 import { EventPackForSavePrepared } from '../../../src/dbsync/packsSyncLogic'
+import { PlaceToSave } from '../../../src/database/db-places'
 
 export async function cleanDb() {
     return await db.none('TRUNCATE cb_events_entrance_times, cb_events, cb_events_packs RESTART identity')
@@ -109,6 +110,32 @@ export function getMockPack({
         }
     }
 }
+
+export function getMockPlace({
+                                 parentTitle = '',
+                                 title = '',
+                                 extId = title,
+                                 url = '',
+                                 address = '',
+                                 isComfort = false,
+                                 tag = '',
+                                 yandexAddress = '',
+                             }: Partial<PlaceToSave['primaryData']> = {}
+): PlaceToSave {
+    return {
+        primaryData: {
+            parentTitle,
+            title,
+            extId,
+            url,
+            address,
+            isComfort,
+            tag,
+            yandexAddress
+        }
+    }
+}
+
 
 export const MOCK_UUID = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'
 

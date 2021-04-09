@@ -16,6 +16,14 @@ export function fieldInt<T>(column: string): IColumnConfig<T> {
     }
 }
 
+export function fieldBoolean<T>(column: string): IColumnConfig<T> {
+    return {
+        name: column,
+        skip: (c: { value: boolean }) => c.value === null || c.value === undefined,
+        init: ({value, exists}: { value: boolean, exists: boolean }) => exists ? !!value : undefined
+    }
+}
+
 export function fieldTextArray<T>(column: string): IColumnConfig<T> {
     return {
         name: column,

@@ -18,6 +18,7 @@ import { EventsGeoRepository } from './db-events-geo'
 import { EventsMatchingRepository } from './db-event-matching'
 import d from 'debug'
 import { DbCustomizeRepository } from './db-customize-repository'
+import { PlacesRepository } from './db-places'
 
 const debug = d('bot:sql')
 
@@ -32,9 +33,10 @@ export interface IExtensions {
     repoFeedback: FeedbackRepository
     repoPacks: PacksRepository
     repoEventsCommon: EventsCommonRepository
-    repoEventsGeo: EventsGeoRepository,
-    repoEventsMatching: EventsMatchingRepository,
+    repoEventsGeo: EventsGeoRepository
+    repoEventsMatching: EventsMatchingRepository
     repoLikes: LikesRepository
+    repoPlaces: PlacesRepository
 }
 
 export type BotDb = IDatabase<IExtensions> & IExtensions;
@@ -55,6 +57,7 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoLikes = new LikesRepository(dbEx, pgp)
         dbEx.repoEventsGeo = new EventsGeoRepository(dbEx, pgp)
         dbEx.repoEventsMatching = new EventsMatchingRepository(dbEx, pgp)
+        dbEx.repoPlaces = new PlacesRepository(dbEx, pgp)
     },
 
     query(e) {

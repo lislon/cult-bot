@@ -85,8 +85,6 @@ export class PacksRepository {
     readonly syncCommon: UniversalDbSync<PackToSave, PackDb, PackRecoveredColumns>
 
     constructor(private db: IDatabase<any>, private pgp: IMain) {
-        this.columns = new pgp.helpers.ColumnSet(packsColumnsDef, {table: 'cb_events_packs'})
-
         const cfg: SyncConfig<PackToSave, PackDb, PackRecoveredColumns> = {
             table: 'cb_events_packs',
             columnsDef: packsColumnsDef,
@@ -95,7 +93,9 @@ export class PacksRepository {
             deletedAuxColumns: ['title'],
             recoveredAuxColumns: ['title']
         }
+
         this.syncCommon = new UniversalDbSync(cfg, pgp)
+        this.columns = new pgp.helpers.ColumnSet(packsColumnsDef, {table: cfg.table})
     }
 
     public async syncDatabase(newPacks: PackToSave[]): Promise<PacksSyncDiffSaved> {

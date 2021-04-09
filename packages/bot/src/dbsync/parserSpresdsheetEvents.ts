@@ -3,14 +3,12 @@ import {
     CAT_TO_SHEET_NAME,
     EXCEL_COLUMNS_EVENTS,
     ExcelColumnNameEvents,
+    ExcelEventRow,
     ExcelRowEvents,
-    ExcelRowResult,
-    ExcelSheetResult,
     processExcelRow
 } from './parseSheetRow'
 import { sheets_v4 } from 'googleapis'
 import { EventToSave } from '../interfaces/db-interfaces'
-import { WrongExcelColumnsError } from './WrongFormatException'
 import { BotDb } from '../database/db'
 import { isEqual, parseISO } from 'date-fns'
 import { botConfig } from '../util/bot-config'
@@ -18,6 +16,7 @@ import { logger } from '../util/logger'
 import { countBy, last } from 'lodash'
 import { ExcelUpdater } from '@culthub/google-docs'
 import { rightDate } from '@culthub/timetable'
+import { ExcelSheetResult, RowMapping } from './dbsync-common'
 import Sheets = sheets_v4.Sheets
 
 export interface SpreadSheetValidationError {
@@ -43,7 +42,7 @@ function mapRowToColumnObject(row: string[]) {
     return keyValueRow
 }
 
-function validateUnique(excelRows: ExcelRowResult[]) {
+function validateUnique(excelRows: ExcelEventRow[]) {
     const uniqueId = countBy(excelRows, (e) => e.data.extId)
     excelRows.forEach(row => {
         if (uniqueId[row.data.extId] !== 1) {
@@ -55,7 +54,7 @@ function validateUnique(excelRows: ExcelRowResult[]) {
 const OLD_DATE = parseISO('1999-01-01T00:00:00Z')
 const FUTURE_DATE = parseISO('3000-01-01 00:00:00')
 
-function getDueDate(mapped: ExcelRowResult) {
+function getDueDate(mapped: ExcelEventRow) {
     const lastEventDate = last(mapped.predictedIntervals)
     if (lastEventDate === undefined) {
         return OLD_DATE
@@ -66,7 +65,7 @@ function getDueDate(mapped: ExcelRowResult) {
     }
 }
 
-export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, spreadsheetId: string): Promise<ExcelSheetResult[]> {
+export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, spreadsheetId: string): Promise<ExcelSheetResult<ExcelEventRow>[]> {
     const ranges = Object.values(CAT_TO_SHEET_NAME).map(name => `${name}!A1:AA`)
 
     logger.debug(`Loading from excel [${ranges}]...`)
@@ -80,22 +79,15 @@ export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, sp
 
         // Print columns A and E, which correspond to indices 0 and 4.
 
+        const rowMapper = new RowMapping(EXCEL_COLUMNS_EVENTS)
         const parsedRows = sheet.values
             .map((row: string[], rowNumber: number) => {
                 if (rowNumber == 0) {
-                    if (JSON.stringify(row) !== JSON.stringify(Object.values(EXCEL_COLUMNS_EVENTS))) {
-                        throw new WrongExcelColumnsError({
-                            listName: sheetsMetaData.data.sheets[sheetNo].properties.title,
-                            expected: Object.values(EXCEL_COLUMNS_EVENTS).join(', '),
-                            actual: row.join(', ')
-                        })
-                    }
-                    return
+                    rowMapper.initHeader(row)
+                } else {
+                    const keyValueRow = rowMapper.getRow(row)
+                    return processExcelRow(keyValueRow, getSheetCategory(sheetNo), new Date(), rowNumber)
                 }
-
-                const keyValueRow = mapRowToColumnObject(row)
-
-                return processExcelRow(keyValueRow, getSheetCategory(sheetNo), new Date(), rowNumber)
             })
             .filter(e => e !== undefined)
         return {
@@ -103,7 +95,7 @@ export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, sp
             totalNumberOfRows: sheet.values?.length,
             rows: parsedRows,
             sheetTitle: sheetsMetaData.data.sheets[sheetNo].properties.title
-        } as ExcelSheetResult
+        } as ExcelSheetResult<ExcelEventRow>
     })
 }
 
@@ -131,7 +123,7 @@ export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel:
         validateUnique(rows)
         const erroredExtIds: string[] = []
 
-        rows.forEach((mapped: ExcelRowResult) => {
+        rows.forEach((mapped: ExcelEventRow) => {
 
             const rowNo = mapped.rowNumber
 
@@ -221,7 +213,3 @@ export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel:
         rawEvents
     }
 }
-
-
-
-

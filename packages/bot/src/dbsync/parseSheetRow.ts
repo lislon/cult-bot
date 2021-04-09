@@ -55,14 +55,8 @@ export const CAT_TO_SHEET_NAME: { [key in EventCategory]?: string } = {
 
 export type Popularity = 1 | 2 | 3
 
-export interface ExcelSheetResult {
-    totalNumberOfRows: number
-    sheetId: number
-    sheetTitle: string
-    rows: ExcelRowResult[]
-}
 
-export interface ExcelRowResult {
+export interface ExcelEventRow {
     valid: boolean,
     publish: boolean,
     errors?: {
@@ -88,7 +82,7 @@ export interface ExcelRowResult {
     fakeDislikes?: number
 }
 
-function preparePublish(data: EventNoId, result: ExcelRowResult) {
+function preparePublish(data: EventNoId, result: ExcelEventRow) {
     if (fieldIsQuestionMarkOrEmpty(data.timetable)) {
         return false
     }
@@ -172,7 +166,7 @@ function validateExtId(data: EventNoId, errorCallback: ErrorCallback): void {
     }
 }
 
-export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCategory, now: Date, rowNumber: number): ExcelRowResult {
+export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCategory, now: Date, rowNumber: number): ExcelEventRow {
 
     const notNull = (s: string) => s === undefined ? '' : s.trim()
     const notNullOrUnknown = (s: string) => s === undefined ? '' : s
@@ -204,7 +198,7 @@ export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCat
 
     debug(`Preparing ${row.ext_id}`)
 
-    const result: ExcelRowResult = {
+    const result: ExcelEventRow = {
         valid: true,
         publish: true,
         errors: {
