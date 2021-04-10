@@ -1,4 +1,4 @@
-import { Event, EventNoId, TagLevel2 } from '../interfaces/app-interfaces'
+import { EventNoId, TagLevel2 } from '../interfaces/app-interfaces'
 import { EventCategory } from '@culthub/interfaces'
 import { fieldIsQuestionMarkOrEmpty } from '../util/misc-utils'
 import { parseAndPredictTimetable } from '../lib/timetable/timetable-utils'
@@ -17,6 +17,7 @@ export const EXCEL_COLUMNS_EVENTS = {
     publish: 'Публикация',
     subcategory: 'Вид',
     title: 'Название',
+    new_address: 'Адрес из пробы пера (бот пока игнорирует)',
     place: 'Место ',
     address: 'Адрес',
     geotag: 'Yandex.Maps',
