@@ -1,6 +1,9 @@
 import { ColumnSet, IColumnConfig, IMain, ITask } from 'pg-promise'
 import md5 from 'md5'
 import { keyBy, merge } from 'lodash'
+import debugNamespace from 'debug'
+
+const debug = debugNamespace('db-sync')
 
 export interface PrimaryDataExtId {
     primaryData: {
@@ -136,11 +139,13 @@ export class UniversalDbSync<E extends PrimaryDataExtId, DBE extends BaseSyncIte
                     const e: E & PrimaryDataId = merge({}, newEvent, {primaryData: {id: +extIdToId.get(newEvent.primaryData.extId)}})
                     result.updated.push(e)
 
-                    // const old = existingIdsRaw.find(e => e['extid'] === newEvent.primaryData.extId)['md5text']
-                    // const new2 = this.postgresConcat(newRow)
-                    // logger.silly('problem md5?')
-                    // logger.silly(old)
-                    // logger.silly(new2)
+                    if (debug.enabled) {
+                        const old = existingIdsRaw.find(e => e['extid'] === newEvent.primaryData.extId)['md5text']
+                        const new2 = this.postgresConcat(newRow)
+                        debug(`diff detected for ext_id = ${newEvent.primaryData.extId}`)
+                        debug(old)
+                        debug(new2)
+                    }
 
                 } else {
                     const e = merge({}, newEvent, ({primaryData: {id: +existingIdsRaw.find(e => e['extid'] === newEvent.primaryData.extId).id}}))

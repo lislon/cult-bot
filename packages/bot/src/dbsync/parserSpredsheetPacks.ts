@@ -54,24 +54,26 @@ function getEventExtId(rowValue?: string | number) {
 }
 
 export async function savePacksValidationErrors(excel: Sheets, allValidatedEvents: EventPackValidated[]): Promise<void> {
-    const excelUpdater = new ExcelUpdater(excel, EXCEL_COLUMNS_PACKS)
+    const excelUpdater = new ExcelUpdater(excel)
 
 
     allValidatedEvents.forEach(({raw, errors}, index) => {
 
+        const sheetUpdater = excelUpdater.useSheet(raw.sheetId, EXCEL_COLUMNS_PACKS)
+
 
         function markRow(rowName: keyof typeof VERTICAL_ORDER, errorText: string) {
             const rowNumber = raw.rowNumber + Object.keys(VERTICAL_ORDER).indexOf(rowName)
-            excelUpdater.colorCell(raw.sheetId, 'values', rowNumber, 'red')
-            excelUpdater.annotateCell(raw.sheetId, 'values', rowNumber, errorText)
+            sheetUpdater.colorCell('values', rowNumber, 'red')
+            sheetUpdater.annotateCell('values', rowNumber, errorText)
         }
 
         const numberOfRowsTillNextPack = index === allValidatedEvents.length - 1 ? 25 : (allValidatedEvents[index + 1].raw.rowNumber - raw.rowNumber - 1)
-        excelUpdater.clearColumnFormat(raw.sheetId, 'values', raw.rowNumber, numberOfRowsTillNextPack)
+        sheetUpdater.clearColumnFormat('values', raw.rowNumber, numberOfRowsTillNextPack)
 
         errors.badEvents.forEach(({rawEvent, error}) => {
-            excelUpdater.colorCell(raw.sheetId, 'values', rawEvent.rowNumber, 'red')
-            excelUpdater.annotateCell(raw.sheetId, 'values', rawEvent.rowNumber, error)
+            sheetUpdater.colorCell('values', rawEvent.rowNumber, 'red')
+            sheetUpdater.annotateCell('values', rawEvent.rowNumber, error)
         })
         if (errors.description) {
             markRow('description', errors.description)

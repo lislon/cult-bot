@@ -1,8 +1,11 @@
-export interface ExcelSheetResult<T> {
+import { EXCEL_COLUMNS_EVENTS } from './parseSheetRow'
+
+export interface ExcelSheetResult<T, C extends Record<string, string>> {
     totalNumberOfRows: number
     sheetId: number
     sheetTitle: string
     rows: T[]
+    rowMapper: RowMapping<C>
 }
 
 export class RowMapping<T extends Record<string, string>> {
@@ -20,6 +23,10 @@ export class RowMapping<T extends Record<string, string>> {
                 countFound++
             }
         })
+    }
+
+    getIndexByRow(t: keyof T): number {
+        return this.rowKeyToIndex.get(t) + 1
     }
 
     getRow(row: string[]): Record<Extract<keyof T, string>, string> {

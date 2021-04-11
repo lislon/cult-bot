@@ -146,7 +146,7 @@ async function asyncSync(ctx: ContextMessageUpdate, message: Message.TextMessage
             await statusUpdate(ctx, message, 'sync_wrong_format', e.data)
         } else {
             await statusUpdate(ctx, message, 'sync_error', {error: e.toString().substr(0, 100)})
-            throw e
+            logger.error(e)
         }
     }
 }

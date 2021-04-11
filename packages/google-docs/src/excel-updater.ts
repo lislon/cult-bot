@@ -12,24 +12,22 @@ import {
 import Schema$Request = sheets_v4.Schema$Request
 import Schema$BatchUpdateSpreadsheetResponse = sheets_v4.Schema$BatchUpdateSpreadsheetResponse
 
-type StringKeysOf<TObj> = { [K in keyof TObj]: K extends string ? K : never }[keyof TObj]
+export class SheetUpdater<T extends Record<string, unknown>> {
+    constructor(
+        private sheetId: number,
+        private requests: Schema$Request[],
+        private columnIndexResolve: (column: keyof T) => number
+    ) {
 
-export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeysOf<T>> {
-    private requests: Schema$Request[] = []
-    private columns: T
-    private excel: sheets_v4.Sheets
-
-    constructor(excel: sheets_v4.Sheets, columns: T) {
-        this.columns = columns
-        this.excel = excel
     }
 
-    private getColumnIndex(column: K) {
-        return Object.keys(this.columns).indexOf(column) + 1
+    private getColumnIndex(column: keyof T): number {
+        return this.columnIndexResolve(column) + 1
     }
 
-    clearColumnFormat(sheetId: number, column: K, startRow: number, numOfRows: number): void {
-        this.requests.push(mkClearFormat(sheetId, {
+
+    clearColumnFormat(column: keyof T, startRow: number, numOfRows: number): void {
+        this.requests.push(mkClearFormat(this.sheetId, {
             startColumnIndex: this.getColumnIndex(column) - 1,
             endColumnIndex: this.getColumnIndex(column),
             startRowIndex: startRow,
@@ -37,12 +35,12 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
         }))
     }
 
-    clearSheet(sheetId: number): void {
-        this.requests.push(mkClearSheet(sheetId))
+    clearSheet(): void {
+        this.requests.push(mkClearSheet(this.sheetId))
     }
 
-    clearValues(sheetId: number, fromColumn: K, toColumn: K, startRow: number, numOfRows: number): void {
-        this.requests.push(mkClearValue(sheetId, {
+    clearValues(fromColumn: keyof T, toColumn: keyof T, startRow: number, numOfRows: number): void {
+        this.requests.push(mkClearValue(this.sheetId, {
             startColumnIndex: this.getColumnIndex(fromColumn) - 1,
             endColumnIndex: this.getColumnIndex(toColumn),
             startRowIndex: startRow,
@@ -50,17 +48,46 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
         }))
     }
 
-    colorCell(sheetId: number, column: K, rowNo: number, color: CellColor): void {
-        this.requests.push(mkColorCell(sheetId, color, this.getColumnIndex(column), rowNo))
+    colorCell(column: keyof T, rowNo: number, color: CellColor): void {
+        this.requests.push(mkColorCell(this.sheetId, color, this.getColumnIndex(column), rowNo))
     }
 
-    annotateCell(sheetId: number, column: K, rowNo: number, note: string): void {
-        this.requests.push(mkAnnotateCell(sheetId, note, this.getColumnIndex(column), rowNo))
+    annotateCell(column: keyof T, rowNo: number, note: string): void {
+        this.requests.push(mkAnnotateCell(this.sheetId, note, this.getColumnIndex(column), rowNo))
+    }
+
+    editCellDate(column: keyof T, rowNo: number, value: Date): void {
+        this.requests.push(mkEditCellDate(this.sheetId, value, this.getColumnIndex(column), rowNo))
+    }
+
+    editCellValue(column: keyof T, rowNo: number, value: string): void {
+        this.requests.push(mkEditCellValue(this.sheetId, value, this.getColumnIndex(column), rowNo))
+    }
+}
+
+// const dd = new SheetUpdater()
+
+export class ExcelUpdater {
+    private requests: Schema$Request[] = []
+
+    constructor(private excel: sheets_v4.Sheets) {
+    }
+
+    public useSheet<T extends Record<string, string>>(sheetId: number, columns: T): SheetUpdater<T>
+    public useSheet<T extends Record<string, string>>(sheetId: number, columnToIndex: (column: keyof T) => number): SheetUpdater<T>
+    public useSheet<T extends Record<string, string>>(sheetId: number, columnToIndexOrColumns: ((column: keyof T) => number)|T): SheetUpdater<T> {
+        if (typeof columnToIndexOrColumns === 'function') {
+            return new SheetUpdater<T>(sheetId, this.requests, columnToIndexOrColumns)
+        } else {
+            return new SheetUpdater<T>(sheetId, this.requests, (column) => {
+                return Object.keys(columnToIndexOrColumns).indexOf(column as string) + 1
+            })
+        }
     }
 
     async update(spreadsheetId: string): Promise<Schema$BatchUpdateSpreadsheetResponse> {
         if (this.requests.length > 0) {
-            const result =  await this.excel.spreadsheets.batchUpdate({
+            const result = await this.excel.spreadsheets.batchUpdate({
                 spreadsheetId,
                 requestBody: {requests: this.requests}
             })
@@ -68,14 +95,6 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
             return result.data
         }
         return {}
-    }
-
-    editCellDate(sheetId: number, column: K, rowNo: number, value: Date): void {
-        this.requests.push(mkEditCellDate(sheetId, value, this.getColumnIndex(column), rowNo))
-    }
-
-    editCellValue(sheetId: number, column: K, rowNo: number, value: string): void {
-        this.requests.push(mkEditCellValue(sheetId, value, this.getColumnIndex(column), rowNo))
     }
 
     addSheet(title: string): void {
@@ -107,9 +126,9 @@ export class ExcelUpdater<T extends { [Key in K]: string }, K extends StringKeys
 
                 // Request body metadata
                 requestBody: {
-                    "majorDimension": "ROWS",
+                    'majorDimension': 'ROWS',
                     // "range": "A1:B2",
-                    "values": values,
+                    'values': values,
                 }
             }
         )

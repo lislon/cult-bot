@@ -58,7 +58,7 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport,
     const meta = await excel.spreadsheets.get({spreadsheetId})
 
 
-    const excelUpdater = new ExcelUpdater(excel, CHANGED_EVENTS_COLUMNS)
+    const excelUpdater = new ExcelUpdater(excel)
 
     const existing = meta.data.sheets?.filter(s => s.properties?.title === sheetTitle)
     let sheetId: number | undefined = existing?.length === 1 && existing[0].properties?.sheetId ? existing[0].properties?.sheetId : undefined
@@ -70,7 +70,7 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport,
         sheetId = response.replies ? +(response.replies[0].addSheet?.properties?.sheetId || 0) : 0
     } else {
         debug(`Sheet '${sheetTitle}' exists. Clear all values from 1-1000 and column format`)
-        excelUpdater.clearSheet(sheetId)
+        excelUpdater.useSheet(sheetId, CHANGED_EVENTS_COLUMNS).clearSheet()
         await excelUpdater.update(spreadsheetId)
         debug(`Sheet '${sheetTitle}' exists. and it's ID = ${sheetId}`)
 
@@ -83,6 +83,8 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport,
         //     }
         // })
     }
+
+    const sheetUpdater = excelUpdater.useSheet(sheetId, CHANGED_EVENTS_COLUMNS)
 
     let rows: { [key in keyof typeof CHANGED_EVENTS_COLUMNS]: string }[] = []
 
@@ -97,9 +99,9 @@ export async function saveDiffToExcel(excel: sheets_v4.Sheets, diff: DiffReport,
         diff.updated.forEach((eToUpdate, index) => {
             eToUpdate.diffFields.forEach(diffField => {
                 if (sheetId !== undefined && isDiffColumn(diffField)) {
-                    excelUpdater.colorCell(sheetId, diffField, updatedRowsStartsAt + index, 'orange')
+                    sheetUpdater.colorCell(diffField, updatedRowsStartsAt + index, 'orange')
                     const oldElement = eToUpdate.old[diffField]
-                    excelUpdater.annotateCell(sheetId, diffField, updatedRowsStartsAt + index, 'Было: \n' + (Array.isArray(oldElement) ? oldElement.join(' ') : oldElement))
+                    sheetUpdater.annotateCell(diffField, updatedRowsStartsAt + index, 'Было: \n' + (Array.isArray(oldElement) ? oldElement.join(' ') : oldElement))
                 }
             })
         })
@@ -174,17 +176,22 @@ export async function saveCurrentToExcel(excel: sheets_v4.Sheets, events: (Omit<
 
     const meta = await excel.spreadsheets.get({spreadsheetId /*, ranges: [ `${title}!A1:AA`]*/})
 
-
-    const excelUpdater = new ExcelUpdater(excel, CONTENT_EXCEL_COLUMNS)
+    const excelUpdater = new ExcelUpdater(excel)
 
     const existing = meta.data.sheets?.filter(s => s.properties?.title === sheetTitle)
 
     if (existing === undefined || existing.length === 0) {
         excelUpdater.addSheet(sheetTitle)
     } else if (existing.length === 1 && existing[0].properties?.sheetId) {
-        await excelUpdater.clearValues(existing[0].properties.sheetId, 'category', 'url', 1, 1000)
+        await excelUpdater.useSheet(existing[0].properties.sheetId, CONTENT_EXCEL_COLUMNS)
+            .clearValues('category', 'url', 1, 1000)
     }
     await excelUpdater.update(spreadsheetId)
+
+    // excelUpdater.useSheet()
+
+
+
 
     // meta = await excel.spreadsheets.get({spreadsheetId, ranges: [ `${title}!A1:AA`]})
 

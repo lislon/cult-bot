@@ -1,7 +1,7 @@
 import { sheets_v4 } from 'googleapis'
 import { botConfig } from '../util/bot-config'
 import { logger } from '../util/logger'
-import { ExcelSheetResult } from './dbsync-common'
+import { ExcelSheetResult, RowMapping } from './dbsync-common'
 
 export interface ExcelPlaceRow {
     // valid: boolean,
@@ -28,18 +28,18 @@ export interface ExcelPlaceRow {
 }
 
 const PLACES_SHEET_NAME = 'Площадки 2'
-//
-// const columnsMapping = {
-//     'Группа': 'parentTitle',
-//     'Площадка': 'title',
-//     'Адрес': 'address',
-//     'Яндекс.карта': 'yandexAddress',
-//     'Как это в тегах': 'tag',
-//     'Ссылка на сайт': 'url',
-//     'Комфот/ Не комфорт': 'isComfort',
-// }
 
-export async function parseRawSheetsLocationsSpreadsheet(excel: sheets_v4.Sheets): Promise<ExcelSheetResult<ExcelPlaceRow>> {
+const EXCEL_COLUMNS_LOCATIONS = {
+    parentTitle: 'Группа',
+    title: 'Площадка',
+    address: 'Адрес',
+    yandexAddress: 'Яндекс.карта',
+    tag: 'Как это в тегах',
+    url: 'Ссылка на сайт',
+    isComfort: 'Комфот/ Не комфорт'
+}
+
+export async function parseRawSheetsLocationsSpreadsheet(excel: sheets_v4.Sheets): Promise<ExcelSheetResult<ExcelPlaceRow, typeof EXCEL_COLUMNS_LOCATIONS>> {
     const places: ExcelPlaceRow[] = []
 
     const range = `${PLACES_SHEET_NAME}!A2:AA`
@@ -54,24 +54,29 @@ export async function parseRawSheetsLocationsSpreadsheet(excel: sheets_v4.Sheets
             valueRenderOption: 'FORMULA'
         })
     ])
+    const rowMapper = new RowMapping(EXCEL_COLUMNS_LOCATIONS)
 
     let rowNumber = 0
     let currentParent = ''
     for (const row of sheetsData.data.values) {
-        const [ parentTitle, title, address, yandexAddress, tag, url, isComfort ] = row;
-        if (address !== '') {
-            if (parentTitle !== '') {
-                currentParent = parentTitle;
+        if (rowNumber === 0) {
+            rowMapper.initHeader(row)
+        } else {
+            const { parentTitle, title, address, yandexAddress, tag, url, isComfort } = rowMapper.getRow(row);
+            if (address !== '') {
+                if (parentTitle !== '') {
+                    currentParent = parentTitle;
+                }
+                places.push({
+                    title,
+                    parentTitle: currentParent,
+                    address,
+                    isComfort: isComfort === 'Комфорт',
+                    tag,
+                    url,
+                    yandexAddress
+                })
             }
-            places.push({
-                title,
-                parentTitle: currentParent,
-                address,
-                isComfort: isComfort === 'Комфорт',
-                tag,
-                url,
-                yandexAddress
-            })
         }
 
         rowNumber++
@@ -81,7 +86,8 @@ export async function parseRawSheetsLocationsSpreadsheet(excel: sheets_v4.Sheets
         totalNumberOfRows: rowNumber,
         sheetId: sheetsMetaData.data.sheets[0].properties.sheetId,
         sheetTitle: sheetsMetaData.data.sheets[0].properties.title,
-        rows: places
+        rows: places,
+        rowMapper
     }
 }
 

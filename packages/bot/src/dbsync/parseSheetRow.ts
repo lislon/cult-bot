@@ -17,7 +17,6 @@ export const EXCEL_COLUMNS_EVENTS = {
     publish: 'Публикация',
     subcategory: 'Вид',
     title: 'Название',
-    new_address: 'Адрес из пробы пера (бот пока игнорирует)',
     place: 'Место ',
     address: 'Адрес',
     geotag: 'Yandex.Maps',
@@ -36,7 +35,6 @@ export const EXCEL_COLUMNS_EVENTS = {
     popularity: 'Популярность',
     fake_likes: 'Лайки',
     fake_dislikes: 'Дизлайки',
-    random: 'Random',
     due_date: 'Due date',
 }
 

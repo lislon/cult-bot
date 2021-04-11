@@ -65,7 +65,7 @@ function getDueDate(mapped: ExcelEventRow) {
     }
 }
 
-export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, spreadsheetId: string): Promise<ExcelSheetResult<ExcelEventRow>[]> {
+export async function parseRawSheetsEventSpreadsheet(excel: sheets_v4.Sheets, spreadsheetId: string): Promise<ExcelSheetResult<ExcelEventRow, typeof EXCEL_COLUMNS_EVENTS>[]> {
     const ranges = Object.values(CAT_TO_SHEET_NAME).map(name => `${name}!A1:AA`)
 
     logger.debug(`Loading from excel [${ranges}]...`)
@@ -94,13 +94,14 @@ export async function parseRawSheetsEventSpreedsheet(excel: sheets_v4.Sheets, sp
             sheetId,
             totalNumberOfRows: sheet.values?.length,
             rows: parsedRows,
-            sheetTitle: sheetsMetaData.data.sheets[sheetNo].properties.title
-        } as ExcelSheetResult<ExcelEventRow>
+            sheetTitle: sheetsMetaData.data.sheets[sheetNo].properties.title,
+            rowMapper
+        }
     })
 }
 
 export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel: Sheets, statusCb?: (sheetTitle: string) => Promise<void>): Promise<ExcelParseResult> {
-    const sheetsParsedRows = await parseRawSheetsEventSpreedsheet(excel, botConfig.GOOGLE_DOCS_ID)
+    const sheetsParsedRows = await parseRawSheetsEventSpreadsheet(excel, botConfig.GOOGLE_DOCS_ID)
     logger.debug('Saving to db...')
 
     const errors: SpreadSheetValidationError[] = []
@@ -108,17 +109,18 @@ export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel:
 
     // let max = 1;
 
-    const excelUpdater = new ExcelUpdater(excel, EXCEL_COLUMNS_EVENTS)
+    const excelUpdater = new ExcelUpdater(excel)
 
     const columnToClearFormat: ExcelColumnNameEvents[] = [
         'ext_id', 'publish', 'timetable', 'address', 'place', 'tag_level_1', 'tag_level_2', 'tag_level_3', 'due_date', 'duration'
     ]
 
-    sheetsParsedRows.forEach(({rows, sheetId, totalNumberOfRows, sheetTitle}) => {
+    sheetsParsedRows.forEach(({rows, sheetId, totalNumberOfRows, sheetTitle, rowMapper}) => {
 
         statusCb?.(sheetTitle)
+        const sheetUpdater = excelUpdater.useSheet<typeof EXCEL_COLUMNS_EVENTS>(sheetId, r => rowMapper.getIndexByRow(r))
 
-        columnToClearFormat.forEach(colName => excelUpdater.clearColumnFormat(sheetId, colName, 1, totalNumberOfRows))
+        columnToClearFormat.forEach(colName => sheetUpdater.clearColumnFormat(colName, 1, totalNumberOfRows))
 
         validateUnique(rows)
         const erroredExtIds: string[] = []
@@ -130,45 +132,45 @@ export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel:
             if (mapped.publish) {
 
                 if (mapped.errors.timetable && !mapped.data.timetable.includes('???')) {
-                    excelUpdater.annotateCell(sheetId, 'timetable', rowNo, mapped.errors.timetable.join('\n'))
-                    excelUpdater.colorCell(sheetId, 'timetable', rowNo, 'red')
+                    sheetUpdater.annotateCell('timetable', rowNo, mapped.errors.timetable.join('\n'))
+                    sheetUpdater.colorCell('timetable', rowNo, 'red')
                 } else {
-                    excelUpdater.annotateCell(sheetId, 'timetable', rowNo, '')
+                    sheetUpdater.annotateCell('timetable', rowNo, '')
                 }
 
                 if (mapped.errors.duration && !mapped.data.duration.includes('???')) {
-                    excelUpdater.annotateCell(sheetId, 'duration', rowNo, mapped.errors.duration.join('\n'))
-                    excelUpdater.colorCell(sheetId, 'duration', rowNo, 'red')
+                    sheetUpdater.annotateCell('duration', rowNo, mapped.errors.duration.join('\n'))
+                    sheetUpdater.colorCell('duration', rowNo, 'red')
                 } else {
-                    excelUpdater.annotateCell(sheetId, 'duration', rowNo, '')
+                    sheetUpdater.annotateCell('duration', rowNo, '')
                 }
 
                 for (const mappedElement of mapped.errors.emptyRows) {
-                    excelUpdater.colorCell(sheetId, mappedElement, rowNo, 'red')
+                    sheetUpdater.colorCell(mappedElement, rowNo, 'red')
                 }
 
                 if (mapped.errors.extId.length > 0) {
-                    excelUpdater.annotateCell(sheetId, 'ext_id', rowNo, mapped.errors.extId.join('\n'))
-                    excelUpdater.colorCell(sheetId, 'ext_id', rowNo, 'red')
+                    sheetUpdater.annotateCell('ext_id', rowNo, mapped.errors.extId.join('\n'))
+                    sheetUpdater.colorCell('ext_id', rowNo, 'red')
                 } else {
-                    excelUpdater.annotateCell(sheetId, 'ext_id', rowNo, '')
+                    sheetUpdater.annotateCell('ext_id', rowNo, '')
                 }
 
                 if (mapped.errors.tagLevel1.length > 0) {
-                    excelUpdater.annotateCell(sheetId, 'tag_level_1', rowNo, mapped.errors.tagLevel1.join('\n'))
-                    excelUpdater.colorCell(sheetId, 'tag_level_1', rowNo, 'red')
+                    sheetUpdater.annotateCell('tag_level_1', rowNo, mapped.errors.tagLevel1.join('\n'))
+                    sheetUpdater.colorCell('tag_level_1', rowNo, 'red')
                 } else {
-                    excelUpdater.annotateCell(sheetId, 'tag_level_1', rowNo, '')
+                    sheetUpdater.annotateCell('tag_level_1', rowNo, '')
                 }
                 if (mapped.errors.tagLevel2.length > 0) {
-                    excelUpdater.colorCell(sheetId, 'tag_level_2', rowNo, 'red')
-                    excelUpdater.annotateCell(sheetId, 'tag_level_2', rowNo, mapped.errors.tagLevel2.join('\n'))
+                    sheetUpdater.colorCell('tag_level_2', rowNo, 'red')
+                    sheetUpdater.annotateCell('tag_level_2', rowNo, mapped.errors.tagLevel2.join('\n'))
                 } else if (mapped.warnings.tagLevel2.length > 0) {
-                    excelUpdater.colorCell(sheetId, 'tag_level_2', rowNo, 'orange')
-                    excelUpdater.annotateCell(sheetId, 'tag_level_2', rowNo, mapped.warnings.tagLevel2.join('\n'))
+                    sheetUpdater.colorCell('tag_level_2', rowNo, 'orange')
+                    sheetUpdater.annotateCell('tag_level_2', rowNo, mapped.warnings.tagLevel2.join('\n'))
                 }
                 if (mapped.errors.tagLevel3.length > 0) {
-                    excelUpdater.colorCell(sheetId, 'tag_level_3', rowNo, 'red')
+                    sheetUpdater.colorCell('tag_level_3', rowNo, 'red')
                 }
 
                 if (mapped.valid) {
@@ -181,20 +183,20 @@ export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel:
                         fakeLikes: mapped.fakeLikes || 0,
                         fakeDislikes: mapped.fakeDislikes || 0,
                     });
-                    excelUpdater.colorCell(sheetId, 'publish', rowNo, 'green')
+                    sheetUpdater.colorCell('publish', rowNo, 'green')
 
                     // debugTimetable(mapped, excelUpdater, sheetId, rowNo)
                 } else {
                     erroredExtIds.push(mapped.data.extId)
 
                     // rows.push(mapped.data);
-                    excelUpdater.colorCell(sheetId, 'publish', rowNo, 'lightred')
+                    sheetUpdater.colorCell('publish', rowNo, 'lightred')
                 }
             }
 
             const dueDate = getDueDate(mapped)
             if (!isEqual(mapped.dueDate, dueDate)) {
-                excelUpdater.editCellDate(sheetId, 'due_date', rowNo, dueDate)
+                sheetUpdater.editCellDate('due_date', rowNo, dueDate)
             }
         })
 
