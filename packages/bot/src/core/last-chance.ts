@@ -33,10 +33,10 @@ function isLastChance({ parsedTimetable, now, predictedIntervals, tagLevel2, cat
     if (parsedTimetable.weekTimes?.length > 0 || parsedTimetable.anytime) {
         return false
     }
-    if (parsedTimetable.dateRangesTimetable?.length > 0) {
+    if (parsedTimetable.dateRangesTimetable?.length > 0 && predictedIntervals.length > 0) {
         const lastInterval = last(predictedIntervals)
         const diff = differenceInSeconds(rightDate(lastInterval), now) / 3600.0 / 24.0
-        if (diff <= getThresholdDaysForCategory(category)) {
+        if (diff >= 0 && diff <= getThresholdDaysForCategory(category)) {
             return true;
         }
     }

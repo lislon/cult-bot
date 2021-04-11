@@ -27,6 +27,14 @@ describe('last chance', () => {
         expectLastChanceTags(false, 'exhibitions', '1 января - 15 января: 12:01', [])
     })
 
+    test('Very old events should not tag last_chance', () => {
+        expectLastChanceTags(false, 'exhibitions', '1 января 2019 - 15 января 2019: 12:01', [])
+    })
+
+    test('Past events should not tag last_chance', () => {
+        expectLastChanceTags(false, 'exhibitions', '28 - 30 декабря 2019: 12:01', [])
+    })
+
     test('Other events 1 week', () => {
         expectLastChanceTags(true, 'walks', '1 января - 8 января: 12:00', [])
     })
