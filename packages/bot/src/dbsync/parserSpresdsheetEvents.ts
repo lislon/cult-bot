@@ -120,7 +120,9 @@ export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel:
         statusCb?.(sheetTitle)
         const sheetUpdater = excelUpdater.useSheet<typeof EXCEL_COLUMNS_EVENTS>(sheetId, r => rowMapper.getIndexByRow(r))
 
-        columnToClearFormat.forEach(colName => sheetUpdater.clearColumnFormat(colName, 1, totalNumberOfRows))
+        columnToClearFormat.forEach(colName => {
+            sheetUpdater.clearNoteAndFormat(colName, colName, 1, totalNumberOfRows)
+        })
 
         validateUnique(rows)
         const erroredExtIds: string[] = []
@@ -130,19 +132,14 @@ export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel:
             const rowNo = mapped.rowNumber
 
             if (mapped.publish) {
-
                 if (mapped.errors.timetable && !mapped.data.timetable.includes('???')) {
                     sheetUpdater.annotateCell('timetable', rowNo, mapped.errors.timetable.join('\n'))
                     sheetUpdater.colorCell('timetable', rowNo, 'red')
-                } else {
-                    sheetUpdater.annotateCell('timetable', rowNo, '')
                 }
 
                 if (mapped.errors.duration && !mapped.data.duration.includes('???')) {
                     sheetUpdater.annotateCell('duration', rowNo, mapped.errors.duration.join('\n'))
                     sheetUpdater.colorCell('duration', rowNo, 'red')
-                } else {
-                    sheetUpdater.annotateCell('duration', rowNo, '')
                 }
 
                 for (const mappedElement of mapped.errors.emptyRows) {
@@ -152,15 +149,11 @@ export async function parseAndValidateGoogleSpreadsheetsEvents(db: BotDb, excel:
                 if (mapped.errors.extId.length > 0) {
                     sheetUpdater.annotateCell('ext_id', rowNo, mapped.errors.extId.join('\n'))
                     sheetUpdater.colorCell('ext_id', rowNo, 'red')
-                } else {
-                    sheetUpdater.annotateCell('ext_id', rowNo, '')
                 }
 
                 if (mapped.errors.tagLevel1.length > 0) {
                     sheetUpdater.annotateCell('tag_level_1', rowNo, mapped.errors.tagLevel1.join('\n'))
                     sheetUpdater.colorCell('tag_level_1', rowNo, 'red')
-                } else {
-                    sheetUpdater.annotateCell('tag_level_1', rowNo, '')
                 }
                 if (mapped.errors.tagLevel2.length > 0) {
                     sheetUpdater.colorCell('tag_level_2', rowNo, 'red')

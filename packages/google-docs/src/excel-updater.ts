@@ -2,7 +2,7 @@ import { sheets_v4 } from 'googleapis'
 import {
     CellColor,
     mkAnnotateCell,
-    mkClearFormat,
+    mkClearFormat, mkClearNoteAndFormat,
     mkClearSheet,
     mkClearValue,
     mkColorCell,
@@ -22,14 +22,14 @@ export class SheetUpdater<T extends Record<string, unknown>> {
     }
 
     private getColumnIndex(column: keyof T): number {
-        return this.columnIndexResolve(column) + 1
+        return this.columnIndexResolve(column)
     }
 
 
     clearColumnFormat(column: keyof T, startRow: number, numOfRows: number): void {
         this.requests.push(mkClearFormat(this.sheetId, {
-            startColumnIndex: this.getColumnIndex(column) - 1,
-            endColumnIndex: this.getColumnIndex(column),
+            startColumnIndex: this.getColumnIndex(column),
+            endColumnIndex: this.getColumnIndex(column) + 1,
             startRowIndex: startRow,
             endRowIndex: startRow + numOfRows
         }))
@@ -39,10 +39,19 @@ export class SheetUpdater<T extends Record<string, unknown>> {
         this.requests.push(mkClearSheet(this.sheetId))
     }
 
+    clearNoteAndFormat(fromColumn: keyof T, toColumn: keyof T, startRow: number, numOfRows: number): void {
+        this.requests.push(mkClearNoteAndFormat(this.sheetId, {
+            startColumnIndex: this.getColumnIndex(fromColumn),
+            endColumnIndex: this.getColumnIndex(toColumn) + 1,
+            startRowIndex: startRow,
+            endRowIndex: startRow + numOfRows
+        }))
+    }
+
     clearValues(fromColumn: keyof T, toColumn: keyof T, startRow: number, numOfRows: number): void {
         this.requests.push(mkClearValue(this.sheetId, {
-            startColumnIndex: this.getColumnIndex(fromColumn) - 1,
-            endColumnIndex: this.getColumnIndex(toColumn),
+            startColumnIndex: this.getColumnIndex(fromColumn),
+            endColumnIndex: this.getColumnIndex(toColumn) + 1,
             startRowIndex: startRow,
             endRowIndex: startRow + numOfRows
         }))
@@ -80,7 +89,7 @@ export class ExcelUpdater {
             return new SheetUpdater<T>(sheetId, this.requests, columnToIndexOrColumns)
         } else {
             return new SheetUpdater<T>(sheetId, this.requests, (column) => {
-                return Object.keys(columnToIndexOrColumns).indexOf(column as string) + 1
+                return Object.keys(columnToIndexOrColumns).indexOf(column as string)
             })
         }
     }

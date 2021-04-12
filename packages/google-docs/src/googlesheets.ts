@@ -88,6 +88,21 @@ export function mkClearSheet(sheetId: number): Schema$Request {
     }
 }
 
+export function mkClearNoteAndFormat(sheetId: number, {startRowIndex, endRowIndex, startColumnIndex, endColumnIndex}: Range): Schema$Request {
+    return {
+        'updateCells': {
+            'range': {
+                'sheetId': sheetId,
+                startRowIndex,
+                endRowIndex,
+                startColumnIndex,
+                endColumnIndex,
+            },
+            'fields': ' userEnteredFormat, note'
+        }
+    }
+}
+
 
 export function mkClearValue(sheetId: number, {startRowIndex, endRowIndex, startColumnIndex, endColumnIndex}: Range): Schema$Request {
     return {
@@ -112,8 +127,8 @@ export function mkColorCell(sheetId: number, color: CellColor, column: number, r
                 sheetId: sheetId,
                 startRowIndex: row,
                 endRowIndex: row + 1,
-                startColumnIndex: column - 1,
-                endColumnIndex: column
+                startColumnIndex: column,
+                endColumnIndex: column + 1
             },
             fields: 'userEnteredFormat',
             rows: [
@@ -138,8 +153,8 @@ export function mkAnnotateCell(sheetId: number, text: string, column: number, ro
                 sheetId: sheetId,
                 startRowIndex: row,
                 endRowIndex: row + 1,
-                startColumnIndex: column - 1,
-                endColumnIndex: column
+                startColumnIndex: column,
+                endColumnIndex: column + 1
             },
             fields: 'note',
             cell: {
@@ -160,8 +175,8 @@ export function mkEditCellDate(sheetId: number, date: Date, column: number, row:
                 sheetId: sheetId,
                 startRowIndex: row,
                 endRowIndex: row + 1,
-                startColumnIndex: column - 1,
-                endColumnIndex: column
+                startColumnIndex: column,
+                endColumnIndex: column + 1
             },
             fields: 'userEnteredValue,userEnteredFormat',
             rows: [
@@ -192,8 +207,8 @@ export function mkEditCellValue(sheetId: number, value: string, column: number, 
                 sheetId: sheetId,
                 startRowIndex: row,
                 endRowIndex: row + 1,
-                startColumnIndex: column - 1,
-                endColumnIndex: column
+                startColumnIndex: column,
+                endColumnIndex: column + 1
             },
             fields: 'userEnteredValue',
             rows: [

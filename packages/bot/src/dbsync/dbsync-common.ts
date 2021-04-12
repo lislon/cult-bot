@@ -25,8 +25,9 @@ export class RowMapping<T extends Record<string, string>> {
         })
     }
 
+    // 0 - first column
     getIndexByRow(t: keyof T): number {
-        return this.rowKeyToIndex.get(t) + 1
+        return this.rowKeyToIndex.get(t)
     }
 
     getRow(row: string[]): Record<Extract<keyof T, string>, string> {
