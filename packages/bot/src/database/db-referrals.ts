@@ -83,7 +83,7 @@ export class ReferralsRepository {
     public async list(): Promise<ReferralDesc[]> {
         return await this.db.map(`
                 SELECT r.code, r.ga_source, r.redirect, r.description, ce.title AS redirect_title,
-                        (SELECT COUNT(u.id) FROM cb_users u WHERE u.referral = r.redirect) AS users_count
+                        (SELECT COUNT(u.id) FROM cb_users u WHERE u.referral = r.redirect AND u.referral != '') AS users_count
                 FROM cb_referrals r
                 LEFT JOIN cb_events ce ON (ce.ext_id = r.redirect)
                 WHERE r.deleted_at IS NULL
