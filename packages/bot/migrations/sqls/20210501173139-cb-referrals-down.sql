@@ -1,0 +1,1 @@
+drop table cb_referrals;

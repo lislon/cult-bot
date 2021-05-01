@@ -18,9 +18,7 @@ import { cardFormat } from '../shared/card-format'
 import { User } from 'typegram/manage'
 import { analyticRecordEventView, analyticRecordReferral } from '../../lib/middleware/analytics-middleware'
 import { parseAndPredictTimetable } from '../../lib/timetable/timetable-utils'
-import { bot } from '../../bot'
 import { KeyboardButton } from 'typegram'
-import CommonButton = KeyboardButton.CommonButton
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('main_scene')
 
@@ -103,77 +101,6 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
         })
 }
 
-function setGoogleAnalyticsSource(ctx: ContextMessageUpdate, payloads: string[]) {
-
-    function getSourceTitle(sourceCode: string) {
-        switch (sourceCode) {
-            case 'a':
-                return 'advert'
-            case 'i':
-                return 'instagram'
-            case 'f':
-                return 'facebook'
-            case 'v':
-                return 'vk'
-            case 't':
-                return 'telegram'
-            case 'o':
-                return 'other'
-            case 'm':
-                return 'email'
-            default:
-                return sourceCode
-        }
-    }
-
-    function getSourceFrom(sourceCode: string) {
-        switch (sourceCode) {
-            case '1':
-                return 'igor'
-            case '2':
-                return 'elena'
-            case '3':
-                return 'anna'
-            case '4':
-                return 'masha'
-            case 'L':
-                return 'marina'
-            default:
-                return sourceCode
-        }
-    }
-
-    function getSource(payload: string) {
-        switch (payload) {
-            case 'a1f6b':
-                return 'cofe-i-bileti'
-            case 'a9481':
-                return 'kosmos-oliferovich'
-            default: {
-                let source = getSourceTitle(payload[0])
-
-                if (payload.length > 1) {
-                    source += `-` + getSourceFrom(payload.substring(1))
-                }
-                return source
-            }
-        }
-    }
-
-    if (payloads.length > 0) {
-        ctx.ua.set('cm', 'referral')
-
-        try {
-            const source = getSource(payloads[0])
-            analyticRecordReferral(ctx, source)
-            ctx.ua.set('cs', source)
-        } catch (e) {
-            ctx.ua.set('cs', 'fallback')
-            ctx.logger.error(e)
-        }
-    }
-}
-
 async function showWelcomeScene(ctx: ContextMessageUpdate, message: { from?: User }) {
     const name = message.from?.first_name ?? undefined
     if (!quick) await sleep(500)
@@ -230,13 +157,33 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
             `startPayload=${ctx.startPayload}`,
             `ua_uuid=${ctx.session.user.uaUuid}`].join(' '))
 
-        const payloads = ctx.startPayload.split('_').filter(s => s !== '')
+        const [ source, redirectPart ] = ctx.startPayload.split('_').filter(s => s !== '')
+        const oldRedirect = redirectPart?.match(/event-(.+)$/)?.[1] || ''
+        let newRedirect = ''
 
-        setGoogleAnalyticsSource(ctx, payloads)
+        if (source !== '') {
+            ctx.ua.set('cm', 'referral')
 
-        const isDirectEvent = ctx.startPayload.match(/event-(.+)$/)
-        if (isDirectEvent !== null) {
-            await showDirectMessage(ctx, isDirectEvent[1])
+            try {
+                const referralInfo = await db.repoReferrals.loadByCode(source)
+                if (referralInfo !== undefined) {
+                    analyticRecordReferral(ctx, referralInfo.gaSource)
+                    ctx.ua.set('cs', referralInfo.gaSource)
+                    newRedirect = referralInfo.redirect
+                } else {
+                    analyticRecordReferral(ctx, source)
+                    ctx.ua.set('cs', source)
+                }
+            } catch (e) {
+                ctx.ua.set('cs', 'error-fallback')
+                ctx.logger.error(e)
+            }
+        }
+
+        if (oldRedirect !== '') {
+            await showDirectMessage(ctx, oldRedirect)
+        } else if (newRedirect !== '') {
+            await showDirectMessage(ctx, newRedirect)
         } else {
             await showWelcomeScene(ctx, ctx.message)
         }

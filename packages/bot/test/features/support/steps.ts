@@ -53,6 +53,16 @@ Given(/^I'am already used bot (\d+) times$/, async function (times: number) {
     })
 })
 
+Given(/^there is referrals:$/, async function (table: DataTable) {
+    table.hashes().forEach((row: any) => {
+        db.repoReferrals.add({
+            code: row.code,
+            gaSource: row.gaSource || row.code,
+            redirect: row.redirect || '',
+        })
+    })
+})
+
 Given(/^there is events:$/, async function (table: DataTable) {
 
     const mockEvents = table.hashes().map((row: any) => {
@@ -288,7 +298,7 @@ Then(/^Google analytics params will be:$/, function (table: DataTable) {
 const ORIGINAL_BOT_CONFIG: typeof botConfig = clone(botConfig)
 
 Before(async () => {
-    await db.none(`TRUNCATE cb_events CASCADE`)
+    await db.none(`TRUNCATE cb_events, cb_referrals CASCADE`)
     botConfig.setFromKeyValue(ORIGINAL_BOT_CONFIG)
 })
 Before(function (testCase: ITestCaseHookParameter) {

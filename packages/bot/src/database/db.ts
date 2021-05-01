@@ -19,6 +19,7 @@ import { EventsMatchingRepository } from './db-event-matching'
 import d from 'debug'
 import { DbCustomizeRepository } from './db-customize-repository'
 import { PlacesRepository } from './db-places'
+import { ReferralsRepository } from './db-referrals'
 
 const debug = d('bot:sql')
 
@@ -30,6 +31,7 @@ export interface IExtensions {
     repoSearch: SearchRepository
     repoSnapshot: SnapshotRepository
     repoUser: UserRepository
+    repoReferrals: ReferralsRepository
     repoFeedback: FeedbackRepository
     repoPacks: PacksRepository
     repoEventsCommon: EventsCommonRepository
@@ -58,6 +60,7 @@ const initOptions: IInitOptions<IExtensions> = {
         dbEx.repoEventsGeo = new EventsGeoRepository(dbEx, pgp)
         dbEx.repoEventsMatching = new EventsMatchingRepository(dbEx, pgp)
         dbEx.repoPlaces = new PlacesRepository(dbEx, pgp)
+        dbEx.repoReferrals = new ReferralsRepository(dbEx, pgp)
     },
 
     query(e) {

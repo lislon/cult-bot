@@ -1,6 +1,9 @@
 Feature: Main scene
 
   Scenario: I enter bot first time
+    Given there is referrals:
+      | code  | gaSource           |
+      | i1    | instagram-igor    |
     When I start bot with payload 'i1'
     Then Bot responds '*Приветствую, TestFirstName*'
     Then Bot responds '*Начнем?*' with markup buttons:
@@ -50,8 +53,11 @@ Feature: Main scene
   Scenario: I can view particular card on bot start
     Given now is 2020-01-02 12:00
     Given there is events:
-      | extId | title | category | timetable            |
+      | extId  | title | category | timetable            |
       | K1     | A     | movies   | 1 января 2020: 21:59 |
+    Given there is referrals:
+      | code  | gaSource           |
+      | i1    | instagram-igor    |
     When I start bot with payload 'i1_event-K1'
     Then Bot responds '*<b>A</b> <i>(прошло)</i>*' with inline buttons:
       """
@@ -75,3 +81,24 @@ Feature: Main scene
   Scenario: I will be redirect to standart start scene if event not found
     When I start bot with payload 'i1_event-bad'
     Then Bot responds '*Приветствую, TestFirstName*'
+
+  Scenario: Referral will be saved even if its not exists in table
+    When I start bot with payload 'bb'
+    Then Google analytics params will be:
+      | key | value          |
+      | cs  | bb             |
+
+  Scenario: I can view particular card on bot by configured redirect
+    Given now is 2020-01-02 12:00
+    Given there is events:
+      | extId  | title | category | timetable            |
+      | K1     | A     | movies   | 1 января 2020: 21:59 |
+    Given there is referrals:
+      | code  | gaSource           | redirect |
+      | i1    | instagram-igor     |  K1       |
+    When I start bot with payload 'i1'
+    Then Bot responds '*<b>A</b> <i>(прошло)</i>*' with inline buttons:
+      """
+      [👍] [👎] [⭐]
+      [🚀 Открыть бот]
+      """
