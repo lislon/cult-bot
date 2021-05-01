@@ -22,6 +22,7 @@ import Telegram from 'telegraf/typings/telegram'
 import { ReplyMessage } from 'typegram'
 import emojiRegex from 'emoji-regex'
 import TextMessage = Message.TextMessage
+import { getNextRangeForPacks } from '../../scenes/packs/packs-common'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('support_chat_scene')
 
@@ -181,7 +182,7 @@ supportFeedbackMiddleware
             const messageId = ctx.message.reply_to_message.message_id
 
             const allPacks = await db.repoPacks.listPacks({
-                interval: getNextWeekRange(new Date())
+                interval: getNextRangeForPacks(new Date())
             })
             const messageToSend = await formatMessage(ctx, ctx.message.reply_to_message, allPacks, webPreview)
 

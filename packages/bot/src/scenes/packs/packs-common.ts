@@ -19,10 +19,9 @@ export interface PacksSceneState {
 export function getNextRangeForPacks(now: Date): DateInterval {
     return {
         start: max([now, (flow(startOfISOWeek, startOfDay, addDays(0))(now))]),
-        end: flow(startOfISOWeek, startOfDay, addMonths(1))(now)
+        end: flow(startOfDay, addMonths(6))(now)
     }
 }
-
 
 export async function getPacksList(ctx: ContextMessageUpdate): Promise<ScenePack[]> {
     prepareSessionStateIfNeeded(ctx)

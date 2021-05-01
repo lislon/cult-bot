@@ -72,3 +72,18 @@ Feature: Packs scene
       Then now is 2020-03-01 12:00
       Then I click inline [PACK1]
       Then Bot edits text '*Узнайте больше о тематических*'
+
+   Scenario: I see pack event in far future
+    Given there is events:
+      | title | category    | timetable               |
+      | A     | exhibitions | 1 марта 2020: 15:00     |
+    Given there is packs:
+      | title    | desc       | events         | weight | hideIfLessThen |
+      | PACK1    | PACK1 desc | A              | 0      | 0              |
+    Given Scene is 'packs_scene'
+    Then Bot responds '👇'
+    Then Bot responds 'Узнайте больше о тематических коллекциях событий в подборках и следите за их пополнением' with inline buttons:
+      """
+      [PACK1]
+      [Назад]
+      """
