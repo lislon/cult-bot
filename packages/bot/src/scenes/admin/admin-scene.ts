@@ -10,7 +10,7 @@ import { InlineKeyboardButton, Message } from 'typegram'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
 import { loggerTransport } from '../../util/logger'
-import { formatMainAdminMenu } from './admin-format'
+import { formatMainAdminMenu, formatPartnerLinks } from './admin-format'
 import { getButtonsSwitch, getHumanReadableUsername, getUserFromCtx, menuCats } from './admin-common'
 import { ITask } from 'pg-promise'
 import { AdminPager } from './admin-pager'
@@ -66,6 +66,29 @@ scene
         await ctx.answerCbQuery()
         await synchronizeDbByUser(ctx)
     })
+    .action(actionName('links'), async ctx => {
+        await ctx.answerCbQuery()
+        await formatPartnerLinks(ctx, await db.repoReferrals.list())
+    })
+    .command('link_add', async ctx => {
+        const match = ctx.message.text.match(/\/link_add\s+(?<code>[a-z0-9]+)\s(?<title>[A-Za-z0-9-]+)\s*(?<redirect>[A-Za-z][0-9]+[a-zA-Z]?)?/)
+        if (match) {
+            try {
+                await db.repoReferrals.add({
+                    code: match.groups['code'].toLowerCase(),
+                    gaSource: match.groups['title'].toLowerCase(),
+                    redirect: (match.groups['redirect'] || '').toUpperCase(),
+                })
+                await formatPartnerLinks(ctx, await db.repoReferrals.list())
+                await ctx.replyWithHTML(`✅ Код ${match.groups['title']} Добавлен успешно!`)
+            } catch (e) {
+                await ctx.replyWithHTML(`Ошибка при добавлении (Возможно гугл код <b>${match.groups['code']}</b> или <b>${match.groups['title']}</b> уже есть?):\n ` + e)
+            }
+        } else {
+            await ctx.replyWithHTML(i18Btn(ctx, 'link_add_invalid_format'))
+        }
+    })
+
     .command('redis_reset', async ctx => {
         async function countKeys() {
             return (await getRedis().keys('*')).length
@@ -76,9 +99,9 @@ scene
                 sessionSafeDestroyCounter = 3;
                 const keysBefore = await countKeys()
                 await getRedis().flushdb()
-                ctx.reply(`Done. ${keysBefore} -> ${await countKeys()} keys`)
+                await ctx.reply(`Done. ${keysBefore} -> ${await countKeys()} keys`)
             } else {
-                ctx.reply(`type ${ctx.message.text} again (${sessionSafeDestroyCounter})`)
+                await ctx.reply(`type ${ctx.message.text} again (${sessionSafeDestroyCounter})`)
             }
         }
     })
@@ -94,7 +117,7 @@ scene
                 backupRows[key] = data
             }
             const buffer = Buffer.from(JSON.stringify(backupRows, undefined, 2))
-            ctx.replyWithDocument({
+            await ctx.replyWithDocument({
                 source: buffer,
                 filename: `sessions-${botConfig.HEROKU_APP_NAME}-${format(new Date(), 'yyyy-MM-dd--HH-mm-ss')}.json`
             })
@@ -114,12 +137,12 @@ scene
                     for (const [key, value] of Object.entries(response)) {
                         await getRedis().set(key, value as string)
                     }
-                    ctx.replyWithHTML(`Обновили сессии для ${Object.entries(response).length} элементов.`)
+                    await ctx.replyWithHTML(`Обновили сессии для ${Object.entries(response).length} элементов.`)
                 } else {
-                    ctx.replyWithHTML('Опасно, вначале скачать бекап.')
+                    await ctx.replyWithHTML('Опасно, вначале скачать бекап.')
                 }
             } else {
-                ctx.replyWithHTML('Ожидался файл session-*.json')
+                await ctx.replyWithHTML('Ожидался файл session-*.json')
             }
         }
         return await next()

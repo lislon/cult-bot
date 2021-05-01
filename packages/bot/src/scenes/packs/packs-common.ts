@@ -45,7 +45,7 @@ export async function getPackSelected(ctx: ContextMessageUpdate): Promise<SceneP
     return findPackById(packs, ctx.session.packsScene.selectedPackId)
 }
 
-export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
+export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate): void {
     const {
         selectedPackId,
         fetchTime,
@@ -57,9 +57,6 @@ export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         fetchTime: fetchTime || 0,
         selectedPackId: SessionEnforcer.number(selectedPackId)
     }
-}
-export function getPacksCount(ctx: ContextMessageUpdate) {
-    return ctx.session.packsScene.packs.length
 }
 
 export async function getEventsCount(ctx: ContextMessageUpdate) {

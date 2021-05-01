@@ -15,6 +15,8 @@ import { PackRecovered, PacksSyncDiff, PackToSave } from '../../database/db-pack
 import emojiRegex from 'emoji-regex'
 import * as tt from 'telegraf/src/telegram-types'
 import { ALL_CATEGORIES } from '@culthub/interfaces'
+import { ReferralDesc } from '../../database/db-referrals'
+import { botConfig } from '../../util/bot-config'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 
@@ -78,7 +80,7 @@ export async function formatMainAdminMenu(ctx: ContextMessageUpdate): Promise<{ 
             Markup.button.callback(i18Btn(ctx, 'sync'), actionName('sync')),
         ])
         adminButtons.push([
-            Markup.button.callback(i18Btn(ctx, 'version'), actionName('version'))
+            Markup.button.callback(i18Btn(ctx, 'version'), actionName('version')), Markup.button.callback(i18Btn(ctx, 'links'), actionName('links'))
         ])
 
         return {
@@ -250,4 +252,34 @@ export async function formatMessageForSyncReport(eventsErrors: SpreadSheetValida
     } else {
         return `${listStr}\n\n✅ 0 Ошибок`
     }
+}
+
+export async function formatPartnerLinks(ctx: ContextMessageUpdate, referrals: ReferralDesc[]): Promise<void> {
+
+    function showRedirect(r: ReferralDesc) {
+        if (r.redirect) {
+            if (r.redirectTitle) {
+                return i18Msg(ctx, 'link_row_redirect', {id: r.redirect, title: r.redirectTitle})
+            } else if (r.redirect.startsWith('G')) {
+                return i18Msg(ctx, 'link_row_redirect', {id: r.redirect, title: 'Подборка'})
+            } else {
+                return i18Msg(ctx, 'link_row_redirect', {id: r.redirect, title: '???'})
+            }
+        }
+        return ''
+    }
+
+    const text = referrals.map(r => {
+        return i18Msg(ctx, 'link_row', {
+            url: `https://t.me/${botConfig.TELEGRAM_BOT_NAME}?start=${r.code}`,
+            code: r.code,
+            title: r.gaSource,
+            desc: r.description ? ` (${r.description})` : '',
+            redirect: showRedirect(r),
+            users: r.usersCount > 0 ? `+ ${r.usersCount}` : ''
+        } )
+    }).join("\n")
+    await ctx.replyWithHTML(i18Msg(ctx, 'link_header', { text }), {
+        disable_web_page_preview: true
+    });
 }

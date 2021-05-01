@@ -28,6 +28,7 @@ export class BotConfig {
 
     public PORT: number
     public TELEGRAM_TOKEN: string
+    public TELEGRAM_BOT_NAME: string
     public WEBHOOK_HOST: string
     public WEBHOOK_PORT: number
     public REDIS_URL: string
@@ -167,6 +168,8 @@ export class BotConfig {
 
 
         this.TELEGRAM_TOKEN = envVars.TELEGRAM_TOKEN
+        this.TELEGRAM_BOT_NAME = envVars.TELEGRAM_BOT_NAME || 'CultHubBot'
+
         number('PORT', 0)
         number('WEBHOOK_PORT', 0)
         this.REDIS_URL = envVars.REDIS_URL

@@ -12,6 +12,8 @@ export interface ReferralDesc {
     gaSource: string
     description: string
     redirect: string
+    redirectTitle: string
+    usersCount: number
 }
 
 export interface ReferralDb {
@@ -21,6 +23,11 @@ export interface ReferralDb {
     description: string
     published_at?: string
     deleted_at?: string
+}
+
+export interface ReferralDbStats extends ReferralDb {
+    redirect_title: string
+    users_count: number
 }
 
 export interface ReferralInfo {
@@ -75,16 +82,20 @@ export class ReferralsRepository {
 
     public async list(): Promise<ReferralDesc[]> {
         return await this.db.map(`
-                SELECT code, gaSource, redirect, description
-                FROM cb_referrals
-                WHERE date_deleted IS NULL
-                ORDER BY date_publish DESC, code DESC
-                `, undefined,(row: ReferralDb) => {
+                SELECT r.code, r.ga_source, r.redirect, r.description, ce.title AS redirect_title,
+                        (SELECT COUNT(u.id) FROM cb_users u WHERE u.referral = r.redirect) AS users_count
+                FROM cb_referrals r
+                LEFT JOIN cb_events ce ON (ce.ext_id = r.redirect)
+                WHERE r.deleted_at IS NULL
+                ORDER BY r.created_at ASC, code DESC
+                `, undefined,(row: ReferralDbStats) => {
             return {
                 redirect: row.redirect,
                 code: row.code,
                 gaSource: row.ga_source,
-                description: row.description
+                description: row.description,
+                redirectTitle: row.redirect_title,
+                usersCount: row.users_count
             }
         })
     }

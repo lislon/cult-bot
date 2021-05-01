@@ -32,11 +32,11 @@ describe('Packs', () => {
         ])
 
         await db.repoPacks.syncDatabase([
-            getMockPack({extId: 'A pack', eventIds: [aId, bId], hideIfLessThen: 2}),
+            getMockPack({extId: 'G1', eventIds: [aId, bId], hideIfLessThen: 2}),
             getMockPack({extId: 'B back', eventIds: [aId, cId], hideIfLessThen: 2}),
         ])
         const list = await db.repoPacks.listPacks({interval: yearRange})
-        expectedPacksTitle(['A pack'], list)
+        expectedPacksTitle(['G1'], list)
     })
 
     test('packs with single event will be shown if hide_if_less_then =1', async () => {
@@ -45,10 +45,10 @@ describe('Packs', () => {
         ])
 
         await db.repoPacks.syncDatabase([
-            getMockPack({extId: 'A pack', eventIds: [aId], hideIfLessThen: 1})
+            getMockPack({extId: 'G1', eventIds: [aId], hideIfLessThen: 1})
         ])
         const list = await db.repoPacks.listPacks({interval: yearRange})
-        expectedPacksTitle(['A pack'], list)
+        expectedPacksTitle(['G1'], list)
     })
 
     test('packs with 5 events will not be shown if hide_if_less_then = 6', async () => {
@@ -57,7 +57,7 @@ describe('Packs', () => {
         ])
 
         await db.repoPacks.syncDatabase([
-            getMockPack({extId: 'A pack', eventIds: [aId], hideIfLessThen: 6})
+            getMockPack({extId: 'G1', eventIds: [aId], hideIfLessThen: 6})
         ])
         const list = await db.repoPacks.listPacks({interval: yearRange})
         expectedPacksTitle([], list)
@@ -75,7 +75,7 @@ describe('Packs', () => {
         ])
 
         await db.repoPacks.syncDatabase([
-            getMockPack({extId: 'A pack', eventIds: [A, B, C, D, E]}),
+            getMockPack({extId: 'G1', eventIds: [A, B, C, D, E]}),
         ])
 
         const events = await db.repoPacks.listPacks({ interval: yearRange })
@@ -93,7 +93,7 @@ describe('Packs', () => {
             ])
 
             const packSync = await db.repoPacks.syncDatabase([
-                getMockPack({extId: 'A pack', eventIds: [aId, bId, cId], hideIfLessThen: 2}),
+                getMockPack({extId: 'G1', eventIds: [aId, bId, cId], hideIfLessThen: 2}),
             ])
             const packId = packSync.inserted[0].primaryData.id
             const eventIds = await db.repoPacks.getEventIdsByPackId({interval: yearRange, packId})
@@ -108,12 +108,42 @@ describe('Packs', () => {
             ])
 
             const packSync = await db.repoPacks.syncDatabase([
-                getMockPack({extId: 'A pack', eventIds: [aId, bId, cId], hideIfLessThen: 3}),
+                getMockPack({extId: 'G1', eventIds: [aId, bId, cId], hideIfLessThen: 3}),
             ])
             const packId = packSync.inserted[0].primaryData.id
             const eventIds = await db.repoPacks.getEventIdsByPackId({interval: yearRange, packId})
             expect(eventIds).toStrictEqual([])
         })
+
+        test('Can find active pack by extId', async () => {
+            const [aId, bId, cId] = await syncEventsDb4Test([
+                getMockEvent({extId: 'A', eventTime: day2}),
+                getMockEvent({extId: 'B', eventTime: day1}),
+                getMockEvent({extId: 'C', eventTime: eventTimeOutRange}),
+            ])
+
+            const packSync = await db.repoPacks.syncDatabase([
+                getMockPack({extId: 'G1', eventIds: [aId, bId, cId], hideIfLessThen: 3}),
+            ])
+            const foundId = await db.repoPacks.getActivePackInfoByExtId({interval: yearRange, extId: 'G1'})
+            expect(foundId).toStrictEqual({
+                id: packSync.inserted[0].primaryData.id,
+                title: 'G1'
+            })
+        })
+
+        test('Will return null if no active pack exists by extId', async () => {
+            const [aId, bId, cId] = await syncEventsDb4Test([
+                getMockEvent({extId: 'C', eventTime: eventTimeOutRange}),
+            ])
+
+            await db.repoPacks.syncDatabase([
+                getMockPack({extId: 'G1', eventIds: [aId, bId, cId], hideIfLessThen: 3}),
+            ])
+            const foundId = await db.repoPacks.getActivePackInfoByExtId({interval: yearRange, extId: 'G1'})
+            expect(foundId).toBeUndefined()
+        })
+
     })
 
 

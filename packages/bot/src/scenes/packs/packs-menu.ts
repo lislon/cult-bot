@@ -1,7 +1,15 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { Markup } from 'telegraf'
-import { getPackSelected, getPacksList, resetPacksCache, resetSelectedPack, scene } from './packs-common'
+import {
+    findPackById,
+    getPackSelected,
+    getPacksList,
+    prepareSessionStateIfNeeded,
+    resetPacksCache,
+    resetSelectedPack,
+    scene
+} from './packs-common'
 import { editMessageAndButtons, EditMessageAndButtonsOptions, generatePlural, mySlugify } from '../shared/shared-logic'
 import { logger } from '../../util/logger'
 
@@ -51,4 +59,13 @@ export async function displayPackMenu(ctx: ContextMessageUpdate, options?: EditM
 
         await editMessageAndButtons(ctx, buttons, text, options)
     }
+}
+
+export async function displayPackMenuFromStart(ctx: ContextMessageUpdate, packId: number): Promise<void> {
+    prepareSessionStateIfNeeded(ctx)
+    ctx.session.packsScene.selectedPackId = packId
+    await displayPackMenu(ctx, {
+        forceNewMsg: true
+    })
+    ctx.scene.enter(scene.id, {}, true)
 }

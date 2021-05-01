@@ -163,6 +163,9 @@ function validateExtId(data: EventNoId, errorCallback: ErrorCallback): void {
         return errorCallback([`Идентификатор для категории ${data.category} должен начинатся с буквы '${startLetter}'.
             \nЗатем должна идти цифра, и возможно другая буква, например: ${startLetter}123 или ${startLetter}123B`])
     }
+    if (extId.trim() === '') {
+        return errorCallback(['Пустой extId'])
+    }
 }
 
 export function processExcelRow(row: Partial<ExcelRowEvents>, category: EventCategory, now: Date, rowNumber: number): ExcelEventRow {

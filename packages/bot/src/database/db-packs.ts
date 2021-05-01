@@ -4,9 +4,8 @@ import { ColumnSet, IDatabase, IMain, ITask } from 'pg-promise'
 import { db, IExtensions } from './db'
 import { zip } from 'lodash'
 import { mapEvent, SELECT_ALL_EVENTS_FIELDS } from './db-events-common'
-import { SyncConfig, UniversalDbSync, UniversalSyncDiff, WithId } from '@culthub/universal-db-sync'
+import { BaseSyncItemDbRow, SyncConfig, UniversalDbSync, UniversalSyncDiff, WithId } from '@culthub/universal-db-sync'
 import { fieldInt, fieldInt8Array, fieldStr, fieldTimestamptzNullable } from '@culthub/pg-utils'
-import { BaseSyncItemDbRow } from '@culthub/universal-db-sync'
 
 export interface PackToSave {
     primaryData: {
@@ -50,6 +49,16 @@ export interface PacksListQuery {
 export interface SinglePackQuery {
     packId: number
     interval: DateInterval
+}
+
+export interface ExtIdPackQuery {
+    extId: string
+    interval: DateInterval
+}
+
+export interface ActivePackInfoForDirect {
+    id: number
+    title: string
 }
 
 export interface PackRecovered extends PackToSave {
@@ -139,6 +148,23 @@ export class PacksRepository {
         }
         return rawRows.map(raw => +raw.id)
     }
+
+    public async getActivePackInfoByExtId(query: ExtIdPackQuery): Promise<ActivePackInfoForDirect|undefined> {
+        const {from, where, params} = this.prepareQueryBody(query)
+        return await this.db.oneOrNone<ActivePackInfoForDirect>(`
+            select distinct p.id, p.title
+            ${from}
+            WHERE ${where} AND p.ext_id = $(extId)
+        `, {...params, extId: query.extId}, row => {
+            if (row) {
+                return {
+                    id: +row.id,
+                    title: row.title
+                }
+            }
+        })
+    }
+
 
     public async listPacks(query: PacksListQuery): Promise<ScenePack[]> {
         const {from, where, params} = this.prepareQueryBody(query)

@@ -19,6 +19,8 @@ import { User } from 'typegram/manage'
 import { analyticRecordEventView, analyticRecordReferral } from '../../lib/middleware/analytics-middleware'
 import { parseAndPredictTimetable } from '../../lib/timetable/timetable-utils'
 import { KeyboardButton } from 'typegram'
+import { displayPackMenu, displayPackMenuFromStart } from '../packs/packs-menu'
+import { getNextRangeForPacks } from '../packs/packs-common'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('main_scene')
 
@@ -40,7 +42,7 @@ const content = (ctx: ContextMessageUpdate) => {
         row.map(btnName => {
             return Markup.button.text(i18Btn(ctx, btnName))
         })
-    );
+    )
     if (botConfig.FEATURE_GEO) {
         const text = i18Btn(ctx, 'near_me')
         mainButtons.push([Markup.button.locationRequest(text)])
@@ -134,7 +136,7 @@ async function showDirectMessage(ctx: ContextMessageUpdate, extId: string) {
         await ctx.replyWithHTML(cardFormat({
             ...event,
             isFuture: isEventEndsInFuture(parsedTimetable.predictedIntervals, ctx.now())
-        }, { now: ctx.now() }), extraInlineMenu([likesRow, [startUsingBot]]))
+        }, {now: ctx.now()}), extraInlineMenu([likesRow, [startUsingBot]]))
         analyticRecordEventView(ctx, event)
         ctx.ua.pv({
             dp: `/start-event/${mySlugify(event.extId)}`,
@@ -145,6 +147,27 @@ async function showDirectMessage(ctx: ContextMessageUpdate, extId: string) {
         await showWelcomeScene(ctx, ctx.message)
     }
 }
+
+async function showDirectPack(ctx: ContextMessageUpdate, extId: string) {
+    const packInfo = await db.repoPacks.getActivePackInfoByExtId({
+        extId,
+        interval: getNextRangeForPacks(ctx.now())
+    })
+
+    if (packInfo !== undefined) {
+        await displayPackMenuFromStart(ctx, packInfo.id)
+
+        ctx.ua.pv({
+            dp: `/start-pack/${mySlugify(extId)}`,
+            dt: `Прямая ссылка > ${packInfo.title}`
+        })
+
+    } else {
+        ctx.logger.warn(`pack with id '${extId}' is not found. fallback.`)
+        await showWelcomeScene(ctx, ctx.message)
+    }
+}
+
 
 function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }) => {
@@ -157,7 +180,7 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
             `startPayload=${ctx.startPayload}`,
             `ua_uuid=${ctx.session.user.uaUuid}`].join(' '))
 
-        const [ source, redirectPart ] = ctx.startPayload.split('_').filter(s => s !== '')
+        const [source, redirectPart] = ctx.startPayload.split('_').filter(s => s !== '')
         const oldRedirect = redirectPart?.match(/event-(.+)$/)?.[1] || ''
         let newRedirect = ''
 
@@ -182,6 +205,8 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
 
         if (oldRedirect !== '') {
             await showDirectMessage(ctx, oldRedirect)
+        } else if (newRedirect.startsWith('G')) {
+            await showDirectPack(ctx, newRedirect)
         } else if (newRedirect !== '') {
             await showDirectMessage(ctx, newRedirect)
         } else {
@@ -190,7 +215,7 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
     })
 }
 
-export const mainScene : SceneRegister = {
+export const mainScene: SceneRegister = {
     scene,
     preStageGlobalActionsFn,
     postStageActionsFn
