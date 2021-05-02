@@ -195,6 +195,16 @@ describe('parser', () => {
         )
     })
 
+    test('far distance range', () => {
+        const actual = doParseTimetable('15 июня - 15 декабря: 00:00', DATE_2020_JAN_1)
+        expect(actual.dateRangesTimetable).toStrictEqual([{
+                dateRange: ['2020-06-15', '2020-12-15'],
+                times: ['00:00'],
+                weekTimes: [],
+            }]
+        )
+    })
+
     test('english letter c', () => {
         const actual = doParseTimetable('cб: 12:00', DATE_2020_JAN_1)
         expect(actual.weekTimes).toStrictEqual([{

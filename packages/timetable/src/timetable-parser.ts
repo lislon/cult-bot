@@ -196,25 +196,31 @@ function validateAndFixDate(p: string, errors: string[], now: Date): string {
     return p;
 }
 
-function fillUnknownYearsAndValidate(parse: Success<RawParseResult>, dateValidation: string[], now: Date): Success<RawParseResult> {
+function fillUnknownYearsAndValidate(parse: Success<RawParseResult>, errors: string[], now: Date): Success<RawParseResult> {
     const fixed: Success<RawParseResult> = cloneDeep(parse)
 
-    const validationAndFixation: (d: string) => string = (d: string) => validateAndFixDate(d, dateValidation, now)
+    const validationAndFixationSingle: (d: string) => string = (d: string) => validateAndFixDate(d, errors, now);
+    function validationAndFixationRange(range: DateRange): DateRange {
+        const startDate = validateAndFixDate(range[0], errors, now)
+        const endDate = validateAndFixDate(range[1], errors, parseISO(startDate))
+        return [ startDate, endDate ];
+    }
+
     const validateDateRangeOrder = (d: DateOrDateRange) => {
         if (isDateRange(d) && d[0] > d[1]) {
-            dateValidation.push(`Дата '${d[0]}' должна быть меньше, чем '${d[1]}'`)
+            errors.push(`Дата '${d[0]}' должна быть меньше, чем '${d[1]}'`)
         }
     }
 
     for (const p of fixed.value) {
         if (p.dateRange !== undefined) {
-            p.dateRange = mapInterval(p.dateRange, validationAndFixation)
+            p.dateRange = validationAndFixationRange(p.dateRange)
             validateDateRangeOrder(p.dateRange)
         } else if (p.dateRangesTimetable !== undefined) {
-            p.dateRangesTimetable.dateRange = mapInterval(p.dateRangesTimetable.dateRange, validationAndFixation)
+            p.dateRangesTimetable.dateRange = validationAndFixationRange(p.dateRangesTimetable.dateRange)
             validateDateRangeOrder(p.dateRangesTimetable.dateRange)
         } else if (p.exactDate) {
-            p.exactDate.date = validationAndFixation(p.exactDate.date)
+            p.exactDate.date = validationAndFixationSingle(p.exactDate.date)
             validateDateRangeOrder(p.exactDate.date)
         }
     }
