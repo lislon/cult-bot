@@ -13,8 +13,11 @@ import { hasAnyEventsInFuture } from '@culthub/timetable'
 
 const debug = debugNamespace('bot:card-format')
 
-export function addHtmlNiceUrls(text: string) {
+export function addHtmlNiceUrls(text: string): string {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
+}
+export function hasUrlsInside(text: string): boolean {
+    return !!text.match(/\[(.+?)\]\s*\(([^)]+)\)/)
 }
 
 export function formatUrl(text: string) {
@@ -42,7 +45,7 @@ export function formatCardTimetable(event: Event, options: FormatCardTimetableOp
             .map(l => l.trim())
             .map(l => l.replace(/:[^(]*[(](http.+?)[)]/, ': <a href="$1">расписание</a>'))
             .filter(l => l !== '')
-            .map(l => `🗓 ${l}`)
+            .map(l => `${l}`)
             .join('\n')
     }
 
@@ -92,7 +95,7 @@ export function getCardHeaderCat(row: Event): string {
 export interface CardOptions {
     showAdminInfo?: boolean
     deleted?: boolean
-    showTags?: boolean
+    showDetails?: boolean
     now: Date
 }
 
@@ -111,6 +114,13 @@ export function filterTagLevel2(row: Event | AdminEvent): TagLevel2[] {
 
 function isCardWithPossiblePast(row: Event | EventWithPast): row is EventWithPast {
     return (row as EventWithPast).isFuture !== undefined
+}
+
+function wrapInUrl(content: string, url: string) {
+    if (fieldIsQuestionMarkOrEmpty(url) || hasUrlsInside(content)) {
+        return addHtmlNiceUrls(content)
+    }
+    return `<a href="${url}">${content}</a>`
 }
 
 export function cardFormat(row: Event | AdminEvent | EventWithPast, options: CardOptions): string {
@@ -137,15 +147,13 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
         text += ` <i>${row.extId}</i> `
     }
 
-    if (!fieldIsQuestionMarkOrEmpty(row.title)) {
-        text += '\n'
-        text += '\n'
-        if (isFuture) {
-            text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`)
-        } else {
-            text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b> <i>(прошло)</i>`)
-        }
-    }
+    text += '\n'
+    text += '\n'
+
+    const gone = isFuture ? '' : ` <i>(прошло)</i>`
+
+    text += strikeIfDeleted(`<b>${escapeHTML(row.title)}</b>${gone}`)
+    text += '\n'
 
     if (options.deleted) {
         text += '\n'.repeat(7)
@@ -156,41 +164,42 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
     }
 
     text += '\n'
+
+    if (isFuture) {
+        text += `${formatCardTimetable(row, { now: options.now })}\n`
+    } else {
+        text += `<s>${formatCardTimetable(row, { now: options.now })}</s>\n`
+    }
+    text += `+ ${wrapInUrl('info', row.url)}\n`
+    const priceLine: string[] = []
+    if (!fieldIsQuestionMarkOrEmpty(row.duration)) {
+        priceLine.push(escapeHTML(formatEventDuration(row.duration)))
+    }
+    if (!fieldIsQuestionMarkOrEmpty(row.price)) {
+        priceLine.push(addHtmlNiceUrls(escapeHTML(formatPrice(parsePrice((row.price))))))
+    }
+    if (priceLine.length > 0) {
+        text += `<i>${priceLine.join(' | ')}</i>\n`
+    }
+
     text += '\n'
-    text += `${strikeIfDeleted(addHtmlNiceUrls(escapeHTML(row.description)))}\n`
+    text += `${strikeIfDeleted(addHtmlNiceUrls(escapeHTML(row.description)))} \n`
     text += '\n'
 
 
     if (!fieldIsQuestionMarkOrEmpty(row.place)) {
-        text += `🌐 ${addHtmlNiceUrls(escapeHTML(row.place))}\n`
+        text += `<b>${addHtmlNiceUrls(escapeHTML(row.place))}</b>\n`
     }
-    const map = row.geotag != '' ? ` <a href="${escapeHTML(row.geotag)}">(Я.Карта)</a>` : ``
+
     if (!fieldIsQuestionMarkOrEmpty(row.address)) {
-        text += `📍 ${addHtmlNiceUrls(escapeHTML(row.address))}${map}\n`
+        text += `${wrapInUrl(escapeHTML(row.address), row.geotag)}\n`
     }
-    if (!fieldIsQuestionMarkOrEmpty(getOnlyHumanTimetable(row.timetable))) {
-        if (isFuture) {
-            text += `${formatCardTimetable(row, {now: options.now})}\n`
-        } else {
-            text += `<s>${formatCardTimetable(row, {now: options.now})}</s>\n`
-        }
-    }
-    if (!fieldIsQuestionMarkOrEmpty(row.duration)) {
-        text += `🕐 ${escapeHTML(formatEventDuration(row.duration))}\n`
-    }
-    if (!fieldIsQuestionMarkOrEmpty(row.price)) {
-        text += `💳 ${addHtmlNiceUrls(escapeHTML(formatPrice(parsePrice((row.price)))))}\n`
-    }
-    if (!fieldIsQuestionMarkOrEmpty(row.notes)) {
+
+    if (!fieldIsQuestionMarkOrEmpty(row.notes) && options.showDetails) {
         text += `<b>Особенности:</b> ${addHtmlNiceUrls(escapeHTML(row.notes))}\n`
     }
-    if (!fieldIsQuestionMarkOrEmpty(row.url)) {
-        text += `${formatUrl(escapeHTML(row.url))}\n`
-    }
-    if (!text.endsWith('\n\n')) {
-        text += '\n'
-    }
-    if (options.showTags) {
+    text += '\n'
+    if (options.showDetails) {
         text += `${strikeIfDeleted(escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' ')))}\n`
     }
 

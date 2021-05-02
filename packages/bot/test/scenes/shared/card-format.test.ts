@@ -46,7 +46,7 @@ describe('test card format', () => {
         const event: Event = {
             ...defaultEvent,
         }
-        const card = cardFormat(event, { showTags: true, now: date('2020-01-01') })
+        const card = cardFormat(event, { showDetails: true, now: date('2020-01-01') })
         const expected = (await readCard('show-base.html')).toString()
         expect(prepare(card)).toEqual(prepare(expected))
     })
@@ -60,7 +60,7 @@ describe('test card format', () => {
                 18 января: 11:30 - 23:45 (https://afisha.yandex.ru/saint-petersburg/cinema/dovod?source=search-page&schedule-date=2020-10-18)
             `,
         }
-        const card = cardFormat(event, { showTags: true, now: date('2020-01-01') })
+        const card = cardFormat(event, { showDetails: true, now: date('2020-01-01') })
         const expected = (await readCard('show-timetable-prefix-cinema.html')).toString()
         expect(prepare(card)).toStrictEqual(prepare(expected))
     })
@@ -71,7 +71,7 @@ describe('test card format', () => {
             category: 'movies',
             timetable: `12 ноября 2020 - 29 ноября 2020: сб-вс: 10:00 - 18:00`,
         }
-        const card = cardFormat(event, { showTags: true, now: date('2020-11-15') })
+        const card = cardFormat(event, { showDetails: true, now: date('2020-11-15') })
         const expected = (await readCard('show-timetable-cut-year.html')).toString()
         expect(prepare(card)).toEqual(prepare(expected))
     })
@@ -82,7 +82,7 @@ describe('test card format', () => {
             category: 'events',
             timetable: `пн: 12:00\nвт: 12:00`,
         }
-        const card = cardFormat(event, { showTags: true, now: date('2020-01-01') })
+        const card = cardFormat(event, { showDetails: true, now: date('2020-01-01') })
         const expected = (await readCard('show-timetable-prefix-event.html')).toString()
         expect(prepare(card)).toEqual(prepare(expected))
     })
@@ -93,7 +93,7 @@ describe('test card format', () => {
             category: 'events',
             timetable: '{bot: пн: 12:00\nвт: 12:00} Лиса',
         }
-        const card = cardFormat(event, { showTags: true, now: date('2020-01-01') })
+        const card = cardFormat(event, { showDetails: true, now: date('2020-01-01') })
         expect(card).toContain('Лиса')
         expect(card).not.toContain('вт: 12:00')
     })
@@ -104,7 +104,7 @@ describe('test card format', () => {
             category: 'theaters',
             place: 'Театр кота'
         }
-        const card = cardFormat(event, { showTags: true, now: date('2020-01-01') })
+        const card = cardFormat(event, { showDetails: true, now: date('2020-01-01') })
         const expected = (await readCard('show-icon-theatre.html')).toString()
         expect(prepare(card)).toEqual(prepare(expected))
     })
