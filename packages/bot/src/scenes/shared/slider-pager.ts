@@ -158,6 +158,18 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                     [backButton, tagButton, ...cardButtons],
                     [prevButton, position, nextButton]
                 ]
+            } else if (botConfig.CARD_TAG_TOGGLE_STYLE === 'D') {
+                const countBefore = state.selectedIdx
+                const countAfter = state.total - state.selectedIdx - 1
+                const prevButton = Markup.button.callback(`« ${countBefore}`, this.btnActionPrev)
+                const position = Markup.button.callback('#', this.btnTagToggle)
+                const nextButton = Markup.button.callback(`${countAfter} »`, this.btnActionNext)
+
+                buttons = [
+                    [backButton, ...cardButtons],
+                    [prevButton, position, nextButton]
+                ]
+
             } else {
                 buttons = [
                     [backButton, ...cardButtons],

@@ -5,7 +5,7 @@ import path from 'path'
 
 type Envs = 'development' | 'production' | 'test'
 
-type TagStyle = 'none' | 'A' | 'B' | 'C'
+type TagStyle = 'none' | 'A' | 'B' | 'C' | 'D'
 
 export class BotConfig {
     public DATABASE_URL: string
