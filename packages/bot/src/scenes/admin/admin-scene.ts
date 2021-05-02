@@ -10,7 +10,7 @@ import { InlineKeyboardButton, Message } from 'typegram'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
 import { loggerTransport } from '../../util/logger'
-import { formatMainAdminMenu, formatPartnerLinks } from './admin-format'
+import { formatMainAdminMenu, formatPartnerLinks, formatReferralUrl } from './admin-format'
 import { getButtonsSwitch, getHumanReadableUsername, getUserFromCtx, menuCats } from './admin-common'
 import { ITask } from 'pg-promise'
 import { AdminPager } from './admin-pager'
@@ -44,7 +44,7 @@ export interface AdminSceneState extends AdminSceneQueryState {
 const {actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 
-let sessionSafeDestroyCounter = 3;
+let sessionSafeDestroyCounter = 3
 
 scene
     .use(async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
@@ -70,22 +70,26 @@ scene
         await ctx.answerCbQuery()
         await formatPartnerLinks(ctx, await db.repoReferrals.list())
     })
-    .command('link_add', async ctx => {
-        const match = ctx.message.text.match(/\/link_add\s+(?<code>[a-z0-9]+)\s(?<title>[A-Za-z0-9-]+)\s*(?<redirect>[A-Za-z][0-9]+[a-zA-Z]?)?/)
+    .command('la', async ctx => {
+        const match = ctx.message.text.match(/\/la\s+(?<code>[a-z0-9]+)\s(?<title>[A-Za-z0-9-]+)\s*(?<redirect>[A-Za-z][0-9]+[a-zA-Z]?)?/)
         if (match) {
             try {
-                await db.repoReferrals.add({
+                const referral = {
                     code: match.groups['code'].toLowerCase(),
                     gaSource: match.groups['title'].toLowerCase(),
                     redirect: (match.groups['redirect'] || '').toUpperCase(),
-                })
+                }
+                await db.repoReferrals.add(referral)
                 await formatPartnerLinks(ctx, await db.repoReferrals.list())
-                await ctx.replyWithHTML(`✅ Код ${match.groups['title']} Добавлен успешно!`)
+                await ctx.replyWithHTML(i18Msg(ctx, 'link_add_success', {
+                    title: referral.gaSource,
+                    url: formatReferralUrl(`${botConfig.TELEGRAM_BOT_NAME}`, referral.code)
+                }))
             } catch (e) {
-                await ctx.replyWithHTML(`Ошибка при добавлении (Возможно гугл код <b>${match.groups['code']}</b> или <b>${match.groups['title']}</b> уже есть?):\n ` + e)
+                await ctx.replyWithHTML(`Ошибка! Код <b>${match.groups['code']}</b> или название <b>${match.groups['title']}</b> уже есть в базе\n\n\n` + e)
             }
         } else {
-            await ctx.replyWithHTML(i18Btn(ctx, 'link_add_invalid_format'))
+            await ctx.replyWithHTML(i18Msg(ctx, 'link_add_invalid_format'))
         }
     })
 
@@ -96,7 +100,7 @@ scene
 
         if (isDev(ctx)) {
             if (sessionSafeDestroyCounter-- === 0) {
-                sessionSafeDestroyCounter = 3;
+                sessionSafeDestroyCounter = 3
                 const keysBefore = await countKeys()
                 await getRedis().flushdb()
                 await ctx.reply(`Done. ${keysBefore} -> ${await countKeys()} keys`)
@@ -226,7 +230,7 @@ async function switchCard(ctx: ContextMessageUpdate & { match: RegExpExecArray }
     const event = await db.repoAdmin.findSnapshotEvent(extId, version)
     const existingKeyboard = findExistingButtonRow(ctx, btn => btn.callback_data === actionName('show_more'))
     const buttons = [getButtonsSwitch(ctx, extId, version), ...(existingKeyboard ? [existingKeyboard] : [])]
-    await ctx.editMessageText(cardFormat(event, {showAdminInfo: true, now: ctx.now() }), {
+    await ctx.editMessageText(cardFormat(event, {showAdminInfo: true, now: ctx.now()}), {
         ...Markup.inlineKeyboard(buttons),
         parse_mode: 'HTML',
         disable_web_page_preview: true

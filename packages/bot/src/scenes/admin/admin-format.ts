@@ -254,6 +254,10 @@ export async function formatMessageForSyncReport(eventsErrors: SpreadSheetValida
     }
 }
 
+export function formatReferralUrl(botName: string, code: string) {
+    return `https://t.me/${botName}?start=${code}`
+}
+
 export async function formatPartnerLinks(ctx: ContextMessageUpdate, referrals: ReferralDesc[]): Promise<void> {
 
     function showRedirect(r: ReferralDesc) {
@@ -271,7 +275,7 @@ export async function formatPartnerLinks(ctx: ContextMessageUpdate, referrals: R
 
     const text = referrals.map(r => {
         return i18Msg(ctx, 'link_row', {
-            url: `https://t.me/${botConfig.TELEGRAM_BOT_NAME}?start=${r.code}`,
+            url: formatReferralUrl(`${botConfig.TELEGRAM_BOT_NAME}`, r.code),
             code: r.code,
             title: r.gaSource,
             desc: r.description ? ` (${r.description})` : '',
