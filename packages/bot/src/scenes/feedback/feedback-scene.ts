@@ -1,6 +1,6 @@
 import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, sleep } from '../../util/scene-helper'
+import { findInlineBtnTextByCallbackData, i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
 import { db } from '../../database/db'
@@ -9,6 +9,7 @@ import { menuMiddleware } from './survey'
 import * as tt from 'typegram'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
 import { formatUserName } from '../../util/misc-utils'
+import { InlineKeyboardButton } from 'typegram/inline'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('feedback_scene')
 const {actionName, i18nModuleBtnName, scanKeys, i18Btn, i18Msg} = i18nSceneHelper(scene)
@@ -229,10 +230,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
             await ctx.answerCbQuery()
             if ('message' in ctx.update.callback_query && 'text' in ctx.update.callback_query.message) {
                 const original = ctx.update.callback_query.message.text
-                const choosenText = ctx.update.callback_query.message.reply_markup.inline_keyboard
-                    .flatMap(r => r)
-                    .find(btn => 'callback_data' in btn && btn.callback_data === ctx.match[0])
-                    .text
+                const choosenText = findInlineBtnTextByCallbackData(ctx, ctx.match[0])
 
                 await db.repoFeedback.saveQuiz({
                     userId: ctx.session.user.id,

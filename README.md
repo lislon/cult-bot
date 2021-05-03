@@ -67,6 +67,7 @@ heroku labs:enable runtime-dyno-metadata -a $app
 heroku buildpacks:add heroku/nodejs -a $app
 heroku buildpacks:add "https://github.com/blockhq/heroku-buildpack-yarn-workspaces#master" -a $app
 heroku addons:create heroku-redis:hobby-dev -a $app
+heroku addons:create deployhooks:http ... # https://sentry.io/settings/culthub/projects/cult-hub-bot/plugins/heroku/
 ```
 
 Configure ENV:
@@ -77,6 +78,7 @@ NODE_ENV = production
 WEBHOOK_PORT = 443
 DATABASE_SSL = yes
 APP_ROOT = packages/bot
+SENTRY_DSN = # 1 for all envs https://docs.sentry.io/platforms/node/performance/#connecting-services
 ```
 
 This env vars will be configured automatically:

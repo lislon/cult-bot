@@ -5,8 +5,7 @@ import { ReversableTranslit } from '../lib/translit/reversable-translit'
 import { i18n } from './i18n'
 import { adminIds, adminUsernames, devUsernames } from './admins-list'
 import { InlineKeyboardButton } from 'typegram'
-import { I18n } from "telegraf-i18n"
-
+import CallbackButton = InlineKeyboardButton.CallbackButton
 
 
 export interface CtxI18n {
@@ -123,4 +122,11 @@ export async function ifAdmin<T>(ctx: ContextMessageUpdate, callback: () => Prom
     } else {
         await ctx.replyWithHTML(ctx.i18n.t('shared.no_admin'))
     }
+}
+
+export function findInlineBtnTextByCallbackData(ctx: ContextMessageUpdate, callbackData: string): string | undefined {
+    return (ctx as any)?.update?.callback_query?.message?.reply_markup?.inline_keyboard
+        .flatMap((r: InlineKeyboardButton[]) => r)
+        .find((btn: CallbackButton) => 'callback_data' in btn && btn.callback_data === callbackData)
+        ?.text || undefined
 }

@@ -116,9 +116,10 @@ export class UserRepository {
         return +(await this.db.one(sql))['id']
     }
 
-    public async updateUser(id: number, data: Partial<UserSaveData>): Promise<void> {
+    public async updateUser(id: number, data: Partial<UserSaveData>): Promise<boolean> {
         const sql = this.pgp.helpers.update(data, undefined, 'cb_users') + this.pgp.as.format(' WHERE id = ${id}')
-        await this.db.none(sql, {id})
+        const { rowCount } = await this.db.result(sql, {id})
+        return rowCount > 0;
     }
 
     public async listUsersForMailing(maxMailingsCount: number): Promise<Pick<UserDb, 'id'|'ua_uuid'|'tid'>[]> {

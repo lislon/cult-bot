@@ -74,25 +74,32 @@ export function forceSaveUserDataInDb(ctx: ContextMessageUpdate) {
     ctx.session.user.lastDbUpdated = 0
 }
 
+async function doInsertUser(ctx: ContextMessageUpdate) {
+    return await db.repoUser.insertUser({
+        tid: ctx.from.id,
+        username: ctx.from.username,
+        first_name: ctx.from.first_name,
+        last_name: ctx.from.last_name,
+        language_code: ctx.from.language_code,
+        ua_uuid: ctx.session.user.uaUuid,
+        referral: ctx.sessionTmp.analyticsScene.referral
+    })
+}
+
 export async function updateOrInsertUser(ctx: ContextMessageUpdate, blockedAt: Date = undefined) {
     if (ctx.session.user.id === 0) {
-        ctx.session.user.id = await db.repoUser.insertUser({
-            tid: ctx.from.id,
-            username: ctx.from.username,
-            first_name: ctx.from.first_name,
-            last_name: ctx.from.last_name,
-            language_code: ctx.from.language_code,
-            ua_uuid: ctx.session.user.uaUuid,
-            referral: ctx.sessionTmp.analyticsScene.referral
-        })
+        ctx.session.user.id = await doInsertUser(ctx)
         ctx.session.user.lastDbUpdated = new Date().getTime()
     } else if (isTimeToRefreshDb(ctx) || blockedAt !== undefined) {
-        await db.repoUser.updateUser(ctx.session.user.id, {
+        const wasUserUpdated = await db.repoUser.updateUser(ctx.session.user.id, {
             active_at: new Date(),
             blocked_at: blockedAt,
             events_favorite: ctx.session.user.eventsFavorite,
             clicks: countInteractions(ctx)
         })
+        if (!wasUserUpdated) {
+            ctx.session.user.id = await doInsertUser(ctx)
+        }
         ctx.session.user.clicks = countInteractions(ctx)
         ctx.session.user.lastDbUpdated = new Date().getTime()
     }

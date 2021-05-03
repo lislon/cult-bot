@@ -21,7 +21,37 @@ import https, { Server } from 'https'
 import * as fs from 'fs'
 import { ServerOptions } from 'https'
 
+import * as Sentry from '@sentry/node';
+import * as Tracing from '@sentry/tracing';
+
 const app = express()
+
+if (botConfig.SENTRY_DSN !== '') {
+    Sentry.init({
+        dsn: botConfig.SENTRY_DSN,
+        release: `culthubbot@${botConfig.HEROKU_RELEASE_VERSION}`,
+        environment: botConfig.HEROKU_APP_NAME,
+        debug: true,
+
+        // Set tracesSampleRate to 1.0 to capture 100%
+        // of transactions for performance monitoring.
+        // We recommend adjusting this value in production
+        tracesSampleRate: botConfig.SENTRY_SAMPLE_RATE,
+        integrations: [
+            // enable HTTP calls tracing
+            new Sentry.Integrations.Http({ tracing: true }),
+            // enable Express.js middleware tracing
+            new Tracing.Integrations.Express({
+                // to trace all requests to the default router
+                app,
+                // alternatively, you can specify the routes you want to trace:
+                // router: someRouter,
+            }),
+        ],
+
+    });
+}
+
 
 async function notifyAdminsAboutRestart() {
     const redisVersionKey = 'HEROKU_SLUG_COMMIT'
@@ -59,9 +89,10 @@ class BotStart {
         return bot.webhookCallback(`/${BotStart.PATH}`)
     }
 
-    public static async startDevMode(bot: Telegraf<ContextMessageUpdate>) {
+    public static async startDevMode(bot: Telegraf<ContextMessageUpdate>): Promise<void> {
         logger.info( 'Starting a bot in development mode');
         await got.get(`https://api.telegram.org/bot${botConfig.TELEGRAM_TOKEN}/deleteWebhook`)
+
         await bot.launch()
         logger.info('Started')
     }
@@ -97,7 +128,7 @@ class BotStart {
 
         logger.info('Webhook status: ' + JSON.stringify(webhookStatus))
 
-        const closeAllConnections = (reason: string) => {
+        const closeAllConnections = async (reason: string) => {
             try {
                 bot.stop(reason)
             } catch (e) {
@@ -105,11 +136,12 @@ class BotStart {
                     logger.warn(e)
                 }
             }
+            await Sentry.close()
             pgp.end()
             getRedis().end();
         }
-        process.once('SIGINT', () => closeAllConnections('SIGTERM'))
-        process.once('SIGTERM', () => closeAllConnections('SIGTERM'))
+        process.once('SIGINT', async () => await closeAllConnections('SIGTERM'))
+        process.once('SIGTERM', async () => await closeAllConnections('SIGTERM'))
 
         await notifyAdminsAboutRestart()
     }
@@ -117,7 +149,9 @@ class BotStart {
 
 if (botConfig.BOT_DISABLED === false) {
     if (botConfig.NODE_ENV === 'development') {
-        BotStart.startDevMode(rawBot)
+        (async function run() {
+            await BotStart.startDevMode(rawBot)
+        })()
     }
     initBot(rawBot)
 } else {
@@ -136,7 +170,10 @@ if (botConfig.AGRESSIVE_LOG) {
     });
 }
 
+app.use(Sentry.Handlers.requestHandler());
+app.use(Sentry.Handlers.tracingHandler());
 app.use(BotStart.expressMiddleware(rawBot))
+
 if (botConfig.NODE_ENV === 'development') {
     app.use(swaggerMiddleware)
 }
@@ -156,6 +193,7 @@ app.use(function (err: any, req: any, res: any, next: any) {
     logger.error(err.stack)
     next(err)
 })
+app.use(Sentry.Handlers.errorHandler());
 
 function createHttpOrHttps() {
     let server: Server | Application

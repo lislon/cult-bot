@@ -11,6 +11,7 @@ import { botConfig } from './util/bot-config'
 import { formatUserName } from './util/misc-utils'
 import { loggerMiddleware } from './lib/middleware/logger-middleware'
 import { Composer, Scenes, session } from 'telegraf'
+import { sentryMiddleware } from './lib/middleware/sentry-middleware'
 
 
 let sessionMechanism: MyRedisSession = undefined
@@ -95,6 +96,7 @@ export default {
     logMiddleware: logMiddleware,
     userMiddleware: userMiddleware,
     analyticsMiddleware,
+    sentryMiddleware: sentryMiddleware,
     supportFeedbackMiddleware
 }
 

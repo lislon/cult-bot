@@ -105,6 +105,13 @@ export class BotConfig {
 
     public AGRESSIVE_LOG: boolean
 
+    /**
+     * Monitoring tool
+     */
+    public SENTRY_DSN: string
+    public SENTRY_SAMPLE_RATE: number
+
+
     constructor() {
         config()
         this.setFromKeyValue(process.env)
@@ -147,6 +154,21 @@ export class BotConfig {
             }
         }
 
+        const string = (key: unknown, defaultValue: string | undefined = undefined): void => {
+            // @ts-expect-error: Later
+            if (envVars[key] === undefined) {
+                // @ts-expect-error: Later
+                this[key] = defaultValue
+                // @ts-expect-error: Later
+            } else if (envVars[key] === '') {
+                // @ts-expect-error: Later
+                this[key] = undefined
+            } else {
+                // @ts-expect-error: Later
+                this[key] = envVars[key]
+            }
+        }
+
         this.DATABASE_URL = envVars.DATABASE_URL
         this.DATABASE_MAX_POOL = envVars.DATABASE_MAX_POOL === undefined ? 18 : +envVars.DATABASE_MAX_POOL
         this.DATABASE_SSL = envVars.DATABASE_SSL || 'yes'
@@ -155,12 +177,13 @@ export class BotConfig {
         this.GOOGLE_ANALYTICS_COUNT_ADMINS = !!envVars.GOOGLE_ANALYTICS_COUNT_ADMINS || false
         this.GOOGLE_DOCS_ID = envVars.GOOGLE_DOCS_ID
 
-        this.HEROKU_APP_NAME = envVars.HEROKU_APP_NAME || 'localhost'
-        this.HEROKU_APP_ID = envVars.HEROKU_APP_ID
-        this.HEROKU_RELEASE_VERSION = envVars.HEROKU_RELEASE_VERSION
-        this.HEROKU_SLUG_COMMIT = envVars.HEROKU_SLUG_COMMIT
-        this.HEROKU_RELEASE_CREATED_AT = envVars.HEROKU_RELEASE_CREATED_AT
-
+        string('HEROKU_APP_NAME', 'localhost')
+        string('HEROKU_APP_ID')
+        string('HEROKU_RELEASE_VERSION', 'local')
+        string('HEROKU_SLUG_COMMIT')
+        string('HEROKU_RELEASE_CREATED_AT')
+        string('SENTRY_DSN', '')
+        number('SENTRY_SAMPLE_RATE', 1.0)
 
         this.OKTA_OAUTH2_CLIENT_ID = envVars.OKTA_OAUTH2_CLIENT_ID
         this.OKTA_OAUTH2_ISSUER = envVars.OKTA_OAUTH2_ISSUER

@@ -2,6 +2,7 @@ import { logger } from './logger'
 import { formatUserName } from './misc-utils'
 import { isAdmin } from './scene-helper'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
+import * as Sentry from '@sentry/node'
 
 export function isBlockedError(error: any): boolean {
     return error?.code === 403 && error.message.includes('bot was blocked by the user')
@@ -26,7 +27,6 @@ export async function botErrorHandler(error: any, ctx: ContextMessageUpdate): Pr
             // ignore
         } else {
             logger.error(`Ooops, encountered an error for ${ctx.updateType}`, error)
-
 
             if (isAdmin(ctx)) {
                 await ctx.replyWithHTML(ctx.i18n.t('root.something_went_wrong_admin', {
