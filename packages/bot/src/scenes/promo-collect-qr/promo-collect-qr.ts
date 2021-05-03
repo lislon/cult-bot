@@ -1,87 +1,67 @@
 import { Composer, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
-import { SceneRegister } from '../../middleware-utils'
 import { getRedis } from '../../util/reddis'
-import { formatISO, parseISO } from 'date-fns'
-import { last, max, min, sortBy } from 'lodash'
-import { ruFormat } from '../shared/shared-logic'
 import { db } from '../../database/db'
+import { logger } from '../../util/logger'
+import { SceneRegister } from '../../middleware-utils'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('main_scene')
 
 const {i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
-const REDIS_PREFIX = `promo:collectqr`
+const REDIS_PREFIX = 'promo:collectqr'
 const EXPIRE_SECONDS = 20 * 24 * 3600
 
-interface StatItem {
-    start: string
-    date: string
-}
-
-interface Participant {
-    userName: string
-    startDate: Date
-    endDate: Date
-    starts: string[]
+interface QRCodeStat {
+    qr: string
+    userNames: string[]
 }
 
 function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }, next: () => Promise<void>) => {
-        if (ctx.startPayload !== '') {
-            const key = `${REDIS_PREFIX}:${ctx.session.user.id}`
-            const statItem: StatItem = {
-                start: ctx.startPayload,
-                date: formatISO(ctx.now())
+        try {
+            if (ctx.startPayload !== '') {
+                const key = `${REDIS_PREFIX}:${ctx.startPayload}`
+                await getRedis().rpush(key, `${ctx.session.user.id}`)
+                await getRedis().expire(key, EXPIRE_SECONDS)
             }
-            await getRedis().rpush(key, JSON.stringify(statItem))
-            await getRedis().expire(key, EXPIRE_SECONDS)
+        } catch (e) {
+            logger.error(e)
         }
         await next()
     })
-    bot.command('/collectqr', async ctx => {
+    bot.command('/qr', async ctx => {
         if (isAdmin(ctx)) {
-            const cleanCmd = ctx.message.text.replace('/collectqr', '').trim()
-            const requiredStarts = cleanCmd === '' ? undefined : cleanCmd.split(/\s+|\s*,\s*/).map(s => s.toLowerCase());
+            const cleanCmd = ctx.message.text.replace('/qr', '').trim()
+            if (cleanCmd === '') {
+                await ctx.replyWithHTML('Invalid format.\nTry: /qr a1,a2,a3')
+                return
+            }
+            const requestedQRs = cleanCmd.split(/\s+|\s*,\s*/);
 
-            const participants: Participant[] = []
-            const keys = await getRedis().keys(`${REDIS_PREFIX}:*`)
-            for (const key of keys) {
-                const rawJsons = await getRedis().lrange(key, 0, -1)
-                const userId = +last(key.split(':'))
-                const startsRaw = rawJsons
-                    .map(rawJson => JSON.parse(rawJson) as StatItem)
+            const stats: QRCodeStat[] = []
 
-                if (requiredStarts !== undefined) {
-                    const startsVisitedByUser = startsRaw.map(s => s.start.toLowerCase())
-                    if (!requiredStarts.every(s => startsVisitedByUser.includes(s))) {
-                        continue;
-                    }
+            for (const qr of requestedQRs) {
+                const userIds = await getRedis().lrange(`${REDIS_PREFIX}:${qr}`, 0, -1)
+
+                const userNames = []
+                for (const userId of userIds) {
+                    const user = await db.repoUser.findUserById(+userId)
+                    userNames.push(user ? `id=${user.id} ${user.username ? `username=${user.username}` : ''} ${user.first_name || ''} ${user.last_name || ''}`.trim() : `id=${userId}`)
                 }
 
-                const foundRequiredStarts = requiredStarts !== undefined ? startsRaw.filter(s => requiredStarts.includes(s.start)) : startsRaw
-
-                const user = await db.repoUser.findUserById(userId)
-                const userName = user ? `id=${user.id} ${user.username || ''} ${user.first_name || ''}${user.last_name || ''}`.trim() : `id=${userId}`
-
-                participants.push({
-                    userName,
-                    startDate: parseISO(min(foundRequiredStarts.map(s => s.date))),
-                    endDate: parseISO(max(foundRequiredStarts.map(s => s.date))),
-                    starts: startsRaw.map(s => s.start)
-                })
+                stats.push({
+                    qr, userNames
+                });
             }
-            const sorted = sortBy(participants, 'endDate')
-            const rows = sorted.map((s, counter) => [
-                `${counter + 1}. <b>${s.userName}</b>`,
-                `  Последний QR: <b>${ruFormat(s.endDate, 'dd MMMM HH:mm:ss')}</b>`,
-                `  Первый QR: ${ruFormat(s.startDate, 'dd MMMM HH:mm:ss')}`,
-                `  Набор: ${s.starts.join(' → ')}`].join('\n') + '\n')
 
-            const s = `Показываем всех юзеров, кто собрал ссылки: ${requiredStarts ? requiredStarts.join(' + ') : ' любые ссылки'}\n`
 
-            await ctx.replyWithHTML(s + rows.join('\n'))
+            const rows = stats.map(({qr, userNames }) => {
+                return [`<b>${qr}</b> - ${userNames.length} пользователей`, ... (userNames.sort().map(u => ` ${u}`)) ].join('\n') + '\n'
+            })
+
+            await ctx.replyWithHTML(`Статистика по QR кодам ${requestedQRs.join(',')}:\n\n` + rows.join('\n'))
         }
     })
 }

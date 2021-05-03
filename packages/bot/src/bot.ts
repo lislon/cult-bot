@@ -44,8 +44,8 @@ bot
     .use(middlewares.analyticsMiddleware)
 
 myRegisterScene(bot, stage, [
-    mainScene,
     promoCollectQrScene,
+    mainScene,
     helpScene,
     customizeScene,
     packsScene,
