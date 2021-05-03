@@ -5,6 +5,7 @@ import { getRedis } from '../../util/reddis'
 import { db } from '../../database/db'
 import { logger } from '../../util/logger'
 import { SceneRegister } from '../../middleware-utils'
+import { uniq } from 'lodash'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('main_scene')
 
@@ -31,7 +32,16 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
         }
         await next()
     })
-    bot.command('/qr', async ctx => {
+    .command('/qr --delete', async ctx => {
+        if (isAdmin(ctx)) {
+            const keys = await getRedis().keys(`${REDIS_PREFIX}`)
+            for (const key of keys) {
+                await getRedis().del(key)
+            }
+            await ctx.replyWithHTML(`Deleted ${keys.length} QR statistics`)
+        }
+    })
+    .command('/qr', async ctx => {
         if (isAdmin(ctx)) {
             const cleanCmd = ctx.message.text.replace('/qr', '').trim()
             if (cleanCmd === '') {
@@ -58,7 +68,8 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
 
 
             const rows = stats.map(({qr, userNames }) => {
-                return [`<b>${qr}</b> - ${userNames.length} пользователей`, ... (userNames.sort().map(u => ` ${u}`)) ].join('\n') + '\n'
+                const uniqUsers = uniq(userNames.sort())
+                return [`<b>${qr}</b> - ${uniqUsers.length} пользователей`, ... (uniqUsers.map(u => ` ${u}`)) ].join('\n') + '\n'
             })
 
             await ctx.replyWithHTML(`Статистика по QR кодам ${requestedQRs.join(',')}:\n\n` + rows.join('\n'))

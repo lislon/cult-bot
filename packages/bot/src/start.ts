@@ -51,7 +51,6 @@ if (botConfig.SENTRY_DSN !== '') {
     });
 }
 
-
 async function notifyAdminsAboutRestart() {
     const redisVersionKey = 'HEROKU_SLUG_COMMIT'
     try {

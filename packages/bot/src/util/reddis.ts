@@ -65,6 +65,7 @@ interface MySimpleRedis {
     lrange: (key: string, start: number, stop: number) => Promise<string[]>
     keys: (pattern: string) => Promise<string[]>
     expire: (key: string, seconds: number) => Promise<number>
+    del: (key: string) => Promise<number>
     flushdb: () => Promise<void>
 }
 
@@ -84,6 +85,7 @@ export function getRedis(): MySimpleRedis {
             end: promisify(r.client.end.bind(r.client)),
             keys: promisify(r.client.keys.bind(r.client)),
             rpush: promisify(r.client.rpush.bind(r.client)),
+            del: promisify(r.client.del.bind(r.client)),
             lrange: promisify(r.client.lrange.bind(r.client)),
             expire: promisify(r.client.expire.bind(r.client)),
             flushdb: promisify(r.client.flushdb.bind(r.client)),
