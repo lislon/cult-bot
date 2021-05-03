@@ -73,8 +73,8 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
                 })
             }
             const sorted = sortBy(participants, 'endDate')
-            const rows = sorted.map(s => [
-                `<b>${s.userName}</b>`,
+            const rows = sorted.map((s, counter) => [
+                `${counter + 1}. <b>${s.userName}</b>`,
                 `  Последний QR: <b>${ruFormat(s.endDate, 'dd MMMM HH:mm:ss')}</b>`,
                 `  Первый QR: ${ruFormat(s.startDate, 'dd MMMM HH:mm:ss')}`,
                 `  Набор: ${s.starts.join(' → ')}`].join('\n') + '\n')
