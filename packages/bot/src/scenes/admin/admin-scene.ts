@@ -10,7 +10,7 @@ import { InlineKeyboardButton, Message } from 'typegram'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
 import { loggerTransport } from '../../util/logger'
-import { formatMainAdminMenu, formatPartnerLinks, formatReferralUrl } from './admin-format'
+import { formatMainAdminMenu, formatPartnerLinkAdded, formatPartnerLinks, formatReferralUrl } from './admin-format'
 import { getButtonsSwitch, getHumanReadableUsername, getUserFromCtx, menuCats } from './admin-common'
 import { ITask } from 'pg-promise'
 import { AdminPager } from './admin-pager'
@@ -21,6 +21,7 @@ import got from 'got'
 import debugNamespace from 'debug'
 import { GLOBAL_SYNC_STATE, replySyncNoTransaction, synchronizeDbByUser } from './admin-sync'
 import DocumentMessage = Message.DocumentMessage
+import { Referral } from '../../database/db-referrals'
 
 function isDocumentMessage(msg: Message): msg is DocumentMessage {
     return 'document' in msg
@@ -74,17 +75,13 @@ scene
         const match = ctx.message.text.match(/\/la\s+(?<code>[a-z0-9]+)\s(?<title>[A-Za-z0-9-]+)\s*(?<redirect>[A-Za-z][0-9]+[a-zA-Z]?)?/)
         if (match) {
             try {
-                const referral = {
+                const referral: Referral = {
                     code: match.groups['code'].toLowerCase(),
                     gaSource: match.groups['title'].toLowerCase(),
                     redirect: (match.groups['redirect'] || '').toUpperCase(),
                 }
                 await db.repoReferrals.add(referral)
-                await formatPartnerLinks(ctx, await db.repoReferrals.list())
-                await ctx.replyWithHTML(i18Msg(ctx, 'link_add_success', {
-                    title: referral.gaSource,
-                    url: formatReferralUrl(`${botConfig.TELEGRAM_BOT_NAME}`, referral.code)
-                }))
+                await formatPartnerLinkAdded(ctx, referral)
             } catch (e) {
                 await ctx.replyWithHTML(`Ошибка! Код <b>${match.groups['code']}</b> или название <b>${match.groups['title']}</b> уже есть в базе\n\n\n` + e)
             }

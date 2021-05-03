@@ -15,7 +15,7 @@ import { PackRecovered, PacksSyncDiff, PackToSave } from '../../database/db-pack
 import emojiRegex from 'emoji-regex'
 import * as tt from 'telegraf/src/telegram-types'
 import { ALL_CATEGORIES } from '@culthub/interfaces'
-import { ReferralDesc } from '../../database/db-referrals'
+import { Referral, ReferralDesc } from '../../database/db-referrals'
 import { botConfig } from '../../util/bot-config'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
@@ -258,8 +258,11 @@ export function formatReferralUrl(botName: string, code: string) {
     return `https://t.me/${botName}?start=${code}`
 }
 
-export async function formatPartnerLinks(ctx: ContextMessageUpdate, referrals: ReferralDesc[]): Promise<void> {
+function isUAT() {
+    return botConfig.HEROKU_APP_ID.endsWith('uat')
+}
 
+export async function formatPartnerLinks(ctx: ContextMessageUpdate, referrals: ReferralDesc[]): Promise<void> {
     function showRedirect(r: ReferralDesc) {
         if (r.redirect) {
             if (r.redirectTitle) {
@@ -274,16 +277,25 @@ export async function formatPartnerLinks(ctx: ContextMessageUpdate, referrals: R
     }
 
     const text = referrals.map(r => {
-        return i18Msg(ctx, 'link_row', {
+        const tplData = {
             url: formatReferralUrl(`${botConfig.TELEGRAM_BOT_NAME}`, r.code),
             code: r.code,
             title: r.gaSource,
             desc: r.description ? ` (${r.description})` : '',
             redirect: showRedirect(r),
             users: r.usersCount > 0 ? `+ ${r.usersCount}` : ''
-        } )
+        }
+        return i18Msg(ctx, isUAT() ? 'link_row_uat' : 'link_row', tplData )
     }).join("\n")
     await ctx.replyWithHTML(i18Msg(ctx, 'link_header', { text }), {
         disable_web_page_preview: true
     });
+}
+
+export async function formatPartnerLinkAdded(ctx: ContextMessageUpdate, referral: Referral): Promise<void> {
+    await formatPartnerLinks(ctx, await db.repoReferrals.list())
+    await ctx.replyWithHTML(i18Msg(ctx, isUAT() ? 'link_add_success_uat' : 'link_add_success', {
+        title: referral.gaSource,
+        url: formatReferralUrl(`${botConfig.TELEGRAM_BOT_NAME}`, referral.code)
+    }))
 }
