@@ -37,7 +37,7 @@ const content = (ctx: ContextMessageUpdate) => {
     const menu = [
         ['customize'],
         ['tops', 'packs'],
-        ...[(isAdmin(ctx) ? ['search', 'admin'] : ['search'])],
+        ...[(isAdmin(ctx) ? ['search', 'admin', 'card_zoo'] : ['search'])],
         ['feedback', 'favorites'],
     ]
 
@@ -91,6 +91,9 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
         })
         .hears(i18nModuleBtnName('admin'), async ctx => {
             await ifAdmin(ctx, () => ctx.scene.enter('admin_scene'))
+        })
+        .hears(i18nModuleBtnName('card_zoo'), async ctx => {
+            await ifAdmin(ctx, () => ctx.scene.enter('card_zoo_scene'))
         })
         .action('back_as_new', async ctx => {
             await ctx.answerCbQuery()

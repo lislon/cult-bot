@@ -7,8 +7,8 @@
   "mode": "auto",
   "scripts": {
     "start": "cross-env TZ=Europe/Moscow node -r source-map-support/register dist/start.js",
-    "build": "tsc --build && yarn run lint && copyfiles -u 1 'src/**/assets/*.png' 'src/**/*.yaml' dist",
-    "dev": "ts-node-dev -r dotenv/config -r source-map-support/register --respawn --ignore-watch node_modules --cache-directory dist/ts-node-dev-cache --transpile-only src/start.ts",
+    "build": "tsc --build && yarn run lint && copyfiles -u 1 'src/**/assets/*.png' 'src/**/*.yaml' 'src/**/*.html' dist",
+    "dev": "ts-node-dev --watch src/lib/**/*.html,.env -r dotenv/config -r source-map-support/register --respawn --ignore-watch node_modules --cache-directory dist/ts-node-dev-cache --transpile-only src/start.ts",
     "dev-no-restart": "tsc && nodemon --inspect",
     "lint": "eslint . --quiet",
     "test": "cross-env TZ=Europe/Moscow jest --runInBand && cross-env TZ=Europe/Moscow cucumber-js",

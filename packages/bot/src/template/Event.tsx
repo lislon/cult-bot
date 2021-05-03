@@ -1,9 +1,11 @@
 import React from 'react'
 import { Event } from '../interfaces/app-interfaces'
 import { formatPrice, parsePrice } from '../lib/price-parser'
-import { filterTagLevel2, formatCardTimetable, formatEventDuration } from '../scenes/shared/card-format'
+import { filterTagLevel2, formatCardTimetable } from '../scenes/shared/card-format'
 import { cleanTagLevel1 } from '../util/tag-level1-encoder'
 import { i18n } from '../util/i18n'
+import { formatDuration } from '../lib/duration-formatter'
+import { parseDurationSimple } from '../lib/duration-parser'
 
 export function Event(event: Event) {
     const icon = i18n.t(`ru`, `shared.category_icons.${event.category}`)
@@ -40,7 +42,7 @@ export function Event(event: Event) {
                     {formatCardTimetable(event, { now: new Date() })}
                 </p>
                 <p className='timetable'>
-                    🕐 {formatEventDuration(event.duration)}
+                    🕐 {formatDuration(parseDurationSimple(event.duration))}
                 </p>
                 <p className='price'>
                     💳 {formatPrice(parsePrice(event.price))}

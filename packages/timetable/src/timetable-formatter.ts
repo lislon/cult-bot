@@ -73,11 +73,11 @@ export class TimetableFormatter {
                 if (time[0] === '00:00' && time[1] === '24:00') {
                     return `в любое время`
                 }
-                return `${time[0]}-${time[1]}`
+                return `${time[0]}–${time[1]}`
             } else {
                 return time
             }
-        }).join(',')
+        }).join(', ')
     }
 
     private formatWeekdays(weekdays: number[]): string {
@@ -95,7 +95,7 @@ export class TimetableFormatter {
             } else {
                 if (!isContinueSeq) {
                     if (from !== prev) {
-                        result.push(`${fmtSingle(from)}-${fmtSingle(prev)}`)
+                        result.push(`${fmtSingle(from)}–${fmtSingle(prev)}`)
                     } else {
                         result.push(fmtSingle(from))
                     }
@@ -105,7 +105,7 @@ export class TimetableFormatter {
             prev = cur
         }
         if (isContinueSeq) {
-            result.push(`${fmtSingle(from)}-${fmtSingle(prev)}`)
+            result.push(`${fmtSingle(from)}–${fmtSingle(prev)}`)
         } else {
             result.push(fmtSingle(from))
         }
@@ -298,9 +298,9 @@ export class TimetableFormatter {
             } else {
 
                 if (this.isFarDate(from) || this.isFarDate(to)) {
-                    return `${ruFormat(from, 'dd MMMM yyyy')} - ${ruFormat(to, 'dd MMMM yyyy')}`
+                    return `${ruFormat(from, 'dd MMMM yyyy')} — ${ruFormat(to, 'dd MMMM yyyy')}`
                 } else if (getMonth(from) != getMonth(to)) {
-                    return `${ruFormat(from, 'dd MMMM')} - ${ruFormat(to, 'dd MMMM')}`
+                    return `${ruFormat(from, 'dd MMMM')} — ${ruFormat(to, 'dd MMMM')}`
                 } else {
                     return `${ruFormat(from, 'dd')}-${ruFormat(to, 'dd MMMM')}`
                 }

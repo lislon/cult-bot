@@ -26,6 +26,12 @@ export interface PagingCommonConfig<Q, E> {
 
     cardButtons?(ctx: ContextMessageUpdate, event: E): Promise<InlineKeyboardButton.CallbackButton[]>
 
+    /**
+     * Returns ids of cards by query Q
+     * @param ctx
+     * @param limitOffset
+     * @param query
+     */
     preloadIds(ctx: ContextMessageUpdate, limitOffset: LimitOffsetLast, query: Q): Promise<number[]>
 
     loadCardsByIds(ctx: ContextMessageUpdate, eventIds: number[]): Promise<E[]>

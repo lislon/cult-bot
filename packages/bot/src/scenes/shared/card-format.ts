@@ -1,21 +1,24 @@
 import { escapeHTML } from '../../util/string-utils'
 import { Event, TagLevel2 } from '../../interfaces/app-interfaces'
 import { getOnlyHumanTimetable, hasHumanTimetable } from '../../dbsync/parseSheetRow'
-import { cleanTagLevel1 } from '../../util/tag-level1-encoder'
+import { cleanTagLevel1, decodeTagsLevel1 } from '../../util/tag-level1-encoder'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
 import { i18n } from '../../util/i18n'
 import { AdminEvent } from '../../database/db-admin'
 import { formatPrice, parsePrice } from '../../lib/price-parser'
-import { parseTimetable, TimetableFormatter } from '@culthub/timetable'
+import { hasAnyEventsInFuture, parseTimetable, TimetableFormatter } from '@culthub/timetable'
 import debugNamespace from 'debug'
 import { logger } from '../../util/logger'
-import { hasAnyEventsInFuture } from '@culthub/timetable'
+import { sortBy } from 'lodash'
+import { formatDuration } from '../../lib/duration-formatter'
+import { parseDurationSimple } from '../../lib/duration-parser'
 
 const debug = debugNamespace('bot:card-format')
 
 export function addHtmlNiceUrls(text: string): string {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
 }
+
 export function hasUrlsInside(text: string): boolean {
     return !!text.match(/\[(.+?)\]\s*\(([^)]+)\)/)
 }
@@ -36,7 +39,7 @@ export interface FormatCardTimetableOptions {
 export function formatCardTimetable(event: Event, options: FormatCardTimetableOptions): string {
     const rawTimetable = event.timetable
     if (hasHumanTimetable(rawTimetable)) {
-        return getOnlyHumanTimetable(rawTimetable);
+        return getOnlyHumanTimetable(rawTimetable)
     }
 
     function formatCinemaUrls(humanTimetable: string) {
@@ -52,10 +55,11 @@ export function formatCardTimetable(event: Event, options: FormatCardTimetableOp
     function cutYear(humanTimetable: string) {
         return humanTimetable.replace(/^\d+ [а-яА-Я]+(\s+\d+)?\s*-\s*/g, 'до ')
     }
-    const structured = parseTimetable(rawTimetable, options.now);
-    let formatted: string;
+
+    const structured = parseTimetable(rawTimetable, options.now)
+    let formatted: string
     if (structured.status === true) {
-        formatted =  new TimetableFormatter(options.now, {
+        formatted = new TimetableFormatter(options.now, {
             hidePast: !!hasAnyEventsInFuture(structured.value, options.now),
             hideFutureExactDates: event.category === 'theaters',
             hideNonHolidays: options.hideNonHolidays
@@ -72,18 +76,6 @@ export function formatCardTimetable(event: Event, options: FormatCardTimetableOp
         formatted = cutYear(rawTimetable)
     }
     return formatCinemaUrls(formatted)
-}
-
-export function formatEventDuration(text: string): string {
-    const m = text.match(/(\d+)\s*мин[^ ]*/)
-    if (m && +m[1] >= 60) {
-        const rawMinutes = +m[1]
-        const hours = Math.floor(rawMinutes / 60)
-        const minutes = rawMinutes % 60
-        const format = minutes > 0 ? `${hours} ч ${minutes} мин` : `${hours} ч`
-        return text.replace(/(\d+)\s*мин[^ ]*/, format)
-    }
-    return text
 }
 
 export function getCardHeaderCat(row: Event): string {
@@ -104,7 +96,7 @@ export interface EventWithPast extends Event {
 }
 
 export function filterTagLevel2(row: Event | AdminEvent): TagLevel2[] {
-    let tags = row.tag_level_2;
+    let tags = row.tag_level_2
     if (tags.includes('#_последнийшанс') && !tags.includes('#последнийшанс')) {
         tags = [...tags, '#последнийшанс']
     }
@@ -123,6 +115,65 @@ function wrapInUrl(content: string, url: string) {
     return `<a href="${url}">${content}</a>`
 }
 
+function formatUrlText(row: Event): string {
+
+    function urlText() {
+        const TAG_LEVEL1_FORMAT_AS_LINK = ['#онлайн', '#подкаст', '#аудиоэкскурсия']
+        if (decodeTagsLevel1(row.tag_level_1).find(s => TAG_LEVEL1_FORMAT_AS_LINK.includes(s))) {
+            return 'Ссылка'
+        }
+        return 'Подробнее'
+    }
+
+    if (!fieldIsQuestionMarkOrEmpty(row.url)) {
+        return `+ ${wrapInUrl(urlText(), row.url)}\n`
+    }
+    return ''
+}
+
+function formatTagLevel1(row: Event, tagLevel1: string[]) {
+    const cleanTags = tagLevel1.map(t => cleanTagLevel1(t))
+    sortBy(cleanTags, t => {
+        const sortWeight = ['*', '#фестиваль', '#онлайн']
+        return sortWeight.indexOf(t) >= 0 ? sortWeight.indexOf(t) : 0
+    })
+    return cleanTags.join(' ')
+}
+
+function formatPriceLine(row: Event): string {
+    const priceLine: string[] = []
+    if (!fieldIsQuestionMarkOrEmpty(row.duration)) {
+        priceLine.push(escapeHTML(formatDuration(parseDurationSimple(row.duration))))
+    }
+    if (!fieldIsQuestionMarkOrEmpty(row.price)) {
+        priceLine.push(addHtmlNiceUrls(escapeHTML(formatPrice(parsePrice((row.price))))))
+    }
+    if (priceLine.length > 0) {
+        return `<i>${priceLine.join(' | ')}</i>\n`
+    }
+    return ''
+}
+
+function isFuture(row: Event | AdminEvent | EventWithPast) {
+    return !(isCardWithPossiblePast(row) && row.isFuture == false)
+}
+
+function formatTimetable(row: Event | AdminEvent | EventWithPast, options: CardOptions) {
+    const formatted = formatCardTimetable(row, {now: options.now})
+    if (formatted !== '') {
+        if (isFuture(row)) {
+            return `<i>${formatted}</i>\n`
+        } else {
+            return `<i><s>${formatted}</s></i>\n`
+        }
+    }
+    return ''
+}
+
+function strikeIfDeleted(text: string, options: CardOptions) {
+    return options.deleted ? `<s>${text}</s>` : text
+}
+
 export function cardFormat(row: Event | AdminEvent | EventWithPast, options: CardOptions): string {
     let text = ``
     debug('formatting card')
@@ -136,24 +187,21 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
             text += '[OLD] '
         }
     }
-    const isFuture = !(isCardWithPossiblePast(row) && row.isFuture == false)
 
-    function strikeIfDeleted(text: string) {
-        return options.deleted ? `<s>${text}</s>` : text
-    }
-
-    text += strikeIfDeleted(`${getCardHeaderCat(row)} <b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>`)
+    text += strikeIfDeleted(`${getCardHeaderCat(row)}`, options)
     if (options.showAdminInfo === true) {
         text += ` <i>${row.extId}</i> `
     }
-
     text += '\n'
-    text += '\n'
+    if (row.tag_level_1.length > 0) {
+        text += `<b>${escapeHTML(formatTagLevel1(row, row.tag_level_1))}</b>\n`
+        text += '\n'
+    }
 
-    const gone = isFuture ? '' : ` <i>(прошло)</i>`
-
-    text += strikeIfDeleted(`<b>${escapeHTML(row.title)}</b>${gone}`)
-    text += '\n'
+    if (row.title) {
+        text += strikeIfDeleted(`<b>${escapeHTML(row.title)}</b>${(isFuture(row) ? '' : ` <i>(прошло)</i>`)}`, options)
+        text += '\n'
+    }
 
     if (options.deleted) {
         text += '\n'.repeat(7)
@@ -165,25 +213,12 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
 
     text += '\n'
 
-    if (isFuture) {
-        text += `${formatCardTimetable(row, { now: options.now })}\n`
-    } else {
-        text += `<s>${formatCardTimetable(row, { now: options.now })}</s>\n`
-    }
-    text += `+ ${wrapInUrl('info', row.url)}\n`
-    const priceLine: string[] = []
-    if (!fieldIsQuestionMarkOrEmpty(row.duration)) {
-        priceLine.push(escapeHTML(formatEventDuration(row.duration)))
-    }
-    if (!fieldIsQuestionMarkOrEmpty(row.price)) {
-        priceLine.push(addHtmlNiceUrls(escapeHTML(formatPrice(parsePrice((row.price))))))
-    }
-    if (priceLine.length > 0) {
-        text += `<i>${priceLine.join(' | ')}</i>\n`
-    }
+    text += formatTimetable(row, options)
+    text += formatPriceLine(row)
+    text += formatUrlText(row)
 
     text += '\n'
-    text += `${strikeIfDeleted(addHtmlNiceUrls(escapeHTML(row.description)))} \n`
+    text += `${strikeIfDeleted(addHtmlNiceUrls(escapeHTML(row.description)), options)}\n`
     text += '\n'
 
 
@@ -200,7 +235,7 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
     }
     text += '\n'
     if (options.showDetails) {
-        text += `${strikeIfDeleted(escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' ')))}\n`
+        text += `${strikeIfDeleted(escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' ')), options)}\n`
     }
 
     debug('card formatted')

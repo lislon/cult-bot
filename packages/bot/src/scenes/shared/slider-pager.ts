@@ -162,12 +162,12 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                 const countBefore = state.selectedIdx
                 const countAfter = state.total - state.selectedIdx - 1
                 const prevButton = Markup.button.callback(`« ${countBefore}`, this.btnActionPrev)
-                const position = Markup.button.callback('#', this.btnTagToggle)
+                const tagToggle = Markup.button.callback('#', this.btnTagToggle)
                 const nextButton = Markup.button.callback(`${countAfter} »`, this.btnActionNext)
 
                 buttons = [
                     [backButton, ...cardButtons],
-                    [prevButton, position, nextButton]
+                    [prevButton, tagToggle, nextButton]
                 ]
 
             } else {
@@ -324,6 +324,11 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                 .action(this.btnTagToggle, async ctx => {
                     await ctx.answerCbQuery()
                     ctx.session.user.showTags = !ctx.session.user.showTags
+                    if (ctx.session.user.showTags) {
+                        ctx.ua.event('Button', 'tag_show', '# (Show)', undefined)
+                    } else {
+                        ctx.ua.event('Button', 'tag_hide', '# (Hide)', undefined)
+                    }
 
                     const state = this.getSliderStateIfExists(ctx)
                     if (state !== undefined) {

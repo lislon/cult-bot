@@ -19,6 +19,7 @@ import { likesScene } from './scenes/likes/likes-scene'
 import { favoritesScene } from './scenes/favorites/favorites-scene'
 import { botConfig } from './util/bot-config'
 import { locationScene } from './scenes/location/location-scene'
+import { cardZooScene } from './scenes/card-zoo/card-zoo-scene'
 
 logger.info(`starting bot...`);
 
@@ -54,6 +55,7 @@ myRegisterScene(bot, stage, [
     likesScene,
     favoritesScene,
     locationScene,
+    cardZooScene,
     tailScene
 ])
 

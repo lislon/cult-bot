@@ -18,6 +18,7 @@ import { favoritesScene } from '../../../src/scenes/favorites/favorites-scene'
 import { adminScene } from '../../../src/scenes/admin/admin-scene'
 import { performanceMiddleware } from '../../../src/lib/middleware/performance-middleware'
 import { Composer, Middleware, MiddlewareFn, Scenes, session, Telegraf } from 'telegraf'
+import { cardZooScene } from '../../../src/scenes/card-zoo/card-zoo-scene'
 
 const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
 
@@ -71,6 +72,7 @@ class CustomWorld {
             searchScene,
             likesScene,
             favoritesScene,
+            cardZooScene,
             tailScene
         ])
         this.bot.catch(botErrorHandler)

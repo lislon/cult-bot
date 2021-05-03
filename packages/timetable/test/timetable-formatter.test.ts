@@ -30,7 +30,7 @@ describe('timetable formatter', () => {
         expectWillBeFormatted('в любое время (по записи)');
     })
     test('time_multiply_with_range', () => {
-        expectWillBeFormatted(`сб: 10:00-12:00,14:00`);
+        expectWillBeFormatted(`сб: 10:00–12:00, 14:00`);
     })
 
     test('week_regular_single', () => {
@@ -38,7 +38,7 @@ describe('timetable formatter', () => {
     })
 
     test('week_regular_range', () => {
-        expectWillBeFormatted('пн,сб-вс: 10:00');
+        expectWillBeFormatted('пн,сб–вс: 10:00');
     })
 
     test('concrete_dates_single_far', () => {
@@ -60,11 +60,11 @@ describe('timetable formatter', () => {
     })
 
     test('concrete_dates_range_far', () => {
-        expectWillBeFormatted('12 января 2020 - 12 января 2030: 10:00');
+        expectWillBeFormatted('12 января 2020 — 12 января 2030: 10:00');
     })
 
     test('concrete_dates_range_short_diff_months', () => {
-        expectWillBeFormatted(`28 января - 01 февраля: 10:00`);
+        expectWillBeFormatted(`28 января — 01 февраля: 10:00`);
     })
 
     test('concrete_dates_range_short_same_months', () => {
@@ -102,27 +102,27 @@ describe('timetable formatter', () => {
     })
 
     test('hide past on last date time', () => {
-        const input = `12 декабря 2019: 10:00,20:00\n13 января 2020: 10:00,20:00`;
-        const expected = '13 января: 10:00,20:00'
+        const input = `12 декабря 2019: 10:00,20:00\n13 января 2020: 10:00, 20:00`;
+        const expected = '13 января: 10:00, 20:00'
         expectWillBeFormatted(expected, input, date('2020-01-13 15:00'), {hidePast: true});
     })
 
     test('do hide past event by default', () => {
-        const input = `12 декабря 2018: 10:00,20:00`;
+        const input = `12 декабря 2018: 10:00, 20:00`;
         expectWillBeFormatted(input, input, date('2020-01-13 15:00'));
     })
 
     test('cinema', () => {
         const input = [
-            `17 января: 11:30-23:45 (https://afisha.yandex.ru/saint-petersburg/cinema/dovod?source=search-page&schedule-preset=tomorrow)`,
-            `18 января: 11:30-23:45 (https://afisha.yandex.ru/saint-petersburg/cinema/dovod?source=search-page&schedule-date=2020-10-18)`
+            `17 января: 11:30–23:45 (https://afisha.yandex.ru/saint-petersburg/cinema/dovod?source=search-page&schedule-preset=tomorrow)`,
+            `18 января: 11:30–23:45 (https://afisha.yandex.ru/saint-petersburg/cinema/dovod?source=search-page&schedule-date=2020-10-18)`
         ].join('\n')
         expectWillBeFormatted(input, input, NOW, {hidePast: true});
     })
 
     test('remove first part of range if flag', () => {
         const input = '12 ноября 2019 - 29 ноября 2021: сб-вс: 10:00-18:00'
-        const expected = 'до 29 ноября 2021: сб-вс: 10:00-18:00'
+        const expected = 'до 29 ноября 2021: сб–вс: 10:00–18:00'
         expectWillBeFormatted(expected, input, NOW, {hidePast: true});
     })
 
@@ -135,14 +135,14 @@ describe('timetable formatter', () => {
         })
 
         test('remove first part of range if flag', () => {
-            const input = '12 ноября 2019 - 29 ноября 2021: сб-вс: 10:00-18:00'
-            const expected = 'до 29 ноября 2021: сб-вс'
+            const input = '12 ноября 2019 – 29 ноября 2021: сб-вс: 10:00–18:00'
+            const expected = 'до 29 ноября 2021: сб–вс'
             expectWillBeFormatted(expected, input, NOW, {hidePast: true, hideTimes: true})
         })
 
         test('do not hide past if nothing will be displayed', () => {
             const input = '12 ноября 2019 - 29 ноября 2019: сб-вс: 10:00-18:00'
-            const expected = 'до 29 ноября: сб-вс'
+            const expected = 'до 29 ноября: сб–вс'
             expectWillBeFormatted(expected, input, NOW, {hidePast: true, hideTimes: true})
         })
 
@@ -170,7 +170,7 @@ describe('timetable formatter', () => {
 
         test('week_range are hidden', () => {
             const input = '12-29 ноября: пн-вс: 10:00-18:00'
-            const expected = `12-29 ноября: сб-вс: 10:00-18:00`;
+            const expected = `12-29 ноября: сб–вс: 10:00–18:00`;
             expectWillBeFormatted(expected, input, NOW, config);
         })
 
@@ -182,7 +182,7 @@ describe('timetable formatter', () => {
 
         test('when all days are hidden, show as is', () => {
             const input = '12-29 ноября: пн-вт: 10:00-18:00'
-            const expected = `12-29 ноября: пн-вт: 10:00-18:00`;
+            const expected = `12-29 ноября: пн–вт: 10:00–18:00`;
             expectWillBeFormatted(expected, input, NOW, config);
         })
     })
@@ -197,7 +197,7 @@ describe('timetable formatter', () => {
 
         test('week_regular are hidden', () => {
             const input = `пн-вс: 10:00`;
-            const expected = `ср-чт: 10:00`;
+            const expected = `ср–чт: 10:00`;
             expectWillBeFormatted(expected, input, NOW, config);
         })
 

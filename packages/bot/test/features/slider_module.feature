@@ -42,3 +42,6 @@ Feature: Slider
     Then Bot edits slider with event 'D'
     When I click slider next
     Then Bot edits slider with event 'A'
+
+  Scenario: I can toggle between extended and small card
+    When I click slider next
