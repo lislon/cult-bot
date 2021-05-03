@@ -104,7 +104,7 @@ export type SceneGlobalActionsFn = (bot: Composer<ContextMessageUpdate>) => void
 
 export interface SceneRegister {
     scene?: Scenes.BaseScene<ContextMessageUpdate>
-    postStageActionsFn: SceneGlobalActionsFn
+    postStageActionsFn?: SceneGlobalActionsFn
     preStageGlobalActionsFn?: SceneGlobalActionsFn
     preSceneGlobalActionsFn?: SceneGlobalActionsFn
 }

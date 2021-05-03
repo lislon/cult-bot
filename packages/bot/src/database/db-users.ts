@@ -23,13 +23,13 @@ export interface UserIds {
     tid: number
 }
 
-export interface UserForRead extends UserIds{
+export interface UserForRead extends UserIds {
     username?: string
     first_name?: string
     last_name?: string
     language_code?: string
     ua_uuid: string
-    blocked_at?: Date|null
+    blocked_at?: Date | null
     events_liked?: number[]
     events_disliked?: number[]
     events_favorite: number[]
@@ -46,40 +46,50 @@ export class UserRepository {
 
     constructor(private db: IDatabase<unknown>, private pgp: IMain) {
         this.columns = new pgp.helpers.ColumnSet([
-            fieldStr('username'),
-            fieldStr('first_name'),
-            fieldStr('last_name'),
-            fieldInt('tid'),
-            fieldStr('language_code'),
-            fieldStr('ua_uuid'),
-            fieldTimestamptzNullable('blocked_at'),
-            fieldInt8Array('events_liked'),
-            fieldInt8Array('events_disliked'),
-            fieldInt8Array('events_favorite'),
-            fieldInt('clicks'),
-            fieldStr('referral'),
-        ],
+                fieldStr('username'),
+                fieldStr('first_name'),
+                fieldStr('last_name'),
+                fieldInt('tid'),
+                fieldStr('language_code'),
+                fieldStr('ua_uuid'),
+                fieldTimestamptzNullable('blocked_at'),
+                fieldInt8Array('events_liked'),
+                fieldInt8Array('events_disliked'),
+                fieldInt8Array('events_favorite'),
+                fieldInt('clicks'),
+                fieldStr('referral'),
+            ],
             {table: 'cb_users'}
-        );
+        )
+    }
+
+    public async findUserById(id: number): Promise<UserForRead | null> {
+        return this.db.oneOrNone<UserForRead>('SELECT id, tid, ua_uuid, events_favorite, clicks, username, first_name, last_name FROM cb_users WHERE id = $1', id,
+            UserRepository.userForReadMap)
+    }
+
+    private static userForReadMap(row: UserForRead): UserForRead {
+        if (row !== null) {
+            return {
+                id: +row.id,
+                tid: +row.tid,
+                username: row.username,
+                first_name: row.first_name,
+                last_name: row.last_name,
+                ua_uuid: row.ua_uuid,
+                clicks: +(row.clicks || 0),
+                events_favorite: row.events_favorite || []
+            }
+        }
+        return row
     }
 
     public async findUserByTid(tid: number): Promise<UserForRead | null> {
-        return this.db.oneOrNone<UserForRead>('SELECT id, tid, ua_uuid, events_favorite, clicks FROM cb_users WHERE tid = $1', tid,
-            (row: UserForRead) => {
-                if (row !== null) {
-                    return {
-                        id: +row.id,
-                        tid: +row.tid,
-                        ua_uuid: row.ua_uuid,
-                        clicks: +(row.clicks || 0),
-                        events_favorite: row.events_favorite || []
-                    }
-                }
-                return row
-            })
+        return this.db.oneOrNone<UserForRead>('SELECT id, tid, ua_uuid, events_favorite, clicks, username, first_name, last_name FROM cb_users WHERE tid = $1', tid,
+            UserRepository.userForReadMap)
     }
 
-    public async findUsersByUsernamesOrIds(usernames: string[], tids: number[] = []): Promise<({tid: number, ua_uuid: number})[]> {
+    public async findUsersByUsernamesOrIds(usernames: string[], tids: number[] = []): Promise<({ tid: number, ua_uuid: number })[]> {
         return this.db.map(`
         SELECT tid, ua_uuid
         FROM cb_users
@@ -118,11 +128,11 @@ export class UserRepository {
 
     public async updateUser(id: number, data: Partial<UserSaveData>): Promise<boolean> {
         const sql = this.pgp.helpers.update(data, undefined, 'cb_users') + this.pgp.as.format(' WHERE id = ${id}')
-        const { rowCount } = await this.db.result(sql, {id})
-        return rowCount > 0;
+        const {rowCount} = await this.db.result(sql, {id})
+        return rowCount > 0
     }
 
-    public async listUsersForMailing(maxMailingsCount: number): Promise<Pick<UserDb, 'id'|'ua_uuid'|'tid'>[]> {
+    public async listUsersForMailing(maxMailingsCount: number): Promise<Pick<UserDb, 'id' | 'ua_uuid' | 'tid'>[]> {
         return await this.db.map(`
                 SELECT id, tid, ua_uuid
                 FROM cb_users

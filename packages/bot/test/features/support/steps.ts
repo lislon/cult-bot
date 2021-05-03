@@ -298,7 +298,7 @@ Then(/^Google analytics params will be:$/, function (table: DataTable) {
 const ORIGINAL_BOT_CONFIG: typeof botConfig = clone(botConfig)
 
 Before(async () => {
-    await db.none(`TRUNCATE cb_events, cb_referrals CASCADE`)
+    await db.none(`TRUNCATE cb_events, cb_referrals RESTART identity CASCADE`)
     botConfig.setFromKeyValue(ORIGINAL_BOT_CONFIG)
 })
 Before(function (testCase: ITestCaseHookParameter) {

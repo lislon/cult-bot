@@ -220,7 +220,7 @@ export async function syncPacksDb4Test(mockPacks: MockPackForSave[]): Promise<nu
 
 export async function givenUsers(users: UserSaveData[]): Promise<number[]> {
     return await db.task(async (dbTask) => {
-        await dbTask.none(`TRUNCATE cb_feedbacks, cb_survey, cb_users`)
+        await dbTask.none(`TRUNCATE cb_feedbacks, cb_survey, cb_users RESTART IDENTITY`)
 
         const userIds = []
         for (const user of users) {

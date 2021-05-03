@@ -19,6 +19,7 @@ import { likesScene } from './scenes/likes/likes-scene'
 import { favoritesScene } from './scenes/favorites/favorites-scene'
 import { botConfig } from './util/bot-config'
 import { locationScene } from './scenes/location/location-scene'
+import { promoCollectQrScene } from './scenes/promo-collect-qr/promo-collect-qr'
 
 logger.info(`starting bot...`);
 
@@ -44,6 +45,7 @@ bot
 
 myRegisterScene(bot, stage, [
     mainScene,
+    promoCollectQrScene,
     helpScene,
     customizeScene,
     packsScene,

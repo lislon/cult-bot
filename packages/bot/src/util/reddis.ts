@@ -1,7 +1,7 @@
 import RedisSession from 'telegraf-session-redis'
 import { botConfig } from './bot-config'
 import { Context } from 'telegraf'
-import { Callback, RedisClient } from 'redis'
+import { OverloadedKeyCommand, RedisClient } from 'redis'
 import { promisify } from 'util'
 import redisMock from 'redis-mock'
 
@@ -61,7 +61,10 @@ interface MySimpleRedis {
     get: (key: string) => Promise<string>,
     set: (key: string, value: string) => Promise<void>
     end: (flush?: boolean) => void
+    rpush: OverloadedKeyCommand<string, number, Promise<number>>
+    lrange: (key: string, start: number, stop: number) => Promise<string[]>
     keys: (pattern: string) => Promise<string[]>
+    expire: (key: string, seconds: number) => Promise<number>
     flushdb: () => Promise<void>
 }
 
@@ -80,6 +83,9 @@ export function getRedis(): MySimpleRedis {
             set: promisify(r.client.set.bind(r.client)),
             end: promisify(r.client.end.bind(r.client)),
             keys: promisify(r.client.keys.bind(r.client)),
+            rpush: promisify(r.client.rpush.bind(r.client)),
+            lrange: promisify(r.client.lrange.bind(r.client)),
+            expire: promisify(r.client.expire.bind(r.client)),
             flushdb: promisify(r.client.flushdb.bind(r.client)),
         }
 

@@ -178,7 +178,7 @@ export class BotConfig {
         this.GOOGLE_DOCS_ID = envVars.GOOGLE_DOCS_ID
 
         string('HEROKU_APP_NAME', 'localhost')
-        string('HEROKU_APP_ID')
+        string('HEROKU_APP_ID', '')
         string('HEROKU_RELEASE_VERSION', 'local')
         string('HEROKU_SLUG_COMMIT')
         string('HEROKU_RELEASE_CREATED_AT')

@@ -259,7 +259,7 @@ export function formatReferralUrl(botName: string, code: string) {
 }
 
 function isUAT() {
-    return botConfig.HEROKU_APP_ID.endsWith('uat')
+    return botConfig.HEROKU_APP_NAME.endsWith('uat')
 }
 
 export async function formatPartnerLinks(ctx: ContextMessageUpdate, referrals: ReferralDesc[]): Promise<void> {

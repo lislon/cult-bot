@@ -31,7 +31,6 @@ if (botConfig.SENTRY_DSN !== '') {
         dsn: botConfig.SENTRY_DSN,
         release: `culthubbot@${botConfig.HEROKU_RELEASE_VERSION}`,
         environment: botConfig.HEROKU_APP_NAME,
-        debug: true,
 
         // Set tracesSampleRate to 1.0 to capture 100%
         // of transactions for performance monitoring.
