@@ -133,6 +133,9 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
     }
 
     text += strikeIfDeleted(`${getCardHeaderCat(row)} <b>${escapeHTML(row.tag_level_1.map(t => cleanTagLevel1(t)).join(' '))}</b>`)
+    if (options.showAdminInfo === true) {
+        text += ` <i>${row.extId}</i> `
+    }
 
     text += '\n'
     text += '\n'
@@ -184,9 +187,6 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
     text += '\n'
     if (options.showTags) {
         text += `${strikeIfDeleted(escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' ')))}\n`
-    }
-    if (options.showAdminInfo === true) {
-        text += `<i>${row.extId}, ${row.reviewer}, оценка ${row.rating}</i>\n`
     }
 
     debug('card formatted')

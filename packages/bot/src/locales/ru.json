@@ -41,7 +41,7 @@
     },
     "packs_scene": {
       "welcome": "Узнайте больше о тематических коллекциях событий в подборках и следите за их пополнением",
-      "pack_card": "<b>${title}</b>\n\n${description}\n\nВ подборке ${eventsPlural}",
+      "pack_card": "<b>${title}</b>${adminInfo}\n\n${description}\n\nВ подборке ${eventsPlural}",
       "event_curr_tip": "Используйте кнопки « и » для навигации между событиями",
       "direct_not_available": "Ой, эта подборочка уже не доступна. Но вот что доступно:",
       "slider_is_empty": "К сожалению, это событие удалено из бота",

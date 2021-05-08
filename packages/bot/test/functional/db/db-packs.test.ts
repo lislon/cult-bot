@@ -24,6 +24,19 @@ describe('Packs', () => {
         await db.repoPacks.syncDatabase([getMockPack({extId: 'A'})])
     })
 
+    test('get by id', async () => {
+        const [aId] = await syncEventsDb4Test([
+            getMockEvent({extId: 'A', eventTime}),
+        ])
+
+        const packSync = await db.repoPacks.syncDatabase([
+            getMockPack({extId: 'G1', eventIds: [aId], hideIfLessThen: 1})
+        ])
+        const packId = packSync.inserted[0].primaryData.id
+        const actual = await db.repoPacks.getPackExtIdId(packId)
+        expect('G1').toStrictEqual(actual)
+    })
+
     test('packs will be filtered by date when only 1 active will left', async () => {
         const [aId, bId, cId] = await syncEventsDb4Test([
             getMockEvent({extId: 'A', eventTime}),

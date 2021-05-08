@@ -59,16 +59,16 @@ export function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate): void {
     }
 }
 
-export async function getEventsCount(ctx: ContextMessageUpdate) {
+export async function getEventsCount(ctx: ContextMessageUpdate): Promise<number> {
     const pack = await getPackSelected(ctx)
     return pack?.events.length || 0
 }
 
 
-export function resetSelectedPack(ctx: ContextMessageUpdate) {
+export function resetSelectedPack(ctx: ContextMessageUpdate): void {
     ctx.session.packsScene.selectedPackId = undefined
 }
 
-export function resetPacksCache(ctx: ContextMessageUpdate) {
+export function resetPacksCache(ctx: ContextMessageUpdate): void {
     ctx.session.packsScene = undefined
 }

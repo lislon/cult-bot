@@ -1,5 +1,5 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper } from '../../util/scene-helper'
+import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { Markup } from 'telegraf'
 import {
     findPackById,
@@ -12,6 +12,7 @@ import {
 } from './packs-common'
 import { editMessageAndButtons, EditMessageAndButtonsOptions, generatePlural, mySlugify } from '../shared/shared-logic'
 import { logger } from '../../util/logger'
+import { db } from '../../database/db'
 
 
 const {actionName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
@@ -47,8 +48,10 @@ export async function displayPackMenu(ctx: ContextMessageUpdate, options?: EditM
         const text = i18Msg(ctx, 'pack_card', {
             title: pack.title,
             description: pack.description,
-            eventsPlural: generatePlural(ctx, 'event', pack.events.length)
+            eventsPlural: generatePlural(ctx, 'event', pack.events.length),
+            adminInfo: isAdmin(ctx) ? ` <i>(${await db.repoPacks.getPackExtIdId(pack.id)})</i>` : ''
         })
+
 
         const buttons = [
             [Markup.button.callback(i18Btn(ctx, 'pack_card_open', {

@@ -149,6 +149,14 @@ export class PacksRepository {
         return rawRows.map(raw => +raw.id)
     }
 
+    public async getPackExtIdId(packId: number): Promise<string> {
+        return await this.db.oneOrNone(`
+            select p.ext_id
+            FROM cb_events_packs p
+            WHERE p.id = $(packId)
+        `, { packId }, (r) => r.ext_id)
+    }
+
     public async getActivePackInfoByExtId(query: ExtIdPackQuery): Promise<ActivePackInfoForDirect|undefined> {
         const {from, where, params} = this.prepareQueryBody(query)
         return await this.db.oneOrNone<ActivePackInfoForDirect>(`

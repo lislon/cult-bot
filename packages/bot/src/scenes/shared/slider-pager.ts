@@ -10,7 +10,7 @@ import {
 import { getLikesRow } from '../likes/likes-common'
 import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
-import { i18nSceneHelper, i18SharedBtn } from '../../util/scene-helper'
+import { i18nSceneHelper, i18SharedBtn, isAdmin } from '../../util/scene-helper'
 import { EventsPagerSliderBase, PagerSliderState, PagingCommonConfig } from './events-common'
 import { botConfig } from '../../util/bot-config'
 import { InlineKeyboardButton } from 'typegram'
@@ -181,6 +181,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             const text = cardFormat(event, {
                 showTags: botConfig.CARD_TAG_TOGGLE_STYLE !== 'none' ? ctx.session.user.showTags : true,
                 now: ctx.now(),
+                showAdminInfo: isAdmin(ctx),
                 ...this.config.cardFormatOptions?.(ctx, event)
             })
             analyticRecordEventView(ctx, event)
