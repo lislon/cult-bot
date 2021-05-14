@@ -31,11 +31,12 @@ export interface ReferralDbStats extends ReferralDb {
 }
 
 export interface ReferralInfo {
+    id: number
     gaSource: string
     redirect: string
 }
 
-export class ReferralsRepository {
+export class ReferralRepository {
     private readonly columns: ColumnSet
 
     constructor(private db: IDatabase<unknown>, private pgp: IMain) {
@@ -52,13 +53,14 @@ export class ReferralsRepository {
 
     public async loadByCode(code: string): Promise<ReferralInfo> {
         return this.db.oneOrNone('' +
-            'SELECT ga_source, redirect ' +
+            'SELECT id, ga_source, redirect ' +
             'FROM cb_referrals ' +
             'WHERE code = $(code)',
             { code },
-            (row: Partial<ReferralDb>|null) => {
+            (row: Partial<ReferralDb & { id: number }>|null) => {
                 if (row !== null) {
                     return {
+                        id: +row.id,
                         gaSource: row.ga_source,
                         redirect: row.redirect
                     }

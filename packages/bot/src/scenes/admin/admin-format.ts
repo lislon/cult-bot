@@ -15,7 +15,7 @@ import { PackRecovered, PacksSyncDiff, PackToSave } from '../../database/db-pack
 import emojiRegex from 'emoji-regex'
 import * as tt from 'telegraf/src/telegram-types'
 import { ALL_CATEGORIES } from '@culthub/interfaces'
-import { Referral, ReferralDesc } from '../../database/db-referrals'
+import { Referral, ReferralDesc } from '../../database/db-referral'
 import { botConfig } from '../../util/bot-config'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
@@ -293,7 +293,7 @@ export async function formatPartnerLinks(ctx: ContextMessageUpdate, referrals: R
 }
 
 export async function formatPartnerLinkAdded(ctx: ContextMessageUpdate, referral: Referral): Promise<void> {
-    await formatPartnerLinks(ctx, await db.repoReferrals.list())
+    await formatPartnerLinks(ctx, await db.repoReferral.list())
     await ctx.replyWithHTML(i18Msg(ctx, isUAT() ? 'link_add_success_uat' : 'link_add_success', {
         title: referral.gaSource,
         url: formatReferralUrl(`${botConfig.TELEGRAM_BOT_NAME}`, referral.code)

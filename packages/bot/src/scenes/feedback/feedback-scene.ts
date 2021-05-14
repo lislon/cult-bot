@@ -9,7 +9,6 @@ import { menuMiddleware } from './survey'
 import * as tt from 'typegram'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
 import { formatUserName } from '../../util/misc-utils'
-import { InlineKeyboardButton } from 'typegram/inline'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('feedback_scene')
 const {actionName, i18nModuleBtnName, scanKeys, i18Btn, i18Msg} = i18nSceneHelper(scene)

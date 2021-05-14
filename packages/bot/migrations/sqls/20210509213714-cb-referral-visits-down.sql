@@ -1,0 +1,1 @@
+DROP TABLE cb_referral_visits;

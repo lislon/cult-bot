@@ -21,7 +21,7 @@ import got from 'got'
 import debugNamespace from 'debug'
 import { GLOBAL_SYNC_STATE, replySyncNoTransaction, synchronizeDbByUser } from './admin-sync'
 import DocumentMessage = Message.DocumentMessage
-import { Referral } from '../../database/db-referrals'
+import { Referral } from '../../database/db-referral'
 
 function isDocumentMessage(msg: Message): msg is DocumentMessage {
     return 'document' in msg
@@ -69,10 +69,10 @@ scene
     })
     .action(actionName('links'), async ctx => {
         await ctx.answerCbQuery()
-        await formatPartnerLinks(ctx, await db.repoReferrals.list())
+        await formatPartnerLinks(ctx, await db.repoReferral.list())
     })
     .command('la', async ctx => {
-        const match = ctx.message.text.match(/\/la\s+(?<code>[a-z0-9]+)\s(?<title>[A-Za-z0-9-]+)\s*(?<redirect>[A-Za-z][0-9]+[a-zA-Z]?)?/)
+        const match = ctx.message.text.match(/\/la\s+(?<code>[a-z0-9-]+)\s(?<title>[A-Za-z0-9-]+)\s*(?<redirect>[A-Za-z][0-9]+[a-zA-Z]?)?/)
         if (match) {
             try {
                 const referral: Referral = {
@@ -80,7 +80,7 @@ scene
                     gaSource: match.groups['title'].toLowerCase(),
                     redirect: (match.groups['redirect'] || '').toUpperCase(),
                 }
-                await db.repoReferrals.add(referral)
+                await db.repoReferral.add(referral)
                 await formatPartnerLinkAdded(ctx, referral)
             } catch (e) {
                 await ctx.replyWithHTML(`Ошибка! Код <b>${match.groups['code']}</b> или название <b>${match.groups['title']}</b> уже есть в базе\n\n\n` + e)

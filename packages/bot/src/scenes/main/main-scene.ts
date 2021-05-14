@@ -16,7 +16,7 @@ import {
 import { getLikesRow } from '../likes/likes-common'
 import { cardFormat } from '../shared/card-format'
 import { User } from 'typegram/manage'
-import { analyticRecordEventView, analyticRecordReferral } from '../../lib/middleware/analytics-middleware'
+import { analyticRecordEventView, googleAnalyticRecordReferral } from '../../lib/middleware/analytics-middleware'
 import { parseAndPredictTimetable } from '../../lib/timetable/timetable-utils'
 import { KeyboardButton } from 'typegram'
 import { displayPackMenu, displayPackMenuFromStart } from '../packs/packs-menu'
@@ -180,22 +180,26 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
             `startPayload=${ctx.startPayload}`,
             `ua_uuid=${ctx.session.user.uaUuid}`].join(' '))
 
-        const [source, redirectPart] = ctx.startPayload.split('_').filter(s => s !== '')
-        const oldRedirect = redirectPart?.match(/event-(.+)$/)?.[1] || ''
+        const [source, oldRedirectPart] = ctx.startPayload.split('_').filter(s => s !== '')
+        const oldRedirect = oldRedirectPart?.match(/event-(.+)$/)?.[1] || ''
         let newRedirect = ''
 
         if (source !== '') {
             ctx.ua.set('cm', 'referral')
 
             try {
-                const referralInfo = await db.repoReferrals.loadByCode(source)
+                const referralInfo = await db.repoReferral.loadByCode(source)
                 if (referralInfo !== undefined) {
-                    analyticRecordReferral(ctx, referralInfo.gaSource)
-                    ctx.ua.set('cs', referralInfo.gaSource)
+                    googleAnalyticRecordReferral(ctx, referralInfo.gaSource)
                     newRedirect = referralInfo.redirect
+
+                    await db.repoReferralVisit.insert({
+                        visitAt: new Date(),
+                        referralId: referralInfo.id,
+                        userId: ctx.session.user.id
+                    })
                 } else {
-                    analyticRecordReferral(ctx, source)
-                    ctx.ua.set('cs', source)
+                    googleAnalyticRecordReferral(ctx, source)
                 }
             } catch (e) {
                 ctx.ua.set('cs', 'error-fallback')

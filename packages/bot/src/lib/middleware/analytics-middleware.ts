@@ -111,8 +111,9 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
 const {i18SharedMsg} = i18nSceneHelper(new Scenes.BaseScene<ContextMessageUpdate>(''))
 
 
-export function analyticRecordReferral(ctx: ContextMessageUpdate, referral: string) {
+export function googleAnalyticRecordReferral(ctx: ContextMessageUpdate, referral: string): void {
     ctx.sessionTmp.analyticsScene.referral = referral
+    ctx.ua.set('cs', referral)
 }
 
 export function analyticRecordEventView(ctx: ContextMessageUpdate, event: Event) {

@@ -13,6 +13,7 @@ const {i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 const REDIS_PREFIX = 'promo:collectqr'
 const EXPIRE_SECONDS = 20 * 24 * 3600
+const PROMO_COLLECT_QR_PAYLOAD_PREFIX = 'qz-alx'
 
 interface QRCodeStat {
     qr: string
@@ -22,10 +23,12 @@ interface QRCodeStat {
 function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot.start(async (ctx: ContextMessageUpdate & { startPayload: string }, next: () => Promise<void>) => {
         try {
-            if (ctx.startPayload !== '') {
+            if (ctx.startPayload.startsWith(PROMO_COLLECT_QR_PAYLOAD_PREFIX)) {
                 const key = `${REDIS_PREFIX}:${ctx.startPayload}`
-                await getRedis().rpush(key, `${ctx.session.user.id}`)
+
+                await getRedis().sadd(key, `${ctx.session.user.id}`)
                 await getRedis().expire(key, EXPIRE_SECONDS)
+
             }
         } catch (e) {
             logger.error(e)
@@ -53,14 +56,13 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
             const stats: QRCodeStat[] = []
 
             for (const qr of requestedQRs) {
-                const userIds = await getRedis().lrange(`${REDIS_PREFIX}:${qr}`, 0, -1)
+                const userIds = await getRedis().smembers(`${REDIS_PREFIX}:${qr}`)
 
                 const userNames = []
                 for (const userId of userIds) {
                     const user = await db.repoUser.findUserById(+userId)
                     userNames.push(user ? `id=${user.id} ${user.username ? `username=${user.username}` : ''} ${user.first_name || ''} ${user.last_name || ''}`.trim() : `id=${userId}`)
                 }
-
                 stats.push({
                     qr, userNames
                 });

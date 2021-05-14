@@ -55,7 +55,7 @@ Given(/^I'am already used bot (\d+) times$/, async function (times: number) {
 
 Given(/^there is referrals:$/, async function (table: DataTable) {
     table.hashes().forEach((row: any) => {
-        db.repoReferrals.add({
+        db.repoReferral.add({
             code: row.code,
             gaSource: row.gaSource || row.code,
             redirect: row.redirect || '',

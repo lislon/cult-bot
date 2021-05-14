@@ -1,5 +1,5 @@
 import { db, dbCfg } from '../../../src/database/db'
-import { Referral } from '../../../src/database/db-referrals'
+import { Referral } from '../../../src/database/db-referral'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
 afterAll(db.$pool.end);
@@ -15,9 +15,9 @@ describe('Referrals', () => {
     beforeEach(async () => await db.none('DELETE FROM cb_referrals'))
 
     test('Referral can be found', async () => {
-        await db.repoReferrals.add(referral)
+        await db.repoReferral.add(referral)
 
-        const gaSource = await db.repoReferrals.loadByCode('a1')
+        const gaSource = await db.repoReferral.loadByCode('a1')
         expect(gaSource).toMatchObject({
             gaSource: 'A',
             redirect: 'P1'
@@ -25,7 +25,7 @@ describe('Referrals', () => {
     })
 
     test('Not found referral is undefined', async () => {
-        const referral = await db.repoReferrals.loadByCode('b1')
+        const referral = await db.repoReferral.loadByCode('b1')
         expect(referral).toStrictEqual(undefined);
     })
 })

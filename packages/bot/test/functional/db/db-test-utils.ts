@@ -9,7 +9,7 @@ import { EventPackForSavePrepared } from '../../../src/dbsync/packsSyncLogic'
 import { PlaceToSave } from '../../../src/database/db-places'
 
 export async function cleanDb() {
-    return await db.none('TRUNCATE cb_events_entrance_times, cb_events, cb_events_packs RESTART identity')
+    return await db.none('TRUNCATE cb_events_entrance_times, cb_events, cb_events_packs RESTART identity CASCADE')
 }
 
 export interface MockEvent {
@@ -220,7 +220,7 @@ export async function syncPacksDb4Test(mockPacks: MockPackForSave[]): Promise<nu
 
 export async function givenUsers(users: UserSaveData[]): Promise<number[]> {
     return await db.task(async (dbTask) => {
-        await dbTask.none(`TRUNCATE cb_feedbacks, cb_survey, cb_users RESTART IDENTITY`)
+        await dbTask.none(`TRUNCATE cb_feedbacks, cb_survey, cb_users RESTART IDENTITY CASCADE`)
 
         const userIds = []
         for (const user of users) {

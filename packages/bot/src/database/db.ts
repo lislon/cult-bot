@@ -19,7 +19,9 @@ import { EventsMatchingRepository } from './db-event-matching'
 import d from 'debug'
 import { DbCustomizeRepository } from './db-customize-repository'
 import { PlacesRepository } from './db-places'
-import { ReferralsRepository } from './db-referrals'
+import { ReferralRepository } from './db-referral'
+import { ReferralVisitRepository } from './db-referral-visits'
+import { assign } from 'lodash'
 
 const debug = d('bot:sql')
 
@@ -31,7 +33,8 @@ export interface IExtensions {
     repoSearch: SearchRepository
     repoSnapshot: SnapshotRepository
     repoUser: UserRepository
-    repoReferrals: ReferralsRepository
+    repoReferral: ReferralRepository
+    repoReferralVisit: ReferralVisitRepository
     repoFeedback: FeedbackRepository
     repoPacks: PacksRepository
     repoEventsCommon: EventsCommonRepository
@@ -46,21 +49,25 @@ export type BotDb = IDatabase<IExtensions> & IExtensions;
 const initOptions: IInitOptions<IExtensions> = {
 
     extend(dbEx: BotDb) {
-        dbEx.repoSync = new EventsSyncRepository(dbEx, pgp)
-        dbEx.repoCustomEvents = new DbCustomizeRepository(dbEx, pgp)
-        dbEx.repoTopEvents = new TopEventsRepository(dbEx, pgp)
-        dbEx.repoAdmin = new AdminRepository(dbEx, pgp)
-        dbEx.repoSearch = new SearchRepository(dbEx, pgp)
-        dbEx.repoUser = new UserRepository(dbEx, pgp)
-        dbEx.repoFeedback = new FeedbackRepository(dbEx, pgp)
-        dbEx.repoSnapshot = new SnapshotRepository(dbEx, pgp)
-        dbEx.repoPacks = new PacksRepository(dbEx, pgp)
-        dbEx.repoEventsCommon = new EventsCommonRepository(dbEx, pgp)
-        dbEx.repoLikes = new LikesRepository(dbEx, pgp)
-        dbEx.repoEventsGeo = new EventsGeoRepository(dbEx, pgp)
-        dbEx.repoEventsMatching = new EventsMatchingRepository(dbEx, pgp)
-        dbEx.repoPlaces = new PlacesRepository(dbEx, pgp)
-        dbEx.repoReferrals = new ReferralsRepository(dbEx, pgp)
+        const extensions: IExtensions = {
+            repoSync: new EventsSyncRepository(dbEx, pgp),
+            repoCustomEvents: new DbCustomizeRepository(dbEx, pgp),
+            repoTopEvents: new TopEventsRepository(dbEx, pgp),
+            repoAdmin: new AdminRepository(dbEx, pgp),
+            repoSearch: new SearchRepository(dbEx, pgp),
+            repoUser: new UserRepository(dbEx, pgp),
+            repoFeedback: new FeedbackRepository(dbEx, pgp),
+            repoSnapshot: new SnapshotRepository(dbEx, pgp),
+            repoPacks: new PacksRepository(dbEx, pgp),
+            repoEventsCommon: new EventsCommonRepository(dbEx, pgp),
+            repoLikes: new LikesRepository(dbEx, pgp),
+            repoEventsGeo: new EventsGeoRepository(dbEx, pgp),
+            repoEventsMatching: new EventsMatchingRepository(dbEx, pgp),
+            repoPlaces: new PlacesRepository(dbEx, pgp),
+            repoReferral: new ReferralRepository(dbEx, pgp),
+            repoReferralVisit: new ReferralVisitRepository(dbEx, pgp),
+        };
+        assign(dbEx, extensions)
     },
 
     query(e) {

@@ -175,6 +175,14 @@ supportFeedbackMiddleware
         }
         await next()
     })
+    .hears(/^u(.*)$/i, async ctx => {
+        if ('reply_to_message' in ctx.message && isTextMessage(ctx.message.reply_to_message) && ctx.match[1] !== '') {
+            const userIds = ctx.match[1].trim().split(/\s*[,]\s*/)
+            await ctx.replyWithHTML(JSON.stringify(userIds))
+        } else {
+            await ctx.replyWithHTML('Чтобы использовать u, наберите эту команду в ответ на сообщение, которое хотите послать. Например u 1,2,5 ')
+        }
+    })
     .hears(/^(s|ы)(i|ш)?(f)?\s*$/i, async ctx => {
         const webPreview = ctx.match[2] !== undefined
         const force = ctx.match[3] === 'f'
