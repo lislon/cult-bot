@@ -64,7 +64,7 @@ export function performanceMiddleware(prefix: string) {
         ctx.editMessageText = (text: string, extra?: ExtraEditMessageText) => {
             recordFirstResponse(ctx)
             if (debug.enabled) {
-                debug(`editing [%s] text='%s' btns='%s'`, ctx.callbackQuery?.message?.message_id, formatShortMsg(text), getButtonsAsText(extra.reply_markup))
+                debug(`editing [%s] text='%s' btns='%s'`, ctx.callbackQuery?.message?.message_id, formatShortMsg(text), getButtonsAsText(extra?.reply_markup))
             }
 
             const res = origCtx.editMessageText.apply(ctx, [text, extra])

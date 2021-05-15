@@ -13,6 +13,6 @@ const config: Config.InitialOptions = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   setupFiles: ['dotenv/config', '<rootDir>/.jest/test-env.js'],
-  testMatch: ["<rootDir>/test/*/*.test.ts"]
+  testMatch: ["<rootDir>/test/**/*.test.ts"]
 };
 export default config;

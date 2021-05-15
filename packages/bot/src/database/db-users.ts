@@ -68,6 +68,11 @@ export class UserRepository {
             UserRepository.userForReadMap)
     }
 
+    public async findUsersByIds(ids: number[]): Promise<UserForRead[]> {
+        return this.db.map<UserForRead>('SELECT id, tid, ua_uuid, events_favorite, clicks, username, first_name, last_name FROM cb_users WHERE id IN ($(ids:csv))', { ids },
+            UserRepository.userForReadMap)
+    }
+
     private static userForReadMap(row: UserForRead): UserForRead {
         if (row !== null) {
             return {

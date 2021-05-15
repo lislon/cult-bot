@@ -3,7 +3,7 @@ import { UserSaveData } from '../../../src/database/db-users'
 import { MOCK_UUID } from './db-test-utils'
 
 beforeAll(() => dbCfg.connectionString.includes('test') || process.exit(666))
-afterAll(db.$pool.end);
+afterAll(db.$pool.end)
 
 describe('Users', () => {
 
@@ -33,7 +33,7 @@ describe('Users', () => {
     })
 
     test('User is saved as referral', async () => {
-        const id = await db.repoUser.insertUser({ ...user, referral: 'lisa' })
+        const id = await db.repoUser.insertUser({...user, referral: 'lisa'})
 
         const dbUser = await db.one('SELECT * FROM cb_users WHERE id = $1', [id])
 
@@ -45,6 +45,28 @@ describe('Users', () => {
             language_code: '',
             referral: 'lisa'
         })
+    })
+
+    test('Find users by id', async () => {
+        const id1 = await db.repoUser.insertUser({...user, tid: 1, referral: 'lisa'})
+        const id2 = await db.repoUser.insertUser({...user, tid: 2, referral: 'lisa2'})
+        const users = await db.repoUser.findUsersByIds([id1, id2])
+
+        expect(users).toMatchObject([
+            {
+                id: id1,
+                tid: 1,
+                username: 'lislon',
+                first_name: 'First',
+                last_name: 'Last'
+            },
+            {
+                id: id2,
+                tid: 2,
+                username: 'lislon',
+                first_name: 'First',
+                last_name: 'Last'
+            }])
     })
 
     test('Null will not be a problem', async () => {

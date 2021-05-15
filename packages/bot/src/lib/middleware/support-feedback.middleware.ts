@@ -3,47 +3,36 @@ import { Composer, Markup, Scenes } from 'telegraf'
 import { db } from '../../database/db'
 import { botConfig } from '../../util/bot-config'
 import { i18n } from '../../util/i18n'
-import { isBlockedError } from '../../util/error-handler'
-import { logger } from '../../util/logger'
-import { i18nSceneHelper, sleep } from '../../util/scene-helper'
+import { i18nSceneHelper } from '../../util/scene-helper'
 import { parseTelegramMessageToHtml } from '../message-parser/message-parser'
-import {
-    editMessageAndButtons,
-    EditMessageAndButtonsOptions,
-    getMsgId,
-    getNextWeekRange,
-    mySlugify,
-    ruFormat
-} from '../../scenes/shared/shared-logic'
+import { getMsgId, mySlugify } from '../../scenes/shared/shared-logic'
 import { ScenePack } from '../../database/db-packs'
-import { formatUserName } from '../../util/misc-utils'
-import { InlineKeyboardButton, Message } from 'typegram'
-import Telegram from 'telegraf/typings/telegram'
-import { ReplyMessage } from 'typegram'
+import { InlineKeyboardButton, Message, ReplyMessage } from 'typegram'
 import emojiRegex from 'emoji-regex'
-import TextMessage = Message.TextMessage
 import { getNextRangeForPacks } from '../../scenes/packs/packs-common'
+import {
+    FormattedMailedMessage,
+    MailSender,
+    PreviewFormattedMailedMessage, MailingResult, MailingSuccessResult
+} from './support/mail-sender'
+import TextMessage = Message.TextMessage
+import { i18MsgSupport } from './support/common'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('support_chat_scene')
 
-const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)
+const { i18Msg} = i18nSceneHelper(scene)
 
 export const supportFeedbackMiddleware = new Composer<ContextMessageUpdate>()
 
 export const filterOnlyFeedbackChat = Composer.filter((ctx) =>
     botConfig.SUPPORT_FEEDBACK_CHAT_ID === undefined || ctx.chat.id === botConfig.SUPPORT_FEEDBACK_CHAT_ID)
 
-interface FormattedMailedMessages {
-    text: string
-    btns: InlineKeyboardButton.CallbackButton[][]
-    webPreview: boolean
-}
 
 function isSurvey(msg: string) {
     return !!msg.match(/^\s*Опрос:?\s*$/mi)
 }
 
-export function getSurveyBtnsAndMsg(input: string): FormattedMailedMessages {
+export function getSurveyBtnsAndMsg(input: string): FormattedMailedMessage {
     const [text, buttons] = input.split(/^\s*Опрос:?\s*$/im, 2)
     const surveyAnswers = buttons.match(/(?<=\[).+(?=\])/mg)
 
@@ -56,7 +45,7 @@ export function getSurveyBtnsAndMsg(input: string): FormattedMailedMessages {
     }
 }
 
-async function formatMessage(ctx: ContextMessageUpdate, msg: Omit<Message.TextMessage, 'reply_to_message'>, allPacks: ScenePack[], webPreview: boolean): Promise<FormattedMailedMessages & { hasErrors: boolean }> {
+async function formatMessage(ctx: ContextMessageUpdate, msg: Omit<Message.TextMessage, 'reply_to_message'>, allPacks: ScenePack[], webPreview: boolean): Promise<PreviewFormattedMailedMessage> {
     let text = parseTelegramMessageToHtml(msg)
     const matchButtonAtEnd = text.match(/^\s*\[.+\]\s*$/gm)
     const btns: InlineKeyboardButton.CallbackButton[][] = []
@@ -92,80 +81,11 @@ async function formatMessage(ctx: ContextMessageUpdate, msg: Omit<Message.TextMe
     return {text, btns, webPreview, hasErrors}
 }
 
-function i18MsgSupport(id: string, templateData?: any) {
-    return i18n.t(`ru`, `scenes.support_chat_scene.${id}`, templateData)
-}
 
-async function startMailings(telegram: Telegram, mailingId: number) {
-    if (mailingMessages[mailingId] === undefined) {
-        await telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, i18MsgSupport(`mailing_not_found`), {
-            parse_mode: 'HTML'
-        })
-        return
-    }
-    const mailMsg = mailingMessages[mailingId]
-    mailingMessages = {}
-
-    const blockedUsers: number[] = []
-    const sentOkUsers: number[] = []
-
-    const users = await db.repoUser.listUsersForMailing(botConfig.MAILINGS_PER_WEEK_MAX);
-    logger.info(`Starting mailing to ${users.length}`)
-    const nowFormat = ruFormat(new Date(), 'yyyy-MM-dd')
-
-    for (const user of users) {
-        try {
-            await telegram.sendMessage(user.tid, mailMsg.text, {
-                parse_mode: 'HTML',
-                disable_web_page_preview: !mailMsg.webPreview,
-                ...Markup.inlineKeyboard(mailMsg.btns)
-            })
-
-            sentOkUsers.push(user.id)
-            await sleep(1000.0 / botConfig.MAILINGS_PER_SECOND)
-        } catch (e) {
-            if (isBlockedError(e)) {
-                blockedUsers.push(user.id)
-            } else {
-                logger.error(`Failed to sent message to user ${user.id}`, e)
-            }
-        }
-    }
-    logger.info(`Mailing done. Sent=${sentOkUsers.length} Blocked=${blockedUsers.length}`)
-    try {
-        await db.task(async dbTx => {
-            await dbTx.repoUser.incrementMailingCounter(sentOkUsers)
-            await dbTx.repoUser.markAsBlocked(blockedUsers, new Date())
-        })
-    } catch (e) {
-        logger.error(e)
-        await telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, e.toString(), {
-            parse_mode: 'HTML'
-        })
-
-    }
-
-    await telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID,
-        i18MsgSupport(`mailing_done`, {
-            users: sentOkUsers.length,
-            blocked: blockedUsers.length,
-            maxPerWeek: botConfig.MAILINGS_PER_WEEK_MAX
-        }), {
-            parse_mode: 'HTML'
-        })
-}
-
-let mailingMessages: Record<number, FormattedMailedMessages> = {}
-
-async function startMailing(ctx: ContextMessageUpdate, mailingId: number, options?: EditMessageAndButtonsOptions) {
-    await editMessageAndButtons(ctx, [], i18MsgSupport(`mailing_started`, {
-        name: formatUserName(ctx)
-    }), options)
-    setTimeout(startMailings, 0, ctx.telegram, mailingId)
-}
+const mailing = new MailSender()
 
 function isTextMessage(r: ReplyMessage): r is TextMessage & { reply_to_message: undefined } {
-    return 'text' in r;
+    return 'text' in r
 }
 
 supportFeedbackMiddleware
@@ -177,17 +97,32 @@ supportFeedbackMiddleware
     })
     .hears(/^u(.*)$/i, async ctx => {
         if ('reply_to_message' in ctx.message && isTextMessage(ctx.message.reply_to_message) && ctx.match[1] !== '') {
-            const userIds = ctx.match[1].trim().split(/\s*[,]\s*/)
-            await ctx.replyWithHTML(JSON.stringify(userIds))
+            const userIds = ctx.match[1].trim().split(/\s*[,]\s*/).map(u => +u)
+            const messageToSend = await formatMessage(ctx, ctx.message.reply_to_message, [], false)
+            const users = await db.repoUser.findUsersByIds(userIds)
+
+            await mailing.armMessage(ctx, {
+                orderMessageId: ctx.message.reply_to_message.message_id,
+                formatMessage: () => messageToSend,
+                getRecipients: async () => users,
+                previewMessage: async () => messageToSend,
+                previewAdditionalMsg(previewMessage: PreviewFormattedMailedMessage): string | undefined {
+                    if (users.length !== userIds.length) {
+                        return `Внимание. Найдено ${users.length} пользователей, а запрошено: ${userIds.length}`
+                    }
+                    return undefined;
+                },
+                skipReview: false,
+            })
+
         } else {
             await ctx.replyWithHTML('Чтобы использовать u, наберите эту команду в ответ на сообщение, которое хотите послать. Например u 1,2,5 ')
         }
     })
-    .hears(/^(s|ы)(i|ш)?(f)?\s*$/i, async ctx => {
+    .hears(/^([sы])([iш])?(f)?\s*$/i, async ctx => {
         const webPreview = ctx.match[2] !== undefined
         const force = ctx.match[3] === 'f'
         if ('reply_to_message' in ctx.message && isTextMessage(ctx.message.reply_to_message)) {
-            const messageId = ctx.message.reply_to_message.message_id
 
             const allPacks = await db.repoPacks.listPacks({
                 interval: getNextRangeForPacks(new Date())
@@ -195,58 +130,26 @@ supportFeedbackMiddleware
             const messageToSend = await formatMessage(ctx, ctx.message.reply_to_message, allPacks, webPreview)
 
             const users = await db.repoUser.listUsersForMailing(botConfig.MAILINGS_PER_WEEK_MAX)
-            mailingMessages = {[messageId]: messageToSend}
-
-            const previewMessage = await ctx.replyWithHTML(messageToSend.text, {
-                ...Markup.inlineKeyboard(messageToSend.btns),
-                disable_web_page_preview: !messageToSend.webPreview
+            await mailing.armMessage(ctx, {
+                orderMessageId: ctx.message.reply_to_message.message_id,
+                formatMessage: () => messageToSend,
+                getRecipients: async () => users,
+                previewMessage: async () => messageToSend,
+                previewAdditionalMsg: (previewMessage: PreviewFormattedMailedMessage) => {
+                    if (previewMessage.btns.length === 0) {
+                        return i18MsgSupport('ready_to_send_with_packs', {list: allPacks.map(p => ` [ ${p.title} ]`).join('\n')})
+                    }
+                    return undefined
+                },
+                onSuccess: async (result: MailingSuccessResult): Promise<void> => {
+                    await db.repoUser.incrementMailingCounter(result.sentIds)
+                },
+                skipReview: force,
             })
 
-            if (force === true) {
-                await startMailing(ctx, messageId, {forceNewMsg: true})
-            } else {
-                const startMailing = Markup.button.callback(i18Btn(ctx, 'mailing_start', {
-                    users: users.length,
-                    env: botConfig.HEROKU_APP_NAME.replace(/.+-(\w+)$/, '$1').toUpperCase()
-                }), 'mailing_start_' + messageId)
-
-                const cancel = Markup.button.callback(i18Btn(ctx, 'cancel'), `mailing_cancel_${previewMessage.message_id}_${getMsgId(ctx)}`)
-                const spacer = Markup.button.callback(i18Btn(ctx, 'spacer'), `mailing_dummy`)
-
-                let btns: InlineKeyboardButton.CallbackButton[][] = []
-                let msg = ''
-                if (messageToSend.hasErrors) {
-                    msg = i18Msg(ctx, 'has_errors')
-                    btns = [[cancel]]
-                } else {
-                    btns = [[cancel], [spacer], [startMailing]]
-                    if (messageToSend.btns.length > 0) {
-                        msg = i18Msg(ctx, 'ready_to_send')
-                    } else {
-                        const list = allPacks.map(p => ` [ ${p.title} ]`).join('\n')
-                        msg = i18Msg(ctx, 'ready_to_send_with_packs', {list})
-                    }
-                }
-
-
-                await ctx.replyWithHTML(msg, Markup.inlineKeyboard(btns))
-            }
         }
     })
-    .action(/^mailing_dummy$/, async ctx => {
-        await ctx.answerCbQuery()
-    })
-    .action(/^mailing_cancel_(\d+)_(\d+)$/, async ctx => {
-        await ctx.answerCbQuery()
-        await ctx.deleteMessage(getMsgId(ctx))
-        await ctx.deleteMessage(+ctx.match[1])
-        await ctx.deleteMessage(+ctx.match[2])
-    })
-    .action(/^mailing_start_(\d+)$/, async ctx => {
-        await ctx.answerCbQuery()
-        const mailingId = +ctx.match[1]
-        await startMailing(ctx, mailingId)
-    })
+    .use(mailing.middleware())
     .hears(/.+/, async (ctx: ContextMessageUpdate, next: any) => {
         if ('reply_to_message' in ctx.message && 'text' in ctx.message) {
             // ctx.telegram.sendMessage()
@@ -275,7 +178,7 @@ supportFeedbackMiddleware
             } catch (e) {
                 await ctx.replyWithHTML(i18n.t(`ru`,
                     `scenes.feedback_scene.admin_response.error`,
-                    { message: e.message }))
+                    {message: e.message}))
                 throw e
             }
         }

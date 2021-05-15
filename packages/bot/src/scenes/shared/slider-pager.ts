@@ -294,7 +294,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
             .filter(this.isNotExpired) as SliderState<Q>[]
     }
 
-    private isNotExpired(s: SliderState<unknown>) {
+    private isNotExpired(s: SliderState<unknown>): boolean {
         return s.createdAt + botConfig.SLIDER_STATE_TTL_SECONDS * 1000 >= new Date().getTime()
     }
 
@@ -334,8 +334,6 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                         await this.answerCbSliderIsOld(ctx)
                     }
 
-
-
                     await ctx.answerCbQuery()
                 })
         ).middleware()
@@ -345,7 +343,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
         return this.getSliderStateIfExists(ctx)?.query
     }
 
-    public isThisSliderValid(ctx: ContextMessageUpdate) {
+    public isThisSliderValid(ctx: ContextMessageUpdate): boolean {
         return this.getSliderStateIfExists(ctx) !== undefined
     }
 
@@ -354,7 +352,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
         return activeSlider
     }
 
-    public async answerCbSliderIsOld(ctx: ContextMessageUpdate) {
+    public async answerCbSliderIsOld(ctx: ContextMessageUpdate): Promise<void> {
         await ctx.answerCbQuery(i18SharedMsg(ctx, 'slider.cb_card_is_old'))
     }
 
