@@ -10,7 +10,7 @@ import { InlineKeyboardButton, Message } from 'typegram'
 import { addMonths } from 'date-fns/fp'
 import { SceneRegister } from '../../middleware-utils'
 import { loggerTransport } from '../../util/logger'
-import { formatMainAdminMenu, formatPartnerLinkAdded, formatPartnerLinks, formatReferralUrl } from './admin-format'
+import { formatMainAdminMenu, formatPartnerLinkAdded, formatPartnerLinks } from './admin-format'
 import { getButtonsSwitch, getHumanReadableUsername, getUserFromCtx, menuCats } from './admin-common'
 import { ITask } from 'pg-promise'
 import { AdminPager } from './admin-pager'
@@ -20,8 +20,8 @@ import { getRedis } from '../../util/reddis'
 import got from 'got'
 import debugNamespace from 'debug'
 import { GLOBAL_SYNC_STATE, replySyncNoTransaction, synchronizeDbByUser } from './admin-sync'
-import DocumentMessage = Message.DocumentMessage
 import { Referral } from '../../database/db-referral'
+import DocumentMessage = Message.DocumentMessage
 
 function isDocumentMessage(msg: Message): msg is DocumentMessage {
     return 'document' in msg
@@ -72,13 +72,14 @@ scene
         await formatPartnerLinks(ctx, await db.repoReferral.list())
     })
     .command('la', async ctx => {
-        const match = ctx.message.text.match(/\/la\s+(?<code>[a-z0-9-]+)\s(?<title>[A-Za-z0-9-]+)\s*(?<redirect>[A-Za-z][0-9]+[a-zA-Z]?)?/)
+        const match = ctx.message.text.match(/\/la\s+(?<code>[a-z0-9-]+)\s+(?<title>[A-Za-z0-9-]+)\s*(?<redirect>[A-Za-z][0-9]+[a-zA-Z]?)?\s*(?<comment>.+)?/)
         if (match) {
             try {
                 const referral: Referral = {
                     code: match.groups['code'].toLowerCase(),
                     gaSource: match.groups['title'].toLowerCase(),
                     redirect: (match.groups['redirect'] || '').toUpperCase(),
+                    description: (match.groups['comment'] || '')
                 }
                 await db.repoReferral.add(referral)
                 await formatPartnerLinkAdded(ctx, referral)
@@ -89,7 +90,12 @@ scene
             await ctx.replyWithHTML(i18Msg(ctx, 'link_add_invalid_format'))
         }
     })
-
+    .command('poll', async ctx => {
+        await ctx.replyWithPoll(
+            'Your favorite math constant',
+            ['x', 'e', 'π', 'φ', 'γ'],
+            { is_anonymous: false })
+    })
     .command('redis_reset', async ctx => {
         async function countKeys() {
             return (await getRedis().keys('*')).length
@@ -372,11 +378,15 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
                 await ctx.replyWithHTML(`<code>${(JSON.stringify(botConfig, maskInfo, 2))}</code>`)
             }
         })
-        .action(/admin_scene[.]snapshot_(\w+)$/, async (ctx) => {
+        .action(/admin_scene[.]snapshot_(\w+)$/, async ctx => {
             await switchCard(ctx, 'snapshot')
         })
-        .action(/admin_scene[.]current_(\w+)$/, async (ctx) => {
+        .action(/admin_scene[.]current_(\w+)$/, async ctx => {
             await switchCard(ctx, 'current')
+        })
+        .command('pl', async ctx => {
+            const limit = +ctx.message.text.replace(/[^\d]/g, '')
+            return await formatPartnerLinks(ctx, await db.repoReferral.list(), isNaN(limit) ? undefined : limit)
         })
 
     bot.use(Composer.optional(ctx => isAdmin(ctx), adminGlobalCommands))

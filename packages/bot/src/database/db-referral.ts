@@ -5,6 +5,7 @@ export interface Referral {
     code: string
     gaSource: string
     redirect: string
+    description: string
 }
 
 export interface ReferralDesc {
@@ -74,9 +75,9 @@ export class ReferralRepository {
             code: referral.code,
             ga_source: referral.gaSource,
             redirect: referral.redirect,
+            description: referral.description,
             published_at: undefined,
-            deleted_at: undefined,
-            description: ''
+            deleted_at: undefined
         }
         const sql = this.pgp.helpers.insert(rawData, this.columns) + ' returning id'
         return +(await this.db.one(sql))['id']
@@ -89,7 +90,7 @@ export class ReferralRepository {
                 FROM cb_referrals r
                 LEFT JOIN cb_events ce ON (ce.ext_id = r.redirect)
                 WHERE r.deleted_at IS NULL
-                ORDER BY r.created_at ASC, code DESC
+                ORDER BY r.id ASC
                 `, undefined,(row: ReferralDbStats) => {
             return {
                 redirect: row.redirect,

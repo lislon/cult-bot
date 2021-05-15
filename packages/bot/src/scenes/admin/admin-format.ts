@@ -262,21 +262,23 @@ function isUAT() {
     return botConfig.HEROKU_APP_NAME.endsWith('uat')
 }
 
-export async function formatPartnerLinks(ctx: ContextMessageUpdate, referrals: ReferralDesc[]): Promise<void> {
+export async function formatPartnerLinks(ctx: ContextMessageUpdate, referrals: ReferralDesc[], limit?: number): Promise<void> {
     function showRedirect(r: ReferralDesc) {
         if (r.redirect) {
-            if (r.redirectTitle) {
-                return i18Msg(ctx, 'link_row_redirect', {id: r.redirect, title: r.redirectTitle})
-            } else if (r.redirect.startsWith('G')) {
-                return i18Msg(ctx, 'link_row_redirect', {id: r.redirect, title: 'Подборка'})
-            } else {
-                return i18Msg(ctx, 'link_row_redirect', {id: r.redirect, title: '???'})
-            }
+            return `⟶ ${r.redirect}`;
+            // if (r.redirectTitle) {
+            //     return i18Msg(ctx, 'link_row_redirect', {id: r.redirect, title: r.redirectTitle})
+            // } else if (r.redirect.startsWith('G')) {
+            //     return i18Msg(ctx, 'link_row_redirect', {id: r.redirect, title: 'Подборка'})
+            // } else {
+            //     return i18Msg(ctx, 'link_row_redirect', {id: r.redirect, title: '???'})
+            // }
         }
         return ''
     }
 
-    const text = referrals.map(r => {
+    const actualLimit = limit || 20
+    const text = referrals.slice(-actualLimit).map(r => {
         const tplData = {
             url: formatReferralUrl(`${botConfig.TELEGRAM_BOT_NAME}`, r.code),
             code: r.code,
@@ -287,7 +289,7 @@ export async function formatPartnerLinks(ctx: ContextMessageUpdate, referrals: R
         }
         return i18Msg(ctx, isUAT() ? 'link_row_uat' : 'link_row', tplData )
     }).join("\n")
-    await ctx.replyWithHTML(i18Msg(ctx, 'link_header', { text }), {
+    await ctx.replyWithHTML(i18Msg(ctx, 'link_header', { text, limit: actualLimit }), {
         disable_web_page_preview: true
     });
 }

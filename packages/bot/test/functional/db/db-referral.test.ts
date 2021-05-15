@@ -9,7 +9,8 @@ describe('Referrals', () => {
     const referral: Referral = {
         code: 'a1',
         gaSource: 'A',
-        redirect: 'P1'
+        redirect: 'P1',
+        description: 'тест'
     }
 
     beforeEach(async () => await db.none('DELETE FROM cb_referrals'))

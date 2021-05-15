@@ -225,19 +225,25 @@ function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot
-        .action(/^mail_survey_(.+)/, async ctx => {
+        .action(/^mail_survey_(.+)_(.+)/, async ctx => {
             await ctx.answerCbQuery()
             if ('message' in ctx.update.callback_query && 'text' in ctx.update.callback_query.message) {
                 const original = ctx.update.callback_query.message.text
                 const choosenText = findInlineBtnTextByCallbackData(ctx, ctx.match[0])
 
+                const questionId = ctx.match[1]
                 await db.repoFeedback.saveQuiz({
                     userId: ctx.session.user.id,
-                    question: original.substr(0, 20),
+                    question: questionId,
                     answer: choosenText
                 })
 
-                await ctx.editMessageText(i18Msg(ctx, 'mail_survey_edit', {original, choosen: choosenText}))
+                if (questionId.startsWith('qr')) {
+                    const matches = original.match(/«(?!Реверберация)(.+)»/)
+                    await ctx.editMessageText(i18Msg(ctx, 'mail_survey_done_qr', {original, choosen: choosenText, title: matches ? matches[1] : ''}))
+                } else {
+                    await ctx.editMessageText(i18Msg(ctx, 'mail_survey_done', {original, choosen: choosenText}))
+                }
             }
         })
 }

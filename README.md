@@ -182,6 +182,10 @@ This query might take a while to kill the query, so if you want to kill it the h
 
 SELECT pg_terminate_backend(PID);
 
+Fix autoincrement:
+```
+select setval('cb_referrals_id_seq', (select max(id) from public.cb_referrals));
+```
 
 ### View redis state
 

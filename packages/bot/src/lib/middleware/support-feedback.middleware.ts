@@ -30,21 +30,24 @@ export const filterOnlyFeedbackChat = Composer.filter((ctx) =>
     botConfig.SUPPORT_FEEDBACK_CHAT_ID === undefined || ctx.chat.id === botConfig.SUPPORT_FEEDBACK_CHAT_ID)
 
 
-function isSurvey(msg: string) {
-    return !!msg.match(/^\s*Опрос:?\s*$/mi)
+export interface SurveyData {
+    id: string
+    question: string
+    options: string[]
 }
 
-export function getSurveyBtnsAndMsg(input: string): FormattedMailedMessage {
-    const [text, buttons] = input.split(/^\s*Опрос:?\s*$/im, 2)
-    const surveyAnswers = buttons.match(/(?<=\[).+(?=\])/mg)
-
-    return {
-        text: text.trim(),
-        btns: (surveyAnswers || []).map(answer => [Markup.button.callback(
-            answer.trim(), `mail_survey_` + mySlugify(answer.replace(emojiRegex(), '').trim())
-        )]),
-        webPreview: false
+export function getSurveyData(msg: string): SurveyData | undefined {
+    if (msg.match(/^\s*Опрос:?\s*$/mi)) {
+        const idMatcher = msg.match(/id:\s*(.+)$/mi)
+        const [text, buttons] = msg.split(/^\s*Опрос:?\s*$/im, 2)
+        const surveyAnswers = buttons.match(/(?<=\[).+(?=\])/mg)
+        return {
+            id: idMatcher[1],
+            question: text.trim(),
+            options: surveyAnswers || []
+        }
     }
+    return undefined
 }
 
 export interface FormatMessageOptions {
@@ -69,10 +72,15 @@ function formatMessage(ctx: ContextMessageUpdate, msg: Omit<Message.TextMessage,
     const btns: InlineKeyboardButton.CallbackButton[][] = []
     let hasErrors = false
 
-    if (isSurvey(text)) {
-        const result = getSurveyBtnsAndMsg(text)
-
-        return {...result, hasErrors: result.btns.length <= 1}
+    const surveyData = getSurveyData(text)
+    if (surveyData !== undefined) {
+        return {
+            text: surveyData.question,
+            btns: surveyData.options.map(answer => [Markup.button.callback(
+                answer.trim(), `mail_survey_${surveyData.id}_${mySlugify(answer.replace(emojiRegex(), '').trim())}`)]),
+            webPreview: false,
+            hasErrors: surveyData.options.length <= 1
+        }
     } else {
         (matchButtonAtEnd || []).forEach((btnMatch: string) => {
             const searchForPackTitle = btnMatch.replace(/^\s*\[\s*/, '').replace(/\s*\]\s*$/, '').toLowerCase().trim()
@@ -116,7 +124,7 @@ supportFeedbackMiddleware
     .hears(/^qr_tickets(.*)$/i, async ctx => {
         const ctxReplyToMessage = ctx.message.reply_to_message
         if ('reply_to_message' in ctx.message && isTextMessage(ctxReplyToMessage) && ctx.match[1] !== '') {
-            const usersAndTickets: {ticketId: string, userId: number}[] = ctx.match[1].trim().split(/\s*[,]\s*/)
+            const usersAndTickets: { ticketId: string, userId: number }[] = ctx.match[1].trim().split(/\s*[,]\s*/)
                 .map(ticketUser => ticketUser.split('-'))
                 .map(([ticketId, userId]) => ({
                     ticketId,
@@ -126,6 +134,11 @@ supportFeedbackMiddleware
             const userIds = usersAndTickets.map(u => u.userId)
             const users = await db.repoUser.findUsersByIds(userIds)
 
+            const previewFormattedMailedMessage: PreviewFormattedMailedMessage = formatMessage(ctx, ctxReplyToMessage, {
+                templateParams: {
+                    ticketNumbers: '1,2 (для примера)'
+                }
+            })
             await mailing.armMessage(ctx, {
                 orderMessageId: ctxReplyToMessage.message_id,
                 formatMessage: (user: MailUser) => {
@@ -136,11 +149,7 @@ supportFeedbackMiddleware
                     })
                 },
                 getRecipients: async () => users,
-                previewMessage: async () => formatMessage(ctx, ctxReplyToMessage, {
-                    templateParams: {
-                        ticketNumbers: '1,2 (для примера)'
-                    }
-                }),
+                previewMessage: async () => previewFormattedMailedMessage,
                 previewAdditionalMsg(): string | undefined {
                     if (users.length !== userIds.length) {
                         return `Внимание. Найдено ${users.length} пользователей, а запрошено: ${userIds.length}`
