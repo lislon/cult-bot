@@ -95,6 +95,30 @@ supportFeedbackMiddleware
         }
         await next()
     })
+    .hears(/^qr_tickets(.*)$/i, async ctx => {
+        if ('reply_to_message' in ctx.message && isTextMessage(ctx.message.reply_to_message) && ctx.match[1] !== '') {
+            const userIds = ctx.match[1].trim().split(/\s*[,]\s*/).map(u => +u)
+            const messageToSend = await formatMessage(ctx, ctx.message.reply_to_message, [], false)
+            const users = await db.repoUser.findUsersByIds(userIds)
+
+            await mailing.armMessage(ctx, {
+                orderMessageId: ctx.message.reply_to_message.message_id,
+                formatMessage: () => messageToSend,
+                getRecipients: async () => users,
+                previewMessage: async () => messageToSend,
+                previewAdditionalMsg(previewMessage: PreviewFormattedMailedMessage): string | undefined {
+                    if (users.length !== userIds.length) {
+                        return `Внимание. Найдено ${users.length} пользователей, а запрошено: ${userIds.length}`
+                    }
+                    return undefined;
+                },
+                skipReview: false,
+            })
+
+        } else {
+            await ctx.replyWithHTML('Чтобы использовать u, наберите эту команду в ответ на сообщение, которое хотите послать. Например u 1,2,5 ')
+        }
+    })
     .hears(/^u(.*)$/i, async ctx => {
         if ('reply_to_message' in ctx.message && isTextMessage(ctx.message.reply_to_message) && ctx.match[1] !== '') {
             const userIds = ctx.match[1].trim().split(/\s*[,]\s*/).map(u => +u)
