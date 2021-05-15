@@ -5,22 +5,24 @@ import { botConfig } from '../../util/bot-config'
 import { i18n } from '../../util/i18n'
 import { i18nSceneHelper } from '../../util/scene-helper'
 import { parseTelegramMessageToHtml } from '../message-parser/message-parser'
-import { getMsgId, mySlugify } from '../../scenes/shared/shared-logic'
+import { mySlugify } from '../../scenes/shared/shared-logic'
 import { ScenePack } from '../../database/db-packs'
 import { InlineKeyboardButton, Message, ReplyMessage } from 'typegram'
 import emojiRegex from 'emoji-regex'
 import { getNextRangeForPacks } from '../../scenes/packs/packs-common'
 import {
     FormattedMailedMessage,
+    MailingSuccessResult,
     MailSender,
-    PreviewFormattedMailedMessage, MailingResult, MailingSuccessResult
+    MailUser,
+    PreviewFormattedMailedMessage
 } from './support/mail-sender'
-import TextMessage = Message.TextMessage
 import { i18MsgSupport } from './support/common'
+import TextMessage = Message.TextMessage
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('support_chat_scene')
 
-const { i18Msg} = i18nSceneHelper(scene)
+const {i18Msg} = i18nSceneHelper(scene)
 
 export const supportFeedbackMiddleware = new Composer<ContextMessageUpdate>()
 
@@ -45,8 +47,24 @@ export function getSurveyBtnsAndMsg(input: string): FormattedMailedMessage {
     }
 }
 
-async function formatMessage(ctx: ContextMessageUpdate, msg: Omit<Message.TextMessage, 'reply_to_message'>, allPacks: ScenePack[], webPreview: boolean): Promise<PreviewFormattedMailedMessage> {
+export interface FormatMessageOptions {
+    allPacks?: ScenePack[]
+    webPreview?: boolean
+    templateParams?: Record<string, string>
+}
+
+function replaceTemplateParams(text: string, templateParams?: Record<string, string>): string {
+    for (const key in templateParams || []) {
+        text = text.replace(`\${${key}}`, templateParams[key])
+    }
+    return text
+}
+
+function formatMessage(ctx: ContextMessageUpdate, msg: Omit<Message.TextMessage, 'reply_to_message'>, options: FormatMessageOptions): PreviewFormattedMailedMessage {
     let text = parseTelegramMessageToHtml(msg)
+
+    text = replaceTemplateParams(text, options.templateParams)
+
     const matchButtonAtEnd = text.match(/^\s*\[.+\]\s*$/gm)
     const btns: InlineKeyboardButton.CallbackButton[][] = []
     let hasErrors = false
@@ -63,7 +81,7 @@ async function formatMessage(ctx: ContextMessageUpdate, msg: Omit<Message.TextMe
             if (searchForPackTitle === 'подборки' || searchForPackTitle === 'подборка') {
                 btns.push([Markup.button.callback(' 📚 Подборки', `packs_scene.direct_menu`)])
             } else {
-                const packData = allPacks.find(p => p.title.toLowerCase().trim() === searchForPackTitle)
+                const packData = options.allPacks?.find(p => p.title.toLowerCase().trim() === searchForPackTitle)
 
                 if (packData !== undefined) {
                     btns.push([Markup.button.callback(packData.title, `packs_scene.direct_${packData.id}`)])
@@ -78,7 +96,7 @@ async function formatMessage(ctx: ContextMessageUpdate, msg: Omit<Message.TextMe
         })
     }
 
-    return {text, btns, webPreview, hasErrors}
+    return {text, btns, webPreview: options.webPreview || false, hasErrors}
 }
 
 
@@ -96,33 +114,53 @@ supportFeedbackMiddleware
         await next()
     })
     .hears(/^qr_tickets(.*)$/i, async ctx => {
-        if ('reply_to_message' in ctx.message && isTextMessage(ctx.message.reply_to_message) && ctx.match[1] !== '') {
-            const userIds = ctx.match[1].trim().split(/\s*[,]\s*/).map(u => +u)
-            const messageToSend = await formatMessage(ctx, ctx.message.reply_to_message, [], false)
+        const ctxReplyToMessage = ctx.message.reply_to_message
+        if ('reply_to_message' in ctx.message && isTextMessage(ctxReplyToMessage) && ctx.match[1] !== '') {
+            const usersAndTickets: {ticketId: string, userId: number}[] = ctx.match[1].trim().split(/\s*[,]\s*/)
+                .map(ticketUser => ticketUser.split('-'))
+                .map(([ticketId, userId]) => ({
+                    ticketId,
+                    userId: +userId
+                }))
+
+            const userIds = usersAndTickets.map(u => u.userId)
             const users = await db.repoUser.findUsersByIds(userIds)
 
             await mailing.armMessage(ctx, {
-                orderMessageId: ctx.message.reply_to_message.message_id,
-                formatMessage: () => messageToSend,
+                orderMessageId: ctxReplyToMessage.message_id,
+                formatMessage: (user: MailUser) => {
+                    return formatMessage(ctx, ctxReplyToMessage, {
+                        templateParams: {
+                            ticketNumbers: usersAndTickets.filter(({userId}) => userId === user.id).map(({ticketId}) => ticketId).join(', ')
+                        }
+                    })
+                },
                 getRecipients: async () => users,
-                previewMessage: async () => messageToSend,
-                previewAdditionalMsg(previewMessage: PreviewFormattedMailedMessage): string | undefined {
+                previewMessage: async () => formatMessage(ctx, ctxReplyToMessage, {
+                    templateParams: {
+                        ticketNumbers: '1,2 (для примера)'
+                    }
+                }),
+                previewAdditionalMsg(): string | undefined {
                     if (users.length !== userIds.length) {
                         return `Внимание. Найдено ${users.length} пользователей, а запрошено: ${userIds.length}`
                     }
-                    return undefined;
+                    return undefined
                 },
                 skipReview: false,
             })
 
         } else {
-            await ctx.replyWithHTML('Чтобы использовать u, наберите эту команду в ответ на сообщение, которое хотите послать. Например u 1,2,5 ')
+            await ctx.replyWithHTML('Инструкция по команде qr_tickets https://www.notion.so/6c2e844920d94467943fdcb4505cbe53')
         }
     })
     .hears(/^u(.*)$/i, async ctx => {
         if ('reply_to_message' in ctx.message && isTextMessage(ctx.message.reply_to_message) && ctx.match[1] !== '') {
             const userIds = ctx.match[1].trim().split(/\s*[,]\s*/).map(u => +u)
-            const messageToSend = await formatMessage(ctx, ctx.message.reply_to_message, [], false)
+            const messageToSend = formatMessage(ctx, ctx.message.reply_to_message, {
+                webPreview: false,
+                allPacks: []
+            })
             const users = await db.repoUser.findUsersByIds(userIds)
 
             await mailing.armMessage(ctx, {
@@ -130,11 +168,11 @@ supportFeedbackMiddleware
                 formatMessage: () => messageToSend,
                 getRecipients: async () => users,
                 previewMessage: async () => messageToSend,
-                previewAdditionalMsg(previewMessage: PreviewFormattedMailedMessage): string | undefined {
+                previewAdditionalMsg(): string | undefined {
                     if (users.length !== userIds.length) {
                         return `Внимание. Найдено ${users.length} пользователей, а запрошено: ${userIds.length}`
                     }
-                    return undefined;
+                    return undefined
                 },
                 skipReview: false,
             })
@@ -151,7 +189,10 @@ supportFeedbackMiddleware
             const allPacks = await db.repoPacks.listPacks({
                 interval: getNextRangeForPacks(new Date())
             })
-            const messageToSend = await formatMessage(ctx, ctx.message.reply_to_message, allPacks, webPreview)
+            const messageToSend = formatMessage(ctx, ctx.message.reply_to_message, {
+                webPreview,
+                allPacks,
+            })
 
             const users = await db.repoUser.listUsersForMailing(botConfig.MAILINGS_PER_WEEK_MAX)
             await mailing.armMessage(ctx, {
