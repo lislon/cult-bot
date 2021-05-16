@@ -7,11 +7,11 @@ import { i18nSceneHelper } from '../../util/scene-helper'
 import { parseTelegramMessageToHtml } from '../message-parser/message-parser'
 import { mySlugify } from '../../scenes/shared/shared-logic'
 import { ScenePack } from '../../database/db-packs'
+import { uniq } from 'lodash'
 import { InlineKeyboardButton, Message, ReplyMessage } from 'typegram'
 import emojiRegex from 'emoji-regex'
 import { getNextRangeForPacks } from '../../scenes/packs/packs-common'
 import {
-    FormattedMailedMessage,
     MailingSuccessResult,
     MailSender,
     MailUser,
@@ -131,7 +131,7 @@ supportFeedbackMiddleware
                     userId: +userId
                 }))
 
-            const userIds = usersAndTickets.map(u => u.userId)
+            const userIds = uniq(usersAndTickets.map(u => u.userId))
             const users = await db.repoUser.findUsersByIds(userIds)
 
             const previewFormattedMailedMessage: PreviewFormattedMailedMessage = formatMessage(ctx, ctxReplyToMessage, {
