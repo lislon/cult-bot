@@ -34,6 +34,7 @@ export interface ReferralDbStats extends ReferralDb {
 export interface ReferralInfo {
     id: number
     gaSource: string
+    description: string
     redirect: string
 }
 
@@ -45,6 +46,7 @@ export class ReferralRepository {
             fieldStr('code'),
             fieldStr('ga_source'),
             fieldStr('redirect'),
+            fieldStr('description'),
             fieldTimestamptzNullable('published_at'),
             fieldTimestamptzNullable('deleted_at'),
         ],
@@ -54,7 +56,7 @@ export class ReferralRepository {
 
     public async loadByCode(code: string): Promise<ReferralInfo> {
         return this.db.oneOrNone('' +
-            'SELECT id, ga_source, redirect ' +
+            'SELECT id, ga_source, redirect, description ' +
             'FROM cb_referrals ' +
             'WHERE code = $(code)',
             { code },
@@ -63,7 +65,8 @@ export class ReferralRepository {
                     return {
                         id: +row.id,
                         gaSource: row.ga_source,
-                        redirect: row.redirect
+                        redirect: row.redirect,
+                        description: row.description
                     }
                 }
                 return undefined

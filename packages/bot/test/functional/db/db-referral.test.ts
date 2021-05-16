@@ -21,7 +21,8 @@ describe('Referrals', () => {
         const gaSource = await db.repoReferral.loadByCode('a1')
         expect(gaSource).toMatchObject({
             gaSource: 'A',
-            redirect: 'P1'
+            redirect: 'P1',
+            description: 'тест'
         });
     })
 
