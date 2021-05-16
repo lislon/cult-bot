@@ -1,23 +1,17 @@
 import { Context, MiddlewareFn, Telegraf, Telegram, TelegramError } from 'telegraf'
-import {
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    KeyboardButton,
-    Message,
-    Update
-} from 'typegram'
+import { InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, Message, Update } from 'typegram'
 import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { MarkupHelper } from './MarkupHelper'
 import { Chat, User } from 'typegram/manage'
 import { omit } from 'lodash'
+import { ExtraEditMessageText, ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 import ServiceMessage = Message.ServiceMessage
 import TextMessage = Message.TextMessage
 import CallbackButton = InlineKeyboardButton.CallbackButton
 import CommonButton = KeyboardButton.CommonButton
-import { ExtraEditMessageText, ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 
 const CHAT_ID = 1234
-const FROM_ID = 7777
+export const TEST_USER_TID = 7777
 
 type MessageWithInlineMarkup = Message.CommonMessage
 
@@ -30,7 +24,7 @@ const CHAT: Chat.PrivateChat = {
 function makeFrom(): { from: User } {
     return {
         from: {
-            id: FROM_ID,
+            id: TEST_USER_TID,
             first_name: 'TestFirstName',
             last_name: 'Ber',
             is_bot: false

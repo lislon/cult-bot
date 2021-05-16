@@ -16,7 +16,11 @@ import {
 import { getLikesRow } from '../likes/likes-common'
 import { cardFormat } from '../shared/card-format'
 import { User } from 'typegram/manage'
-import { analyticRecordEventView, googleAnalyticRecordReferral } from '../../lib/middleware/analytics-middleware'
+import {
+    analyticRecordEventView,
+    countInteractions,
+    googleAnalyticRecordReferral
+} from '../../lib/middleware/analytics-middleware'
 import { parseAndPredictTimetable } from '../../lib/timetable/timetable-utils'
 import { KeyboardButton } from 'typegram'
 import { displayPackMenu, displayPackMenuFromStart } from '../packs/packs-menu'
@@ -99,7 +103,11 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
             } catch (e) {
                 ctx.logger.warn('error when click on on start button: ', e)
             }
-            await showWelcomeScene(ctx, ctx.callbackQuery)
+            if (countInteractions(ctx) >= 3) {
+                await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.welcome2')})
+            } else {
+                await showWelcomeScene(ctx, ctx.callbackQuery)
+            }
         })
 }
 

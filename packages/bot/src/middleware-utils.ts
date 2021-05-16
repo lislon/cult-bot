@@ -50,7 +50,8 @@ const dateTimeMiddleware = async (ctx: ContextMessageUpdate, next: () => Promise
 function sessionTmp() {
     return async (ctx: ContextMessageUpdate, next: () => Promise<void>) => {
         ctx.sessionTmp = {
-            analyticsScene: undefined
+            analyticsScene: undefined,
+            userScene: undefined
         }
         if (ctx.session === undefined) {
             ctx.session = {

@@ -5,7 +5,7 @@ import { Visitor } from 'universal-analytics'
 import { PerformanceContext } from '../lib/middleware/performance-middleware'
 import { FeedbackSceneState } from '../scenes/feedback/feedback-scene'
 import { AnalyticsState, AnalyticsStateTmp } from '../lib/middleware/analytics-middleware'
-import { UserState } from '../lib/middleware/user-middleware'
+import { UserState, UserStateTmp } from '../lib/middleware/user-middleware'
 import { HelpSceneState } from '../scenes/help/help-scene'
 import { PacksSceneState } from '../scenes/packs/packs-common'
 import { AllSlidersState } from '../scenes/shared/slider-pager'
@@ -59,6 +59,7 @@ export interface ContextMessageUpdate extends Context {
     i18n: I18n
     sessionTmp: {
         analyticsScene: AnalyticsStateTmp
+        userScene: UserStateTmp
     },
     logger: Logger
     webhookReply: boolean

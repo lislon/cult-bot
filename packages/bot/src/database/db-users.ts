@@ -29,6 +29,7 @@ export interface UserForRead extends UserIds {
     last_name?: string
     language_code?: string
     ua_uuid: string
+    referral: string
     blocked_at?: Date | null
     events_liked?: number[]
     events_disliked?: number[]
@@ -63,13 +64,15 @@ export class UserRepository {
         )
     }
 
+    private readonly userFields = 'id, tid, ua_uuid, events_favorite, clicks, username, first_name, last_name, referral'
+
     public async findUserById(id: number): Promise<UserForRead | null> {
-        return this.db.oneOrNone<UserForRead>('SELECT id, tid, ua_uuid, events_favorite, clicks, username, first_name, last_name FROM cb_users WHERE id = $1', id,
+        return this.db.oneOrNone<UserForRead>(`SELECT ${this.userFields} FROM cb_users WHERE id = $1`, id,
             UserRepository.userForReadMap)
     }
 
     public async findUsersByIds(ids: number[]): Promise<UserForRead[]> {
-        return this.db.map<UserForRead>('SELECT id, tid, ua_uuid, events_favorite, clicks, username, first_name, last_name FROM cb_users WHERE id IN ($(ids:csv))', { ids },
+        return this.db.map<UserForRead>(`SELECT ${this.userFields} FROM cb_users WHERE id IN ($(ids:csv))`, { ids },
             UserRepository.userForReadMap)
     }
 
@@ -83,14 +86,15 @@ export class UserRepository {
                 last_name: row.last_name,
                 ua_uuid: row.ua_uuid,
                 clicks: +(row.clicks || 0),
-                events_favorite: row.events_favorite || []
+                events_favorite: row.events_favorite || [],
+                referral: row.referral
             }
         }
         return row
     }
 
     public async findUserByTid(tid: number): Promise<UserForRead | null> {
-        return this.db.oneOrNone<UserForRead>('SELECT id, tid, ua_uuid, events_favorite, clicks, username, first_name, last_name FROM cb_users WHERE tid = $1', tid,
+        return this.db.oneOrNone<UserForRead>(`SELECT ${this.userFields} FROM cb_users WHERE tid = $1`, tid,
             UserRepository.userForReadMap)
     }
 
@@ -110,7 +114,6 @@ export class UserRepository {
                 }
             })
     }
-
 
     public async insertUser(user: UserSaveData): Promise<number> {
         const rawData: Omit<UserDb, 'id'> = {

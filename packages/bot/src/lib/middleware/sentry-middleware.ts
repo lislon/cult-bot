@@ -51,7 +51,7 @@ export function sentryMiddleware(): MiddlewareFn<ContextMessageUpdate> {
         try {
             await next()
         } catch (e) {
-            if (ctx.scene.current?.id) {
+            if (ctx.scene?.current?.id) {
                 Sentry.setExtra('scene', ctx.scene.current?.id)
             }
             Sentry.setTag('is_admin', isAdmin(ctx))

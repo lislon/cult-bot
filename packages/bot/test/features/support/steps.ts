@@ -3,7 +3,7 @@ import { db, dbCfg } from '../../../src/database/db'
 import expect from 'expect'
 import { mskMoment } from '../../../src/util/moment-msk'
 import { AnyTypeOfKeyboard, MarkupHelper } from '../lib/MarkupHelper'
-import { BotReply } from '../lib/TelegramMockServer'
+import { BotReply, TEST_USER_TID } from '../lib/TelegramMockServer'
 import emojiRegex from 'emoji-regex'
 import { getMockEvent, MockPackForSave, syncEventsDb4Test, syncPacksDb4Test } from '../../functional/db/db-test-utils'
 import { parseAndPredictTimetable } from '../../../src/lib/timetable/timetable-utils'
@@ -59,6 +59,7 @@ Given(/^there is referrals:$/, async function (table: DataTable) {
             code: row.code,
             gaSource: row.gaSource || row.code,
             redirect: row.redirect || '',
+            description: ''
         })
     })
 })
@@ -295,6 +296,17 @@ Then(/^Google analytics params will be:$/, function (table: DataTable) {
     })
 })
 
+Then(/^Referral visit recorded with referral '(.+)'$/, async function (gaSource: string) {
+    expect(await db.repoReferralVisit.isVisitRecordedByUsernameAndGaSource(TEST_USER_TID, gaSource)).toBeTruthy()
+})
+
+Then(/^User is persisted with referral '(.+)' and uuid$/, async function (gaSource: string) {
+    const userForRead = await db.repoUser.findUserByTid(TEST_USER_TID)
+    expect(userForRead.referral).toEqual(gaSource)
+    expect(userForRead.ua_uuid).toBeTruthy()
+    expect(userForRead.ua_uuid).not.toEqual('00000000-0000-0000-0000-000000000000')
+})
+
 const ORIGINAL_BOT_CONFIG: typeof botConfig = clone(botConfig)
 
 Before(async () => {
@@ -306,3 +318,7 @@ Before(function (testCase: ITestCaseHookParameter) {
 })
 BeforeAll(() => dbCfg.connectionString?.includes('test') || process.exit(666))
 AfterAll(db.$pool.end)
+
+function isVisitRecordedByUsernameAndGaSource(): any {
+    throw new Error('Function not implemented.')
+}

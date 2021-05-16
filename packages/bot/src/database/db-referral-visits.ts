@@ -1,5 +1,6 @@
 import { ColumnSet, IDatabase, IMain } from 'pg-promise'
 import { fieldInt, fieldInt8Array, fieldStr, fieldTimestamptzNullable } from '@culthub/pg-utils'
+import { db } from './db'
 
 export interface ReferralVisitData {
     userId: number
@@ -36,5 +37,15 @@ export class ReferralVisitRepository {
         const sql = this.pgp.helpers.insert(rawData, this.columns) + ' returning id'
         return +(await this.db.one(sql))['id']
     }
+
+    public async isVisitRecordedByUsernameAndGaSource(userTid: number, gaSource: string): Promise<boolean> {
+        return db.oneOrNone(`
+            SELECT crv.id
+            FROM cb_referral_visits crv
+            JOIN cb_users u ON u.id = crv.user_id 
+            JOIN cb_referrals r ON (r.id  = crv.referral_id )
+            WHERE u.tid = $1 AND r.ga_source = $2`, [ userTid, gaSource ], r =>  !!r)
+    }
+
 }
 

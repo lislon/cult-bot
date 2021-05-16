@@ -44,7 +44,7 @@ export function getSurveyData(msg: string): SurveyData | undefined {
         return {
             id: idMatcher[1],
             question: text.trim(),
-            options: surveyAnswers || []
+            options: surveyAnswers ? surveyAnswers.map(s => s.trim()) : []
         }
     }
     return undefined

@@ -19,6 +19,8 @@ Feature: Main scene
     Then Google analytics params will be:
       | key | value          |
       | cs  | instagram-igor |
+    Then Referral visit recorded with referral 'instagram-igor'
+    Then User is persisted with referral 'instagram-igor' and uuid
 
   Scenario: I can click customize
     Given Scene is 'main_scene'
