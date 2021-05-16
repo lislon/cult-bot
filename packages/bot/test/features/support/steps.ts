@@ -310,7 +310,7 @@ Then(/^User is persisted with referral '(.+)' and uuid$/, async function (gaSour
 const ORIGINAL_BOT_CONFIG: typeof botConfig = clone(botConfig)
 
 Before(async () => {
-    await db.none(`TRUNCATE cb_events, cb_referrals RESTART identity CASCADE`)
+    await db.none(`TRUNCATE cb_events, cb_referrals, cb_users RESTART identity CASCADE`)
     botConfig.setFromKeyValue(ORIGINAL_BOT_CONFIG)
 })
 Before(function (testCase: ITestCaseHookParameter) {
@@ -318,7 +318,3 @@ Before(function (testCase: ITestCaseHookParameter) {
 })
 BeforeAll(() => dbCfg.connectionString?.includes('test') || process.exit(666))
 AfterAll(db.$pool.end)
-
-function isVisitRecordedByUsernameAndGaSource(): any {
-    throw new Error('Function not implemented.')
-}

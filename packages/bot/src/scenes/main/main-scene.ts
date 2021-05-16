@@ -131,7 +131,7 @@ async function showWelcomeScene(ctx: ContextMessageUpdate, message: { from?: Use
     await ctx.scene.enter('main_scene', {override_main_scene_msg: ctx.i18n.t('root.welcome2')})
 }
 
-async function showDirectMessage(ctx: ContextMessageUpdate, extId: string) {
+async function showDirectEvent(ctx: ContextMessageUpdate, extId: string) {
     const event = await db.repoEventsCommon.getEventsByExtId(extId)
     if (event !== undefined) {
 
@@ -216,11 +216,11 @@ function preStageGlobalActionsFn(bot: Composer<ContextMessageUpdate>): void {
         }
 
         if (oldRedirect !== '') {
-            await showDirectMessage(ctx, oldRedirect)
+            await showDirectEvent(ctx, oldRedirect)
         } else if (newRedirect.startsWith('G')) {
             await showDirectPack(ctx, newRedirect)
         } else if (newRedirect !== '') {
-            await showDirectMessage(ctx, newRedirect)
+            await showDirectEvent(ctx, newRedirect)
         } else {
             await showWelcomeScene(ctx, ctx.message)
         }

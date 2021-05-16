@@ -30,7 +30,7 @@ export interface FormatCardTimetableOptions {
     hideNonHolidays?: boolean
 }
 
-export function formatCardTimetable(event: Event, options: FormatCardTimetableOptions) {
+export function formatCardTimetable(event: Event, options: FormatCardTimetableOptions): string {
     const rawTimetable = event.timetable
     if (hasHumanTimetable(rawTimetable)) {
         return getOnlyHumanTimetable(rawTimetable);
@@ -137,13 +137,14 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
         text += ` <i>${row.extId}</i> `
     }
 
-    text += '\n'
-    text += '\n'
-
-    if (isFuture) {
-        text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`)
-    } else {
-        text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b> <i>(прошло)</i>`)
+    if (!fieldIsQuestionMarkOrEmpty(row.title)) {
+        text += '\n'
+        text += '\n'
+        if (isFuture) {
+            text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b>`)
+        } else {
+            text += strikeIfDeleted(`<b>${addHtmlNiceUrls(escapeHTML(row.title))}</b> <i>(прошло)</i>`)
+        }
     }
 
     if (options.deleted) {
@@ -156,7 +157,7 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
 
     text += '\n'
     text += '\n'
-    text += `${strikeIfDeleted(addHtmlNiceUrls(escapeHTML(row.description)))} \n`
+    text += `${strikeIfDeleted(addHtmlNiceUrls(escapeHTML(row.description)))}\n`
     text += '\n'
 
 
@@ -167,10 +168,12 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
     if (!fieldIsQuestionMarkOrEmpty(row.address)) {
         text += `📍 ${addHtmlNiceUrls(escapeHTML(row.address))}${map}\n`
     }
-    if (isFuture) {
-        text += `${formatCardTimetable(row, { now: options.now })}\n`
-    } else {
-        text += `<s>${formatCardTimetable(row, { now: options.now })}</s>\n`
+    if (!fieldIsQuestionMarkOrEmpty(getOnlyHumanTimetable(row.timetable))) {
+        if (isFuture) {
+            text += `${formatCardTimetable(row, {now: options.now})}\n`
+        } else {
+            text += `<s>${formatCardTimetable(row, {now: options.now})}</s>\n`
+        }
     }
     if (!fieldIsQuestionMarkOrEmpty(row.duration)) {
         text += `🕐 ${escapeHTML(formatEventDuration(row.duration))}\n`
@@ -184,7 +187,9 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
     if (!fieldIsQuestionMarkOrEmpty(row.url)) {
         text += `${formatUrl(escapeHTML(row.url))}\n`
     }
-    text += '\n'
+    if (!text.endsWith('\n\n')) {
+        text += '\n'
+    }
     if (options.showTags) {
         text += `${strikeIfDeleted(escapeHTML([...row.tag_level_3, ...(filterTagLevel2(row))].join(' ')))}\n`
     }

@@ -123,6 +123,34 @@ describe('test card format', () => {
         }, { now: date('2020-01-01') })).toContain('1 ч 30 мин')
     })
 
+    test('Test card only description and tags', async () => {
+        const card = cardFormat({
+                id: 1,
+                extId: '',
+                title: '',
+                category: 'theaters',
+                description: 'описание',
+                timetable: `{bot: 17 октября: 11:30 - 23:45}`,
+                notes: '',
+                price: '',
+                duration: '',
+                address: '',
+                tag_level_1: ['#level1'],
+                tag_level_2: ['#комфорт', '#_недешево'],
+                tag_level_3: ['#level3'],
+                rating: 15,
+                geotag: '',
+                publish: '',
+                place: '',
+                url: '',
+                reviewer: '',
+                likes: 0,
+                dislikes: 0
+            }, { now: date('2020-01-01'), showTags: true })
+        const expected = (await readCard('show-minimal-card.html')).toString()
+        expect(prepare(card)).toEqual(prepare(expected))
+    })
+
 })
 
 describe('rouble formatting', () => {

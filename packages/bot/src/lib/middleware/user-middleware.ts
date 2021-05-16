@@ -82,7 +82,7 @@ export async function updateOrInsertUser(ctx: ContextMessageUpdate, blockedAt: D
             blocked_at: blockedAt,
             clicks: countInteractions(ctx),
             ua_uuid: ctx.session.user.uaUuid,
-            referral: ctx.sessionTmp.analyticsScene?.referral
+            referral: ctx.sessionTmp.analyticsScene?.referral || ''
         })
 
         ctx.session.user.lastDbUpdated = new Date().getTime()
