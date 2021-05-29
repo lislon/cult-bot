@@ -120,13 +120,13 @@ function formatUrlText(row: Event): string {
     function urlText() {
         const TAG_LEVEL1_FORMAT_AS_LINK = ['#онлайн', '#подкаст', '#аудиоэкскурсия']
         if (decodeTagsLevel1(row.tag_level_1).find(s => TAG_LEVEL1_FORMAT_AS_LINK.includes(s))) {
-            return 'Ссылка'
+            return '+ Ссылка'
         }
-        return 'Подробнее'
+        return '+ Подробнее'
     }
 
     if (!fieldIsQuestionMarkOrEmpty(row.url)) {
-        return `+ ${wrapInUrl(urlText(), row.url)}\n`
+        return `${wrapInUrl(urlText(), row.url)}\n`
     }
     return ''
 }
