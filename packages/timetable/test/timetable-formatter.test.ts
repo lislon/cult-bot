@@ -83,6 +83,14 @@ describe('timetable formatter', () => {
         expectWillBeFormatted(expected);
     })
 
+    test('reversive weekdays normalization', () => {
+        const expected = [
+        `ср,пт–вс: 10:00–18:00`,
+        `пн: 10:00–20:00`,
+        `чт: 13:00, 14:00, 15:00, 16:00, 18:00 (по сеансам)`].join('\n')
+        expectWillBeFormatted(expected);
+    })
+
     test('week_range_every_day', () => {
         const input = `25 января 2020 - 28 января 2020: в любое время`;
         const expected = `25-28 января: в любое время`;

@@ -53,11 +53,11 @@ const ruDateFormat: {
     useAdditionalWeekYearTokens?: boolean
     useAdditionalDayOfYearTokens?: boolean
 } = {
-        locale: ru,
-        weekStartsOn: 1
-    }
+    locale: ru,
+    weekStartsOn: 1
+}
 
-export function ruFormat(date: Date | number, pattern: string) {
+export function ruFormat(date: Date | number, pattern: string): string {
     return format(date, pattern, ruDateFormat)
 }
 
@@ -71,13 +71,14 @@ export class SessionEnforcer {
     }
 
     static default<T>(original: T, def: T): T {
-        return (original === undefined) ? def : original;
+        return (original === undefined) ? def : original
     }
 
     static number(original: number, defaultValue?: number): number | undefined {
         return typeof original === 'number' ? original : defaultValue
     }
 }
+
 export async function showBotVersion(ctx: ContextMessageUpdate) {
     const info = [
         ['Release', botConfig.HEROKU_RELEASE_VERSION || 'localhost'],
@@ -118,10 +119,17 @@ export function extraInlineMenu(rows: InlineKeyboardButton[][]): ExtraReplyMessa
     }
 }
 
+type UpdateBtnFunc = (text: InlineKeyboardButton.CallbackButton) => (InlineKeyboardButton.CallbackButton | InlineKeyboardButton.CallbackButton[])
+
+export async function updateKeyboardButtons(replyMarkup: undefined,
+                                            callbackDataToken: RegExp,
+                                            updateFunc: UpdateBtnFunc): Promise<undefined>;
 export async function updateKeyboardButtons(replyMarkup: InlineKeyboardMarkup,
                                             callbackDataToken: RegExp,
-                                            updateFunc: (text: InlineKeyboardButton.CallbackButton) => (InlineKeyboardButton.CallbackButton | InlineKeyboardButton.CallbackButton[])
-): Promise<undefined | InlineKeyboardMarkup> {
+                                            updateFunc: UpdateBtnFunc): Promise<InlineKeyboardMarkup>;
+export async function updateKeyboardButtons(replyMarkup: InlineKeyboardMarkup|undefined,
+                                            callbackDataToken: RegExp,
+                                            updateFunc: UpdateBtnFunc): Promise<InlineKeyboardMarkup|undefined> {
     if (replyMarkup !== undefined) {
         const newKeyboard: InlineKeyboardButton.CallbackButton[][] = []
         for (const row of replyMarkup.inline_keyboard) {
@@ -142,7 +150,7 @@ export async function updateKeyboardButtons(replyMarkup: InlineKeyboardMarkup,
     return undefined
 }
 
-export function mySlugify(text: string) {
+export function mySlugify(text: string): string {
     return slugify(text, {
         lower: true,
         strict: true
@@ -150,11 +158,11 @@ export function mySlugify(text: string) {
 }
 
 // @deprec -> editMessageAndButtons
-export function backToMainButtonTitle() {
+export function backToMainButtonTitle(): string {
     return i18SharedBtn('markup_back')
 }
 
-export async function replyWithBackToMainMarkup(ctx: ContextMessageUpdate, message?: string) {
+export async function replyWithBackToMainMarkup(ctx: ContextMessageUpdate, message?: string): Promise<number> {
     const markupWithBackButton = Markup.keyboard([Markup.button.text(backToMainButtonTitle())]).resize()
 
     const msg = await ctx.replyWithHTML(message ?? i18SharedMsg('markup_back_decoy'), markupWithBackButton)

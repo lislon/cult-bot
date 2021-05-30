@@ -23,14 +23,6 @@ export function hasUrlsInside(text: string): boolean {
     return !!text.match(/\[(.+?)\]\s*\(([^)]+)\)/)
 }
 
-export function formatUrl(text: string) {
-    const niceUrls = addHtmlNiceUrls(text)
-    if (niceUrls === text && text.match(/^https?:\/\//)) {
-        return `<a href="${text}">(ссылка на событие)</a>`
-    }
-    return niceUrls
-}
-
 export interface FormatCardTimetableOptions {
     now: Date
     hideNonHolidays?: boolean
@@ -108,25 +100,26 @@ function isCardWithPossiblePast(row: Event | EventWithPast): row is EventWithPas
     return (row as EventWithPast).isFuture !== undefined
 }
 
-function wrapInUrl(content: string, url: string) {
+export function wrapInUrl(content: string, url: string): string {
     if (fieldIsQuestionMarkOrEmpty(url) || hasUrlsInside(content)) {
         return addHtmlNiceUrls(content)
     }
     return `<a href="${url}">${content}</a>`
 }
 
-function formatUrlText(row: Event): string {
-
-    function urlText() {
-        const TAG_LEVEL1_FORMAT_AS_LINK = ['#онлайн', '#подкаст', '#аудиоэкскурсия']
-        if (decodeTagsLevel1(row.tag_level_1).find(s => TAG_LEVEL1_FORMAT_AS_LINK.includes(s))) {
-            return '+ Ссылка'
-        }
-        return '+ Подробнее'
+export function formatUrlText(row: Pick<Event, 'tag_level_1'|'url'>): string {
+    if (decodeTagsLevel1(row.tag_level_1).find(s => ['#подкаст', '#аудиоэкскурсия'].includes(s))) {
+        return 'к аудио'
+    } else if (row.tag_level_1.includes('#онлайн')) {
+        return 'к видео'
+    } else {
+        return 'подробнее'
     }
+}
 
+function formatCardUrl(row: Pick<Event, 'tag_level_1'|'url'>): string {
     if (!fieldIsQuestionMarkOrEmpty(row.url)) {
-        return `${wrapInUrl(urlText(), row.url)}\n`
+        return `${wrapInUrl(` + ${formatUrlText(row)}`, row.url)}\n`
     }
     return ''
 }
@@ -215,7 +208,7 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
 
     text += formatTimetable(row, options)
     text += formatPriceLine(row)
-    text += formatUrlText(row)
+    text += formatCardUrl(row)
 
     text += '\n'
     text += `${strikeIfDeleted(addHtmlNiceUrls(escapeHTML(row.description)), options)}\n`

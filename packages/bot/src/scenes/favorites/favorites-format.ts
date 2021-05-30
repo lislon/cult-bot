@@ -3,19 +3,19 @@ import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { CtxI18n, i18nSceneHelper } from '../../util/scene-helper'
 import { isEventEndsInFuture, isEventStarsInPast, ruFormat } from '../shared/shared-logic'
 import { rightDate, TimetableFormatter } from '@culthub/timetable'
-import { first, last } from 'lodash'
-import { addHtmlNiceUrls, formatUrl } from '../shared/card-format'
+import { first, last, partition } from 'lodash'
+import { addHtmlNiceUrls, formatUrlText, wrapInUrl } from '../shared/card-format'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
 import { escapeHTML } from '../../util/string-utils'
 import { botConfig } from '../../util/bot-config'
 import { FavoriteEvent } from './favorites-scene'
-import { isAfter } from "date-fns"
+import { isAfter } from 'date-fns'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 
 const {i18SharedMsg, i18Btn, i18Msg, i18SharedBtn, backButton, actionName, actionNameRegex} = i18nSceneHelper(scene)
 
-type FavoriteEventForFormat = Pick<FavoriteEvent, 'place' | 'url' | 'title' | 'category' | 'parsedTimetable'>
+type FavoriteEventForFormat = Pick<FavoriteEvent, 'place' | 'url' | 'title' | 'category' | 'parsedTimetable' | 'tag_level_1'>
 
 function isOnlyWeekdaysSet(event: FavoriteEventForFormat) {
     const { weekTimes, dateRangesTimetable, datesExact, anytime} = event.parsedTimetable.parsedTimetable
@@ -23,11 +23,14 @@ function isOnlyWeekdaysSet(event: FavoriteEventForFormat) {
 }
 
 function formatFutureDate(event: FavoriteEventForFormat, ctx: CtxI18n, now: Date) {
+    if (event.parsedTimetable.parsedTimetable === undefined) {
+        return ''
+    }
     if (isOnlyWeekdaysSet(event)) {
         const formattedTimetable = new TimetableFormatter(now, {
             hideTimes: true
         }).structureFormatTimetable(event.parsedTimetable.parsedTimetable)
-        return formattedTimetable.weekTimes.join(', ')
+        return formattedTimetable.weekTimes.join(',')
     }
     if (event.parsedTimetable.parsedTimetable.anytime) {
         return new TimetableFormatter(now, {
@@ -45,43 +48,53 @@ function formatFutureDate(event: FavoriteEventForFormat, ctx: CtxI18n, now: Date
 }
 
 function formatPastDate(event: FavoriteEventForFormat) {
-    if (event.parsedTimetable.predictedIntervals.length === 0) {
+    const lastInterval = last(event.parsedTimetable.predictedIntervals)
+    if (lastInterval === undefined) {
         return `больше ${botConfig.SCHEDULE_WEEKS_AHEAD} недель назад`
     } else {
-        return `${ruFormat(rightDate(last(event.parsedTimetable.predictedIntervals)), 'dd MMMM')}`
+        return `${ruFormat(rightDate(lastInterval), 'dd MMMM')}`
     }
 }
 
 export async function formatListOfFavorites(ctx: CtxI18n, events: FavoriteEventForFormat[], now: Date): Promise<string> {
-    return events.map(event => {
+    const [activeEvents, pastEvents] = partition(events, e => isEventEndsInFuture(e.parsedTimetable.predictedIntervals, now))
+
+    const activeEventsLines = activeEvents.map(event => {
         const details = []
         if (!fieldIsQuestionMarkOrEmpty(event.place)) {
             details.push(`🌐 ${addHtmlNiceUrls(escapeHTML(event.place))}`)
         }
         if (!fieldIsQuestionMarkOrEmpty(event.url)) {
-            details.push(`${formatUrl(escapeHTML(event.url))}`)
+            details.push(`${wrapInUrl(` + ${formatUrlText(event)}`, event.url)}`)
         }
 
         const icon = i18SharedMsg(ctx, 'category_icons.' + event.category)
-        if (isEventEndsInFuture(event.parsedTimetable.predictedIntervals, now)) {
-            return i18Msg(ctx, 'event_item', {
-                icon,
-                title: event.title,
-                place: details.length > 0 ? `\n${details.join(', ')}\n` : '',
-                date: formatFutureDate(event, ctx, now)
-            })
-        } else {
+        return i18Msg(ctx, 'event_item', {
+            icon,
+            title: event.title ? event.title : i18Msg(ctx, 'event_no_name'),
+            place: details.length > 0 ? `\n${details.join(' ')}\n` : '',
+            date: formatFutureDate(event, ctx, now)
+        })
+    })
 
-            return i18Msg(ctx, 'event_item_past', {
-                icon,
-                title: event.title,
-                place: '',
-                date: formatPastDate(event)
-            })
-        }
-    }).join('\n')
+    const pastEventsLines = pastEvents.map(event => {
+        const icon = i18SharedMsg(ctx, 'category_icons.' + event.category)
+        return i18Msg(ctx, 'event_item_past', {
+            icon,
+            title: event.title,
+            place: '',
+            date: formatPastDate(event)
+        })
+    })
+
+    let allLines = activeEventsLines;
+
+    if (pastEventsLines.length > 0) {
+        allLines = [...allLines, i18Msg(ctx, 'past_events_header'), ...pastEventsLines]
+    }
+    return allLines.join('\n')
 }
 
-function nearestDate(now: Date, event: Pick<FavoriteEvent, 'parsedTimetable'>): Date {
+function nearestDate(now: Date, event: Pick<FavoriteEvent, 'parsedTimetable'>): Date|undefined {
     return first(event.parsedTimetable.predictedIntervals.map(rightDate).filter(rightDate => isAfter(rightDate, now)))
 }

@@ -2,21 +2,18 @@ import { User } from 'typegram'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 
 export function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
-    if (value === null || value === undefined) return false;
-    const testDummy: TValue = value;
-    return true;
+    return !(value === null || value === undefined)
 }
 
-export function fieldIsQuestionMarkOrEmpty(str: string) {
-    const trim = str.trim()
-    return trim === '???' || trim === ''
+export function fieldIsQuestionMarkOrEmpty(str: string): boolean {
+    return str === undefined || str.trim() === '???' || str.trim() === ''
 }
 
-export function formatUserName(ctx: ContextMessageUpdate) {
+export function formatUserName(ctx: ContextMessageUpdate): string {
     return formatUserName2(ctx.from)
 }
 
-export function formatUserName2(user: User) {
+export function formatUserName2(user: User): string {
     const result: string[] = []
     if (user.first_name) {
         result.push(user.first_name)
