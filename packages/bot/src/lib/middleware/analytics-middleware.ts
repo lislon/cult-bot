@@ -112,12 +112,16 @@ const {i18SharedMsg} = i18nSceneHelper(new Scenes.BaseScene<ContextMessageUpdate
 
 
 export function googleAnalyticRecordReferral(ctx: ContextMessageUpdate, referral: string): void {
-    ctx.sessionTmp.analyticsScene.referral = referral
-    ctx.ua.set('cs', referral)
+    if (ctx.sessionTmp) {
+        ctx.sessionTmp.analyticsScene.referral = referral
+        ctx.ua.set('cs', referral)
+    }
 }
 
-export function analyticRecordEventView(ctx: ContextMessageUpdate, event: Event) {
-    const label = `${i18SharedMsg(ctx, `category_icons.${event.category}`)} ${event.extId} ${event.title} [${event.place}]`
-    ctx.ua.event('Card View', 'view', label, undefined)
-    ctx.sessionTmp.analyticsScene.viewedEvents.push(+event.id)
+export function analyticRecordEventView(ctx: ContextMessageUpdate, event: Event): void {
+    if (ctx.sessionTmp) {
+        const label = `${i18SharedMsg(ctx, `category_icons.${event.category}`)} ${event.extId} ${event.title} [${event.place}]`
+        ctx.ua.event('Card View', 'view', label, undefined)
+        ctx.sessionTmp.analyticsScene.viewedEvents.push(+event.id)
+    }
 }

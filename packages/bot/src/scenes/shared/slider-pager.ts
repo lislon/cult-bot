@@ -11,9 +11,10 @@ import { getLikesRow } from '../likes/likes-common'
 import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
 import { i18nSceneHelper, i18SharedBtn, isAdmin } from '../../util/scene-helper'
-import { EventsPagerSliderBase, PagerSliderState, PagingCommonConfig } from './events-common'
+import { PagerSliderState, PagingCommonConfig } from './events-common'
 import { botConfig } from '../../util/bot-config'
 import { InlineKeyboardButton } from 'typegram'
+import { EventsPagerSliderBase } from './events-slider-base'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18SharedMsg} = i18nSceneHelper(scene)
@@ -54,7 +55,7 @@ function getSliderState(ctx: ContextMessageUpdate): AllSlidersState {
     return ctx.session.slider
 }
 
-function getPositionText(page: number, total: number) {
+function formatPositionText(page: number, total: number): string {
     return i18nSharedBtnName('slider_keyboard.position', {
         page: page,
         total: total
@@ -97,7 +98,7 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
         ctx.logger.silly(`invalidateSliders new: ${state.sliders.filter(s => s.sceneId === this.config.sceneId).map(s => s.msgId || 'undefined').join(',')}`)
     }
 
-    async showOrUpdateSlider(ctx: ContextMessageUpdate, sliderState: SliderState<Q> = this.getSliderStateIfExists(ctx), options?: EditMessageAndButtonsOptions) {
+    async showOrUpdateSlider(ctx: ContextMessageUpdate, sliderState: SliderState<Q> = this.getSliderStateIfExists(ctx), options?: EditMessageAndButtonsOptions): Promise<number> {
         if (sliderState === undefined) {
             throw new Error(`Should call updateState before showOrUpdateSlider`)
         }
@@ -137,49 +138,18 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
 
 
             const prevButton = Markup.button.callback(i18nSharedBtnName('slider_keyboard.prev'), this.btnActionPrev)
-            const position = Markup.button.callback(getPositionText(state.selectedIdx + 1, state.total), this.btnActionPosition)
+            const position = Markup.button.callback(formatPositionText(state.selectedIdx + 1, state.total), this.btnActionPosition)
             const nextButton = Markup.button.callback(i18nSharedBtnName('slider_keyboard.next'), this.btnActionNext)
-            const tagButton = Markup.button.callback(i18SharedBtn('show_tags'), this.btnTagToggle)
 
             let buttons: InlineKeyboardButton.CallbackButton[][] = []
-            if (botConfig.CARD_TAG_TOGGLE_STYLE === 'A') {
-                buttons = [
-                    [tagButton],
-                    [backButton, ...cardButtons],
-                    [prevButton, position, nextButton]
-                ]
-            } else if (botConfig.CARD_TAG_TOGGLE_STYLE === 'B') {
-                buttons = [
-                    [backButton, ...cardButtons],
-                    [prevButton, tagButton, position, nextButton]
-                ]
-            } else if (botConfig.CARD_TAG_TOGGLE_STYLE === 'C') {
-                buttons = [
-                    [backButton, tagButton, ...cardButtons],
-                    [prevButton, position, nextButton]
-                ]
-            } else if (botConfig.CARD_TAG_TOGGLE_STYLE === 'D') {
-                const countBefore = state.selectedIdx
-                const countAfter = state.total - state.selectedIdx - 1
-                const prevButton = Markup.button.callback(`« ${countBefore}`, this.btnActionPrev)
-                const tagToggle = Markup.button.callback('#', this.btnTagToggle)
-                const nextButton = Markup.button.callback(`${countAfter} »`, this.btnActionNext)
 
-                buttons = [
-                    [backButton, ...cardButtons],
-                    [prevButton, tagToggle, nextButton]
-                ]
-
-            } else {
-                buttons = [
-                    [backButton, ...cardButtons],
-                    [prevButton, position, nextButton]
-                ]
-            }
-
+            buttons = [
+                [backButton, ...cardButtons],
+                [prevButton, position, nextButton]
+            ]
 
             const text = cardFormat(event, {
-                showDetails: botConfig.CARD_TAG_TOGGLE_STYLE !== 'none' ? ctx.session.user.showTags : true,
+                showDetails: ctx.session.user.showTags,
                 now: ctx.now(),
                 showAdminInfo: isAdmin(ctx),
                 ...this.config.cardFormatOptions?.(ctx, event)
@@ -235,21 +205,17 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
         return `slider_keyboard.${this.config.sceneId}.prev`
     }
 
-    private get btnTagToggle() {
-        return `slider_keyboard.${this.config.sceneId}.tag`
-    }
-
-    private async nextPrev(ctx: ContextCallbackQueryUpdate, leftRightLogic: (state: SliderState<Q>) => void) {
+    private async nextPrev(ctx: ContextCallbackQueryUpdate, nextPrevIndexUpdateLogic: (state: SliderState<Q>) => void) {
 
         function onlyOneEventLeftAccordingToButtons() {
             const keyboard = getInlineKeyboardFromCallbackQuery(ctx)
-            const oneOfOneBtn = keyboard.inline_keyboard.flatMap(rows => rows).find(row => row.text === getPositionText(1, 1))
+            const oneOfOneBtn = keyboard.inline_keyboard.flatMap(rows => rows).find(row => row.text === formatPositionText(1, 1))
             return oneOfOneBtn !== undefined
         }
 
         const state = this.getSliderStateIfExists(ctx)
         if (state !== undefined) {
-            leftRightLogic(state)
+            nextPrevIndexUpdateLogic(state)
             await ctx.answerCbQuery()
             if (state.total === 0) {
                 const {text, buttons} = await this.getEmptyCard(ctx)
@@ -320,9 +286,6 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                 })
                 .action(this.btnActionPosition, async ctx => {
                     await ctx.answerCbQuery()
-                })
-                .action(this.btnTagToggle, async ctx => {
-                    await ctx.answerCbQuery()
                     ctx.session.user.showTags = !ctx.session.user.showTags
                     if (ctx.session.user.showTags) {
                         ctx.ua.event('Button', 'tag_show', '# (Show)', undefined)
@@ -338,8 +301,6 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
                     } else {
                         await this.answerCbSliderIsOld(ctx)
                     }
-
-                    await ctx.answerCbQuery()
                 })
         ).middleware()
     }

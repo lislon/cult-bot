@@ -51,7 +51,7 @@ describe('dates to timetable', () => {
             date('2020-01-19 15:00'),
         ])
         expect(timetable).toEqual([
-            '04-19 января: сб-вс: 15:00'
+            '04-19 января: сб–вс: 15:00'
         ].join('\n'))
     })
 

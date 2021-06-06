@@ -53,14 +53,16 @@ export interface MySession extends Scenes.SceneSession<Scenes.SceneSessionData> 
     language?: 'en' | 'ru'
 }
 
+export type MySessionTmp = {
+    analyticsScene: AnalyticsStateTmp
+    userScene: UserStateTmp
+}
+
 export interface ContextMessageUpdate extends Context {
     session: MySession
     scene: Scenes.SceneContextScene<ContextMessageUpdate>
     i18n: I18n
-    sessionTmp: {
-        analyticsScene: AnalyticsStateTmp
-        userScene: UserStateTmp
-    },
+    sessionTmp: MySessionTmp,
     logger: Logger
     webhookReply: boolean
     ua: Visitor

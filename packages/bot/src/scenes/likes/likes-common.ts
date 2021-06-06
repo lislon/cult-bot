@@ -13,7 +13,7 @@ const scene = new Scenes.BaseScene<ContextMessageUpdate>('likes_scene')
 const {i18Btn} = i18nSceneHelper(scene)
 
 export function getLikeDislikeButtonText(ctx: ContextMessageUpdate, count: number, type: 'like' | 'dislike'): string {
-    return i18Btn(ctx, type, {count: count === 0 ? '' : count}).trimEnd()
+    return i18Btn(ctx, type, {maybeCount: count === 0 ? '' : ` ${count}`})
 }
 export const LIKES_EVENT_ACTION_PREFIXES = ['like_', 'dislike_', 'favorite_']
 

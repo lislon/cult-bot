@@ -9,7 +9,6 @@
         "search": "🔎 Поиск",
         "favorites": "⭐ Избранное",
         "admin": "👨🏻‍🎤 Админка",
-        "card_zoo": "\uD83D\uDC39\uD83D\uDC12\uD83D\uDC0A\uD83E\uDD8F",
         "near_me": "📍 Рядом со мной",
         "feedback": "✉️ Обратная связь",
         "back_as_new": "🚀 Открыть бот"
@@ -415,8 +414,8 @@
       "cb_answer_unliked": "«${title}» ✊ Отмена",
       "cb_answer_undisliked": "«${title}» ✊ Отмена",
       "keyboard": {
-        "like": "👍 ${count}",
-        "dislike": "👎 ${count}"
+        "like": "👍${maybeCount}",
+        "dislike": "👎${maybeCount}"
       }
     },
     "favorites_scene": {
@@ -493,7 +492,7 @@
       "slider_keyboard": {
         "back": "◀️",
         "prev": "«",
-        "position": "${page} / ${total}",
+        "position": "# ${page} / ${total}",
         "next": "»"
       }
     },

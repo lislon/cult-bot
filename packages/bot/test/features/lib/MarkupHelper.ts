@@ -1,4 +1,3 @@
-import { BotReply } from './TelegramMockServer'
 import { i18n } from '../../../src/util/i18n'
 import {
     ForceReply,
@@ -9,6 +8,7 @@ import {
     ReplyKeyboardRemove
 } from 'typegram'
 import CallbackButton = InlineKeyboardButton.CallbackButton
+import { BotReply } from '../../util/telegram-server-mock'
 
 export type AnyTypeOfKeyboard = InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 

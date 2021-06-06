@@ -20,7 +20,11 @@ export class FavoritesPagerConfig implements SliderConfig<void> {
     }
 
     async preloadIds(ctx: ContextMessageUpdate, {offset, limit}: LimitOffset): Promise<number[]> {
-        return (await getSortedFavoriteEventsIds(ctx)).slice(offset, offset + limit)
+        const eventIds = await getSortedFavoriteEventsIds(ctx)
+        if (eventIds.length !== ctx.session.user.eventsFavorite.length) {
+            ctx.logger.warn(`Favorites in session ${ctx.session.user.eventsFavorite.join(',')} != ${eventIds.join(',')}`)
+        }
+        return eventIds.slice(offset, offset + limit)
     }
 
     async getTotal(ctx: ContextMessageUpdate, snapshotFavoriteIds: void): Promise<number> {

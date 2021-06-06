@@ -14,17 +14,18 @@ const ctxI18n: CtxI18n = {
 
 const now = date('2020-01-03 12:00')
 
-async function assertFavoriteTimeFormat(expected: string, timetable: string, tag: 'i'|'s' = 'i') {
+async function assertFavoriteTimeFormat(expected: string, timetable: string, tag: 'i' | 's' | '' = 'i') {
     const msg = await formatListOfFavorites(ctxI18n, [
         {
             category: 'exhibitions',
             title: 'title',
             place: 'place',
             url: 'https://example.com',
-            parsedTimetable: parseAndPredictTimetable(timetable, now, { SCHEDULE_DAYS_AGO: 14, SCHEDULE_DAYS_AHEAD: 14 })
+            parsedTimetable: parseAndPredictTimetable(timetable, now, {SCHEDULE_DAYS_AGO: 14, SCHEDULE_DAYS_AHEAD: 14}),
+            tag_level_1: []
         }
     ], now)
-    expect(msg).toContain(`<${tag}>${expected}</${tag}>`)
+    expect(msg).toContain(tag ? `<${tag}>${expected}</${tag}>` : expected)
 }
 
 describe('format favorites cards', () => {
@@ -38,11 +39,11 @@ describe('format favorites cards', () => {
         await assertFavoriteTimeFormat('до 15 января', '1-15 января: пн-вс: 12:00')
     })
     test('In past', async () => {
-        await assertFavoriteTimeFormat('title (прошло 01 января)', '1 января: 12:00', 's')
+        await assertFavoriteTimeFormat('title (прошло 01 января)', '1 января: 12:00', '')
     })
 
     test('Only weekdays', async () => {
-        await assertFavoriteTimeFormat('пн-пт', 'пн-пт: 12:00')
+        await assertFavoriteTimeFormat('пн–пт,вс', 'пн–пт,вс: 12:00')
     })
 
     test('Anytime', async () => {

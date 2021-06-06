@@ -84,7 +84,6 @@ export class BotConfig {
      */
     public readonly DEFAULT_PACK_HIDE_WHEN_LESS_THEN_EVENTS = 2
 
-    public CARD_TAG_TOGGLE_STYLE: TagStyle
     public FEATURE_GEO: boolean
 
     /**
@@ -242,8 +241,6 @@ export class BotConfig {
         boolean('AGRESSIVE_LOG', false)
         boolean('LISTEN_DIRECT_ON_HTTPS', false)
 
-
-        this.CARD_TAG_TOGGLE_STYLE = (envVars.CARD_TAG_TOGGLE_STYLE ? envVars.CARD_TAG_TOGGLE_STYLE : 'none') as TagStyle
         this.WEBHOOK_HOST = envVars.WEBHOOK_HOST || `${this.HEROKU_APP_NAME}.herokuapp.com`
     }
 

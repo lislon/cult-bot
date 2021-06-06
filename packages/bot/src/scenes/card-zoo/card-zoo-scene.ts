@@ -2,7 +2,7 @@ import { Composer, Scenes } from 'telegraf'
 import { SliderConfig, SliderPager } from '../shared/slider-pager'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { LimitOffset } from '../../database/db'
-import { i18nSceneHelper } from '../../util/scene-helper'
+import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { cardDesignLibrary } from '../../lib/card-format/card-design-library'
 import { replyWithBackToMainMarkup } from '../shared/shared-logic'
@@ -51,14 +51,16 @@ scene
     .enter(async ctx => {
         await replyWithBackToMainMarkup(ctx, i18Msg(ctx, 'welcome'))
         const state = await slider.updateState(ctx, { state: null })
-        await slider.showOrUpdateSlider(ctx, state)
+        await slider.showOrUpdateSlider(ctx, state, {forceNewMsg: true})
     })
     .use(slider.middleware())
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot
         .command('card_zoo', async ctx => {
-            await ctx.scene.enter('card_zoo_scene')
+            if (isAdmin(ctx)) {
+                await ctx.scene.enter('card_zoo_scene')
+            }
         })
 }
 

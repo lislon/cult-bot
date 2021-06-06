@@ -101,6 +101,7 @@
     "esm": "^3.2.25",
     "njwt": "^1.0.0",
     "nodemon": "^2.0.4",
+    "ts-mockito": "^2.6.1",
     "typegram": "^3.2.3"
   },
   "engines": {

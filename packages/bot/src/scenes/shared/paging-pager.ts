@@ -4,11 +4,12 @@ import { SessionEnforcer } from './shared-logic'
 import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 
 import { LimitOffset } from '../../database/db'
-import { EventsPagerSliderBase, PagerSliderState, PagingCommonConfig } from './events-common'
+import { PagerSliderState, PagingCommonConfig } from './events-common'
 import { getLikesRow, LIKES_EVENT_ACTION_PREFIXES } from '../likes/likes-common'
 import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
 import { InlineKeyboardButton } from 'typegram'
+import { EventsPagerSliderBase } from './events-slider-base'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg} = i18nSceneHelper(scene)

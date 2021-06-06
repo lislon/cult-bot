@@ -5,11 +5,11 @@ Feature: Slider
     Given Scene is 'tops_scene'
     Given bot config SLIDER_MAX_IDS_CACHED=2
     Given there is events:
-      | title | category | timetable | rating |
-      | A     | theaters | вс: 15:00 | 5      |
-      | B     | theaters | вс: 16:00 | 4      |
-      | C     | theaters | вс: 17:00 | 3      |
-      | D     | theaters | вс: 18:00 | 2      |
+      | title | category | timetable            | tag_level_3 | rating |
+      | A     | theaters | 5 января 2020: 15:00 | #tag3       | 5      |
+      | B     | theaters | 5 января 2020: 16:00 | #tag3       | 4      |
+      | C     | theaters | 5 января 2020: 17:00 | #tag3       | 3      |
+      | D     | theaters | 5 января 2020: 18:00 | #tag3       | 2      |
     When I click markup [~tops_scene.theaters]
     Then Bot responds something
     Then Bot responds with slider with event 'A'
@@ -33,7 +33,7 @@ Feature: Slider
     Then Bot edits text '*Не осталось событий в этой подборке*'
 
 
-  Scenario: Can click next like crazy
+  Scenario: Can click next and cards cache will update
     When I click slider next
     Then Bot edits slider with event 'B'
     When I click slider next
@@ -45,3 +45,8 @@ Feature: Slider
 
   Scenario: I can toggle between extended and small card
     When I click slider next
+    Then Bot edits text not contains '#tag3'
+    When I click inline [# 2 / 4]
+    Then Bot edits text '*#tag3*'
+    When I click inline [# 2 / 4]
+    Then Bot edits text not contains '#tag3'

@@ -14,17 +14,17 @@ import {
     getTopEventCount,
     getTopRangeInterval,
     prepareSessionStateIfNeeded,
-    TopEventsStageQuery
+    TopEventsStageQuery, TopsSceneState
 } from './tops-common'
 
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('tops_scene')
-const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
+const {actionName, i18nModuleBtnName, i18Btn, i18Msg} = i18nSceneHelper(scene)
 
 const pager = new SliderPager<TopEventsStageQuery>(new TopsPagerConfig())
 
 
-const backMarkup = (ctx: ContextMessageUpdate) => {
+const backMarkup = () => {
     const btn = Markup.button.text(backToMainButtonTitle())
     return Markup.keyboard([btn]).resize()
 }
@@ -80,9 +80,9 @@ async function showExhibitionsSubMenu(ctx: ContextMessageUpdate) {
     )
 }
 
-async function showEventsFirstTime(ctx: ContextMessageUpdate) {
+async function showEventsFirstTime(ctx: ContextMessageUpdate, query: TopEventsStageQuery) {
     const range = getTopRangeInterval(ctx)
-    const total = await getTopEventCount(ctx, ctx.session.topsScene, range)
+    const total = await getTopEventCount(ctx, query, range)
 
     await warnAdminIfDateIsOverriden(ctx)
 
@@ -90,10 +90,10 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
 
     if (total > 0) {
         const tplData = {
-            cat: i18Msg(ctx, `keyboard.${ctx.session.topsScene.submenuSelected ? ctx.session.topsScene.submenuSelected : ctx.session.topsScene.cat}`)
+            cat: i18Msg(ctx, `keyboard.${query.submenuSelected ? query.submenuSelected : query.cat}`)
         }
 
-        let humanDateRange = ''
+        let humanDateRange: string
         let templateName
 
         if (isSameDay(ctx.now(), rangeHuman.end)) {
@@ -107,32 +107,37 @@ async function showEventsFirstTime(ctx: ContextMessageUpdate) {
             templateName = 'let_me_show_next_weekend'
         }
 
-        await ctx.replyWithHTML(i18Msg(ctx, templateName, {humanDateRange, ...tplData}), backMarkup(ctx))
+        await ctx.replyWithHTML(i18Msg(ctx, templateName, {humanDateRange, ...tplData}), backMarkup())
 
         await sleep(70)
         const sliderState = await pager.updateState(ctx, {
-            state: ctx.session.topsScene,
+            state: query,
             total
         })
         await pager.showOrUpdateSlider(ctx, sliderState, {
             forceNewMsg: true
         })
     } else {
-        await ctx.replyWithHTML(i18Msg(ctx, 'nothing_found_in_interval', intervalTemplateParams(range)), backMarkup(ctx))
+        await ctx.replyWithHTML(i18Msg(ctx, 'nothing_found_in_interval', intervalTemplateParams(range)), backMarkup())
     }
 }
 
-function trackUa(ctx: ContextMessageUpdate) {
-    ctx.ua.pv(analyticsTopParams(ctx.session.topsScene))
+function trackUa(ctx: ContextMessageUpdate, topSceneState: TopsSceneState): void {
+    if (topSceneState.cat !== undefined) {
+        ctx.ua.pv(analyticsTopParams({
+            cat: topSceneState.cat,
+            submenuSelected: topSceneState.submenuSelected
+        }))
+    }
 }
 
 scene
     .enter(async ctx => {
         const {msg, markupMainMenu} = content(ctx)
-        await prepareSessionStateIfNeeded(ctx)
+        const topSceneState = await prepareSessionStateIfNeeded(ctx)
 
-        ctx.session.topsScene.isWatchingEvents = false
-        ctx.session.topsScene.isInSubMenu = false
+        topSceneState.isWatchingEvents = false
+        topSceneState.isInSubMenu = false
 
         await ctx.replyWithHTML(msg, markupMainMenu)
         ctx.ua.pv({dp: '/top/', dt: 'Рубрики'})
@@ -148,34 +153,32 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
 
     for (const cat of ['theaters', 'movies', 'events', 'walks', 'concerts', 'exhibitions_temp', 'exhibitions_perm']) {
         bot.hears(i18nModuleBtnName(cat), async ctx => {
-            await prepareSessionStateIfNeeded(ctx)
-            if (cat === 'exhibitions_temp' || cat === 'exhibitions_perm') {
-                ctx.session.topsScene.cat = 'exhibitions'
-                ctx.session.topsScene.submenuSelected = cat
-            } else {
-                ctx.session.topsScene.cat = cat as EventCategory
-                ctx.session.topsScene.submenuSelected = undefined
-            }
-            ctx.session.topsScene.isWatchingEvents = true
-            ctx.session.topsScene.isInSubMenu = false
-            await showEventsFirstTime(ctx)
+            const topSceneState = await prepareSessionStateIfNeeded(ctx)
+            topSceneState.isWatchingEvents = true
+            topSceneState.isInSubMenu = false
+
+            const isExhibition = cat === 'exhibitions_temp' || cat === 'exhibitions_perm'
+            await showEventsFirstTime(ctx, {
+                cat: isExhibition ? 'exhibitions' : cat as EventCategory,
+                submenuSelected: isExhibition ? (cat === 'exhibitions_temp' ? 'exhibitions_temp' : 'exhibitions_perm') : undefined
+            })
         })
     }
     bot
         .hears(i18nModuleBtnName('exhibitions'), async ctx => {
-            await prepareSessionStateIfNeeded(ctx)
-            ctx.session.topsScene.isInSubMenu = true
-            ctx.session.topsScene.cat = 'exhibitions'
+            const topSceneState = await prepareSessionStateIfNeeded(ctx)
+            topSceneState.isInSubMenu = true
+            topSceneState.cat = 'exhibitions'
             await showExhibitionsSubMenu(ctx)
-            trackUa(ctx)
+            trackUa(ctx, topSceneState)
         })
         .action(actionName('back_inline'), async ctx => {
-            await prepareSessionStateIfNeeded(ctx)
+            const topSceneState = await prepareSessionStateIfNeeded(ctx)
             await ctx.answerCbQuery()
-            if (ctx.session.topsScene.submenuSelected !== undefined) {
-                ctx.session.topsScene.submenuSelected = undefined
+            if (topSceneState.submenuSelected !== undefined) {
+                topSceneState.submenuSelected = undefined
                 await showExhibitionsSubMenu(ctx)
-            } else if (ctx.session.topsScene.isWatchingEvents) {
+            } else if (topSceneState.isWatchingEvents) {
                 await ctx.scene.enter('tops_scene')
             } else {
                 await ctx.scene.enter('main_scene')
@@ -184,7 +187,7 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
         .use(pager.middleware())
 }
 
-export const topsScene : SceneRegister = {
+export const topsScene: SceneRegister = {
     scene,
     postStageActionsFn
 }

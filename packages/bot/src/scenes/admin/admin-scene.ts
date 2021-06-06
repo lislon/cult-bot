@@ -96,41 +96,6 @@ scene
             ['x', 'e', 'π', 'φ', 'γ'],
             { is_anonymous: false })
     })
-    .command('redis_reset', async ctx => {
-        async function countKeys() {
-            return (await getRedis().keys('*')).length
-        }
-
-        if (isDev(ctx)) {
-            if (sessionSafeDestroyCounter-- === 0) {
-                sessionSafeDestroyCounter = 3
-                const keysBefore = await countKeys()
-                await getRedis().flushdb()
-                await ctx.reply(`Done. ${keysBefore} -> ${await countKeys()} keys`)
-            } else {
-                await ctx.reply(`type ${ctx.message.text} again (${sessionSafeDestroyCounter})`)
-            }
-        }
-    })
-    .command('redis_backup', async ctx => {
-        if (isDev(ctx)) {
-            const keys = await getRedis().keys('*')
-            await ctx.reply(`Готовим... ${keys.length} сессий`)
-
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const backupRows: any = {}
-            for (const key of keys) {
-                const data = await getRedis().get(key)
-                backupRows[key] = data
-            }
-            const buffer = Buffer.from(JSON.stringify(backupRows, undefined, 2))
-            await ctx.replyWithDocument({
-                source: buffer,
-                filename: `sessions-${botConfig.HEROKU_APP_NAME}-${format(new Date(), 'yyyy-MM-dd--HH-mm-ss')}.json`
-            })
-            ctx.session.adminScene.reddisBackupIsDone = true
-        }
-    })
     .on('message', async (ctx, next) => {
         const msg = ctx.message
         if (isDocumentMessage(msg) && isDev(ctx)) {
@@ -387,6 +352,43 @@ function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
         .command('pl', async ctx => {
             const limit = +ctx.message.text.replace(/[^\d]/g, '')
             return await formatPartnerLinks(ctx, await db.repoReferral.list(), isNaN(limit) ? undefined : limit)
+        })
+        .command('redis_reset', async ctx => {
+            async function countKeys() {
+                return (await getRedis().keys('*')).length
+            }
+
+            if (isDev(ctx)) {
+                if (sessionSafeDestroyCounter-- === 0) {
+                    sessionSafeDestroyCounter = 3
+                    const keysBefore = await countKeys()
+                    setTimeout(async () => {
+                        await getRedis().flushdb()
+                        await ctx.reply(`Done. ${keysBefore} -> ${await countKeys()} keys for ${botConfig.HEROKU_APP_NAME}`)
+                    }, 1000)
+                } else {
+                    await ctx.reply(`type ${ctx.message.text} again (${sessionSafeDestroyCounter}) for ${botConfig.HEROKU_APP_NAME}`)
+                }
+            }
+        })
+        .command('redis_backup', async ctx => {
+            if (isDev(ctx)) {
+                const keys = await getRedis().keys('*')
+                await ctx.reply(`Готовим... ${keys.length} сессий`)
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const backupRows: any = {}
+                for (const key of keys) {
+                    const data = await getRedis().get(key)
+                    backupRows[key] = data
+                }
+                const buffer = Buffer.from(JSON.stringify(backupRows, undefined, 2))
+                await ctx.replyWithDocument({
+                    source: buffer,
+                    filename: `sessions-${botConfig.HEROKU_APP_NAME}-${format(new Date(), 'yyyy-MM-dd--HH-mm-ss')}.json`
+                })
+                ctx.session.adminScene.reddisBackupIsDone = true
+            }
         })
 
     bot.use(Composer.optional(ctx => isAdmin(ctx), adminGlobalCommands))

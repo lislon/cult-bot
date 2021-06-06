@@ -21,6 +21,7 @@ export interface MockEvent {
     timetable: string
     tag_level_1: string[]
     tag_level_2: TagLevel2[]
+    tag_level_3: string[]
     rating: number
     anytime: boolean
     order_rnd?: number
@@ -41,6 +42,7 @@ export function getMockEvent({
                                  timetable = 'пн-вт: 15:00-18:00',
                                  tag_level_1 = [],
                                  tag_level_2 = [],
+                                 tag_level_3 = [],
                                  rating = 5,
                                  anytime = false,
                                  order_rnd = undefined,
@@ -63,7 +65,7 @@ export function getMockEvent({
         url: '',
         tag_level_1: tag_level_1,
         tag_level_2: tag_level_2,
-        tag_level_3: [],
+        tag_level_3: tag_level_3,
         rating: rating,
         reviewer: reviewer,
         geotag: '',

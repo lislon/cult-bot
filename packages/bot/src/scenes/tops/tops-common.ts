@@ -7,16 +7,18 @@ import { Scenes } from 'telegraf'
 import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('tops_scene')
-const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)
+const {i18Msg} = i18nSceneHelper(scene)
 
 export type SubMenuVariants = 'exhibitions_temp' | 'exhibitions_perm'
 
 export interface TopEventsStageQuery {
     cat: EventCategory
-    submenuSelected: SubMenuVariants
+    submenuSelected?: SubMenuVariants
 }
 
-export interface TopsSceneState extends TopEventsStageQuery {
+export interface TopsSceneState {
+    cat?: EventCategory
+    submenuSelected?: SubMenuVariants
     isWatchingEvents: boolean
     isInSubMenu: boolean
 }
@@ -28,7 +30,7 @@ function getRubrics(ctx: ContextMessageUpdate, query: TopEventsStageQuery) {
     return []
 }
 
-export function getTopRangeInterval(ctx: ContextMessageUpdate) {
+export function getTopRangeInterval(ctx: ContextMessageUpdate): DateInterval {
     return getNextWeekendRange(ctx.now())
 }
 
@@ -49,7 +51,7 @@ export async function getTopEventCount(ctx: ContextMessageUpdate, query: TopEven
     })
 }
 
-export async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
+export async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate): Promise<TopsSceneState> {
     if (!ctx.scene.current) {
         await ctx.scene.enter('tops_scene', undefined, true)
     }
@@ -67,9 +69,10 @@ export async function prepareSessionStateIfNeeded(ctx: ContextMessageUpdate) {
         cat: cat,
         submenuSelected,
     }
+    return ctx.session.topsScene
 }
 
-export function analyticsTopParams(stageQuery: TopEventsStageQuery) {
+export function analyticsTopParams(stageQuery: TopEventsStageQuery): { dt: string; dp: string } {
     const rubName = {
         'exhibitions_temp': 'Временные',
         'exhibitions_perm': 'Постояннные',

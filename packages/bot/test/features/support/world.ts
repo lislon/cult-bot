@@ -2,7 +2,6 @@ import { setWorldConstructor } from '@cucumber/cucumber'
 import middlewares, { myRegisterScene } from '../../../src/middleware-utils'
 import { ContextMessageUpdate } from '../../../src/interfaces/app-interfaces'
 import { customizeScene } from '../../../src/scenes/customize/customize-scene'
-import { BotReply, TelegramMockServer } from '../lib/TelegramMockServer'
 import { topsScene } from '../../../src/scenes/tops/tops-scene'
 import { feedbackScene } from '../../../src/scenes/feedback/feedback-scene'
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
@@ -19,6 +18,9 @@ import { adminScene } from '../../../src/scenes/admin/admin-scene'
 import { performanceMiddleware } from '../../../src/lib/middleware/performance-middleware'
 import { Composer, Middleware, MiddlewareFn, Scenes, session, Telegraf } from 'telegraf'
 import { cardZooScene } from '../../../src/scenes/card-zoo/card-zoo-scene'
+import { BotReply, TelegramServerMock } from '../../util/telegram-server-mock'
+import { KeyboardButton } from 'typegram'
+import CommonButton = KeyboardButton.CommonButton
 
 const noImg = (btnText: string) => btnText.replace(/[^\wа-яА-ЯёЁ ]/g, '').trim()
 
@@ -30,7 +32,7 @@ class CustomWorld {
 
     private bot = new Telegraf<ContextMessageUpdate>('')
     private now: Date = new Date()
-    public readonly server = new TelegramMockServer()
+    public readonly server = new TelegramServerMock()
     private middlewaresBeforeScenes: MiddlewareFn<ContextMessageUpdate>[] = []
     private analyticsRecorder = new AnalyticsRecorder()
 
@@ -78,7 +80,7 @@ class CustomWorld {
         this.bot.catch(botErrorHandler)
     }
 
-    async initTestCase(testCase: ITestCaseHookParameter) {
+    async worldInitTestCase(testCase: ITestCaseHookParameter) {
     }
 
     private executeFeaturesMiddlewares() {
@@ -88,44 +90,44 @@ class CustomWorld {
         }
     }
 
-    async enterScene(scene: string) {
+    async worldEnterScene(scene: string) {
         await this.server.enterScene(this.bot, scene)
     }
 
-    async sendMessage(text: string) {
+    async worldSendMessage(text: string) {
         await this.server.sendMessage(this.bot, text)
     }
 
-    async start(payload: string) {
+    async worldStart(payload: string) {
         await this.server.start(this.bot, payload)
     }
 
-    async clickMarkup(buttonText: string) {
+    async worldClickMarkup(buttonText: string) {
         const {message, buttons} = this.server.getListOfMarkupButtonsFromLastMsg()
 
         const btnTextTransformed = MarkupHelper.replaceI18nBtnsWithoutBraces(buttonText)
         const foundButton = buttons.find(btn => noImg(btn.text) === noImg(btnTextTransformed))
         if (foundButton === undefined) {
-            throw new Error(`Cant find '${buttonText}' markup buttons. List of good buttons: ${buttons.map(b => `'${b.text}'`).join(', ')}`)
+            throw new Error(`Cant find '${buttonText}' markup buttons. List of good buttons: ${CustomWorld.makeListOfButtons(buttons)}`)
         }
 
         await this.server.sendMessage(this.bot, foundButton.text)
     }
 
-    async clickInline(buttonText: string) {
+    async worldClickInline(buttonText: string) {
         const {message, buttons} = this.server.getListOfInlineButtonsFromLastMsg()
         let matchButtons = buttons.filter(btn => noImg(btn.text) === noImg(MarkupHelper.replaceI18nBtnsWithoutBraces(buttonText)))
         if (matchButtons.length > 1) {
             matchButtons = buttons.filter(btn => btn.text === buttonText)
         }
         if (matchButtons.length === 0) {
-            throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: ${buttons.map(b => `'${b.text}'`).join(', ')}`)
+            throw new Error(`Cant find '${buttonText}' inline buttons. List of good buttons: ${CustomWorld.makeListOfButtons(buttons)}`)
         }
 
         await this.server.clickInline(this.bot, matchButtons[0].callback_data, message)
     }
 
-    async setNow(now: Date) {
+    async worldSetNow(now: Date) {
         this.now = now
         const setDate = async (ctx: ContextMessageUpdate, next: any) => {
             ctx.session.adminScene = {
@@ -137,41 +139,45 @@ class CustomWorld {
         await this.server.sendInitialUpdate(this.compose(setDate))
     }
 
-    useBeforeScenes(middleware: MiddlewareFn<ContextMessageUpdate>) {
+    worldUseBeforeScenes(middleware: MiddlewareFn<ContextMessageUpdate>) {
         this.middlewaresBeforeScenes.push(middleware)
     }
 
-    getLastCbQuery(): string {
+    worldGetLastCbQuery(): string | true {
         return this.server.getLastCbQuery()
     }
 
-    getNextMsg(): BotReply {
+    worldGetNextMsg(): BotReply {
         const next = this.server.replyIterator().next()
         if (isUselessMessage(next)) {
-            return this.getNextMsg()
+            return this.worldGetNextMsg()
         }
         return next.value
     }
 
-    getNextMsgOtherChat(): BotReply {
+    worldGetNextMsgOtherChat(): BotReply {
         const next = this.server.replyIteratorOtherChat().next()
         return next.value
     }
 
-    getLastEditedInline(): BotReply {
+    worldGetLastEditedInline(): BotReply {
         return this.server.getLastEditedInline()
     }
 
-    ctx(): ContextMessageUpdate {
+    worldCtx(): ContextMessageUpdate {
         return this.server.ctx()
     }
 
-    blockBotByUser() {
+    worldBlockBotByUser() {
         this.server.blockBotByUser()
     }
 
     private compose(middleware: Middleware<ContextMessageUpdate>) {
         return Composer.compose([this.bot.middleware(), middleware])
+    }
+
+    private static makeListOfButtons(buttons: CommonButton[]): string {
+        return buttons.length > 0 ? buttons.map(b => `'${b.text}'`).join(', ') : '<none>'
     }
 }
 
