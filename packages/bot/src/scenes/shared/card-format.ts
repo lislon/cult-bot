@@ -112,7 +112,7 @@ function isOnline(row: Pick<Event, 'tag_level_1' | 'url' | 'address'>): boolean 
 }
 
 export function formatUrlText(row: Pick<Event, 'tag_level_1' | 'url' | 'address'>): string {
-    if (decodeTagsLevel1(row.tag_level_1).find(s => ['#подкаст', '#аудиоэкскурсия'].includes(s))) {
+    if (decodeTagsLevel1(row.tag_level_1).find(s => ['#подкаст', '#аудиоэкскурсия', '#аудиоспектакль'].includes(s))) {
         return 'к аудио'
     } else if (isOnline(row)) {
         return 'к видео'
