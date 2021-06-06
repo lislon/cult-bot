@@ -34,7 +34,7 @@ export interface FavoriteEvent extends Event {
     isFuture: boolean
 }
 
-async function getMainMenu(ctx: ContextMessageUpdate) {
+async function getMainMenu(ctx: ContextMessageUpdate): Promise<{ msg: string; buttons: InlineKeyboardButton.CallbackButton[][] }> {
     let msg
     let buttons: InlineKeyboardButton.CallbackButton[][] = []
     const events = sortFavorites(await loadEventsAsFavorite(ctx.session.user.eventsFavorite, ctx.now()))

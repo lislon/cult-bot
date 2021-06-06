@@ -20,6 +20,7 @@ async function assertFavoriteTimeFormat(expected: string, timetable: string, tag
             category: 'exhibitions',
             title: 'title',
             place: 'place',
+            address: 'address',
             url: 'https://example.com',
             parsedTimetable: parseAndPredictTimetable(timetable, now, {SCHEDULE_DAYS_AGO: 14, SCHEDULE_DAYS_AHEAD: 14}),
             tag_level_1: []

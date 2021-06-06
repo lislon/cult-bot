@@ -13,12 +13,15 @@ import { isAfter } from 'date-fns'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 
-const {i18SharedMsg, i18Btn, i18Msg, i18SharedBtn, backButton, actionName, actionNameRegex} = i18nSceneHelper(scene)
+const {i18SharedMsg, i18Msg} = i18nSceneHelper(scene)
 
-type FavoriteEventForFormat = Pick<FavoriteEvent, 'place' | 'url' | 'title' | 'category' | 'parsedTimetable' | 'tag_level_1'>
+type FavoriteEventForFormat = Pick<FavoriteEvent, 'place' | 'url' | 'title' | 'category' | 'parsedTimetable' | 'tag_level_1' | 'address'>
 
 function isOnlyWeekdaysSet(event: FavoriteEventForFormat) {
-    const { weekTimes, dateRangesTimetable, datesExact, anytime} = event.parsedTimetable.parsedTimetable
+    if (!event.parsedTimetable.parsedTimetable) {
+        return false
+    }
+    const {weekTimes, dateRangesTimetable, datesExact, anytime} = event.parsedTimetable.parsedTimetable
     return weekTimes.length > 0 && dateRangesTimetable.length === 0 && anytime === false && datesExact.length === 0
 }
 
@@ -56,16 +59,30 @@ function formatPastDate(event: FavoriteEventForFormat) {
     }
 }
 
+const MAX_CARD_LEN = 4096
+
+function removeTags(str: string | null): string {
+    if ((str === null) || (str === ''))
+        return ''
+    else
+        str = str.toString()
+
+    // Regular expression to identify HTML tags in
+    // the input string. Replacing the identified
+    // HTML tag with a null string.
+    return str.replace(/(<([^>]+)>)/ig, '')
+}
+
 export async function formatListOfFavorites(ctx: CtxI18n, events: FavoriteEventForFormat[], now: Date): Promise<string> {
     const [activeEvents, pastEvents] = partition(events, e => isEventEndsInFuture(e.parsedTimetable.predictedIntervals, now))
 
     const activeEventsLines = activeEvents.map(event => {
         const details = []
         if (!fieldIsQuestionMarkOrEmpty(event.place)) {
-            details.push(`🌐 ${addHtmlNiceUrls(escapeHTML(event.place))}`)
+            details.push(`${addHtmlNiceUrls(escapeHTML(event.place))}`)
         }
         if (!fieldIsQuestionMarkOrEmpty(event.url)) {
-            details.push(`${wrapInUrl(` + ${formatUrlText(event)}`, event.url)}`)
+            details.push(`${wrapInUrl(`+ ${formatUrlText(event)}`, event.url)}`)
         }
 
         const icon = i18SharedMsg(ctx, 'category_icons.' + event.category)
@@ -87,12 +104,23 @@ export async function formatListOfFavorites(ctx: CtxI18n, events: FavoriteEventF
         })
     })
 
-    let allLines = activeEventsLines;
+    let allLines = activeEventsLines
 
     if (pastEventsLines.length > 0) {
         allLines = [...allLines, i18Msg(ctx, 'past_events_header'), ...pastEventsLines]
     }
-    return allLines.join('\n')
+
+    let maxLines = 0
+    for (let totalLength = 0; maxLines < allLines.length; maxLines++) {
+        if (allLines[maxLines].length + totalLength > MAX_CARD_LEN) {
+            break
+        }
+        totalLength += allLines[maxLines].length
+    }
+    if (maxLines === allLines.length) {
+        return allLines.join('\n')
+    }
+    return [...allLines.slice(0, maxLines), i18Msg(ctx, 'overflow', {count: allLines.length - maxLines})].join('\n')
 }
 
 function nearestDate(now: Date, event: Pick<FavoriteEvent, 'parsedTimetable'>): Date|undefined {

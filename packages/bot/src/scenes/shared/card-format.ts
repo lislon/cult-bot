@@ -107,17 +107,21 @@ export function wrapInUrl(content: string, url: string): string {
     return `<a href="${url}">${content}</a>`
 }
 
-export function formatUrlText(row: Pick<Event, 'tag_level_1'|'url'>): string {
+function isOnline(row: Pick<Event, 'tag_level_1' | 'url' | 'address'>): boolean {
+    return row.tag_level_1.includes('#онлайн') || row.address === 'онлайн'
+}
+
+export function formatUrlText(row: Pick<Event, 'tag_level_1' | 'url' | 'address'>): string {
     if (decodeTagsLevel1(row.tag_level_1).find(s => ['#подкаст', '#аудиоэкскурсия'].includes(s))) {
         return 'к аудио'
-    } else if (row.tag_level_1.includes('#онлайн')) {
+    } else if (isOnline(row)) {
         return 'к видео'
     } else {
         return 'подробнее'
     }
 }
 
-function formatCardUrl(row: Pick<Event, 'tag_level_1'|'url'>): string {
+function formatCardUrl(row: Pick<Event, 'tag_level_1' | 'url' | 'address'>): string {
     if (!fieldIsQuestionMarkOrEmpty(row.url)) {
         return `${wrapInUrl(` + ${formatUrlText(row)}`, row.url)}\n`
     }
