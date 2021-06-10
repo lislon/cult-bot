@@ -15,7 +15,7 @@ import { parseDurationSimple } from '../../lib/duration-parser'
 
 const debug = debugNamespace('bot:card-format')
 
-export function addHtmlNiceUrls(text: string): string {
+export function markupUrlsToHtml(text: string): string {
     return text.replace(/\[(.+?)\]\s*\(([^)]+)\)/g, '<a href="$2">$1</a>')
 }
 
@@ -102,7 +102,7 @@ function isCardWithPossiblePast(row: Event | EventWithPast): row is EventWithPas
 
 export function wrapInUrl(content: string, url: string): string {
     if (fieldIsQuestionMarkOrEmpty(url) || hasUrlsInside(content)) {
-        return addHtmlNiceUrls(content)
+        return markupUrlsToHtml(content)
     }
     return `<a href="${url}">${content}</a>`
 }
@@ -111,21 +111,18 @@ function isOnline(row: Pick<Event, 'tag_level_1' | 'url' | 'address'>): boolean 
     return row.tag_level_1.includes('#онлайн') || row.address === 'онлайн'
 }
 
-export function formatUrlText(row: Pick<Event, 'tag_level_1' | 'url' | 'address'>): string {
-    if (decodeTagsLevel1(row.tag_level_1).find(s => ['#подкаст', '#аудиоэкскурсия', '#аудиоспектакль'].includes(s))) {
-        return 'к аудио'
+export function formatCardUrl(row: Pick<Event, 'tag_level_1' | 'url' | 'address'>): string {
+    if (fieldIsQuestionMarkOrEmpty(row.url)) {
+        return ``
+    } else if (hasUrlsInside(row.url)) {
+        return `+ ` + markupUrlsToHtml(row.url)
+    } else if (decodeTagsLevel1(row.tag_level_1).find(s => ['#подкаст', '#аудиоэкскурсия', '#аудиоспектакль'].includes(s))) {
+        return wrapInUrl('+ к аудио', row.url)
     } else if (isOnline(row)) {
-        return 'к видео'
+        return wrapInUrl('+ к видео', row.url)
     } else {
-        return 'подробнее'
+        return wrapInUrl('+ подробнее', row.url)
     }
-}
-
-function formatCardUrl(row: Pick<Event, 'tag_level_1' | 'url' | 'address'>): string {
-    if (!fieldIsQuestionMarkOrEmpty(row.url)) {
-        return `${wrapInUrl(` + ${formatUrlText(row)}`, row.url)}\n`
-    }
-    return ''
 }
 
 function formatTagLevel1(row: Event, tagLevel1: string[]) {
@@ -143,7 +140,7 @@ function formatPriceLine(row: Event): string {
         priceLine.push(escapeHTML(formatDuration(parseDurationSimple(row.duration))))
     }
     if (!fieldIsQuestionMarkOrEmpty(row.price)) {
-        priceLine.push(addHtmlNiceUrls(escapeHTML(formatPrice(parsePrice((row.price))))))
+        priceLine.push(markupUrlsToHtml(escapeHTML(formatPrice(parsePrice((row.price))))))
     }
     if (priceLine.length > 0) {
         return `<i>${priceLine.join(' | ')}</i>\n`
@@ -212,15 +209,15 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
 
     text += formatTimetable(row, options)
     text += formatPriceLine(row)
-    text += formatCardUrl(row)
+    text += fieldIsQuestionMarkOrEmpty(row.url) ? '' : ` ${formatCardUrl(row)}\n`
 
     text += '\n'
-    text += `${strikeIfDeleted(addHtmlNiceUrls(escapeHTML(row.description)), options)}\n`
+    text += `${strikeIfDeleted(markupUrlsToHtml(escapeHTML(row.description)), options)}\n`
     text += '\n'
 
 
     if (!fieldIsQuestionMarkOrEmpty(row.place)) {
-        text += `<b>${addHtmlNiceUrls(escapeHTML(row.place))}</b>\n`
+        text += `<b>${markupUrlsToHtml(escapeHTML(row.place))}</b>\n`
     }
 
     if (!fieldIsQuestionMarkOrEmpty(row.address)) {
@@ -228,7 +225,7 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
     }
 
     if (!fieldIsQuestionMarkOrEmpty(row.notes) && options.showDetails) {
-        text += `<b>Особенности:</b> ${addHtmlNiceUrls(escapeHTML(row.notes))}\n`
+        text += `<b>Особенности:</b> ${markupUrlsToHtml(escapeHTML(row.notes))}\n`
     }
     text += '\n'
     if (options.showDetails) {

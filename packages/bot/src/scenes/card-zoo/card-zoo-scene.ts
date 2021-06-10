@@ -57,7 +57,7 @@ scene
 
 function postStageActionsFn(bot: Composer<ContextMessageUpdate>): void {
     bot
-        .command('card_zoo', async ctx => {
+        .command('cardzoo', async ctx => {
             if (isAdmin(ctx)) {
                 await ctx.scene.enter('card_zoo_scene')
             }

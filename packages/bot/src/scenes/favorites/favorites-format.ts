@@ -4,7 +4,7 @@ import { CtxI18n, i18nSceneHelper } from '../../util/scene-helper'
 import { isEventEndsInFuture, isEventStarsInPast, ruFormat } from '../shared/shared-logic'
 import { rightDate, TimetableFormatter } from '@culthub/timetable'
 import { first, last, partition } from 'lodash'
-import { addHtmlNiceUrls, formatUrlText, wrapInUrl } from '../shared/card-format'
+import { formatCardUrl, markupUrlsToHtml } from '../shared/card-format'
 import { fieldIsQuestionMarkOrEmpty } from '../../util/misc-utils'
 import { escapeHTML } from '../../util/string-utils'
 import { botConfig } from '../../util/bot-config'
@@ -79,10 +79,10 @@ export async function formatListOfFavorites(ctx: CtxI18n, events: FavoriteEventF
     const activeEventsLines = activeEvents.map(event => {
         const details = []
         if (!fieldIsQuestionMarkOrEmpty(event.place)) {
-            details.push(`${addHtmlNiceUrls(escapeHTML(event.place))}`)
+            details.push(`${markupUrlsToHtml(escapeHTML(event.place))}`)
         }
         if (!fieldIsQuestionMarkOrEmpty(event.url)) {
-            details.push(`${wrapInUrl(`+ ${formatUrlText(event)}`, event.url)}`)
+            details.push(' ' + formatCardUrl(event))
         }
 
         const icon = i18SharedMsg(ctx, 'category_icons.' + event.category)
