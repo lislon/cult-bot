@@ -13,29 +13,29 @@ Feature: Likes
     Then Bot responds '*<b>A</b>*' with inline buttons:
       """
       [◀️] [👍] [👎] [⭐]
-      [«] [# 1 / 1] [»]
+      [«] [#] [1 / 1 »]
       """
     When I click inline [👍]
     Then Bot edits inline buttons:
       """
       [◀️] [👍 1] [👎] [⭐]
-      [«] [# 1 / 1] [»]
+      [«] [#] [1 / 1 »]
       """
     When I click inline [👍 1]
     Then Bot edits inline buttons:
       """
       [◀️] [👍] [👎] [⭐]
-      [«] [# 1 / 1] [»]
+      [«] [#] [1 / 1 »]
       """
     When I click inline [👎]
     Then Bot edits inline buttons:
       """
       [◀️] [👍] [👎 1] [⭐]
-      [«] [# 1 / 1] [»]
+      [«] [#] [1 / 1 »]
       """
     When I click inline [👍]
     Then Bot edits inline buttons:
       """
       [◀️] [👍 1] [👎] [⭐]
-      [«] [# 1 / 1] [»]
+      [«] [#] [1 / 1 »]
       """

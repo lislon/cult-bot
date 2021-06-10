@@ -46,7 +46,7 @@ Feature: Slider
   Scenario: I can toggle between extended and small card
     When I click slider next
     Then Bot edits text not contains '#tag3'
-    When I click inline [# 2 / 4]
+    When I click inline [#]
     Then Bot edits text '*#tag3*'
-    When I click inline [# 2 / 4]
+    When I click inline [#]
     Then Bot edits text not contains '#tag3'

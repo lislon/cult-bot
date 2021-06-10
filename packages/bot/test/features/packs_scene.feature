@@ -43,7 +43,7 @@ Feature: Packs scene
     Then Bot edits inline buttons:
       """
       [◀️] [👍] [👎] [⭐]
-      [«] [# 1 / 3] [»]
+      [«] [#] [1 / 3 »]
       """
     Then I click inline [◀️]
     Then Google analytics pageviews will be:

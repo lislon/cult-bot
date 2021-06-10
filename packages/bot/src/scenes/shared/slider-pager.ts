@@ -56,7 +56,7 @@ function getSliderState(ctx: ContextMessageUpdate): AllSlidersState {
 }
 
 function formatPositionText(page: number, total: number): string {
-    return i18nSharedBtnName('slider_keyboard.position', {
+    return i18nSharedBtnName('slider_keyboard.next', {
         page: page,
         total: total
     })
@@ -138,8 +138,8 @@ export class SliderPager<Q, E extends Event = Event> extends EventsPagerSliderBa
 
 
             const prevButton = Markup.button.callback(i18nSharedBtnName('slider_keyboard.prev'), this.btnActionPrev)
-            const position = Markup.button.callback(formatPositionText(state.selectedIdx + 1, state.total), this.btnActionPosition)
-            const nextButton = Markup.button.callback(i18nSharedBtnName('slider_keyboard.next'), this.btnActionNext)
+            const position = Markup.button.callback('#', this.btnActionPosition)
+            const nextButton = Markup.button.callback(formatPositionText(state.selectedIdx + 1, state.total), this.btnActionNext)
 
             let buttons: InlineKeyboardButton.CallbackButton[][] = []
 

@@ -49,10 +49,6 @@
       "keyboard": {
         "single_pack": "${title}",
         "event": "${title}",
-        "event_prev": "«",
-        "event_curr": "${page} / ${total}",
-        "event_next": "»",
-        "event_back": "◀️",
         "pack_back": "◀️ Назад",
         "pack_card_open": "Посмотреть события 📚 "
       }
@@ -493,8 +489,8 @@
       "slider_keyboard": {
         "back": "◀️",
         "prev": "«",
-        "position": "# ${page} / ${total}",
-        "next": "»"
+        "position": "#",
+        "next": "${page} / ${total} »"
       }
     },
     "category_icons": {

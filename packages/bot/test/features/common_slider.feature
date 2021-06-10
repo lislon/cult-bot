@@ -23,17 +23,17 @@ Feature: Customize navigation
     Then Bot responds '*<b>A</b>*' with inline buttons:
       """
       [◀️] [👍] [👎] [⭐]
-      [«] [# 1 / 2] [»]
+      [«] [#] [1 / 2 »]
       """
     When I click inline [«]
     Then Bot edits inline buttons:
       """
       [◀️] [👍] [👎] [⭐]
-      [«] [# 2 / 2] [»]
+      [«] [#] [2 / 2 »]
       """
-    When I click inline [»]
+    When I click inline [2 / 2 »]
     Then Bot edits inline buttons:
       """
       [◀️] [👍] [👎] [⭐]
-      [«] [# 1 / 2] [»]
+      [«] [#] [1 / 2 »]
       """

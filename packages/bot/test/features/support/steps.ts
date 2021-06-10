@@ -248,7 +248,7 @@ Then(/^Bot edits slider with event '(.+)' \[(\d+)\/(\d+)\]$/, function (eventTit
     }
 
     expect(markup.text).toContain(`<b>${eventTitle}</b>\n`)
-    expect((markup.extra.reply_markup as InlineKeyboardMarkup).inline_keyboard[1][1].text).toContain(`${page} / ${total}`)
+    expect((markup.extra.reply_markup as InlineKeyboardMarkup).inline_keyboard[1][2].text).toContain(`${page} / ${total}`)
 })
 
 Then(/^Bot responds with slider with event '(.+)'$/, function (eventTitle: string) {
