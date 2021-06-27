@@ -26,17 +26,6 @@ export const getServerSideProps: GetServerSideProps = async (context: GetServerS
 }
 
 export default function Pay(props: CreatePaymentResponse): JSX.Element {
-
-    // useEffect(() => {
-    //     const script = document.createElement('script')
-    //     script.src = 'https://securepay.tinkoff.ru/html/payForm/js/tinkoff_v2.js'
-    //     script.async = true
-    //     document.body.appendChild(script)
-    //     return () => {
-    //         document.body.removeChild(script)
-    //     }
-    // })
-
     function handleSubmit(e: FormEvent) {
         e.preventDefault()
         pay(e.target)
@@ -57,7 +46,7 @@ export default function Pay(props: CreatePaymentResponse): JSX.Element {
                 </main>
 
                 <footer className={styles.footer}>
-                    ООО Хультхаб
+                    ООО «Культхаб»
                 </footer>
             </div>
         </>
