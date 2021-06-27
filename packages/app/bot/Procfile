@@ -1,0 +1,2 @@
+release: yarn run bot:db:up
+web: yarn run bot:start

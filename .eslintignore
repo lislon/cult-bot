@@ -1,6 +1,7 @@
-packages/*/test/**/*
-packages/*/dist/
-packages/*/docs/
-packages/*/migrations/
-packages/*/secrets/
-packages/*/**/*.js
+packages/*/*/test/**/*
+packages/*/*/dist/
+packages/*/*/docs/
+packages/*/*/typings/
+packages/*/*/migrations/
+packages/*/*/secrets/
+packages/**/*.js

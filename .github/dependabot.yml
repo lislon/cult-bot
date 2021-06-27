@@ -6,7 +6,7 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/packages/bot/"
+    directory: "/packages/app/bot/"
     schedule:
       interval: "weekly"
   - package-ecosystem: "npm"
@@ -14,25 +14,29 @@ updates:
     schedule:
       interval: "weekly"
   - package-ecosystem: "npm"
-      directory: "/packages/google-docs"
+      directory: "/packages/lib/google-docs"
       schedule:
-      interval: "weekly"
+        interval: "weekly"
   - package-ecosystem: "npm"
-      directory: "/packages/pg-utils"
+      directory: "/packages/lib/pg-utils"
       schedule:
-      interval: "weekly"
+        interval: "weekly"
   - package-ecosystem: "npm"
-      directory: "/packages/timetable"
+      directory: "/packages/lib/timetable"
       schedule:
-      interval: "weekly"
+        interval: "weekly"
   - package-ecosystem: "npm"
-      directory: "/packages/universal-db-sync"
+      directory: "/packages/lib/universal-db-sync"
       schedule:
-      interval: "weekly"
+        interval: "weekly"
   - package-ecosystem: "npm"
-      directory: "/packages/yandex-afisha"
+      directory: "/packages/lib/web"
       schedule:
-      interval: "weekly"
+        interval: "weekly"
+  - package-ecosystem: "npm"
+      directory: "/packages/app/yandex-afisha"
+      schedule:
+        interval: "weekly"
   - package-ecosystem: "github-actions"
     # Workflow files stored in the
     # default location of `.github/workflows`

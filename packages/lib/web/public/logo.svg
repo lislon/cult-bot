@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 430 430">
+    <defs>
+        <style>
+            .cls-1{fill:none;}.cls-2{fill:#c8d869;}.cls-3,.cls-5,.cls-6,.cls-8,.cls-9{fill:#4e2b7d;}.cls-4{clip-path:url(#clip-path);}.cls-5,.cls-6,.cls-8{stroke:#c8d869;}.cls-5,.cls-6,.cls-8,.cls-9{stroke-miterlimit:10;}.cls-5{stroke-width:1.5px;}.cls-6{stroke-width:0.5px;}.cls-7{clip-path:url(#clip-path-2);}.cls-8{stroke-width:1.5px;}.cls-9{stroke:#4e2b7d;}
+        </style>
+        <clipPath id="clip-path">
+            <rect id="SVGID" class="cls-1" x="104.26" y="51.21" width="220.38" height="151.88"
+                  transform="matrix(1, 0, 0, 1, 0.16, -0.27)"/>
+        </clipPath>
+        <clipPath id="clip-path-2">
+            <rect id="SVGID-2" data-name="SVGID" class="cls-1" x="104.75" y="151.13" width="220.21" height="151.88"/>
+        </clipPath>
+    </defs>
+    <g id="Картинка">
+        <circle class="cls-2" cx="214.9" cy="214.73" r="215" transform="translate(-88.89 214.85) rotate(-45)"/>
+        <polygon class="cls-3"
+                 points="104.44 76.09 104.44 127.8 183.74 174.8 104.71 224.5 104.86 277.79 211.61 206.22 213.52 207.46 213.52 145.81 104.44 76.09"/>
+        <polygon class="cls-3"
+                 points="325.06 280.06 213.43 207.41 213.43 145.76 213.56 145.85 324.92 67.98 324.75 83.54 325.1 123.14 241.73 176.79 324.96 223.91 325.06 280.06"/>
+        <g class="cls-4">
+            <polygon class="cls-3"
+                     points="214.11 176.71 93.76 102.05 106.05 84.13 213.1 150.35 326.75 77.25 339.81 94.69 214.11 176.71"/>
+            <polygon class="cls-5"
+                     points="213.77 171.49 94.2 98.21 104.39 81.61 213.32 152.16 325.65 73.31 337.72 90.02 213.77 171.49"/>
+            <polygon class="cls-2"
+                     points="213.63 166.47 97.07 95.11 101.17 84.73 213.45 156.69 329.02 76.29 334.67 87.03 213.63 166.47"/>
+        </g>
+        <polygon class="cls-6"
+                 points="325.33 222.63 214.57 293.15 104.48 227.24 104.48 175.53 212.61 245.34 325.16 167.47 325.33 222.63"/>
+        <g class="cls-7">
+            <polygon class="cls-3"
+                     points="214.38 276.63 94.03 202.13 106.28 184.19 213.33 250.27 326.81 177.03 339.88 194.45 214.38 276.63"/>
+            <polygon class="cls-8"
+                     points="214.03 271.41 94.46 198.28 104.63 181.67 213.55 252.08 325.7 173.09 337.78 189.79 214.03 271.41"/>
+            <polygon class="cls-2"
+                     points="213.89 266.39 97.32 195.18 101.41 184.8 213.69 256.61 329.07 176.06 334.73 186.8 213.89 266.39"/>
+        </g>
+        <polyline class="cls-9" points="325.63 292.23 325.63 324.38 105.37 324.38 105.37 292.23"/>
+    </g>
+</svg>

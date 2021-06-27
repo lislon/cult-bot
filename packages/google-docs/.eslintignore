@@ -1,6 +1,0 @@
-test/**/*
-dist/
-docs/
-migrations/
-secrets/
-*.js

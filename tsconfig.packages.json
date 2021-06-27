@@ -12,6 +12,7 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "composite": true,
+    "skipLibCheck": true,
     "declarationMap": true,
     "declaration": true,
     "baseUrl": ".",
@@ -19,8 +20,13 @@
     "strictNullChecks": true,
     "strictBindCallApply": true,
     "jsx": "react",
+    "types": [
+      "node",
+      "@types/jest"
+    ],
     "lib": [
-      "es2020", "dom"
+      "es2020",
+      "dom"
     ]
   }
 }

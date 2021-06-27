@@ -1,0 +1,1 @@
+release: yarn run yandex-afisha:db:up

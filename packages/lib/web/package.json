@@ -1,0 +1,36 @@
+{
+  "name": "@culthub/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest --runInBand --passWithNoTests"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.35",
+    "@fortawesome/free-solid-svg-icons": "^5.15.3",
+    "@fortawesome/react-fontawesome": "^0.1.14",
+    "axios": "^0.21.1",
+    "axios-logger": "^2.5.0",
+    "dotenv": "^10.0.0",
+    "next": "11.0.0",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "sass": "^1.35.1"
+  },
+  "devDependencies": {
+    "@culthub/interfaces": "workspace:*",
+    "@types/jest": "^26.0.14",
+    "@types/node": "^15.12.2",
+    "@types/react": "17.0.11",
+    "@types/sass": "^1",
+    "eslint": "^7.29.0",
+    "eslint-config-next": "^11.0.1",
+    "jest": "26.6.0",
+    "ts-jest": "^26.4.4",
+    "typescript": "4.3.3"
+  }
+}

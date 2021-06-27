@@ -1,0 +1,7 @@
+/dist/
+/docs/
+/migrations/
+/typings/
+/test/features/support/steps.ts
+/secrets/
+/*.js
