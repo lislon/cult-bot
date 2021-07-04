@@ -194,7 +194,7 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
 
     if (row.title) {
         text += strikeIfDeleted(`<b>${escapeHTML(row.title)}</b>${(isFuture(row) ? '' : ` <i>(прошло)</i>`)}`, options)
-        text += '\n'
+        text += '\n\n'
     }
 
     if (options.deleted) {
@@ -205,13 +205,12 @@ export function cardFormat(row: Event | AdminEvent | EventWithPast, options: Car
         return text
     }
 
-    text += '\n'
+    let miniblock = ''
+    miniblock += formatTimetable(row, options)
+    miniblock += formatPriceLine(row)
+    miniblock += fieldIsQuestionMarkOrEmpty(row.url) ? '' : ` ${formatCardUrl(row)}\n`
 
-    text += formatTimetable(row, options)
-    text += formatPriceLine(row)
-    text += fieldIsQuestionMarkOrEmpty(row.url) ? '' : ` ${formatCardUrl(row)}\n`
-
-    text += '\n'
+    text += miniblock ? `${miniblock}\n` : ''
     text += `${strikeIfDeleted(markupUrlsToHtml(escapeHTML(row.description)), options)}\n`
     text += '\n'
 
