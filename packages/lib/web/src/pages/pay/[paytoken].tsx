@@ -1,7 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../@types/tinkoff.d.ts" />
 import Head from 'next/head'
-import Image from 'next/image'
 import styles from '@/src/styles/Home.module.css'
 import { PaymentForm } from '@/src/components/forms/payment/payment-form'
 import React, { FormEvent } from 'react'
