@@ -3265,6 +3265,7 @@ __metadata:
     express-json-error-handler: ^4.0.0
     googleapis: ^71.0.0
     got: ^11.8.2
+    html-entities: ^2.3.2
     image-type: ^4.1.0
     jest: 26.6.0
     lodash: ^4.17.21
@@ -7106,6 +7107,13 @@ __metadata:
   dependencies:
     whatwg-encoding: ^1.0.5
   checksum: 6f49e83a2e9225ba92c4586701cd21c0cf26c4c1f1a5f330a911c90a792649cc47b5bb3e67e78ba23dfa6b5b9c70af34231f44729b173d52b4ba305467b39042
+  languageName: node
+  linkType: hard
+
+"html-entities@npm:^2.3.2":
+  version: 2.3.2
+  resolution: "html-entities@npm:2.3.2"
+  checksum: a0bcdfdb2326d8943d43d4f5f794769f666d335f7795e82ac5140154970d82a8a1be082725bd53e18c8727821713e7d124982ed9a3463db9b0159b58bc6eff42
   languageName: node
   linkType: hard
 

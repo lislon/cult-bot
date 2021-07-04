@@ -54,6 +54,7 @@
     "express-json-error-handler": "^4.0.0",
     "googleapis": "^71.0.0",
     "got": "^11.8.2",
+    "html-entities": "^2.3.2",
     "image-type": "^4.1.0",
     "lodash": "^4.17.21",
     "md5": "^2.3.0",

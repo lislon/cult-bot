@@ -1,9 +1,10 @@
 import { SliderConfig, SliderPager } from '../../../src/scenes/shared/slider-pager'
 import { ContextMessageUpdate, Event } from '../../../src/interfaces/app-interfaces'
-import { LimitOffset } from '../../../src/database/db'
+import { db, LimitOffset } from '../../../src/database/db'
 import { MOCK_EVENT } from '../../util/mock-bot-objects'
 import { TelegramCtxMock } from '../../util/telegram-ctx-mock'
 import { botConfig } from '../../../src/util/bot-config'
+import { getMockPack } from '../../functional/db/db-test-utils'
 
 describe('Event slider', () => {
 
@@ -29,10 +30,12 @@ describe('Event slider', () => {
     test('No events', async () => {
         const sliderPager = new SliderPager(new TestDualConfig([]))
 
-        const state = await sliderPager.updateState(initCtx, {
-            state: null
-        })
-        const msgId = await sliderPager.showOrUpdateSlider(initCtx, state, {forceNewMsg: true})
+        expect(async () => {
+            const state = await sliderPager.updateState(initCtx, {
+                state: null
+            })
+            await sliderPager.showOrUpdateSlider(initCtx, state, {forceNewMsg: true})
+        }).not.toThrow()
     })
 
     test('if there is one card and I click previous, nothing bad is happens (this tests if onlyOneEventLeftAccordingToButtons is working)', async () => {
