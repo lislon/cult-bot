@@ -19,7 +19,9 @@
     "bot:cron:refresh-events": "yarn workspace bot run cron:refresh-events",
     "bot:cron:reset-mailing-counters": "yarn workspace bot run cron:reset-mailing-counters",
     "yandex-afisha:cron:parse-base": "yarn workspace @culthub/yandex-afisha run cron:parse-base",
-    "yandex-afisha:cron:parse-diff": "yarn workspace @culthub/yandex-afisha run cron:parse-diff"
+    "yandex-afisha:cron:parse-diff": "yarn workspace @culthub/yandex-afisha run cron:parse-diff",
+    "yandex-afisha:db:up": "yarn workspace @culthub/yandex-afisha run db:up",
+    "yandex-afisha:db:down": "yarn workspace @culthub/yandex-afisha run db:down"
   },
   "version": "1.0.0",
   "main": "index.js",
