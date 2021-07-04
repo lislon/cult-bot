@@ -81,7 +81,7 @@ TELEGRAM_TOKEN = ??
 NODE_ENV = production
 WEBHOOK_PORT = 443
 DATABASE_SSL = yes
-APP_ROOT = packages/bot
+PROCFILE=packages/app/bot/Procfile
 SENTRY_DSN = # 1 for all envs https://docs.sentry.io/platforms/node/performance/#connecting-services
 TELEGRAM_BOT_NAME=fbiwwbwm_uat_bot
 ```

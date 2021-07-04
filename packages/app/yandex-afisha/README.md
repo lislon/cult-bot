@@ -23,7 +23,7 @@ heroku config:set NPM_CONFIG_PRODUCTION=true YARN_PRODUCTION=true  -a $app
 
 Add env settings:
 ```
-APP_ROOT=packages/yandex-afisha
+PROCFILE=packages/app/yandex-afisha/Procfile
 DATABASE_SSL=yes
 JSON_SNAPSHOT_DIR=/tmp/afisha
 NODE_ENV=production
