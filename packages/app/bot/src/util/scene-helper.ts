@@ -6,6 +6,10 @@ import { i18n } from './i18n'
 import { adminIds, adminUsernames, devUsernames } from './admins-list'
 import { InlineKeyboardButton } from 'typegram'
 import CallbackButton = InlineKeyboardButton.CallbackButton
+import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
+import { chunkanize, MAX_TELEGRAM_MESSAGE_LENGTH } from '../scenes/shared/shared-logic'
+import { botConfig } from './bot-config'
+import * as tt from 'telegraf/src/telegram-types'
 
 
 export interface CtxI18n {
@@ -134,4 +138,11 @@ export function findInlineBtnTextByCallbackData(ctx: ContextMessageUpdate, callb
         .flatMap((r: InlineKeyboardButton[]) => r)
         .find((btn: CallbackButton) => 'callback_data' in btn && btn.callback_data === callbackData)
         ?.text || undefined
+}
+
+export async function sendLongMessage(ctx: ContextMessageUpdate, chatId: number | string,
+                               text: string,
+                               extra?: tt.ExtraReplyMessage, maxLen: number = MAX_TELEGRAM_MESSAGE_LENGTH) {
+
+    return await chunkanize(text, async (text, msgExtra) => await ctx.telegram.sendMessage(chatId, text, extra), extra, maxLen)
 }

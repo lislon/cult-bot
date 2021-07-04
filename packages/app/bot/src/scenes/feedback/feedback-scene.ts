@@ -1,10 +1,15 @@
 import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { findInlineBtnTextByCallbackData, i18nSceneHelper, sleep } from '../../util/scene-helper'
+import { findInlineBtnTextByCallbackData, i18nSceneHelper, sendLongMessage, sleep } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
 import { db } from '../../database/db'
-import { backToMainButtonTitle, replyWithBackToMainMarkup, SessionEnforcer } from '../shared/shared-logic'
+import {
+    backToMainButtonTitle,
+    MAX_TELEGRAM_MESSAGE_LENGTH,
+    replyWithBackToMainMarkup,
+    SessionEnforcer
+} from '../shared/shared-logic'
 import * as tt from 'typegram'
 import { Message } from 'typegram'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
@@ -62,20 +67,21 @@ function isPhoto(message: Message): message is PhotoMessage {
 async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
     if (botConfig.SUPPORT_FEEDBACK_CHAT_ID !== undefined) {
         const tplData = getBasicTemplateForAdminMessage(ctx)
+        const maxLen = MAX_TELEGRAM_MESSAGE_LENGTH - 400
 
         let adminMessage: tt.Message
-        let feedbackText
+         let feedbackText
         if ('text' in ctx.message) {
             feedbackText = ctx.message.text
-            adminMessage = await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, i18Msg(ctx, 'admin_feedback_template_text', tplData), {
+            adminMessage = await sendLongMessage(ctx, botConfig.SUPPORT_FEEDBACK_CHAT_ID, i18Msg(ctx, 'admin_feedback_template_text', tplData), {
                 ...Markup.removeKeyboard(),
                 parse_mode: 'HTML',
-            })
+            }, maxLen)
         } else if (isPhoto(ctx.message)) {
-            await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, i18Msg(ctx, 'admin_feedback_template_other', tplData), {
+            await sendLongMessage(ctx, botConfig.SUPPORT_FEEDBACK_CHAT_ID, i18Msg(ctx, 'admin_feedback_template_other', tplData), {
                 ...Markup.removeKeyboard(),
                 parse_mode: 'HTML',
-            })
+            }, maxLen)
 
             const fileId = last(sortBy(ctx.message.photo, p => p.width))['file_id']
             const url = await ctx.telegram.getFileLink(fileId)
@@ -89,10 +95,10 @@ async function sendFeedbackToOurGroup(ctx: ContextMessageUpdate) {
         } else {
             feedbackText = 'other media: ' + JSON.stringify(ctx.message)
             const template = i18Msg(ctx, 'admin_feedback_template_other', tplData)
-            await ctx.telegram.sendMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, {
+            await sendLongMessage(ctx, botConfig.SUPPORT_FEEDBACK_CHAT_ID, template, {
                 ...Markup.removeKeyboard(),
                 parse_mode: 'HTML',
-            })
+            }, maxLen)
             adminMessage = await ctx.telegram.forwardMessage(botConfig.SUPPORT_FEEDBACK_CHAT_ID, ctx.chat.id, ctx.message.message_id)
         }
 
@@ -163,3 +169,4 @@ export type IsListening = 'like' | 'dislike' | 'text'
 export interface FeedbackSceneState {
     messagesSent: number
 }
+

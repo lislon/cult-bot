@@ -240,9 +240,10 @@ export function getInlineKeyboardFromCallbackQuery(ctx: ContextCallbackQueryUpda
     }
 }
 
-export async function chunkanize(msg: string, callback: (text: string, extra?: ExtraReplyMessage) => Promise<Message>, extra: ExtraReplyMessage = undefined): Promise<Message> {
-    const MAX_TELEGRAM_MESSAGE_LENGTH = 4096
-    const chunks: string[] = chunkString(msg, MAX_TELEGRAM_MESSAGE_LENGTH)
+export const MAX_TELEGRAM_MESSAGE_LENGTH = 4096
+
+export async function chunkanize(msg: string, callback: (text: string, extra?: ExtraReplyMessage) => Promise<Message>, extra: ExtraReplyMessage = undefined, maxLen: number = MAX_TELEGRAM_MESSAGE_LENGTH): Promise<Message> {
+    const chunks: string[] = chunkString(msg, maxLen)
     let last: Message = undefined
     for (let i = 0; i < chunks.length; i++) {
         last = await callback(chunks[i], i === chunks.length - 1 ? extra : {...extra, disable_notification: true})

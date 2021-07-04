@@ -284,7 +284,7 @@ class GlobalSync {
                 }, {
                     parse_mode: 'HTML',
                     disable_notification: true
-                })
+                }, maxLen)
                 await sleep(200)
             } catch (e) {
                 logger.warn(`failed to send to admin.tid = ${admin.tid}`)
@@ -347,7 +347,7 @@ function shouldUserConfirmSync(eventsDiff: EventsSyncDiff, packsDiff: PacksSyncD
 }
 
 async function replyWithHTMLMaybeChunk(ctx: ContextMessageUpdate, msg: string, extra?: ExtraReplyMessage) {
-    return await chunkanize(msg, async (text, msgExtra) => await ctx.replyWithHTML(text, msgExtra), extra)
+    return await chunkanize(msg, async (text, msgExtra) => await ctx.replyWithHTML(text, msgExtra), extra, maxLen)
 }
 
 function listExtIds(eventToSaves: EventToSave[]): string {
