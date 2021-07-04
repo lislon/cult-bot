@@ -35,7 +35,7 @@ export function PaymentForm({onPay, details}: PaymentFormProps): JSX.Element {
                 <input type="hidden" placeholder="Номер заказа" name="order" value={details.paymentId}/>
                 <input type="hidden" placeholder="Описание заказа" name="description" value={details.description}/>
                 <div>
-                    <input type="text" placeholder="E-mail" name="email"/>
+                    <input type="text" placeholder="Введите email для отправки чека" name="email"/>
                 </div>
                 <div>
                     <input className={styles.button} type="submit" value="Оплатить"/>

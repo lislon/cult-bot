@@ -5,4 +5,12 @@ module.exports = {
     //   config.externals.pay = 'foo'
     //   return config
     // }
+    async rewrites() {
+        return [
+            {
+                source: '/robots.txt',
+                destination: '/api/robots'
+            }
+        ]
+    }
 }

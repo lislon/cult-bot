@@ -24,6 +24,10 @@ export class AppConfig {
         this.setFromKeyValue(process.env)
     }
 
+    public get isProduction(): boolean {
+        return this.HEROKU_APP_NAME?.endsWith('-prod') || false
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types
     public setFromKeyValue(envVars: any): void {
         this.HEROKU_APP_NAME = envVars.HEROKU_APP_NAME || 'localhost'
