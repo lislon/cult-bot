@@ -1,11 +1,11 @@
 import { Composer, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import { backToMainButtonTitle, replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { SceneRegister } from '../../middleware-utils'
 import emojiRegex from 'emoji-regex'
 import { SearchPagerConfig } from './search-pager'
 import { SliderPager } from '../shared/slider-pager'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('search_scene')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg, backButton} = i18nSceneHelper(scene)

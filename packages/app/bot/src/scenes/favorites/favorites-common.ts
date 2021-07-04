@@ -1,6 +1,5 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { Markup, Scenes } from 'telegraf'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import { leftDate } from '@culthub/timetable'
 import { compareAsc, compareDesc } from 'date-fns'
 import { first } from 'lodash'
@@ -10,6 +9,7 @@ import { FavoriteEvent } from './favorites-scene'
 import { getLikeDislikeButtonText, isEventInFavorites } from '../likes/likes-common'
 import { isEventEndsInFuture } from '../shared/shared-logic'
 import { botConfig } from '../../util/bot-config'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 

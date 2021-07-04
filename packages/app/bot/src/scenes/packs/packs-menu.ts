@@ -1,5 +1,4 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { Markup } from 'telegraf'
 import {
     findPackById,
@@ -13,6 +12,8 @@ import {
 import { editMessageAndButtons, EditMessageAndButtonsOptions, generatePlural, mySlugify } from '../shared/shared-logic'
 import { logger } from '../../util/logger'
 import { db } from '../../database/db'
+import { isAdmin } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 
 const {actionName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)

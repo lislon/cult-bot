@@ -1,7 +1,6 @@
 import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { EventCategory } from '@culthub/interfaces'
-import { i18nSceneHelper, isAdmin, isDev } from '../../util/scene-helper'
 import { cardFormat } from '../shared/card-format'
 import { replyWithBackToMainMarkup, ruFormat, showBotVersion, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { db, IExtensions, pgLogOnlyErrors, pgLogVerbose } from '../../database/db'
@@ -22,6 +21,8 @@ import debugNamespace from 'debug'
 import { GLOBAL_SYNC_STATE, replySyncNoTransaction, synchronizeDbByUser } from './admin-sync'
 import { Referral } from '../../database/db-referral'
 import DocumentMessage = Message.DocumentMessage
+import { isAdmin, isDev } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 function isDocumentMessage(msg: Message): msg is DocumentMessage {
     return 'document' in msg

@@ -1,12 +1,13 @@
 import { ContextMessageUpdate, Event, DateInterval } from '../../interfaces/app-interfaces'
 import { db, LimitOffset } from '../../database/db'
-import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
 import { Scenes } from 'telegraf'
 import { getNextRangeForPacks } from './packs-common'
 import { mySlugify } from '../shared/shared-logic'
 import emojiRegex from 'emoji-regex'
 import { ScenePack } from '../../database/db-packs'
+import { isAdmin } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('packs_scene')
 const {i18Msg, actionName} = i18nSceneHelper(scene)

@@ -1,7 +1,6 @@
 import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate, DateInterval } from '../../interfaces/app-interfaces'
 import { EventCategory } from '@culthub/interfaces'
-import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import * as events from 'events'
 import { backToMainButtonTitle, ruFormat, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { subSeconds } from 'date-fns/fp'
@@ -16,6 +15,8 @@ import {
     prepareSessionStateIfNeeded,
     TopEventsStageQuery, TopsSceneState
 } from './tops-common'
+import { sleep } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('tops_scene')

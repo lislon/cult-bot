@@ -1,6 +1,5 @@
 import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, ifAdmin, isAdmin, isPaidUser, sleep } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { botConfig } from '../../util/bot-config'
 import { db } from '../../database/db'
@@ -25,6 +24,8 @@ import { parseAndPredictTimetable } from '../../lib/timetable/timetable-utils'
 import { KeyboardButton } from 'typegram'
 import { displayPackMenu, displayPackMenuFromStart } from '../packs/packs-menu'
 import { getNextRangeForPacks } from '../packs/packs-common'
+import { ifAdmin, isAdmin, isPaidUser, sleep } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('main_scene')
 

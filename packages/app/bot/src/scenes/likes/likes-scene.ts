@@ -1,10 +1,10 @@
 import { Composer, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import { db } from '../../database/db'
 import { SceneRegister } from '../../middleware-utils'
 import { formatUserName } from '../../util/misc-utils'
 import { updateLikeDislikeInlineButtons } from './likes-common'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('likes_scene')
 

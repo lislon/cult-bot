@@ -1,5 +1,5 @@
-import { formatListOfFavorites } from '../../../src/scenes/favorites/favorites-format'
 import { CtxI18n } from '../../../src/util/scene-helper'
+import { formatListOfFavorites } from '../../../src/scenes/favorites/favorites-format'
 import { i18n } from '../../../src/util/i18n'
 import { date } from '../../util/timetable-util'
 import { parseAndPredictTimetable } from '../../../src/lib/timetable/timetable-utils'
@@ -40,7 +40,8 @@ describe('format favorites cards', () => {
         await assertFavoriteTimeFormat('до 15 января', '1-15 января: пн-вс: 12:00')
     })
     test('In past', async () => {
-        await assertFavoriteTimeFormat('title (прошло 01 января)', '1 января: 12:00', '')
+        await assertFavoriteTimeFormat('title', '1 января: 12:00', '')
+        await assertFavoriteTimeFormat('прошло 01 января', '1 января: 12:00')
     })
 
     test('Only weekdays', async () => {

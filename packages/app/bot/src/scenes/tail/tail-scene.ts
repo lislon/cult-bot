@@ -1,8 +1,8 @@
 import { Composer } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { isAdmin } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { backToMainButtonTitle, buttonIsOldGoToMain } from '../shared/shared-logic'
+import { isAdmin } from '../../util/scene-utils'
 
 const tail = new Composer<ContextMessageUpdate>()
 

@@ -1,12 +1,12 @@
 import { Markup, Scenes } from 'telegraf'
 import { ContextCallbackQueryUpdate, ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper } from '../../util/scene-helper'
 
 import { ITask } from 'pg-promise'
 import { IExtensions } from '../../database/db'
 import { getInlineKeyboardFromCallbackQuery, updateKeyboardButtons } from '../shared/shared-logic'
 import { getFavoriteBtnText } from '../favorites/favorites-common'
 import { InlineKeyboardButton } from 'typegram'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('likes_scene')
 

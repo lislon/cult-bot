@@ -9,8 +9,8 @@ import {
     getTopRangeInterval,
     TopEventsStageQuery
 } from './tops-common'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import { mySlugify } from '../shared/shared-logic'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('tops_scene')
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)

@@ -1,7 +1,6 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { Composer, Markup, MiddlewareFn, Scenes } from 'telegraf'
 import { SessionEnforcer } from './shared-logic'
-import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 
 import { LimitOffset } from '../../database/db'
 import { PagerSliderState, PagingCommonConfig } from './events-common'
@@ -10,6 +9,8 @@ import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
 import { InlineKeyboardButton } from 'typegram'
 import { EventsPagerSliderBase } from './events-slider-base'
+import { sleep } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18Msg, i18SharedMsg} = i18nSceneHelper(scene)

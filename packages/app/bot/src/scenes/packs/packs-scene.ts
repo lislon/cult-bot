@@ -1,12 +1,12 @@
 import { Composer } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { findPackById, getPacksList, resetPacksCache, scene } from './packs-common'
 import { getMsgId, replyWithBackToMainMarkup, warnAdminIfDateIsOverriden } from '../shared/shared-logic'
 import { SliderPager } from '../shared/slider-pager'
 import { PackEventPagerConfig } from './pack-event-pager-config'
 import { displayMainMenu, displayPackMenu } from './packs-menu'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const {sceneHelper, actionName, i18nModuleBtnName, i18Btn, i18Msg, backButton} = i18nSceneHelper(scene)
 

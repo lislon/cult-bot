@@ -14,6 +14,7 @@ import { isAfter } from 'date-fns'
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 
 const {i18SharedMsg, i18Msg} = i18nSceneHelper(scene)
+const MAX_CARD_LEN = 4096
 
 type FavoriteEventForFormat = Pick<FavoriteEvent, 'place' | 'url' | 'title' | 'category' | 'parsedTimetable' | 'tag_level_1' | 'address'>
 
@@ -59,19 +60,6 @@ function formatPastDate(event: FavoriteEventForFormat) {
     }
 }
 
-const MAX_CARD_LEN = 4096
-
-function removeTags(str: string | null): string {
-    if ((str === null) || (str === ''))
-        return ''
-    else
-        str = str.toString()
-
-    // Regular expression to identify HTML tags in
-    // the input string. Replacing the identified
-    // HTML tag with a null string.
-    return str.replace(/(<([^>]+)>)/ig, '')
-}
 
 export async function formatListOfFavorites(ctx: CtxI18n, events: FavoriteEventForFormat[], now: Date): Promise<string> {
     const [activeEvents, pastEvents] = partition(events, e => isEventEndsInFuture(e.parsedTimetable.predictedIntervals, now))

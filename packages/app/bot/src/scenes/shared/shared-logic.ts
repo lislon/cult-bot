@@ -4,7 +4,7 @@ import { format, formatDistanceToNow, isAfter, isBefore, Locale, parse } from 'd
 import flow from 'lodash/fp/flow'
 import { ru } from 'date-fns/locale'
 import { i18n } from '../../util/i18n'
-import { botConfig } from '../../util/bot-config'
+import { botConfig, MAX_TELEGRAM_MESSAGE_LENGTH } from '../../util/bot-config'
 import plural from 'plural-ru'
 import { Markup } from 'telegraf'
 import slugify from 'slugify'
@@ -239,8 +239,6 @@ export function getInlineKeyboardFromCallbackQuery(ctx: ContextCallbackQueryUpda
         throw new Error('wtf')
     }
 }
-
-export const MAX_TELEGRAM_MESSAGE_LENGTH = 4096
 
 export async function chunkanize(msg: string, callback: (text: string, extra?: ExtraReplyMessage) => Promise<Message>, extra: ExtraReplyMessage = undefined, maxLen: number = MAX_TELEGRAM_MESSAGE_LENGTH): Promise<Message> {
     const chunks: string[] = chunkString(msg, maxLen)

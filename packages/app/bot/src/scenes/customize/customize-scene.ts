@@ -1,6 +1,5 @@
 import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import {
     editMessageAndButtons,
     EditMessageAndButtonsOptions,
@@ -21,6 +20,7 @@ import { SliderPager } from '../shared/slider-pager'
 import { CustomizePagerConfig } from './customize-pager-config'
 import { db } from '../../database/db'
 import { InlineKeyboardButton } from 'typegram'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('customize_scene')
 

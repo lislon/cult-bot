@@ -1,6 +1,5 @@
 import { Scenes, Telegraf } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import middlewares, { SceneRegister } from '../../middleware-utils'
 import { createReadStream, ReadStream } from 'fs'
 import path from 'path'
@@ -8,6 +7,7 @@ import { getRedisSession } from '../../util/reddis'
 import { countInteractions } from '../../lib/middleware/analytics-middleware'
 import { botErrorHandler, isBlockedError } from '../../util/error-handler'
 import { updateOrInsertUser } from '../../lib/middleware/user-middleware'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('help_scene')
 const {i18Msg} = i18nSceneHelper(scene)

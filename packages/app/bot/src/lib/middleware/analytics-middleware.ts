@@ -2,12 +2,15 @@ import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import ua from 'universal-analytics'
 import { v4 as generateUuid } from 'uuid'
 import { botConfig } from '../../util/bot-config'
-import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { db } from '../../database/db'
 import { logger } from '../../util/logger'
 import { getResponsePerformance } from './performance-middleware'
 import { Scenes } from 'telegraf'
 import { Update } from 'typegram'
+import { isAdmin } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
+
+const {i18SharedMsg} = i18nSceneHelper(new Scenes.BaseScene<ContextMessageUpdate>(''))
 
 export interface AnalyticsState {
     markupClicks: number
@@ -107,8 +110,6 @@ export const analyticsMiddleware = async (ctx: ContextMessageUpdate, next: any) 
 
     }
 }
-
-const {i18SharedMsg} = i18nSceneHelper(new Scenes.BaseScene<ContextMessageUpdate>(''))
 
 
 export function googleAnalyticRecordReferral(ctx: ContextMessageUpdate, referral: string): void {

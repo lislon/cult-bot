@@ -285,3 +285,4 @@ export class BotConfig {
 const botConfig = new BotConfig()
 
 export { botConfig }
+export const MAX_TELEGRAM_MESSAGE_LENGTH = 4096

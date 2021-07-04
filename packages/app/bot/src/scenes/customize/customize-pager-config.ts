@@ -1,10 +1,10 @@
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { Scenes } from 'telegraf'
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import { CustomizeFilters, prepareRepositoryQuery } from './customize-common'
 import { db, LimitOffset } from '../../database/db'
 import { mySlugify } from '../shared/shared-logic'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('customize_scene')
 const {backButton, actionName, i18nModuleBtnName, revertActionName, scanKeys, i18nSharedBtnName, i18Btn, i18Msg, i18SharedBtn} = i18nSceneHelper(scene)

@@ -3,7 +3,6 @@ import { Composer, Markup, Scenes } from 'telegraf'
 import { db } from '../../database/db'
 import { botConfig } from '../../util/bot-config'
 import { i18n } from '../../util/i18n'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import { parseTelegramMessageToHtml } from '../message-parser/message-parser'
 import { mySlugify } from '../../scenes/shared/shared-logic'
 import { ScenePack } from '../../database/db-packs'
@@ -19,6 +18,7 @@ import {
 } from './support/mail-sender'
 import { i18MsgSupport } from './support/common'
 import TextMessage = Message.TextMessage
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('support_chat_scene')
 

@@ -1,9 +1,9 @@
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
 import { formatUserName } from '../../util/misc-utils'
-import { findInlineBtnTextByCallbackData, isAdmin } from '../../util/scene-helper'
 import { logger } from '../../util/logger'
 import * as Sentry from '@sentry/node'
 import { MiddlewareFn } from 'telegraf'
+import { findInlineBtnTextByCallbackData, isAdmin } from '../../util/scene-utils'
 
 function getTransactionName(ctx: ContextMessageUpdate): string {
     try {

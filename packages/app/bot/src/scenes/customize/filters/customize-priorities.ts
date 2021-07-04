@@ -1,7 +1,7 @@
 import { chidrensTags, ContextMessageUpdate, TagLevel2 } from '../../../interfaces/app-interfaces'
 import { DropdownMenu } from '../dropdown-menu'
-import { i18nSceneHelper } from '../../../util/scene-helper'
 import { Scenes } from 'telegraf'
+import { i18nSceneHelper } from '../../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('customize_scene')
 const {revertActionName} = i18nSceneHelper(scene)

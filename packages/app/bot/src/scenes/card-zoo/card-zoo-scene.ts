@@ -2,12 +2,13 @@ import { Composer, Scenes } from 'telegraf'
 import { SliderConfig, SliderPager } from '../shared/slider-pager'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 import { LimitOffset } from '../../database/db'
-import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { cardDesignLibrary } from '../../lib/card-format/card-design-library'
 import { replyWithBackToMainMarkup } from '../shared/shared-logic'
 import { CardOptions } from '../shared/card-format'
 import { isEventInFavorites } from '../likes/likes-common'
+import { isAdmin } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('card_zoo_scene')

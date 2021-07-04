@@ -1,7 +1,7 @@
 import { db, pgp } from '../database/db'
 import { logger } from '../util/logger'
-import { sleep } from '../util/scene-helper'
 import { getLatLngByGeoTag } from '../lib/yandex-maps/lat-lng-updater'
+import { sleep } from '../util/scene-utils'
 
 (async function run() {
     logger.debug(`Updating events lat lng`)

@@ -22,7 +22,6 @@ import {
     getUserFromCtx,
     SYNC_CONFIRM_TIMEOUT_SECONDS
 } from './admin-common'
-import { i18nSceneHelper, sleep } from '../../util/scene-helper'
 import { STICKER_CAT_THUMBS_UP } from '../../util/stickers'
 import { WrongExcelColumnsError } from '../../dbsync/WrongFormatException'
 import { EventsSyncDiff, EventToRecover } from '../../database/db-sync-repository'
@@ -37,6 +36,8 @@ import { rawBot } from '../../raw-bot'
 import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
 import { EventToSave } from '../../interfaces/db-interfaces'
 import Timeout = NodeJS.Timeout
+import { sleep } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('admin_scene')
 const {actionName, i18Btn, i18Msg} = i18nSceneHelper(scene)

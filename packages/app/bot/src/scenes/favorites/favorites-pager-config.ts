@@ -2,12 +2,12 @@ import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
 
 import { Scenes } from 'telegraf'
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import { LimitOffset } from '../../database/db'
 import { favoriteCardButtonsRow, getSortedFavoriteEventsIds, loadEventsAsFavorite } from './favorites-common'
 import { CardOptions } from '../shared/card-format'
 import { isEventInFavorites } from '../likes/likes-common'
 import { InlineKeyboardButton } from 'typegram'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 const {backButton, i18Msg, actionName} = i18nSceneHelper(scene)

@@ -1,15 +1,9 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
-import { ReversableTranslit } from '../lib/translit/reversable-translit'
 import { i18n } from './i18n'
-import { adminIds, adminUsernames, devUsernames } from './admins-list'
 import { InlineKeyboardButton } from 'typegram'
-import CallbackButton = InlineKeyboardButton.CallbackButton
-import { ExtraReplyMessage } from 'telegraf/typings/telegram-types'
-import { chunkanize, MAX_TELEGRAM_MESSAGE_LENGTH } from '../scenes/shared/shared-logic'
-import { botConfig } from './bot-config'
-import * as tt from 'telegraf/src/telegram-types'
+import { Markup, Scenes } from 'telegraf'
+import { ReversableTranslit } from '../lib/translit/reversable-translit'
 
 
 export interface CtxI18n {
@@ -27,7 +21,9 @@ export function i18SharedMsg(id: string, tplData: any = undefined): string {
     return i18n.t(`ru`, `shared.${id}`, tplData)
 }
 
-export function i18nSceneHelper(scene: Pick<Scenes.BaseScene<ContextMessageUpdate>, 'id'>) {
+type SceneHelper = { sceneHelper: (ctx: CtxI18n) => { i18Btn: (id: string, tplData?: object) => string; i18SharedBtn: (id: string, tplData?: object) => string; i18Msg: (id: string, tplData?: any, byDefault?: string) => (string) }; i18SharedBtn: (ctx: CtxI18n, id: string, tplData?: object) => string; i18Msg: (ctx: CtxI18n, id: string, tplData?: object, byDefault?: string) => string; i18SharedMsg: (ctx: CtxI18n, id: string, tplData?: unknown) => string; i18nModuleBtnName: (id: string) => string; i18nModuleMsg: (id: string) => string; i18Btn: (ctx: CtxI18n, id: string, tplData?: object) => string; scanKeys: (prefix: string, mode?: ('return_only_postfix' | undefined)) => string[]; pushEnterScene: (ctx: ContextMessageUpdate, nextSceneId: string) => Promise<void>; backButton: () => InlineKeyboardButton.CallbackButton; revertActionName: (id: string) => (string | string); actionNameRegex: (id: RegExp) => RegExp; actionName: (id: string) => string; i18nSharedBtnName: (id: string, templateData?: any) => string }
+
+export function i18nSceneHelper(scene: Pick<Scenes.BaseScene<ContextMessageUpdate>, 'id'>): SceneHelper {
     const backAction = scene.id + '.button.back'
 
     const pushEnterScene = async (ctx: ContextMessageUpdate, nextSceneId: string) => {
@@ -107,42 +103,4 @@ export function i18nSceneHelper(scene: Pick<Scenes.BaseScene<ContextMessageUpdat
                 .map(s => mode === 'return_only_postfix' ? s.substring(`scenes.${scene.id}.${prefix}`.length + 1) : s)
         }
     }
-}
-
-export function sleep(ms: number): Promise<unknown> {
-    return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-export function isDev(ctx: ContextMessageUpdate): boolean {
-    return devUsernames.includes(ctx.from?.username || '')
-}
-
-export function isAdmin(ctx: ContextMessageUpdate): boolean {
-    return adminUsernames.includes(ctx.from?.username || '') || adminIds.includes(ctx.from?.id || 0)
-}
-
-export function isPaidUser(ctx: ContextMessageUpdate): boolean {
-    return ctx.session.user.isPaid
-}
-
-export async function ifAdmin<T>(ctx: ContextMessageUpdate, callback: () => Promise<T>): Promise<T | undefined> {
-    if (isAdmin(ctx)) {
-        return await callback()
-    } else {
-        await ctx.replyWithHTML(ctx.i18n.t('shared.no_admin'))
-    }
-}
-
-export function findInlineBtnTextByCallbackData(ctx: ContextMessageUpdate, callbackData: string): string | undefined {
-    return (ctx as any)?.update?.callback_query?.message?.reply_markup?.inline_keyboard
-        .flatMap((r: InlineKeyboardButton[]) => r)
-        .find((btn: CallbackButton) => 'callback_data' in btn && btn.callback_data === callbackData)
-        ?.text || undefined
-}
-
-export async function sendLongMessage(ctx: ContextMessageUpdate, chatId: number | string,
-                               text: string,
-                               extra?: tt.ExtraReplyMessage, maxLen: number = MAX_TELEGRAM_MESSAGE_LENGTH) {
-
-    return await chunkanize(text, async (text, msgExtra) => await ctx.telegram.sendMessage(chatId, text, extra), extra, maxLen)
 }

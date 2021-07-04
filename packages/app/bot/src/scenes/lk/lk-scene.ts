@@ -1,10 +1,11 @@
 import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper, isPaidUser } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
 import { replyWithBackToMainMarkup, ruFormat } from '../shared/shared-logic'
 import { botConfig } from '../../util/bot-config'
 import { db } from '../../database/db'
+import { isPaidUser } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('lk_scene')
 

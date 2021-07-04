@@ -1,12 +1,10 @@
 import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate } from '../../interfaces/app-interfaces'
-import { findInlineBtnTextByCallbackData, i18nSceneHelper, sendLongMessage, sleep } from '../../util/scene-helper'
 import { SceneRegister } from '../../middleware-utils'
-import { botConfig } from '../../util/bot-config'
+import { botConfig, MAX_TELEGRAM_MESSAGE_LENGTH } from '../../util/bot-config'
 import { db } from '../../database/db'
 import {
     backToMainButtonTitle,
-    MAX_TELEGRAM_MESSAGE_LENGTH,
     replyWithBackToMainMarkup,
     SessionEnforcer
 } from '../shared/shared-logic'
@@ -17,6 +15,8 @@ import { formatUserName } from '../../util/misc-utils'
 import { last, sortBy } from 'lodash'
 import PhotoMessage = Message.PhotoMessage
 import { encode } from 'html-entities'
+import { findInlineBtnTextByCallbackData, sendLongMessage, sleep } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('feedback_scene')
 const {actionName, i18nModuleBtnName, scanKeys, i18Btn, i18Msg} = i18nSceneHelper(scene)

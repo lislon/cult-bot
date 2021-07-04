@@ -1,8 +1,9 @@
 import { ContextMessageUpdate, Event, DateInterval } from '../../interfaces/app-interfaces'
 import { db, LimitOffset } from '../../database/db'
-import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { SliderConfig, TotalOffset } from '../shared/slider-pager'
 import { Scenes } from 'telegraf'
+import { isAdmin } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('search_scene')
 const {i18Msg, backButton} = i18nSceneHelper(scene)

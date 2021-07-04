@@ -4,12 +4,13 @@ import { botConfig } from '../../../util/bot-config'
 import { db } from '../../../database/db'
 import { logger } from '../../../util/logger'
 import { Composer, Markup, MiddlewareFn, Scenes } from 'telegraf'
-import { i18nSceneHelper, sleep } from '../../../util/scene-helper'
 import { isBlockedError } from '../../../util/error-handler'
 import { ContextMessageUpdate } from '../../../interfaces/app-interfaces'
 import { editMessageAndButtons, EditMessageAndButtonsOptions, getMsgId } from '../../../scenes/shared/shared-logic'
 import { i18MsgSupport } from './common'
 import { formatUserName } from '../../../util/misc-utils'
+import { sleep } from '../../../util/scene-utils'
+import { i18nSceneHelper } from '../../../util/scene-helper'
 
 export interface FormattedMailedMessage {
     text: string

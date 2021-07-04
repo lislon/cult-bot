@@ -1,6 +1,5 @@
 import { Composer, Markup, Scenes } from 'telegraf'
 import { ContextMessageUpdate, Event } from '../../interfaces/app-interfaces'
-import { i18nSceneHelper } from '../../util/scene-helper'
 import { db } from '../../database/db'
 import { SceneRegister } from '../../middleware-utils'
 import { forceSaveUserDataInDb } from '../../lib/middleware/user-middleware'
@@ -23,6 +22,7 @@ import { FavoritesPagerConfig } from './favorites-pager-config'
 import { loadEventsAsFavorite, removeFavoriteButton, sortFavorites } from './favorites-common'
 import { InlineKeyboardButton } from 'typegram'
 import { formatListOfFavorites } from './favorites-format'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('favorites_scene')
 

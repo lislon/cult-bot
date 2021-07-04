@@ -1,8 +1,8 @@
 import { logger } from './logger'
 import { formatUserName } from './misc-utils'
-import { isAdmin } from './scene-helper'
 import { ContextMessageUpdate } from '../interfaces/app-interfaces'
 import * as Sentry from '@sentry/node'
+import { isAdmin } from './scene-utils'
 
 export function isBlockedError(error: any): boolean {
     return error?.code === 403 && error.message.includes('bot was blocked by the user')

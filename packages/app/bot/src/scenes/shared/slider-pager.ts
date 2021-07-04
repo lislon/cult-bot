@@ -10,11 +10,12 @@ import {
 import { getLikesRow } from '../likes/likes-common'
 import { cardFormat } from './card-format'
 import { analyticRecordEventView } from '../../lib/middleware/analytics-middleware'
-import { i18nSceneHelper, isAdmin } from '../../util/scene-helper'
 import { PagerSliderState, PagingCommonConfig } from './events-common'
 import { botConfig } from '../../util/bot-config'
 import { InlineKeyboardButton } from 'typegram'
 import { EventsPagerSliderBase } from './events-slider-base'
+import { isAdmin } from '../../util/scene-utils'
+import { i18nSceneHelper } from '../../util/scene-helper'
 
 const scene = new Scenes.BaseScene<ContextMessageUpdate>('')
 const {sceneHelper, i18nSharedBtnName, actionName, i18Btn, i18SharedMsg} = i18nSceneHelper(scene)
