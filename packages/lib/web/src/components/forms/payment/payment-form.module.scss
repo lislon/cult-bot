@@ -1,14 +1,18 @@
 .button {
-  background-color: #c8d869; /* Green */
-  border: none;
+  display: inline-block;
+
+  margin: 20px;
   padding: 15px 32px;
+
   text-align: center;
   text-decoration: none;
+
+  color: #4E2B7D;
+  border: none;
   border-radius: 40px;
-  display: inline-block;
+  background-color: #C8D869; /* Green */
+
   font-size: 16px;
-  color: #4e2b7d;
-  margin: 20px;
 }
 
 .paymentForm {
@@ -16,8 +20,9 @@
 }
 
 .ofertaLink {
-  color: cornflowerblue;
   text-decoration: underline cornflowerblue dotted;
+
+  color: cornflowerblue;
 }
 
 .myIcon {
