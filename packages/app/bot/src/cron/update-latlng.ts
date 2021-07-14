@@ -5,7 +5,7 @@ import { sleep } from '../util/scene-utils'
 
 (async function run() {
     logger.debug(`Updating events lat lng`)
-    const geoEvents = await db.repoEventsGeo.getOfflineEventsWithMissingLatLng(1)
+    const geoEvents = await db.repoEventsGeo.getOfflineEventsWithMissingLatLng(100)
     for (const {id, geotag} of geoEvents) {
         logger.info(`${id} => ${geotag}`)
         const point = await getLatLngByGeoTag(geotag)

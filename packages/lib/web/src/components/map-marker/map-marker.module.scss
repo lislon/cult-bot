@@ -1,0 +1,12 @@
+.marker {
+  display: inline-block;
+  background: white;
+  border-radius: 5px;
+  padding: 5px;
+  opacity: 50%;
+}
+
+.marker:hover {
+  opacity: 100%;
+  cursor: pointer;
+}

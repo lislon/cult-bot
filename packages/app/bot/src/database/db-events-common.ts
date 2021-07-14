@@ -1,9 +1,10 @@
-import { Event, DateInterval, TagLevel2 } from '../interfaces/app-interfaces'
+import { Event, DateInterval, TagLevel2, LatLng } from '../interfaces/app-interfaces'
 import { EventCategory } from '@culthub/interfaces'
 import { mapToPgInterval, rangeHalfOpenIntersect } from './db-utils'
 import { ColumnSet, IColumnConfig, IDatabase, IMain, ITask } from 'pg-promise'
 import { IExtensions } from './db'
 import { DbEvent } from '../interfaces/db-interfaces'
+import { Exhibition } from '@culthub/interfaces/typings/api/web';
 
 interface CountEventsQuery {
     interval: DateInterval
@@ -12,6 +13,15 @@ interface CountEventsQuery {
 export interface LikeDislikeChange {
     plusLikes: number
     plusDislikes: number
+}
+
+export function mapExhibition(row: ({ id: string, place: string, latlng: { x: number, y: number } })): Exhibition {
+    return {
+        id: +row.id,
+        title: row.place,
+        lat: row.latlng.x,
+        lng: row.latlng.y
+    }
 }
 
 export function mapEventSingle(row?: (DbEvent & { id: string, likes: number, dislikes: number })): Event | undefined {
@@ -207,6 +217,19 @@ export class EventsCommonRepository {
             from cb_events cb
             WHERE cb.ext_id = $(extId)
         `, {extId}, mapEventSingle)) || undefined
+    }
+
+    public async getExhibitions(): Promise<Exhibition[]> {
+        return (await this.db.map(`
+            select ce.id, ce.place, ce.latlng
+            from cb_events ce 
+            where ce.id IN(
+                select MAX(ce.id)
+                from cb_events ce 
+                where ce.latlng is not null
+                group by ce.place
+            )
+        `, {}, mapExhibition))
     }
 
     public async logViews(eventIds: number[]): Promise<void> {

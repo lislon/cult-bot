@@ -100,6 +100,11 @@ export interface Event extends EventNoId {
     id: number
 }
 
+export interface LatLng {
+    lat: number
+    lng: number
+}
+
 export type DateInterval = {
     start: Date
     end: Date

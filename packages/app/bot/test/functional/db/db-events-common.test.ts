@@ -19,7 +19,7 @@ describe('Events common', () => {
     const yearRange = mkInterval('[2020-01-01 00:00, 2021-01-02 00:00)')
 
     beforeEach(async () => {
-        await cleanDb()
+        // await cleanDb()
     })
 
     test('count events on nearest date', async () => {
@@ -103,5 +103,15 @@ describe('Events common', () => {
         const events = await db.repoEventsCommon.getEventsByIds([B, A, C])
         expectedTitlesStrict(['B', 'A', 'C'], events)
     }, 50000000)
+
+    // test('exhibitions', async () => {
+    //     // const [A, B, C] = await syncEventsDb4Test([
+    //     //     getMockEvent({title: 'A', eventTime}),
+    //     // ])
+    //     const exhibitions = await db.repoEventsCommon.getExhibitions();
+    //     expect(
+    //         exhibitions
+    //     ).toEqual([])
+    // })
 
 })

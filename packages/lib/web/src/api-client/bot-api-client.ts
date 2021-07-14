@@ -3,6 +3,7 @@ import debugNamespace from 'debug'
 import { appConfig } from '@/src/lib/app-config'
 import axios, { AxiosInstance } from 'axios'
 import * as AxiosLogger from 'axios-logger'
+import { AllExhibitionsResponse } from '@culthub/interfaces/typings/api/web';
 
 const debug = debugNamespace('web:bot-api')
 
@@ -44,6 +45,10 @@ export class BotApi {
 
     public async apiCreatePaymentByToken(token: string): Promise<CreatePaymentResponse> {
         return (await (await this.getAxios()).post(`/payment/create`, {token})).data
+    }
+
+    public async apiGetExhibitions(): Promise<AllExhibitionsResponse> {
+        return (await (await this.getAxios()).get(`/exhibitions`)).data
     }
 
     private static async receiveAuthToken(): Promise<string> {

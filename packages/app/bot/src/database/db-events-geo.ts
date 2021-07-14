@@ -39,7 +39,7 @@ export class EventsGeoRepository {
         return await this.db.map(`
             select id, geotag
             from cb_events cb
-            WHERE cb.address != 'онлайн'
+            WHERE cb.address != 'онлайн' AND cb.category = 'exhibitions'
             AND cb.deleted_at IS NULL AND latlng IS NULL
             ORDER BY id ASC
             LIMIT $(limit)

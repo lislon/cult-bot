@@ -17,6 +17,8 @@ export class AppConfig {
     public OKTA_OAUTH2_ISSUER: string | undefined
     public CULTHUB_BOT_API_URL: string | undefined
     public TELEGRAM_BOT_NAME: string | undefined
+    public GOOGLE_MAPS_API_KEY: string | undefined
+
 
 
     constructor() {
@@ -44,6 +46,7 @@ export class AppConfig {
         this.OKTA_OAUTH2_ISSUER = process.env.OKTA_OAUTH2_ISSUER || ''
         this.CULTHUB_BOT_API_URL = process.env.CULTHUB_BOT_API_URL || ''
         this.TELEGRAM_BOT_NAME = process.env.TELEGRAM_BOT_NAME || ''
+        this.GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || ''
     }
 }
 
