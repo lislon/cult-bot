@@ -10,6 +10,16 @@ describe('translit', () => {
         ])
     })
 
+    test('tags short', () => {
+        const actual = chunkString('<b>hello\nbob\nthis</b>', 14)
+        expect(actual).toEqual([
+            '<b>hello</b>',
+            `<b>bob</b>`,
+            '<b>this</b>'
+        ])
+    })
+
+
     test('should not mangle anything below the threshold size', function () {
         expect(chunkString('foo', 4)).toEqual(['foo'])
     })

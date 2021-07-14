@@ -329,7 +329,7 @@
     },
     "feedback_scene": {
       "welcome": "✉️ Напишите сообщение\uD83D\uDC47\uD83C\uDFFB, я передам его моим авторам",
-      "admin_feedback_template_text": "📝 Отзыв от <b>${user}</b> id=${userId}\n\n${text}</i>",
+      "admin_feedback_template_text": "📝 Отзыв от <b>${user}</b> id=${userId}\n\n<i>${text}</i>",
       "admin_feedback_template_other": "Отзыв от <b>${user}</b> id=${userId}:",
       "thank_you_for_custom_message": "Ваше сообщение отправлено, спасибо. Напишите еще, если нужно дополнить.",
       "your_feedback_was_amended": "Отклик дополнен, спасибо.",

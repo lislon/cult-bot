@@ -26,7 +26,8 @@ export async function botErrorHandler(error: any, ctx: ContextMessageUpdate): Pr
             logger.warn(`${formatUserName(ctx)}: blocked bot`)
             // ignore
         } else {
-            logger.error(`Ooops, encountered an error for ${ctx.updateType}`, error)
+            const payload = error.on?.payload?.text ? ` Payload: ${error.on.payload.text}` : ''
+            logger.error(`Ooops, encountered an error for ${ctx.updateType}` + payload, error)
 
             if (isAdmin(ctx)) {
                 await ctx.replyWithHTML(ctx.i18n.t('root.something_went_wrong_admin', {
