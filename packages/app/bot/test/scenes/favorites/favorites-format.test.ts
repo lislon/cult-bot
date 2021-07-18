@@ -14,8 +14,8 @@ const ctxI18n: CtxI18n = {
 
 const now = date('2020-01-03 12:00')
 
-async function assertFavoriteTimeFormat(expected: string, timetable: string, tag: 'i' | 's' | '' = 'i') {
-    const msg = await formatListOfFavorites(ctxI18n, [
+async function formatMsg(timetable: string): Promise<string> {
+    return await formatListOfFavorites(ctxI18n, [
         {
             category: 'exhibitions',
             title: 'title',
@@ -26,37 +26,34 @@ async function assertFavoriteTimeFormat(expected: string, timetable: string, tag
             tag_level_1: []
         }
     ], now)
-    expect(msg).toContain(tag ? `<${tag}>${expected}</${tag}>` : expected)
 }
 
 describe('format favorites cards', () => {
 
     test('Empty list', async () => {
-        const msg = await formatListOfFavorites(ctxI18n, [], now)
-        expect(msg).toStrictEqual('')
+        expect(await formatListOfFavorites(ctxI18n, [], now)).toStrictEqual('')
     })
 
     test('In future', async () => {
-        await assertFavoriteTimeFormat('до 15 января', '1-15 января: пн-вс: 12:00')
+        await expect(await formatMsg('1-15 января: пн-вс: 12:00')).toContain(`<i>до 15 января</i>`)
     })
     test('In past', async () => {
-        await assertFavoriteTimeFormat('title', '1 января: 12:00', '')
-        await assertFavoriteTimeFormat('прошло 01 января', '1 января: 12:00')
+        await expect(await formatMsg('1 января: 12:00')).toContain('title')
+        await expect(await formatMsg('1 января: 12:00')).toContain(`<i>прошло 01 января</${'i'}>`)
     })
 
     test('Only weekdays', async () => {
-        await assertFavoriteTimeFormat('пн–пт,вс', 'пн–пт,вс: 12:00')
+        await expect(await formatMsg('пн–пт,вс: 12:00')).toContain(`<i>пн–пт,вс</i>`)
     })
 
     test('Anytime', async () => {
-        await assertFavoriteTimeFormat('в любое время (по записи)', 'в любое время (по записи)')
+        await expect(await formatMsg('в любое время (по записи)')).toContain(`<i>в любое время (по записи)</i>`)
     })
 
     describe('exhibitions', () => {
 
         test('In past', async () => {
-            await assertFavoriteTimeFormat('до 15 января', '1-15 января: 12:00')
+            await expect(await formatMsg('1-15 января: 12:00')).toContain(`<i>до 15 января</i>`)
         })
-
     })
 })
