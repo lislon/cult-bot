@@ -1,3 +1,31 @@
+Culthub is a telegram bot for discovering available weekend activities like theatres or exhibitions in St.Petersburg,
+Russia.
+
+It allows for users to find activities in a form of short lists prepared by the authors every week. Also users can
+filter events by keyworks, locations, tags, priorities or time.
+Each event/location is presented in form carefully prepared and concise card.
+
+The bot was available at @culthub, but project is closed now.
+
+Main menu:
+![root-menu.png](docs%2Fimages%2Froot-menu.png)
+
+Filters:
+![filter.png](docs%2Fimages%2Ffilter.png)
+
+Search:
+![search.png](docs%2Fimages%2Fsearch.png)
+
+Short lists:
+![card-groups-prepared-by-authors.png](docs%2Fimages%2Fcard-groups-prepared-by-authors.png)
+
+Admin:
+![admin.png](docs%2Fimages%2Fadmin.png)
+
+### Technical details
+
+Bot golden source is google sheet (DEMO - just part of events
+there): https://docs.google.com/spreadsheets/d/1wr4HjdkwCdX4TDiolbOFhcBF0b0HW2tqQkZTwy-uaW4/edit?usp=sharing
 
 ## View logs
 
@@ -7,17 +35,15 @@ heroku logs --tail -a cult-hub-bot-dev
 
 ## Install TLS
 
-
 Bot should be on hobby plan.
 
 ```bash
 heroku certs:auto:enable -a cult-hub-bot-dev
 ```
 
-
 ## Debug
 
-debug `npm dev` with `-r dotenv/config` node options. 
+debug `npm dev` with `-r dotenv/config` node options.
 
 ## Testing
 
@@ -34,12 +60,11 @@ Run tests `npm run test-cucumber`
 
 Or single test `npm run test-cucumber -- --name "Regex"`
 
-
 ## Sync
 
 Envs:
-    - `cult-hub-bot-dev`
-    - `cult-hub-bot-uat`
+- `cult-hub-bot-dev`
+- `cult-hub-bot-uat`
 
 To load latest version from excel
 ```
@@ -141,14 +166,14 @@ heroku releases:rollback -a cult-hub-bot-<env>
 heroku container:run web bash
 heroku run bash
 
-
 ### Cron setup
 ```
 heroku addons:create scheduler:standard -a cult-hub-bot-dev
 heroku addons:open scheduler -a cult-hub-bot-dev
 ```
- - Add cron job `npm run cron:refresh-events` `everyday` at `03:00 UTC`. 
-   This job will rotate random events order in cb_events to allow consistent paging. Also it will update timetable for recurrent events
+
+- Add cron job `npm run cron:refresh-events` `everyday` at `03:00 UTC`.
+  This job will rotate random events order in cb_events to allow consistent paging. Also it will update timetable for recurrent events
 
 ### Reset malings
 ```
